@@ -1,7 +1,7 @@
 <div align="center">
 
   <a href="https://github.com/parazeeknova/zephyr">
-    <img src="https://pub-76b24982501b430f872cc299cad80a7f.r2.dev/Assets/zephyr-githubanner.jpg" alt="Banner" width="90%"/>
+    <img src="https://pub-76b24982501b430f872cc299cad80a7f.r2.dev/Assets/zephyr-githubanner.jpg" alt="Zephyr Banner" width="90%"/>
   </a>
 </div>
 <br>
@@ -20,12 +20,12 @@
 
 #### _<div align="left"><sub>// About 🌿</sub></div>_
 
-Zephyr is a next-generation social platform designed for seamless interaction, privacy, and speed. Built with modern web technologies, Zephyr redefines how users connect, share, and engage in a clutter-free digital space. Whether it's real-time conversations, media sharing, or a smooth user experience, Zephyr is crafted for the future of social networking. 
+Zephyr is a next-generation social platform designed for seamless interaction, privacy, and speed. Built with modern web technologies, Zephyr redefines how users connect, share, and engage in a clutter-free digital space. Whether it's real-time conversations, media sharing, or a smooth user experience, Zephyr is crafted for the future of social networking.
 
 |  |  |
 | -- | -- |
-| **About Zephyr**<br><br>- Aggregate social posts in one place<br>- Open Source & contributor friendly<br>- Supports diverse file formats<br>- Bookmark posts from other platforms<br>- Earn & grow Aura (reputation / token system) | <img src="https://pub-76b24982501b430f872cc299cad80a7f.r2.dev/Assets/zephyr-logo.png" alt="Zephyr Logo" width="25%"/> |
-| <img src="https://pub-76b24982501b430f872cc299cad80a7f.r2.dev/Assets/zeph.png" alt="Zeph AI Logo" width="25%"/> | **Zeph AI (WIP)**<br><br>- Context‑aware assistant mascot<br>- Chat + post generation & refinement<br>- Smart summaries & replies<br>- Helpful guidance & interactions |
+| **About Zephyr**<br><br>- Aggregate social posts in one place<br>- Open Source & contributor friendly<br>- Supports diverse file formats<br>- Bookmark posts from other platforms<br>- Earn & grow Aura (reputation / token system) | <img src="https://pub-76b24982501b430f872cc299cad80a7f.r2.dev/Assets/zephyr-logo.png" alt="Zephyr Logo" width="30%"/> |
+| <img src="https://pub-76b24982501b430f872cc299cad80a7f.r2.dev/Assets/zeph.png" alt="Zeph AI Logo" width="30%"/> | **Zeph AI (WIP)**<br><br>- Context‑aware assistant mascot<br>- Chat + post generation & refinement<br>- Smart summaries & replies<br>- Helpful guidance & interactions |
 
 #### _<div align="left"><sub>// Rebranding & Info 🦕</sub></div>_
 With Zephyr's rebranding from Singularity Works, we are excited to announce a renewed focus on enhancing user experience.

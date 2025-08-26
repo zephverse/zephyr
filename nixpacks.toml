@@ -7,7 +7,6 @@ nixPkgs = ["...", "nodejs_22", "prisma"]
 [phases.install]
 cmds = [
   "pnpm config set enable-pre-post-scripts true",
-  "turbo telemetry disable",
   "pnpm install --frozen-lockfile --ignore-scripts"
 ]
 
