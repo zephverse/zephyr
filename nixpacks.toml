@@ -1,5 +1,8 @@
+[nix]
+overlays = ["./.nixpacks/overlay.nix"]
+
 [phases.setup]
-nixPkgs = ["...", "nodejs", "prisma", "pnpm"]
+nixPkgs = ["...", "nodejs_22", "prisma"]
 
 [phases.install]
 cmds = [
