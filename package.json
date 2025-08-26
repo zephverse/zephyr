@@ -1,11 +1,11 @@
 {
   "name": "zephyr",
   "displayName": "Zephyr",
-  "version": "2.0.29-dev",
+  "version": "2.0.31-dev",
   "description": "A seamless, next-gen social experience built for speed, privacy, and effortless connection.",
   "author": "parazeeknova",
   "license": "AGPL-3.0",
-  "homepage": "https://development.zephyyrr.in",
+  "homepage": "https://zephyyrr.in",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/parazeeknova/zephyr"

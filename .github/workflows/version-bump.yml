@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -41,42 +41,42 @@ jobs:
         run: |
           CURRENT_VERSION=$(node -p "require('./package.json').version")
           IFS='.' read -ra VERSION_PARTS <<< "$CURRENT_VERSION"
-          
+
           MAJOR=${VERSION_PARTS[0]}
           MINOR=${VERSION_PARTS[1]}
           PATCH=${VERSION_PARTS[2]}
-          
+
           # Remove any existing -dev suffix for clean calculation
           PATCH=$(echo $PATCH | sed 's/-dev//')
-          
+
           # Simply increment patch version
           if [ $PATCH -ge 40 ]; then
             PATCH=1
           else
             PATCH=$((PATCH + 1))
           fi
-          
+
           NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}-dev"
           echo "Updating version from $CURRENT_VERSION to $NEW_VERSION"
-          
+
           # Update root package.json
           sed -i "s/\"version\": \".*\"/\"version\": \"$NEW_VERSION\"/" package.json
-          
+
           # Update apps/web/package.json
           if [ -f "apps/web/package.json" ]; then
             sed -i "s/\"version\": \".*\"/\"version\": \"$NEW_VERSION\"/" apps/web/package.json
           fi
-          
+
           # Update all package.json files in packages directory
           find packages -name "package.json" -type f -exec sed -i "s/\"version\": \".*\"/\"version\": \"$NEW_VERSION\"/" {} \;
-          
+
           echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
 
       - name: Commit and push changes
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          
+
           git add package.json
           if [ -f "apps/web/package.json" ]; then
             git add apps/web/package.json
