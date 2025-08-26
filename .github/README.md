@@ -1,12 +1,9 @@
 <div align="center">
 
   <a href="https://github.com/parazeeknova/zephyr">
-    <img src="https://pub-76b24982501b430f872cc299cad80a7f.r2.dev/Assets/singxzep-github-banner.jpg" alt="Banner" width="100%"/>
+    <img src="https://pub-76b24982501b430f872cc299cad80a7f.r2.dev/Assets/zephyr-githubanner.jpg" alt="Banner" width="90%"/>
   </a>
 </div>
-
-> Zephyr has joined Singularity Works for improved development and support. More info soon.
-
 <br>
 <br>
 
@@ -14,23 +11,21 @@
 
   <a href="#-local-development-setup"><kbd> <br> Development <br> </kbd></a>&ensp;&ensp;
   <a href="https://github.com/parazeeknova/zephyr/blob/main/.github/CONTRIBUTING.md"><kbd> <br> Contributing <br> </kbd></a>&ensp;&ensp;
-  <a href="https://github.com/parazeeknova/zephyr/wiki"><kbd> <br> Wiki <br> </kbd></a>&ensp;&ensp;
+  <a href="https://github.com/parazeeknova/zephyr/wiki"><kbd> <br> Wiki (OLD) <br> </kbd></a>&ensp;&ensp;
   <a href="https://github.com/parazeeknova/zephyr/issues"><kbd> <br> Roadmap <br> </kbd></a>&ensp;&ensp;
-    <a href="#-screenshots"><kbd> <br> Screenshots <br> </kbd></a>&ensp;&ensp;
+  <a href="https://github.com/singularityworks-xyz"><kbd> <br> Singularity Works <br> </kbd></a>&ensp;&ensp;
   <a href="#-troubleshooting"><kbd> <br> Troubleshoot <br> </kbd></a>&ensp;&ensp;
 
 </div>
 
 #### _<div align="left"><sub>// About 🌿</sub></div>_
 
-Zephyr is a next‑generation social platform focused on speed, privacy, and a distraction‑free experience.  
-It unifies real‑time conversation, media sharing, and community features with a clean, modular stack designed for extensibility and performance.  
-Built as a monorepo, it aims to be intuitive for users and ergonomic for contributors.
+Zephyr is a next-generation social platform designed for seamless interaction, privacy, and speed. Built with modern web technologies, Zephyr redefines how users connect, share, and engage in a clutter-free digital space. Whether it's real-time conversations, media sharing, or a smooth user experience, Zephyr is crafted for the future of social networking. 
 
 |  |  |
 | -- | -- |
-| **About Zephyr**<br><br>- Aggregate social posts in one place<br>- Open Source & contributor friendly<br>- Supports diverse file formats (images, video, audio, docs, etc.)<br>- Bookmark posts from other platforms<br>- Earn & grow Aura (reputation / token system) | <img src="https://pub-76b24982501b430f872cc299cad80a7f.r2.dev/Assets/zephyr-logo.png" alt="Zephyr Logo" width="120"/> |
-| <img src="https://pub-76b24982501b430f872cc299cad80a7f.r2.dev/Assets/zeph.png" alt="Zeph AI Logo" width="120"/> | **Zeph AI (WIP)**<br><br>- Context‑aware assistant mascot<br>- Chat + post generation & refinement<br>- Smart summaries & replies<br>- Helpful guidance & interactions |
+| **About Zephyr**<br><br>- Aggregate social posts in one place<br>- Open Source & contributor friendly<br>- Supports diverse file formats<br>- Bookmark posts from other platforms<br>- Earn & grow Aura (reputation / token system) | <img src="https://pub-76b24982501b430f872cc299cad80a7f.r2.dev/Assets/zephyr-logo.png" alt="Zephyr Logo" width="25%"/> |
+| <img src="https://pub-76b24982501b430f872cc299cad80a7f.r2.dev/Assets/zeph.png" alt="Zeph AI Logo" width="25%"/> | **Zeph AI (WIP)**<br><br>- Context‑aware assistant mascot<br>- Chat + post generation & refinement<br>- Smart summaries & replies<br>- Helpful guidance & interactions |
 
 #### _<div align="left"><sub>// Rebranding & Info 🦕</sub></div>_
 With Zephyr's rebranding from Singularity Works, we are excited to announce a renewed focus on enhancing user experience.
@@ -38,13 +33,13 @@ With Zephyr's rebranding from Singularity Works, we are excited to announce a re
 > [!WARNING]
 > As we are transitioning, services and features may be temporarily unavailable. We appreciate your patience and understanding during this period.
 
-btw here are some cool artworks made by Singularity Works team:
+btw here are some cool artworks for our collaboration:
 
 <p align="center">
   <img src="https://pub-76b24982501b430f872cc299cad80a7f.r2.dev/Assets/singxzephyr-banner.jpg"
-      alt="Singularity Works × Zephyr collaboration artwork" width="420">
-  <img src="https://pub-76b24982501b430f872cc299cad80a7f.r2.dev/Assets/zephyr-githubanner.jpg"
-      alt="Zephyr atmospheric artwork" width="420"><br>
+      alt="Singularity Works × Zephyr collaboration artwork" width="80%">
+  <img src="https://pub-76b24982501b430f872cc299cad80a7f.r2.dev/Assets/singxzep-github-banner.jpg"
+      alt="Zephyr atmospheric artwork" width="80%"><br>
   <sub><em>Artwork by the Singularity Works team</em></sub>
 </p>
 <br>
@@ -207,6 +202,8 @@ If you still encounter any issues with the development server, report the issue 
 <br>
 <br>
 
+#### _<div align="left"><sub>// Our Services 🚀</sub></div>_
+
 <table align="center">
   <tr>
     <td align="center">
@@ -238,3 +235,4 @@ If you still encounter any issues with the development server, report the issue 
 <p align="center">
 <strong>Zephyr</strong> is licensed under the <a href="https://github.com/parazeeknova/zephyr/blob/main/LICENSE">AGPL License</a>.
 </p>
+
