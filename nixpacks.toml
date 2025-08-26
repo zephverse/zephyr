@@ -17,16 +17,13 @@ cmds = [
 ]
 
 [start]
-cmd = "cd apps/web && pnpm start"
+cmd = "cd apps/web && node .next/standalone/server.js"
 
 [deploy]
 healthcheckPath = "/"
 healthcheckTimeout = 100
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
-
-[variables]
-NIXPACKS_NO_CACHE = "1"
 
 [environment]
 NEXT_TELEMETRY_DISABLED = "1"
