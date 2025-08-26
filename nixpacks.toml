@@ -1,5 +1,5 @@
 [phases.setup]
-nixPkgs = ["...", "nodejs-22_x", "pnpm-10", "prisma"]
+nixPkgs = ["...", "nodejs", "prisma", "pnpm"]
 
 [phases.install]
 cmds = [
