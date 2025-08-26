@@ -13,11 +13,11 @@ cmds = [
 [phases.build]
 cmds = [
   "cd packages/db && pnpm dlx prisma generate",
-  "NEXT_TELEMETRY_DISABLED=1 TURBO_TELEMETRY_DISABLED=1 pnpm exec turbo build --filter=@zephyr/web... --force"
+  "cd apps/web && NEXT_TELEMETRY_DISABLED=1 TURBO_TELEMETRY_DISABLED=1 pnpm run build"
 ]
 
 [start]
-cmd = "cd apps/web && node .next/standalone/server.js"
+cmd = "if [ -f apps/web/.next/standalone/server.js ]; then cd apps/web/.next/standalone && node server.js; elif [ -f apps/web/.next/standalone/server.mjs ]; then cd apps/web/.next/standalone && node server.mjs; else cd apps/web && pnpm start; fi"
 
 [deploy]
 healthcheckPath = "/"
