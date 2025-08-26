@@ -1,9 +1,8 @@
 [phases.setup]
-nixPkgs = ["...", "nodejs_latest", "pnpm", "prisma"]
+nixPkgs = ["...", "nodejs-22_x", "pnpm-10", "prisma"]
 
 [phases.install]
 cmds = [
-  "npm install -g pnpm@latest turbo@latest",
   "pnpm config set enable-pre-post-scripts true",
   "turbo telemetry disable",
   "pnpm install --frozen-lockfile --ignore-scripts"
@@ -16,7 +15,7 @@ cmds = [
 ]
 
 [start]
-cmd = "pnpm exec turbo start --filter=@zephyr/web"
+cmd = "cd apps/web && pnpm start"
 
 [deploy]
 healthcheckPath = "/"
@@ -24,7 +23,11 @@ healthcheckTimeout = 100
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
 
+[variables]
+NIXPACKS_NO_CACHE = "1"
+
 [environment]
 NEXT_TELEMETRY_DISABLED = "1"
 TURBO_TELEMETRY_DISABLED = "1"
 NODE_ENV = "production"
+PNPM_HOME = "/tmp/.pnpm"
