@@ -43,7 +43,7 @@ export const metadata: Metadata = {
     title: siteConfig.name,
     description: siteConfig.description,
     images: [siteConfig.ogImage],
-    creator: '@zephyyrr',
+    creator: 'Harsh Sahu | parazeeknova',
   },
   robots: {
     index: true,
@@ -79,9 +79,7 @@ export const metadata: Metadata = {
   },
   manifest: 'site.webmanifest',
   verification: {
-    google: 'your-google-site-verification',
-    yandex: 'your-yandex-verification',
-    me: ['your-personal-website'],
+    me: ['https://folio.zephyyrr.in'],
   },
 };
 
@@ -136,11 +134,7 @@ const RootLayout = ({ children }: RootLayoutProperties) => (
       <meta name="apple-mobile-web-app-status-bar-style" content="default" />
       <meta name="apple-mobile-web-app-title" content="Zephyr" />
       <link rel="manifest" href="/site.webmanifest" />
-      <script
-        defer
-        src="https://analytics-umami.zephyyrr.in/script.js"
-        data-website-id="fcacb118-4db6-446b-909f-0f95a3ccf0a3"
-      />
+      <script defer src="https://tracking.zephyyrr.in/script.js" data-website-id="13fdaf65-e304-4dae-a966-02f376e8c8fb"></script>
     </head>
     <body className={'min-h-screen font-sans antialiased'}>
       <DesignSystemProvider>{children}</DesignSystemProvider>

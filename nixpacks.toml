@@ -17,7 +17,7 @@ cmds = [
 ]
 
 [start]
-cmd = "if [ -f apps/web/.next/standalone/server.js ]; then cd apps/web/.next/standalone && node server.js; elif [ -f apps/web/.next/standalone/server.mjs ]; then cd apps/web/.next/standalone && node server.mjs; else cd apps/web && pnpm start; fi"
+cmd = "cd apps/web && pnpm start"
 
 [deploy]
 healthcheckPath = "/"

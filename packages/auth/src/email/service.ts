@@ -42,7 +42,7 @@ const trailingSlashRegex = /\/$/;
 
 function getBaseUrl(): string {
   return (
-    process.env.NEXT_PUBLIC_APP_URL || 'https://development.zephyyrr.in'
+    process.env.NEXT_PUBLIC_APP_URL || 'https://zephyyrr.in'
   ).replace(trailingSlashRegex, '');
 }
 

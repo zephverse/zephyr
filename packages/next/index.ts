@@ -32,7 +32,6 @@ export const config: NextConfig = {
       { protocol: 'https', hostname: 'avatars.githubusercontent.com' },
       { protocol: 'https', hostname: 'cdn.discordapp.com' },
       { protocol: 'https', hostname: 'pbs.twimg.com' },
-      { protocol: 'https', hostname: 'minio-objectstorage.zephyyrr.in' },
       { protocol: 'http', hostname: 'localhost' },
       { protocol: 'https', hostname: 'localhost' },
     ],
@@ -47,7 +46,6 @@ export const config: NextConfig = {
 
     return config;
   },
-  output: 'standalone',
 };
 
 export const withAnalyzer = (sourceConfig: NextConfig): NextConfig =>

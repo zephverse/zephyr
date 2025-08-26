@@ -194,7 +194,7 @@ If you still encounter any issues with the development server, report the issue 
 ![Alt](https://repobeats.axiom.co/api/embed/21d8d944036757fcd0624e71d0b2598ca8b8041f.svg "Repobeats analytics image")
 
 <div align="center">
-  <a href="https://devsocial.zephyyrr.in">
+  <a href="https://zephyyrr.in">
     <img src="https://raw.githubusercontent.com/parazeeknova/nyxtext-zenith/f4ef877c1ac8c4a5b393a19a086bec2d379b3916/.github/assets/misc/catppuccin_cat.svg" alt="Catppuccino Cat">
   </a>
 </div>
@@ -207,21 +207,21 @@ If you still encounter any issues with the development server, report the issue 
 <table align="center">
   <tr>
     <td align="center">
-      <a href="https://devsocial.zephyyrr.in">
+      <a href="https://zephyyrr.in">
         <img src="https://pub-76b24982501b430f872cc299cad80a7f.r2.dev/Assets/zephyr-logo.png" alt="Zephyr Logo" width="80px"/><br>
         <strong>Zephyr</strong><br>
         <sub>Social media aggregator</sub>
       </a>
     </td>
     <td align="center">
-      <a href="https://devsocial.zephyyrr.in">
+      <a href="https://zephyyrr.in">
         <img src="https://pub-76b24982501b430f872cc299cad80a7f.r2.dev/Assets/zeph.png" alt="Zeph AI" width="80px"/><br>
         <strong>Zeph AI (WIP)</strong><br>
         <sub>Your Companion for Zephyr</sub>
       </a>
     </td>
     <td align="center">
-      <a href="https://devsocial.zephyyrr.in">
+      <a href="https://zephyyrr.in">
         <img src="https://pub-76b24982501b430f872cc299cad80a7f.r2.dev/Assets/chat.png" alt="Zephara" width="80px"/><br>
         <strong>Zephara (WIP)</strong><br>
         <sub>Chat for Zephyr</sub>

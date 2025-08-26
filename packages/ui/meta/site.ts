@@ -2,7 +2,7 @@ export const siteConfig = {
   name: 'Zephyr',
   description:
     'A modern social aggregator combining social media, open-source communities, and content creation.',
-  url: 'https://development.zephyyrr.in',
+  url: 'https://zephyyrr.in',
   ogImage: 'og-image.png',
   keywords: [
     'social platform',
@@ -20,7 +20,7 @@ export const siteConfig = {
     'content discovery',
     'digital collaboration',
   ].join(', '),
-  authors: [{ name: 'parazeeknova', url: 'https://dev.zephyyrr.in' }],
+  authors: [{ name: 'parazeeknova', url: 'https://folio.zephyyrr.in' }],
   creator: 'Harsh Sahu',
   links: {
     github: 'https://github.com/parazeeknova/zephyr',
