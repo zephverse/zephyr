@@ -1,7 +1,7 @@
 <div align="center">
 
   <a href="https://github.com/parazeeknova/zephyr">
-    <img src="https://pub-76b24982501b430f872cc299cad80a7f.r2.dev/Assets/zephyr-githubanner.jpg" alt="Zephyr Banner" width="90%"/>
+    <img src="https://storage-r2.zephyyrr.in/Assets/zephyr-githubanner.jpg" alt="Zephyr Banner" width="90%"/>
   </a>
 </div>
 <br>
@@ -24,8 +24,8 @@ Zephyr is a next-generation social platform designed for seamless interaction, p
 
 |  |  |
 | -- | -- |
-| **About Zephyr**<br><br>- Aggregate social posts in one place<br>- Open Source & contributor friendly<br>- Supports diverse file formats<br>- Bookmark posts from other platforms<br>- Earn & grow Aura (reputation / token system) | <img src="https://pub-76b24982501b430f872cc299cad80a7f.r2.dev/Assets/zephyr-logo.png" alt="Zephyr Logo" width="30%"/> |
-| <img src="https://pub-76b24982501b430f872cc299cad80a7f.r2.dev/Assets/zeph.png" alt="Zeph AI Logo" width="30%"/> | **Zeph AI (WIP)**<br><br>- Context‑aware assistant mascot<br>- Chat + post generation & refinement<br>- Smart summaries & replies<br>- Helpful guidance & interactions |
+| **About Zephyr**<br><br>- Aggregate social posts in one place<br>- Open Source & contributor friendly<br>- Supports diverse file formats<br>- Bookmark posts from other platforms<br>- Earn & grow Aura (reputation / token system) | <img src="https://storage-r2.zephyyrr.in/Assets/zephyr-logo.png" alt="Zephyr Logo" width="30%"/> |
+| <img src="https://storage-r2.zephyyrr.in/Assets/zeph.png" alt="Zeph AI Logo" width="30%"/> | **Zeph AI (WIP)**<br><br>- Context‑aware assistant mascot<br>- Chat + post generation & refinement<br>- Smart summaries & replies<br>- Helpful guidance & interactions |
 
 #### _<div align="left"><sub>// Rebranding & Info 🦕</sub></div>_
 With Zephyr's rebranding from Singularity Works, we are excited to announce a renewed focus on enhancing user experience.
@@ -36,9 +36,9 @@ With Zephyr's rebranding from Singularity Works, we are excited to announce a re
 btw here are some cool artworks for our collaboration:
 
 <p align="center">
-  <img src="https://pub-76b24982501b430f872cc299cad80a7f.r2.dev/Assets/singxzephyr-banner.jpg"
+  <img src="https://storage-r2.zephyyrr.in/Assets/singxzephyr-banner.jpg"
       alt="Singularity Works × Zephyr collaboration artwork" width="80%">
-  <img src="https://pub-76b24982501b430f872cc299cad80a7f.r2.dev/Assets/singxzep-github-banner.jpg"
+  <img src="https://storage-r2.zephyyrr.in/Assets/singxzep-github-banner.jpg"
       alt="Zephyr atmospheric artwork" width="80%"><br>
   <sub><em>Artwork by the Singularity Works team</em></sub>
 </p>
@@ -208,21 +208,21 @@ If you still encounter any issues with the development server, report the issue 
   <tr>
     <td align="center">
       <a href="https://zephyyrr.in">
-        <img src="https://pub-76b24982501b430f872cc299cad80a7f.r2.dev/Assets/zephyr-logo.png" alt="Zephyr Logo" width="80px"/><br>
+        <img src="https://storage-r2.zephyyrr.in/Assets/zephyr-logo.png" alt="Zephyr Logo" width="80px"/><br>
         <strong>Zephyr</strong><br>
         <sub>Social media aggregator</sub>
       </a>
     </td>
     <td align="center">
       <a href="https://zephyyrr.in">
-        <img src="https://pub-76b24982501b430f872cc299cad80a7f.r2.dev/Assets/zeph.png" alt="Zeph AI" width="80px"/><br>
+        <img src="https://storage-r2.zephyyrr.in/Assets/zeph.png" alt="Zeph AI" width="80px"/><br>
         <strong>Zeph AI (WIP)</strong><br>
         <sub>Your Companion for Zephyr</sub>
       </a>
     </td>
     <td align="center">
       <a href="https://zephyyrr.in">
-        <img src="https://pub-76b24982501b430f872cc299cad80a7f.r2.dev/Assets/chat.png" alt="Zephara" width="80px"/><br>
+        <img src="https://storage-r2.zephyyrr.in/Assets/chat.png" alt="Zephara" width="80px"/><br>
         <strong>Zephara (WIP)</strong><br>
         <sub>Chat for Zephyr</sub>
       </a>
@@ -235,4 +235,5 @@ If you still encounter any issues with the development server, report the issue 
 <p align="center">
 <strong>Zephyr</strong> is licensed under the <a href="https://github.com/parazeeknova/zephyr/blob/main/LICENSE">AGPL License</a>.
 </p>
+
 
