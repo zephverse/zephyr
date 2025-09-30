@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import EditProfileDialog from '@/components/Layouts/EditProfileDialog';
-import { cn } from '@/lib/utils';
-import type { UserData } from '@zephyr/db';
-import { Button } from '@zephyr/ui/shadui/button';
-import { useState } from 'react';
+import type { UserData } from "@zephyr/db";
+import { Button } from "@zephyr/ui/shadui/button";
+import { useState } from "react";
+import EditProfileDialog from "@/components/Layouts/EditProfileDialog";
+import { cn } from "@/lib/utils";
 
 interface EditProfileButtonProps {
   user: UserData;
@@ -20,19 +20,19 @@ export default function EditProfileButton({
   return (
     <>
       <Button
-        variant="outline"
-        onClick={() => setShowDialog(true)}
         className={cn(
-          'bg-primary font-medium font-sofiaProSoftMed text-background',
+          "bg-primary font-medium font-sofiaProSoftMed text-background",
           className
         )}
+        onClick={() => setShowDialog(true)}
+        variant="outline"
       >
         Edit profile
       </Button>
       <EditProfileDialog
-        user={user}
-        open={showDialog}
         onOpenChange={setShowDialog}
+        open={showDialog}
+        user={user}
       />
     </>
   );

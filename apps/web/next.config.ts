@@ -1,5 +1,5 @@
-import { config, withStreamConfig } from '@zephyr/next';
-import type { NextConfig } from 'next';
+import { config, withStreamConfig } from "@zephyr/next";
+import type { NextConfig } from "next";
 
 let nextConfig: NextConfig = { ...config };
 

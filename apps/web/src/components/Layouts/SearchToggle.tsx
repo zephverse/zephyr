@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { Button } from '@zephyr/ui/shadui/button';
-import { Search } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import SearchField from './SearchField';
+import { Button } from "@zephyr/ui/shadui/button";
+import { Search } from "lucide-react";
+import { useEffect, useState } from "react";
+import SearchField from "./SearchField";
 
 export default function SearchToggle() {
   const [open, setOpen] = useState(true);
@@ -17,8 +17,8 @@ export default function SearchToggle() {
       }
     };
     handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   return (
@@ -29,9 +29,9 @@ export default function SearchToggle() {
         </div>
       ) : (
         <Button
-          variant="ghost"
           className="h-11 rounded-xl border border-border/50 bg-background/40 px-3 text-muted-foreground hover:bg-background/60 hover:text-foreground"
           onClick={() => setOpen(true)}
+          variant="ghost"
         >
           <Search className="h-5 w-5" />
         </Button>

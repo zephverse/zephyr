@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import ScrollUpButton from '@/components/Layouts/ScrollUpButton';
-import { FossBanner } from '@/components/misc/foss-banner';
-import { Button } from '@zephyr/ui/shadui/button';
-import { ArrowLeft, Shield } from 'lucide-react';
-import Link from 'next/link';
-import React, { useEffect } from 'react';
+import { Button } from "@zephyr/ui/shadui/button";
+import { ArrowLeft, Shield } from "lucide-react";
+import Link from "next/link";
+import React, { useEffect } from "react";
+import ScrollUpButton from "@/components/Layouts/ScrollUpButton";
+import { FossBanner } from "@/components/misc/foss-banner";
 
 export default function TermsPage() {
   const [isVisible, setIsVisible] = React.useState(false);
@@ -19,10 +19,10 @@ export default function TermsPage() {
       }
     };
 
-    window.addEventListener('scroll', toggleVisibility);
+    window.addEventListener("scroll", toggleVisibility);
 
     return () => {
-      window.removeEventListener('scroll', toggleVisibility);
+      window.removeEventListener("scroll", toggleVisibility);
     };
   }, []);
 
@@ -31,8 +31,8 @@ export default function TermsPage() {
       <div className="mb-8 flex items-center justify-between">
         <Link href="/">
           <Button
-            variant="ghost"
             className="group flex items-center gap-2 text-muted-foreground hover:text-foreground"
+            variant="ghost"
           >
             <ArrowLeft className="group-hover:-translate-x-1 h-4 w-4 transition-transform" />
             Drift
@@ -41,8 +41,8 @@ export default function TermsPage() {
 
         <Link href="/privacy">
           <Button
-            variant="ghost"
             className="group flex items-center gap-2 text-muted-foreground hover:text-foreground"
+            variant="ghost"
           >
             Privacy Policy
             <ArrowLeft className="h-4 w-4 rotate-180 transition-transform group-hover:translate-x-1" />
@@ -548,8 +548,8 @@ export default function TermsPage() {
               <p>
                 Our commitment to privacy forms the cornerstone of our platform
                 operations. We maintain comprehensive privacy practices that are
-                detailed in our{' '}
-                <Link href="/privacy" className="text-primary hover:underline">
+                detailed in our{" "}
+                <Link className="text-primary hover:underline" href="/privacy">
                   Privacy Policy
                 </Link>
                 , which forms an integral part of these Terms. This policy
@@ -1012,10 +1012,10 @@ export default function TermsPage() {
               <p>
                 We maintain open channels of communication to address user
                 inquiries, concerns, and feedback regarding our platform and
-                services. Our primary points of contact is{' '}
+                services. Our primary points of contact is{" "}
                 <Link
-                  href="mailto:zephyyrrnyx@gmail.com"
                   className="text-primary hover:underline"
+                  href="mailto:zephyyrrnyx@gmail.com"
                 >
                   zephyyrrnyx@gmail.com
                 </Link>

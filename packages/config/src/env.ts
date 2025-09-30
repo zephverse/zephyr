@@ -14,11 +14,11 @@ const REQUIRED_STREAM_VARS = {
   STREAM_SECRET: process.env.STREAM_SECRET,
 } as const;
 
-const isProduction = process.env.NODE_ENV === 'production';
-const isBuildPhase = process.env.NEXT_PHASE === 'phase-production-build';
-const isTestEnvironment = process.env.NODE_ENV === 'test';
-const skipValidation = process.env.NEXT_PUBLIC_SKIP_VALIDATION === 'true';
-const isDevelopment = !isProduction && !isBuildPhase && !isTestEnvironment;
+const isProduction = process.env.NODE_ENV === "production";
+const isBuildPhase = process.env.NEXT_PHASE === "phase-production-build";
+const isTestEnvironment = process.env.NODE_ENV === "test";
+const skipValidation = process.env.NEXT_PUBLIC_SKIP_VALIDATION === "true";
+const isDevelopment = !(isProduction || isBuildPhase || isTestEnvironment);
 
 let hasLoggedStreamStatus = false;
 
@@ -31,13 +31,13 @@ export function validateStreamEnv(): void {
 
   if (!isConfigured) {
     const message = `Stream Chat environment variables are not configured. Missing: ${missingVars.join(
-      ', '
+      ", "
     )}`;
 
     if (isDevelopment) {
-      console.warn('⚠️ [Stream Chat]:', message);
+      console.warn("⚠️ [Stream Chat]:", message);
       console.info(
-        'ℹ️ [Stream Chat]: Continuing in development mode with disabled Stream features'
+        "ℹ️ [Stream Chat]: Continuing in development mode with disabled Stream features"
       );
     }
   }
@@ -46,9 +46,9 @@ export function validateStreamEnv(): void {
 export function getStreamConfig(): StreamConfig {
   const { isConfigured, isDevelopment } = checkStreamEnvStatus();
 
-  if (!process.env.NEXT_PUBLIC_STREAM_KEY && !process.env.STREAM_SECRET) {
+  if (!(process.env.NEXT_PUBLIC_STREAM_KEY || process.env.STREAM_SECRET)) {
     if (isDevelopment && !hasLoggedStreamStatus) {
-      console.warn('[Stream Chat] Environment variables are not defined');
+      console.warn("[Stream Chat] Environment variables are not defined");
       hasLoggedStreamStatus = true;
     }
     return {
@@ -60,7 +60,7 @@ export function getStreamConfig(): StreamConfig {
   if (!isConfigured) {
     if (isDevelopment && !hasLoggedStreamStatus) {
       console.warn(
-        '[Stream Chat] Missing configuration - some features will be disabled'
+        "[Stream Chat] Missing configuration - some features will be disabled"
       );
       hasLoggedStreamStatus = true;
     }
@@ -77,24 +77,24 @@ export function getStreamConfig(): StreamConfig {
 }
 
 export function isStreamConfigured(): boolean {
-  if (typeof window !== 'undefined' && process.env.NODE_ENV === 'production') {
+  if (typeof window !== "undefined" && process.env.NODE_ENV === "production") {
     return Boolean(process.env.NEXT_PUBLIC_STREAM_KEY);
   }
 
   const key = process.env.NEXT_PUBLIC_STREAM_KEY;
   const secret = process.env.STREAM_SECRET;
   const isConfigured = Boolean(
-    key && (typeof window !== 'undefined' || secret)
+    key && (typeof window !== "undefined" || secret)
   );
 
   if (!hasLoggedStreamStatus) {
-    console.debug('[Stream Config]', {
+    console.debug("[Stream Config]", {
       hasKey: !!key,
       hasSecret: !!secret,
       isConfigured,
       env: process.env.NODE_ENV,
-      isServer: typeof window === 'undefined',
-      isProd: process.env.NODE_ENV === 'production',
+      isServer: typeof window === "undefined",
+      isProd: process.env.NODE_ENV === "production",
     });
     hasLoggedStreamStatus = true;
   }
@@ -103,17 +103,17 @@ export function isStreamConfigured(): boolean {
 }
 
 export function isStreamConfiguredClient(): boolean {
-  if (typeof window === 'undefined') {
+  if (typeof window === "undefined") {
     return false;
   }
   return Boolean(process.env.NEXT_PUBLIC_STREAM_KEY);
 }
 
 function checkStreamEnvStatus(): EnvStatus {
-  if (typeof window !== 'undefined' && process.env.NODE_ENV === 'production') {
+  if (typeof window !== "undefined" && process.env.NODE_ENV === "production") {
     const missingKey = process.env.NEXT_PUBLIC_STREAM_KEY
       ? []
-      : ['NEXT_PUBLIC_STREAM_KEY'];
+      : ["NEXT_PUBLIC_STREAM_KEY"];
     return {
       isConfigured: missingKey.length === 0,
       missingVars: missingKey,
@@ -123,7 +123,7 @@ function checkStreamEnvStatus(): EnvStatus {
 
   const vars = {
     NEXT_PUBLIC_STREAM_KEY: process.env.NEXT_PUBLIC_STREAM_KEY,
-    ...(typeof window === 'undefined'
+    ...(typeof window === "undefined"
       ? { STREAM_SECRET: process.env.STREAM_SECRET }
       : {}),
   };

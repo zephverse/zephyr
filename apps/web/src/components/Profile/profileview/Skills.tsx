@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { Badge } from '@zephyr/ui/shadui/badge';
-import { Card, CardContent } from '@zephyr/ui/shadui/card';
-import { motion } from 'framer-motion';
-import type React from 'react';
+import { Badge } from "@zephyr/ui/shadui/badge";
+import { Card, CardContent } from "@zephyr/ui/shadui/card";
+import { motion } from "framer-motion";
+import type React from "react";
 
 interface SkillsProps {
   skills: string[];
@@ -23,8 +23,8 @@ const Skills: React.FC<SkillsProps> = ({ skills }) => (
             whileTap={{ scale: 0.95 }}
           >
             <Badge
-              variant="secondary"
               className="bg-secondary text-secondary-foreground"
+              variant="secondary"
             >
               {skill}
             </Badge>

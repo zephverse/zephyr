@@ -1,16 +1,16 @@
-'use client';
+"use client";
 
-import { Badge } from '@zephyr/ui/shadui/badge';
-import { formatDistanceToNow } from 'date-fns';
-import { motion } from 'framer-motion';
+import { Badge } from "@zephyr/ui/shadui/badge";
+import { formatDistanceToNow } from "date-fns";
+import { motion } from "framer-motion";
 import {
   ExternalLink,
   Link as LinkIcon,
   MessageCircle,
   ThumbsUp,
   User,
-} from 'lucide-react';
-import Link from 'next/link';
+} from "lucide-react";
+import Link from "next/link";
 
 interface HNStoryCardProps {
   hnStory: {
@@ -40,10 +40,10 @@ export function HNStoryCard({ hnStory }: HNStoryCardProps) {
 
       <div className="mt-2">
         <a
-          href={hnStory.url || hnItemUrl}
-          target="_blank"
-          rel="noopener noreferrer"
           className="block font-medium text-sm transition-colors hover:text-orange-500 sm:text-base"
+          href={hnStory.url || hnItemUrl}
+          rel="noopener noreferrer"
+          target="_blank"
         >
           {hnStory.title}
         </a>
@@ -51,8 +51,8 @@ export function HNStoryCard({ hnStory }: HNStoryCardProps) {
         {domain && (
           <div className="mt-2 flex flex-wrap items-center">
             <Badge
-              variant="secondary"
               className="max-w-[200px] truncate bg-background/80 px-2 text-xs hover:bg-orange-500/10 hover:text-orange-500 sm:max-w-full"
+              variant="secondary"
             >
               <LinkIcon className="mr-1 h-3 w-3 shrink-0" />
               <span className="truncate">{domain}</span>
@@ -77,14 +77,14 @@ export function HNStoryCard({ hnStory }: HNStoryCardProps) {
         <div className="flex items-center gap-1 rounded-full bg-background/50 px-1.5 py-0.5 sm:px-2 sm:py-1">
           <MessageCircle className="h-3 w-3 text-orange-500" />
           <a
-            href={hnItemUrl}
-            target="_blank"
-            rel="noopener noreferrer"
             className="hover:text-orange-500"
+            href={hnItemUrl}
+            rel="noopener noreferrer"
+            target="_blank"
           >
-            {hnStory.descendants}{' '}
+            {hnStory.descendants}{" "}
             <span className="xs:inline hidden">
-              {hnStory.descendants === 1 ? 'comment' : 'comments'}
+              {hnStory.descendants === 1 ? "comment" : "comments"}
             </span>
           </a>
         </div>
@@ -96,20 +96,20 @@ export function HNStoryCard({ hnStory }: HNStoryCardProps) {
 
       <div className="mt-3 flex flex-wrap justify-between gap-2 sm:flex-nowrap sm:items-center">
         <Link
-          href="/hackernews"
           className="mb-1 flex items-center font-medium text-orange-500 text-xs hover:text-orange-600 sm:mb-0"
+          href="/hackernews"
         >
           <span>Browse HN</span>
-          <motion.span whileHover={{ x: 3 }} className="ml-1 inline-block">
+          <motion.span className="ml-1 inline-block" whileHover={{ x: 3 }}>
             →
           </motion.span>
         </Link>
 
         <a
-          href={hnStory.url || hnItemUrl}
-          target="_blank"
-          rel="noopener noreferrer"
           className="flex items-center gap-1 text-muted-foreground text-xs hover:text-orange-500"
+          href={hnStory.url || hnItemUrl}
+          rel="noopener noreferrer"
+          target="_blank"
         >
           <ExternalLink className="h-3 w-3" />
           <span>Original</span>

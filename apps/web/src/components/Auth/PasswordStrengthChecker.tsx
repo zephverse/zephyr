@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import type { SignUpValues } from '@zephyr/auth/src';
-import { AnimatePresence, motion } from 'framer-motion';
-import { Check, X } from 'lucide-react';
-import type { UseFormSetValue } from 'react-hook-form';
-import { PasswordRecommender } from './PasswordRecommender';
+import type { SignUpValues } from "@zephyr/auth/src";
+import { AnimatePresence, motion } from "framer-motion";
+import { Check, X } from "lucide-react";
+import type { UseFormSetValue } from "react-hook-form";
+import { PasswordRecommender } from "./PasswordRecommender";
 
 interface Requirement {
   text: string;
@@ -21,31 +21,31 @@ const commonSequenceRegex = /(?:abc|123|qwe|xyz)/i;
 
 const requirements: Requirement[] = [
   {
-    text: 'At least 8 characters long',
+    text: "At least 8 characters long",
     validator: (password) => password.length >= 8,
   },
   {
-    text: 'Contains at least one uppercase letter',
+    text: "Contains at least one uppercase letter",
     validator: (password) => uppercaseRegex.test(password),
   },
   {
-    text: 'Contains at least one lowercase letter',
+    text: "Contains at least one lowercase letter",
     validator: (password) => lowercaseRegex.test(password),
   },
   {
-    text: 'Contains at least one number',
+    text: "Contains at least one number",
     validator: (password) => numberRegex.test(password),
   },
   {
-    text: 'Contains at least one special character',
+    text: "Contains at least one special character",
     validator: (password) => specialCharRegex.test(password),
   },
   {
-    text: 'No repeated characters (3+ times)',
+    text: "No repeated characters (3+ times)",
     validator: (password) => !repeatedCharRegex.test(password),
   },
   {
-    text: 'No common sequences (123, abc)',
+    text: "No common sequences (123, abc)",
     validator: (password) => !commonSequenceRegex.test(password),
   },
 ];
@@ -75,34 +75,34 @@ export function PasswordStrengthChecker({
 
   const getStrengthColor = () => {
     if (strengthPercent <= 25) {
-      return 'bg-red-500';
+      return "bg-red-500";
     }
     if (strengthPercent <= 50) {
-      return 'bg-orange-500';
+      return "bg-orange-500";
     }
     if (strengthPercent <= 75) {
-      return 'bg-yellow-500';
+      return "bg-yellow-500";
     }
-    return 'bg-green-500';
+    return "bg-green-500";
   };
 
   const getStrengthText = () => {
     if (strengthPercent <= 25) {
-      return 'Weak';
+      return "Weak";
     }
     if (strengthPercent <= 50) {
-      return 'Fair';
+      return "Fair";
     }
     if (strengthPercent <= 75) {
-      return 'Good';
+      return "Good";
     }
-    return 'Strong';
+    return "Strong";
   };
 
   const strengthVariants = {
     container: {
       initial: { opacity: 0, height: 0 },
-      animate: { opacity: 1, height: 'auto' },
+      animate: { opacity: 1, height: "auto" },
       exit: { opacity: 0, height: 0, transition: { duration: 0.2 } },
     },
     indicator: {
@@ -121,27 +121,27 @@ export function PasswordStrengthChecker({
     <AnimatePresence mode="wait">
       {password.length > 0 && (
         <motion.div
-          className="mt-2 space-y-3"
-          variants={strengthVariants.container}
-          initial="initial"
           animate="animate"
+          className="mt-2 space-y-3"
           exit="exit"
+          initial="initial"
+          variants={strengthVariants.container}
         >
           <div className="space-y-2">
             <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
               <motion.div
+                animate={{ width: `${strengthPercent}%` }}
                 className={`h-full rounded-full ${getStrengthColor()}`}
                 initial={{ width: 0 }}
-                animate={{ width: `${strengthPercent}%` }}
                 transition={{ duration: 0.3 }}
               />
             </div>
             <div className="flex justify-between text-xs">
               <span className="text-muted-foreground">Password Strength:</span>
               <motion.span
-                className={`font-medium ${getStrengthColor().replace('bg-', 'text-')}`}
-                initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
+                className={`font-medium ${getStrengthColor().replace("bg-", "text-")}`}
+                initial={{ opacity: 0 }}
                 transition={{ duration: 0.2 }}
               >
                 {getStrengthText()}
@@ -150,16 +150,16 @@ export function PasswordStrengthChecker({
           </div>
 
           <motion.div
+            animate={{ opacity: 1, y: 0 }}
             className="space-y-2 rounded-lg border p-3"
             initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.2, delay: 0.1 }}
           >
             <PasswordRecommender
               password={password}
               requirements={requirements}
-              setValue={setValue}
               setPassword={setPassword}
+              setValue={setValue}
             />
 
             <p className="text-muted-foreground text-xs">
@@ -168,25 +168,25 @@ export function PasswordStrengthChecker({
 
             <div className="space-y-2">
               {requirements.map((req, index) => (
-                <div key={index} className="flex items-center gap-2">
+                <div className="flex items-center gap-2" key={index}>
                   <AnimatePresence mode="wait">
                     {req.validator(password) ? (
                       <motion.div
-                        key="check"
-                        initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
-                        exit={{ scale: 0 }}
                         className="text-green-500"
+                        exit={{ scale: 0 }}
+                        initial={{ scale: 0 }}
+                        key="check"
                       >
                         <Check className="size-4" />
                       </motion.div>
                     ) : (
                       <motion.div
-                        key="x"
-                        initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
-                        exit={{ scale: 0 }}
                         className="text-muted-foreground"
+                        exit={{ scale: 0 }}
+                        initial={{ scale: 0 }}
+                        key="x"
                       >
                         <X className="size-4" />
                       </motion.div>
@@ -195,8 +195,8 @@ export function PasswordStrengthChecker({
                   <span
                     className={`text-xs ${
                       req.validator(password)
-                        ? 'text-green-500'
-                        : 'text-muted-foreground'
+                        ? "text-green-500"
+                        : "text-muted-foreground"
                     }`}
                   >
                     {req.text}

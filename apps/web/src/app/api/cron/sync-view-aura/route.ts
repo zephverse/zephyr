@@ -1,5 +1,5 @@
-import { prisma } from '@zephyr/db';
-import { NextResponse } from 'next/server';
+import { prisma } from "@zephyr/db";
+import { NextResponse } from "next/server";
 
 const VIEWS_AURA_CONFIG = {
   FIFTY_VIEWS: {
@@ -28,7 +28,7 @@ async function awardViewAura() {
   };
 
   try {
-    log('🚀 Starting post view aura awards');
+    log("🚀 Starting post view aura awards");
 
     const posts = await prisma.post.findMany({
       select: {
@@ -93,7 +93,7 @@ async function awardViewAura() {
                 userId: post.userId,
                 issuerId: post.userId,
                 amount: auraToAward,
-                type: 'POST_VIEWS_MILESTONE',
+                type: "POST_VIEWS_MILESTONE",
                 postId: post.id,
               },
             });
@@ -136,7 +136,7 @@ async function awardViewAura() {
     return summary;
   } catch (error) {
     const errorMessage =
-      error instanceof Error ? error.message : 'Unknown error';
+      error instanceof Error ? error.message : "Unknown error";
     log(`❌ Fatal error in aura awards: ${errorMessage}`);
     return {
       success: false,
@@ -152,16 +152,16 @@ export async function POST(request: Request) {
   try {
     if (!process.env.CRON_SECRET_KEY) {
       return NextResponse.json(
-        { error: 'Server configuration error' },
+        { error: "Server configuration error" },
         { status: 500 }
       );
     }
 
-    const authHeader = request.headers.get('authorization');
+    const authHeader = request.headers.get("authorization");
     const expectedAuth = `Bearer ${process.env.CRON_SECRET_KEY}`;
 
     if (!authHeader || authHeader !== expectedAuth) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const results = await awardViewAura();
@@ -169,15 +169,15 @@ export async function POST(request: Request) {
     return NextResponse.json(results, {
       status: results.success ? 200 : 500,
       headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-store',
+        "Content-Type": "application/json",
+        "Cache-Control": "no-store",
       },
     });
   } catch (error) {
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : "Unknown error",
         timestamp: new Date().toISOString(),
       },
       { status: 500 }
@@ -185,5 +185,5 @@ export async function POST(request: Request) {
   }
 }
 
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";

@@ -1,10 +1,10 @@
-import { Button } from '@zephyr/ui/shadui/button';
-import { Textarea } from '@zephyr/ui/shadui/textarea';
-import { motion } from 'framer-motion';
-import { Loader2, Upload } from 'lucide-react';
-import type { StepThreeProps } from '../../types';
-import { SupportMediaPreview } from '../SupportMediaPreview';
-import { stepVariants } from './variants';
+import { Button } from "@zephyr/ui/shadui/button";
+import { Textarea } from "@zephyr/ui/shadui/textarea";
+import { motion } from "framer-motion";
+import { Loader2, Upload } from "lucide-react";
+import type { StepThreeProps } from "../../types";
+import { SupportMediaPreview } from "../SupportMediaPreview";
+import { stepVariants } from "./variants";
 
 export function StepThree({
   formData,
@@ -18,11 +18,11 @@ export function StepThree({
 }: StepThreeProps) {
   return (
     <motion.div
-      variants={stepVariants}
-      initial="enter"
       animate="center"
-      exit="exit"
       className="space-y-4"
+      exit="exit"
+      initial="enter"
+      variants={stepVariants}
     >
       <div className="space-y-2">
         <h3 className="font-semibold text-lg">Additional Information</h3>
@@ -33,25 +33,24 @@ export function StepThree({
 
       <div className="space-y-4">
         <Textarea
-          placeholder="Describe your issue or suggestion in detail..."
-          required
-          value={formData.message}
+          className="min-h-[200px] w-full bg-background/50 backdrop-blur-sm"
           onChange={(e) =>
             setFormData({ ...formData, message: e.target.value })
           }
-          className="min-h-[200px] w-full bg-background/50 backdrop-blur-sm"
+          placeholder="Describe your issue or suggestion in detail..."
+          required
+          value={formData.message}
         />
 
         <div className="space-y-2">
           <input
-            type="file"
-            ref={fileInputRef}
+            accept="image/*,.pdf,.doc,.docx,.txt"
             className="hidden"
             multiple
             onChange={(e) => {
               const files = e.target.files;
               if (files?.length) {
-                console.log('Files selected:', {
+                console.log("Files selected:", {
                   count: files.length,
                   details: Array.from(files).map((f) => ({
                     name: f.name,
@@ -62,15 +61,16 @@ export function StepThree({
                 handleFileUpload(files);
               }
             }}
-            accept="image/*,.pdf,.doc,.docx,.txt"
+            ref={fileInputRef}
+            type="file"
           />
 
           <Button
+            className="w-full bg-background/50 backdrop-blur-sm"
+            disabled
+            onClick={() => fileInputRef.current?.click()}
             type="button"
             variant="outline"
-            className="w-full bg-background/50 backdrop-blur-sm"
-            onClick={() => fileInputRef.current?.click()}
-            disabled
           >
             <Upload className="mr-2 h-4 w-4" />
             Attach Files (We are working on this feature)
@@ -87,17 +87,17 @@ export function StepThree({
 
         <div className="flex space-x-2">
           <Button
+            className="bg-background/50 backdrop-blur-sm"
+            onClick={onBack}
             type="button"
             variant="outline"
-            onClick={onBack}
-            className="bg-background/50 backdrop-blur-sm"
           >
             Back
           </Button>
           <Button
-            type="submit"
             className="flex-1"
             disabled={loading || !formData.message}
+            type="submit"
           >
             {loading ? (
               <>
@@ -105,7 +105,7 @@ export function StepThree({
                 Sending...
               </>
             ) : (
-              'Send Message'
+              "Send Message"
             )}
           </Button>
         </div>

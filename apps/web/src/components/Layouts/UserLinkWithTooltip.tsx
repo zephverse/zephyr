@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import kyInstance from '@/lib/ky';
-import { useQuery } from '@tanstack/react-query';
-import type { UserData } from '@zephyr/db';
-import { HTTPError } from 'ky';
-import Link from 'next/link';
-import type { PropsWithChildren } from 'react';
-import UserTooltip from './UserTooltip';
+import { useQuery } from "@tanstack/react-query";
+import type { UserData } from "@zephyr/db";
+import { HTTPError } from "ky";
+import Link from "next/link";
+import type { PropsWithChildren } from "react";
+import kyInstance from "@/lib/ky";
+import UserTooltip from "./UserTooltip";
 
 interface UserLinkWithTooltipProps extends PropsWithChildren {
   username: string;
@@ -17,7 +17,7 @@ export default function UserLinkWithTooltip({
   username,
 }: UserLinkWithTooltipProps) {
   const { data } = useQuery({
-    queryKey: ['user-data', username],
+    queryKey: ["user-data", username],
     queryFn: () =>
       kyInstance.get(`/api/users/username/${username}`).json<UserData>(),
     retry(failureCount, error) {
@@ -32,8 +32,8 @@ export default function UserLinkWithTooltip({
   if (!data) {
     return (
       <Link
-        href={`/users/${username}`}
         className="text-primary hover:underline"
+        href={`/users/${username}`}
       >
         {children}
       </Link>
@@ -43,8 +43,8 @@ export default function UserLinkWithTooltip({
   return (
     <UserTooltip user={data}>
       <Link
-        href={`/users/${username}`}
         className="text-primary hover:underline"
+        href={`/users/${username}`}
       >
         {children}
       </Link>

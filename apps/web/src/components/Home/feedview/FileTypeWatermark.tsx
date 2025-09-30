@@ -1,6 +1,4 @@
-import { cn } from '@/lib/utils';
-import { FILE_CONFIGS, type FileTypeConfig } from '@/lib/utils/mime-utils';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion } from "framer-motion";
 import {
   AudioWaveform,
   CodeIcon,
@@ -8,8 +6,10 @@ import {
   FileTextIcon,
   ImageIcon,
   VideoIcon,
-} from 'lucide-react';
-import { useState } from 'react';
+} from "lucide-react";
+import { useState } from "react";
+import { cn } from "@/lib/utils";
+import { FILE_CONFIGS, type FileTypeConfig } from "@/lib/utils/mime-utils";
 
 interface FileTypeWatermarkProps {
   type: string;
@@ -47,12 +47,12 @@ export const FileTypeWatermark = ({
   const config = FILE_CONFIGS[extension];
 
   const fallbackConfig: FileTypeConfig = {
-    category: 'DOCUMENT',
-    mime: 'application/octet-stream',
+    category: "DOCUMENT",
+    mime: "application/octet-stream",
     tag: {
-      bg: 'bg-gray-500/30',
-      text: 'text-gray-100',
-      icon: 'FileIcon',
+      bg: "bg-gray-500/30",
+      text: "text-gray-100",
+      icon: "FileIcon",
     },
   };
 
@@ -67,17 +67,17 @@ export const FileTypeWatermark = ({
       whileHover={animations.container.hover}
     >
       <motion.div
-        initial={animations.container.initial}
         animate={animations.container.animate}
         className={cn(
-          'rounded-lg px-3 py-1.5',
+          "rounded-lg px-3 py-1.5",
           tag.bg,
           tag.text,
-          'backdrop-blur-md backdrop-saturate-150',
-          'border border-white/10',
-          'shadow-lg',
-          'transition-all duration-300'
+          "backdrop-blur-md backdrop-saturate-150",
+          "border border-white/10",
+          "shadow-lg",
+          "transition-all duration-300"
         )}
+        initial={animations.container.initial}
       >
         <AnimatePresence mode="wait">
           <motion.div className="flex items-center gap-2">
@@ -85,22 +85,22 @@ export const FileTypeWatermark = ({
             <AnimatePresence mode="wait">
               {isHovered ? (
                 <motion.span
-                  key="file-type"
-                  initial={animations.text.enter}
                   animate={animations.text.animate}
-                  exit={animations.text.exit}
                   className="whitespace-nowrap font-medium text-xs"
+                  exit={animations.text.exit}
+                  initial={animations.text.enter}
+                  key="file-type"
                 >
                   {extension.toUpperCase()}
                 </motion.span>
               ) : (
                 showCategory && (
                   <motion.span
-                    key="category"
-                    initial={animations.text.enter}
                     animate={animations.text.animate}
-                    exit={animations.text.exit}
                     className="whitespace-nowrap font-medium text-xs"
+                    exit={animations.text.exit}
+                    initial={animations.text.enter}
+                    key="category"
                   >
                     {category}
                   </motion.span>
@@ -112,14 +112,14 @@ export const FileTypeWatermark = ({
       </motion.div>
 
       <motion.div
-        initial={{ opacity: 0 }}
         animate={{ opacity: isHovered ? 1 : 0 }}
         className={cn(
-          '-z-10 absolute inset-0',
-          'blur-xl',
+          "-z-10 absolute inset-0",
+          "blur-xl",
           tag.bg,
-          'opacity-50'
+          "opacity-50"
         )}
+        initial={{ opacity: 0 }}
       />
     </motion.div>
   );

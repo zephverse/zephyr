@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { Button } from '@zephyr/ui/shadui/button';
-import { Card, CardContent } from '@zephyr/ui/shadui/card';
-import { motion } from 'framer-motion';
-import { CompassIcon, Home, Newspaper, Search, TrendingUp } from 'lucide-react';
-import Link from 'next/link';
+import { Button } from "@zephyr/ui/shadui/button";
+import { Card, CardContent } from "@zephyr/ui/shadui/card";
+import { motion } from "framer-motion";
+import { CompassIcon, Home, Newspaper, Search, TrendingUp } from "lucide-react";
+import Link from "next/link";
 
 interface NavigationCardProps {
   isCollapsed: boolean;
@@ -15,35 +15,35 @@ interface NavigationCardProps {
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: This component is simple and does not need to be refactored
 export default function NavigationCard({
   isCollapsed,
-  className = '',
-  stickyTop = '0',
+  className = "",
+  stickyTop = "0",
 }: NavigationCardProps) {
   return (
     <Card
       className={`max-h-fit bg-card transition-all duration-300 ease-in-out ${
-        isCollapsed ? 'w-12' : 'w-full'
+        isCollapsed ? "w-12" : "w-full"
       } ${className} sticky`}
       style={{ top: stickyTop }}
     >
       <CardContent
         className={`justify-centeritems-center flex flex-col space-y-2 ${
-          isCollapsed ? 'p-2' : 'p-4'
+          isCollapsed ? "p-2" : "p-4"
         }`}
       >
         <div className="block w-full">
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Link href="/" className="block w-full">
+            <Link className="block w-full" href="/">
               <Button
-                variant="ghost"
-                size={isCollapsed ? 'icon' : 'lg'}
                 className={`w-full ${
-                  isCollapsed ? 'justify-center' : 'justify-start'
+                  isCollapsed ? "justify-center" : "justify-start"
                 }`}
+                size={isCollapsed ? "icon" : "lg"}
                 title="Home"
+                variant="ghost"
               >
                 <Home
                   className={`h-5 w-5 text-muted-foreground ${
-                    isCollapsed ? '' : 'mr-4'
+                    isCollapsed ? "" : "mr-4"
                   }`}
                 />
                 {!isCollapsed && <span>Home</span>}
@@ -54,18 +54,18 @@ export default function NavigationCard({
 
         <div className="block w-full">
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Link href="/search?q=zephyr" className="block w-full">
+            <Link className="block w-full" href="/search?q=zephyr">
               <Button
-                variant="ghost"
-                size={isCollapsed ? 'icon' : 'lg'}
                 className={`w-full ${
-                  isCollapsed ? 'justify-center' : 'justify-start'
+                  isCollapsed ? "justify-center" : "justify-start"
                 }`}
+                size={isCollapsed ? "icon" : "lg"}
                 title="Explore"
+                variant="ghost"
               >
                 <Search
                   className={`h-5 w-5 text-muted-foreground ${
-                    isCollapsed ? '' : 'mr-4'
+                    isCollapsed ? "" : "mr-4"
                   }`}
                 />
                 {!isCollapsed && <span>Explore</span>}
@@ -76,18 +76,18 @@ export default function NavigationCard({
 
         <div className="block w-full">
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Link href="/discover" className="block w-full">
+            <Link className="block w-full" href="/discover">
               <Button
-                variant="ghost"
-                size={isCollapsed ? 'icon' : 'lg'}
                 className={`w-full ${
-                  isCollapsed ? 'justify-center' : 'justify-start'
+                  isCollapsed ? "justify-center" : "justify-start"
                 }`}
+                size={isCollapsed ? "icon" : "lg"}
                 title="Discover"
+                variant="ghost"
               >
                 <CompassIcon
                   className={`h-5 w-5 text-muted-foreground ${
-                    isCollapsed ? '' : 'mr-4'
+                    isCollapsed ? "" : "mr-4"
                   }`}
                 />
                 {!isCollapsed && <span>Zephyrians</span>}
@@ -98,18 +98,18 @@ export default function NavigationCard({
 
         <div className="block w-full">
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Link href="/hackernews" className="block w-full">
+            <Link className="block w-full" href="/hackernews">
               <Button
-                variant="ghost"
-                size={isCollapsed ? 'icon' : 'lg'}
                 className={`w-full ${
-                  isCollapsed ? 'justify-center' : 'justify-start'
+                  isCollapsed ? "justify-center" : "justify-start"
                 }`}
+                size={isCollapsed ? "icon" : "lg"}
                 title="Aggregator (BETA)"
+                variant="ghost"
               >
                 <Newspaper
                   className={`h-5 w-5 text-muted-foreground ${
-                    isCollapsed ? '' : 'mr-4'
+                    isCollapsed ? "" : "mr-4"
                   }`}
                 />
                 {!isCollapsed && <span>HackerNews</span>}
@@ -120,18 +120,18 @@ export default function NavigationCard({
 
         <div className="block w-full">
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Link href="/soon" className="block w-full">
+            <Link className="block w-full" href="/soon">
               <Button
-                variant="ghost"
-                size={isCollapsed ? 'icon' : 'lg'}
                 className={`w-full ${
-                  isCollapsed ? 'justify-center' : 'justify-start'
+                  isCollapsed ? "justify-center" : "justify-start"
                 }`}
+                size={isCollapsed ? "icon" : "lg"}
                 title="Gusts"
+                variant="ghost"
               >
                 <TrendingUp
                   className={`h-5 w-5 text-muted-foreground ${
-                    isCollapsed ? '' : 'mr-4'
+                    isCollapsed ? "" : "mr-4"
                   }`}
                 />
                 {!isCollapsed && <span>Gusts</span>}

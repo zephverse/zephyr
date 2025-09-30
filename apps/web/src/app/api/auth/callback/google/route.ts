@@ -1,26 +1,23 @@
-import { slugify } from '@/lib/utils';
-import { google, lucia, validateRequest } from '@zephyr/auth/auth';
-import { createStreamUser } from '@zephyr/auth/src';
-import { prisma } from '@zephyr/db';
-import { OAuth2RequestError } from 'arctic';
-import { generateIdFromEntropySize } from 'lucia';
-import { cookies } from 'next/headers';
-import type { NextRequest } from 'next/server';
+import { google, lucia, validateRequest } from "@zephyr/auth/auth";
+import { createStreamUser } from "@zephyr/auth/src";
+import { prisma } from "@zephyr/db";
+import { OAuth2RequestError } from "arctic";
+import { generateIdFromEntropySize } from "lucia";
+import { cookies } from "next/headers";
+import type { NextRequest } from "next/server";
+import { slugify } from "@/lib/utils";
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex logic is required here
 export async function GET(req: NextRequest) {
   try {
-    const code = req.nextUrl.searchParams.get('code');
-    const state = req.nextUrl.searchParams.get('state');
-    const storedState = (await cookies()).get('state')?.value;
-    const storedCodeVerifier = (await cookies()).get('code_verifier')?.value;
-    const isLinking = (await cookies()).get('linking')?.value === 'true';
+    const code = req.nextUrl.searchParams.get("code");
+    const state = req.nextUrl.searchParams.get("state");
+    const storedState = (await cookies()).get("state")?.value;
+    const storedCodeVerifier = (await cookies()).get("code_verifier")?.value;
+    const isLinking = (await cookies()).get("linking")?.value === "true";
 
     if (
-      !code ||
-      !state ||
-      !storedState ||
-      !storedCodeVerifier ||
+      !(code && state && storedState && storedCodeVerifier) ||
       state !== storedState
     ) {
       return new Response(null, { status: 400 });
@@ -35,23 +32,23 @@ export async function GET(req: NextRequest) {
         storedCodeVerifier
       );
     } catch (error) {
-      console.error('Token validation error:', error);
+      console.error("Token validation error:", error);
       throw error;
     }
 
     // @ts-expect-error
     const accessToken = tokenResponse?.data?.access_token;
-    if (!accessToken || typeof accessToken !== 'string') {
-      throw new Error('Invalid access token structure');
+    if (!accessToken || typeof accessToken !== "string") {
+      throw new Error("Invalid access token structure");
     }
 
     const response = await fetch(
-      'https://www.googleapis.com/oauth2/v1/userinfo',
+      "https://www.googleapis.com/oauth2/v1/userinfo",
       {
-        method: 'GET',
+        method: "GET",
         headers: {
           Authorization: `Bearer ${accessToken}`,
-          Accept: 'application/json',
+          Accept: "application/json",
         },
       }
     );
@@ -69,7 +66,7 @@ export async function GET(req: NextRequest) {
         return new Response(null, {
           status: 302,
           headers: {
-            Location: '/login',
+            Location: "/login",
           },
         });
       }
@@ -84,7 +81,7 @@ export async function GET(req: NextRequest) {
         return new Response(null, {
           status: 302,
           headers: {
-            Location: '/settings?error=google_account_linked',
+            Location: "/settings?error=google_account_linked",
           },
         });
       }
@@ -94,12 +91,12 @@ export async function GET(req: NextRequest) {
         data: { googleId: googleUser.id },
       });
 
-      (await cookies()).set('linking', '', { maxAge: 0 });
+      (await cookies()).set("linking", "", { maxAge: 0 });
 
       return new Response(null, {
         status: 302,
         headers: {
-          Location: '/settings?success=google_linked',
+          Location: "/settings?success=google_linked",
         },
       });
     }
@@ -137,7 +134,7 @@ export async function GET(req: NextRequest) {
       return new Response(null, {
         status: 302,
         headers: {
-          Location: '/',
+          Location: "/",
         },
       });
     }
@@ -165,7 +162,7 @@ export async function GET(req: NextRequest) {
           newUser.displayName
         );
       } catch (streamError) {
-        console.error('Failed to create Stream user:', streamError);
+        console.error("Failed to create Stream user:", streamError);
       }
 
       // @ts-expect-error
@@ -180,22 +177,22 @@ export async function GET(req: NextRequest) {
       return new Response(null, {
         status: 302,
         headers: {
-          Location: '/',
+          Location: "/",
         },
       });
     } catch (error) {
-      console.error('User creation error:', error);
+      console.error("User creation error:", error);
       throw error;
     }
   } catch (error) {
-    console.error('Final error catch:', error);
+    console.error("Final error catch:", error);
     if (error instanceof OAuth2RequestError) {
       return new Response(null, { status: 400 });
     }
     return new Response(JSON.stringify({ error: String(error) }), {
       status: 500,
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
     });
   }

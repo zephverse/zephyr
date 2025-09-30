@@ -1,11 +1,11 @@
-import { validateRequest } from '@zephyr/auth/auth';
-import { prisma } from '@zephyr/db';
+import { validateRequest } from "@zephyr/auth/auth";
+import { prisma } from "@zephyr/db";
 
 export async function GET() {
   try {
     const { user } = await validateRequest();
     if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const users = await prisma.user.findMany({
@@ -27,7 +27,7 @@ export async function GET() {
       },
       orderBy: {
         mentions: {
-          _count: 'desc',
+          _count: "desc",
         },
       },
       take: 10,
@@ -35,7 +35,7 @@ export async function GET() {
 
     return Response.json({ users });
   } catch (error) {
-    console.error('Error fetching mentioned users:', error);
-    return Response.json({ error: 'Internal server error' }, { status: 500 });
+    console.error("Error fetching mentioned users:", error);
+    return Response.json({ error: "Internal server error" }, { status: 500 });
   }
 }

@@ -1,12 +1,12 @@
-import { validateRequest } from '@zephyr/auth/auth';
-import { prisma } from '@zephyr/db';
+import { validateRequest } from "@zephyr/auth/auth";
+import { prisma } from "@zephyr/db";
 
 export async function PATCH() {
   try {
     const { user } = await validateRequest();
 
     if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     await prisma.notification.updateMany({
@@ -22,6 +22,6 @@ export async function PATCH() {
     return new Response();
   } catch (error) {
     console.error(error);
-    return Response.json({ error: 'Internal server error' }, { status: 500 });
+    return Response.json({ error: "Internal server error" }, { status: 500 });
   }
 }

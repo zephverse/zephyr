@@ -1,8 +1,8 @@
-import { useSession } from '@/app/(main)/SessionProvider';
-import kyInstance from '@/lib/ky';
-import { isStreamConfigured } from '@zephyr/config/src/env';
-import { useEffect, useState } from 'react';
-import { StreamChat } from 'stream-chat';
+import { isStreamConfigured } from "@zephyr/config/src/env";
+import { useEffect, useState } from "react";
+import { StreamChat } from "stream-chat";
+import { useSession } from "@/app/(main)/SessionProvider";
+import kyInstance from "@/lib/ky";
 
 export default function useInitializeChatClient() {
   const session = useSession();
@@ -27,7 +27,7 @@ export default function useInitializeChatClient() {
       const streamKey = process.env.NEXT_PUBLIC_STREAM_KEY;
       const configStatus = isStreamConfigured();
 
-      console.debug('[Stream Init Debug]', {
+      console.debug("[Stream Init Debug]", {
         hasStreamKey: !!streamKey,
         isConfigured: configStatus,
         isClient,
@@ -36,9 +36,9 @@ export default function useInitializeChatClient() {
         displayName: user.displayName,
       });
 
-      if (!streamKey || !configStatus) {
+      if (!(streamKey && configStatus)) {
         if (isMounted) {
-          setError('Stream Chat is not configured');
+          setError("Stream Chat is not configured");
         }
         return;
       }
@@ -46,11 +46,11 @@ export default function useInitializeChatClient() {
       try {
         const client = new StreamChat(streamKey);
         const tokenResponse = await kyInstance
-          .get('/api/get-token')
+          .get("/api/get-token")
           .json<{ token: string | null }>();
 
         if (!tokenResponse.token) {
-          throw new Error('Failed to get Stream Chat token');
+          throw new Error("Failed to get Stream Chat token");
         }
 
         await client.connectUser(
@@ -68,12 +68,12 @@ export default function useInitializeChatClient() {
           setError(null);
         }
       } catch (err) {
-        console.error('[Stream Chat] Initialization error:', err);
+        console.error("[Stream Chat] Initialization error:", err);
         if (isMounted) {
           setError(
             err instanceof Error
               ? err.message
-              : 'Failed to initialize chat client'
+              : "Failed to initialize chat client"
           );
           setChatClient(null);
         }
@@ -89,7 +89,7 @@ export default function useInitializeChatClient() {
       if (chatClient) {
         chatClient
           .disconnectUser()
-          .catch((err) => console.error('[Stream Chat] Disconnect error:', err))
+          .catch((err) => console.error("[Stream Chat] Disconnect error:", err))
           .finally(() => {
             if (isMounted) {
               setChatClient(null);

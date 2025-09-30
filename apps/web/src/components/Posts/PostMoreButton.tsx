@@ -1,18 +1,18 @@
-import { MentionTags } from '@/components/Tags/MentionTags';
-import { Tags as TagsComponent } from '@/components/Tags/Tags';
-import type { PostData, TagWithCount, UserData } from '@zephyr/db';
-import { Button } from '@zephyr/ui/shadui/button';
-import { Dialog, DialogContent, DialogTitle } from '@zephyr/ui/shadui/dialog';
+import type { PostData, TagWithCount, UserData } from "@zephyr/db";
+import { Button } from "@zephyr/ui/shadui/button";
+import { Dialog, DialogContent, DialogTitle } from "@zephyr/ui/shadui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@zephyr/ui/shadui/dropdown-menu';
-import { AtSign, MoreHorizontal, Tags, Trash2 } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
-import DeletePostDialog from './DeletePostDialog';
+} from "@zephyr/ui/shadui/dropdown-menu";
+import { AtSign, MoreHorizontal, Tags, Trash2 } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
+import { MentionTags } from "@/components/Tags/MentionTags";
+import { Tags as TagsComponent } from "@/components/Tags/Tags";
+import DeletePostDialog from "./DeletePostDialog";
 
 interface PostMoreButtonProps {
   post: PostData;
@@ -72,7 +72,7 @@ export default function PostMoreButton({
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button size="icon" variant="ghost" className={className}>
+          <Button className={className} size="icon" variant="ghost">
             <MoreHorizontal className="size-5 text-muted-foreground" />
           </Button>
         </DropdownMenuTrigger>
@@ -99,35 +99,35 @@ export default function PostMoreButton({
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <Dialog open={showMentionsDialog} onOpenChange={setShowMentionsDialog}>
+      <Dialog onOpenChange={setShowMentionsDialog} open={showMentionsDialog}>
         <DialogContent>
           <DialogTitle>Edit Mentions</DialogTitle>
           <MentionTags
             // @ts-expect-error
-            mentions={mentions}
             isOwner={true}
-            postId={post.id}
+            mentions={mentions}
             onMentionsChange={handleMentionsUpdate}
+            postId={post.id}
           />
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showTagsDialog} onOpenChange={setShowTagsDialog}>
+      <Dialog onOpenChange={setShowTagsDialog} open={showTagsDialog}>
         <DialogContent>
           <DialogTitle>Edit Tags</DialogTitle>
           <TagsComponent
-            tags={post.tags}
             isOwner={true}
-            postId={post.id}
             onTagsChange={handleTagsUpdate}
+            postId={post.id}
+            tags={post.tags}
           />
         </DialogContent>
       </Dialog>
 
       <DeletePostDialog
-        post={post}
-        open={showDeleteDialog}
         onClose={() => setShowDeleteDialog(false)}
+        open={showDeleteDialog}
+        post={post}
       />
     </>
   );

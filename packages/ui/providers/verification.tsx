@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { createContext, useContext, useEffect, useState } from 'react';
-import type React from 'react';
+import type React from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
 interface VerificationContextType {
   isVerifying: boolean;
@@ -15,13 +15,15 @@ const VerificationContext = createContext<VerificationContextType | undefined>(
 
 export function VerificationProvider({
   children,
-}: { children: React.ReactNode }) {
+}: {
+  children: React.ReactNode;
+}) {
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationChannel, setVerificationChannel] =
     useState<BroadcastChannel | null>(null);
 
   useEffect(() => {
-    const channel = new BroadcastChannel('email-verification');
+    const channel = new BroadcastChannel("email-verification");
     setVerificationChannel(channel);
 
     return () => {
@@ -46,7 +48,7 @@ export const useVerification = () => {
   const context = useContext(VerificationContext);
   if (!context) {
     throw new Error(
-      'useVerification must be used within a VerificationProvider'
+      "useVerification must be used within a VerificationProvider"
     );
   }
   return context;

@@ -1,35 +1,35 @@
-'use client';
+"use client";
 
-import { cn } from '@/lib/utils';
-import { AnimatePresence, motion } from 'framer-motion';
-import { useEffect, useState } from 'react';
-import MentionedUsersBar from './MentionedUsersBar';
-import TagsBar from './TagsBar';
-import TrendingTopics from './TrendingTopics';
+import { AnimatePresence, motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
+import MentionedUsersBar from "./MentionedUsersBar";
+import TagsBar from "./TagsBar";
+import TrendingTopics from "./TrendingTopics";
 
-const SWITCH_INTERVAL = 10000;
+const SWITCH_INTERVAL = 10_000;
 
 const tabs = [
-  { id: 'topics', label: 'Trending', icon: '📈' },
-  { id: 'tags', label: 'Tags', icon: '#️⃣' },
-  { id: 'mentions', label: 'Mentions', icon: '@️' },
+  { id: "topics", label: "Trending", icon: "📈" },
+  { id: "tags", label: "Tags", icon: "#️⃣" },
+  { id: "mentions", label: "Mentions", icon: "@️" },
 ] as const;
 
-type TabId = (typeof tabs)[number]['id'];
+type TabId = (typeof tabs)[number]["id"];
 
 const TabContent = ({ activeTab }: { activeTab: TabId }) => (
   <AnimatePresence mode="wait">
     <motion.div
-      key={activeTab}
-      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
+      initial={{ opacity: 0, y: 10 }}
+      key={activeTab}
       transition={{ duration: 0.2 }}
     >
-      {activeTab === 'topics' ? (
+      {activeTab === "topics" ? (
         <TrendingTopics />
         // biome-ignore lint/nursery/noNestedTernary: off
-      ) : activeTab === 'tags' ? (
+      ) : activeTab === "tags" ? (
         <TagsBar />
       ) : (
         <MentionedUsersBar />
@@ -39,7 +39,7 @@ const TabContent = ({ activeTab }: { activeTab: TabId }) => (
 );
 
 export function TrendingTabs() {
-  const [activeTab, setActiveTab] = useState<TabId>('topics');
+  const [activeTab, setActiveTab] = useState<TabId>("topics");
   const [isAutoSwitching, setIsAutoSwitching] = useState(true);
   const [progress, setProgress] = useState(0);
 
@@ -59,14 +59,14 @@ export function TrendingTabs() {
       if (newProgress >= 100) {
         setActiveTab((current) => {
           switch (current) {
-            case 'topics':
-              return 'tags';
-            case 'tags':
-              return 'mentions';
-            case 'mentions':
-              return 'topics';
+            case "topics":
+              return "tags";
+            case "tags":
+              return "mentions";
+            case "mentions":
+              return "topics";
             default:
-              return 'topics';
+              return "topics";
           }
         });
 
@@ -92,25 +92,25 @@ export function TrendingTabs() {
           {tabs.map((tab) => (
             // biome-ignore lint/a11y/useButtonType: off
             <button
+              className={cn(
+                "group relative px-2 py-1.5",
+                "font-medium text-sm transition-colors",
+                activeTab === tab.id
+                  ? "text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
               key={tab.id}
               onClick={() => {
                 setActiveTab(tab.id);
                 setIsAutoSwitching(false);
               }}
-              className={cn(
-                'group relative px-2 py-1.5',
-                'font-medium text-sm transition-colors',
-                activeTab === tab.id
-                  ? 'text-primary'
-                  : 'text-muted-foreground hover:text-foreground'
-              )}
             >
               <span className="relative z-10">{tab.label}</span>
               {activeTab === tab.id && (
                 <motion.div
-                  layoutId="activeTab"
                   className="-z-10 absolute inset-0 rounded-md bg-primary/10"
-                  transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+                  layoutId="activeTab"
+                  transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                 />
               )}
             </button>
@@ -120,13 +120,13 @@ export function TrendingTabs() {
         {isAutoSwitching && (
           <div className="-bottom-2 absolute left-0 mt-1 mb-1 h-[2px] w-full overflow-hidden rounded-full bg-muted/30">
             <motion.div
-              className="h-full bg-primary/50"
               animate={{
                 width: `${progress}%`,
               }}
+              className="h-full bg-primary/50"
               transition={{
                 duration: 0,
-                ease: 'linear',
+                ease: "linear",
               }}
             />
           </div>

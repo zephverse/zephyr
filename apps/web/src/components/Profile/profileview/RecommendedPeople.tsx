@@ -1,12 +1,11 @@
-'use client';
+"use client";
 
-import { motion } from 'framer-motion';
-import { ChevronRight } from 'lucide-react';
-import type React from 'react';
-
-import { Avatar, AvatarFallback, AvatarImage } from '@zephyr/ui/shadui/avatar';
-import { Button } from '@zephyr/ui/shadui/button';
-import { Card, CardContent } from '@zephyr/ui/shadui/card';
+import { Avatar, AvatarFallback, AvatarImage } from "@zephyr/ui/shadui/avatar";
+import { Button } from "@zephyr/ui/shadui/button";
+import { Card, CardContent } from "@zephyr/ui/shadui/card";
+import { motion } from "framer-motion";
+import { ChevronRight } from "lucide-react";
+import type React from "react";
 
 interface RecommendationsProps {
   people: Array<{
@@ -24,7 +23,7 @@ const Recommendations: React.FC<RecommendationsProps> = ({ people }) => (
         <h2 className="font-semibold text-muted-foreground text-sm uppercase">
           Endorsements based on your activity:
         </h2>
-        <Button variant="link" className="text-primary">
+        <Button className="text-primary" variant="link">
           View all <ChevronRight className="ml-1 h-4 w-4" />
         </Button>
       </div>
@@ -32,17 +31,17 @@ const Recommendations: React.FC<RecommendationsProps> = ({ people }) => (
         <div className="flex items-start space-x-4">
           {people.map((rec, index) => (
             <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, y: 20 }}
+              key={index}
               transition={{ delay: index * 0.1 }}
             >
               <Avatar>
                 <AvatarImage
-                  src={rec.avatar}
                   alt={rec.name}
-                  width={64}
                   height={64}
+                  src={rec.avatar}
+                  width={64}
                 />
                 <AvatarFallback>{rec.name[0]}</AvatarFallback>
               </Avatar>

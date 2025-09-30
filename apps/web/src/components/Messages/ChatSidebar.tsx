@@ -1,18 +1,18 @@
-import { useSession } from '@/app/(main)/SessionProvider';
-import { cn } from '@/lib/utils';
-import { useQueryClient } from '@tanstack/react-query';
-import { Button } from '@zephyr/ui/shadui/button';
-import { MailPlus, X } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
-import type { ChannelSort } from 'stream-chat';
+import { useQueryClient } from "@tanstack/react-query";
+import { Button } from "@zephyr/ui/shadui/button";
+import { MailPlus, X } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import type { ChannelSort } from "stream-chat";
 import {
   ChannelList,
   ChannelPreviewMessenger,
   type ChannelPreviewUIComponentProps,
   type DefaultStreamChatGenerics,
   useChatContext,
-} from 'stream-chat-react';
-import NewChatDialog from './NewChatDialog';
+} from "stream-chat-react";
+import { useSession } from "@/app/(main)/SessionProvider";
+import { cn } from "@/lib/utils";
+import NewChatDialog from "./NewChatDialog";
 
 interface ChatSidebarProps {
   open: boolean;
@@ -31,7 +31,7 @@ export default function ChatSidebar({
   const { setActiveChannel } = useChatContext();
 
   useEffect(() => {
-    queryClient.invalidateQueries({ queryKey: ['unread-messages-count'] });
+    queryClient.invalidateQueries({ queryKey: ["unread-messages-count"] });
   }, [queryClient]);
 
   const ChannelPreviewCustom = useCallback(
@@ -51,7 +51,7 @@ export default function ChatSidebar({
   );
 
   const filters = {
-    type: 'messaging',
+    type: "messaging",
     members: { $in: [user.id] },
   };
 
@@ -68,12 +68,11 @@ export default function ChatSidebar({
   return (
     <div
       className={cn(
-        'size-full flex-col border-e md:flex md:w-72',
-        open ? 'flex' : 'hidden'
+        "size-full flex-col border-e md:flex md:w-72",
+        open ? "flex" : "hidden"
       )}
     >
       <MenuHeader
-        onClose={onClose}
         onChatCreated={(channel) => {
           setActiveChannel(channel);
           if (onChannelSelect) {
@@ -81,12 +80,9 @@ export default function ChatSidebar({
           }
           onClose();
         }}
+        onClose={onClose}
       />
       <ChannelList
-        filters={filters}
-        sort={sort}
-        options={options}
-        showChannelSearch
         additionalChannelSearchProps={{
           searchForChannels: true,
           searchQueryParams: {
@@ -97,7 +93,11 @@ export default function ChatSidebar({
             },
           },
         }}
+        filters={filters}
+        options={options}
         Preview={ChannelPreviewCustom}
+        showChannelSearch
+        sort={sort}
       />
     </div>
   );
@@ -116,27 +116,27 @@ function MenuHeader({ onClose, onChatCreated }: MenuHeaderProps) {
     <>
       <div className="flex items-center gap-3 p-2">
         <div className="h-full md:hidden">
-          <Button size="icon" variant="ghost" onClick={onClose}>
+          <Button onClick={onClose} size="icon" variant="ghost">
             <X className="size-5" />
           </Button>
         </div>
         <h1 className="me-auto font-bold text-xl md:ms-2">Whispers</h1>
         <Button
-          size="icon"
-          variant="ghost"
-          title="Start new whisper"
           onClick={() => setShowNewChatDialog(true)}
+          size="icon"
+          title="Start new whisper"
+          variant="ghost"
         >
           <MailPlus className="size-5" />
         </Button>
       </div>
       {showNewChatDialog && (
         <NewChatDialog
-          onOpenChange={setShowNewChatDialog}
           onChatCreated={(channel) => {
             setShowNewChatDialog(false);
             onChatCreated(channel);
           }}
+          onOpenChange={setShowNewChatDialog}
         />
       )}
     </>

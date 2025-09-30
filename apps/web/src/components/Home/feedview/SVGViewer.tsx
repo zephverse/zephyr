@@ -1,6 +1,5 @@
-import { cn } from '@/lib/utils';
-import { Button } from '@zephyr/ui/shadui/button';
-import { Slider } from '@zephyr/ui/shadui/slider';
+import { Button } from "@zephyr/ui/shadui/button";
+import { Slider } from "@zephyr/ui/shadui/slider";
 import {
   Download,
   FlipHorizontal,
@@ -12,10 +11,11 @@ import {
   RotateCw,
   ZoomIn,
   ZoomOut,
-} from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
-import type React from 'react';
-import { useMediaQuery } from 'usehooks-ts';
+} from "lucide-react";
+import type React from "react";
+import { useEffect, useRef, useState } from "react";
+import { useMediaQuery } from "usehooks-ts";
+import { cn } from "@/lib/utils";
 
 interface SVGViewerProps {
   url: string;
@@ -42,7 +42,7 @@ export function SVGViewer({
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [_dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const isMobile = useMediaQuery('(max-width: 768px)');
+  const isMobile = useMediaQuery("(max-width: 768px)");
   const [showControls, setShowControls] = useState(!isMobile);
 
   useEffect(() => {
@@ -50,9 +50,9 @@ export function SVGViewer({
       setIsFullscreen(!!document.fullscreenElement);
     };
 
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
     return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
     };
   }, []);
 
@@ -148,136 +148,136 @@ export function SVGViewer({
   const Controls = () => (
     <div
       className={cn(
-        'z-50 flex flex-col gap-4 rounded-lg bg-background/80 p-4 backdrop-blur-sm',
+        "z-50 flex flex-col gap-4 rounded-lg bg-background/80 p-4 backdrop-blur-sm",
         isMobile
           ? // biome-ignore lint/nursery/noNestedTernary: Not needed
             showControls
-            ? 'fixed inset-x-0 bottom-0 mx-4 mb-4 transition-transform duration-300'
-            : 'fixed inset-x-0 bottom-0 mx-4 mb-4 translate-y-full transition-transform duration-300'
-          : 'absolute top-4 right-4'
+            ? "fixed inset-x-0 bottom-0 mx-4 mb-4 transition-transform duration-300"
+            : "fixed inset-x-0 bottom-0 mx-4 mb-4 translate-y-full transition-transform duration-300"
+          : "absolute top-4 right-4"
       )}
     >
       <div className="flex flex-col gap-2">
         <div className="flex gap-2">
           <Button
-            variant="secondary"
-            size={isMobile ? 'sm' : 'icon'}
-            onClick={() => setScale((prev) => Math.max(prev - 0.1, 0.1))}
             className="bg-background/50 hover:bg-background/80"
+            onClick={() => setScale((prev) => Math.max(prev - 0.1, 0.1))}
+            size={isMobile ? "sm" : "icon"}
+            variant="secondary"
           >
-            <ZoomOut className={cn('h-4 w-4', isMobile && 'mr-2')} />
-            {isMobile && 'Zoom Out'}
+            <ZoomOut className={cn("h-4 w-4", isMobile && "mr-2")} />
+            {isMobile && "Zoom Out"}
           </Button>
           <Button
-            variant="secondary"
-            size={isMobile ? 'sm' : 'icon'}
-            onClick={() => setScale((prev) => Math.min(prev + 0.1, 5))}
             className="bg-background/50 hover:bg-background/80"
+            onClick={() => setScale((prev) => Math.min(prev + 0.1, 5))}
+            size={isMobile ? "sm" : "icon"}
+            variant="secondary"
           >
-            <ZoomIn className={cn('h-4 w-4', isMobile && 'mr-2')} />
-            {isMobile && 'Zoom In'}
+            <ZoomIn className={cn("h-4 w-4", isMobile && "mr-2")} />
+            {isMobile && "Zoom In"}
           </Button>
         </div>
         <Slider
-          value={[scale]}
-          min={0.1}
+          className={isMobile ? "w-full" : "w-32"}
           max={5}
-          step={0.1}
+          min={0.1}
           onValueChange={([value]) => value !== undefined && setScale(value)}
-          className={isMobile ? 'w-full' : 'w-32'}
+          step={0.1}
+          value={[scale]}
         />
       </div>
 
-      <div className={cn('flex gap-2', isMobile && 'flex-wrap')}>
+      <div className={cn("flex gap-2", isMobile && "flex-wrap")}>
         <Button
-          variant="secondary"
-          size={isMobile ? 'sm' : 'icon'}
+          className="bg-background/50 hover:bg-background/80"
           onClick={() => setRotation((prev) => prev - 90)}
-          className="bg-background/50 hover:bg-background/80"
+          size={isMobile ? "sm" : "icon"}
+          variant="secondary"
         >
-          <RotateCcw className={cn('h-4 w-4', isMobile && 'mr-2')} />
-          {isMobile && 'Rotate Left'}
+          <RotateCcw className={cn("h-4 w-4", isMobile && "mr-2")} />
+          {isMobile && "Rotate Left"}
         </Button>
         <Button
-          variant="secondary"
-          size={isMobile ? 'sm' : 'icon'}
+          className="bg-background/50 hover:bg-background/80"
           onClick={() => setRotation((prev) => prev + 90)}
-          className="bg-background/50 hover:bg-background/80"
+          size={isMobile ? "sm" : "icon"}
+          variant="secondary"
         >
-          <RotateCw className={cn('h-4 w-4', isMobile && 'mr-2')} />
-          {isMobile && 'Rotate Right'}
+          <RotateCw className={cn("h-4 w-4", isMobile && "mr-2")} />
+          {isMobile && "Rotate Right"}
         </Button>
         <Button
-          variant="secondary"
-          size={isMobile ? 'sm' : 'icon'}
+          className={cn(
+            "bg-background/50 hover:bg-background/80",
+            flipX && "bg-primary/20"
+          )}
           onClick={() => setFlipX((prev) => !prev)}
-          className={cn(
-            'bg-background/50 hover:bg-background/80',
-            flipX && 'bg-primary/20'
-          )}
+          size={isMobile ? "sm" : "icon"}
+          variant="secondary"
         >
-          <FlipHorizontal className={cn('h-4 w-4', isMobile && 'mr-2')} />
-          {isMobile && 'Flip H'}
+          <FlipHorizontal className={cn("h-4 w-4", isMobile && "mr-2")} />
+          {isMobile && "Flip H"}
         </Button>
         <Button
-          variant="secondary"
-          size={isMobile ? 'sm' : 'icon'}
-          onClick={() => setFlipY((prev) => !prev)}
           className={cn(
-            'bg-background/50 hover:bg-background/80',
-            flipY && 'bg-primary/20'
+            "bg-background/50 hover:bg-background/80",
+            flipY && "bg-primary/20"
           )}
+          onClick={() => setFlipY((prev) => !prev)}
+          size={isMobile ? "sm" : "icon"}
+          variant="secondary"
         >
-          <FlipVertical className={cn('h-4 w-4', isMobile && 'mr-2')} />
-          {isMobile && 'Flip V'}
+          <FlipVertical className={cn("h-4 w-4", isMobile && "mr-2")} />
+          {isMobile && "Flip V"}
         </Button>
       </div>
 
       <div className="flex gap-2">
         <Button
-          variant="secondary"
-          size={isMobile ? 'sm' : 'icon'}
-          onClick={toggleFullscreen}
           className="bg-background/50 hover:bg-background/80"
+          onClick={toggleFullscreen}
+          size={isMobile ? "sm" : "icon"}
+          variant="secondary"
         >
           {isFullscreen ? (
-            <Minimize2 className={cn('h-4 w-4', isMobile && 'mr-2')} />
+            <Minimize2 className={cn("h-4 w-4", isMobile && "mr-2")} />
           ) : (
-            <Maximize2 className={cn('h-4 w-4', isMobile && 'mr-2')} />
+            <Maximize2 className={cn("h-4 w-4", isMobile && "mr-2")} />
           )}
-          {isMobile && (isFullscreen ? 'Exit Fullscreen' : 'Fullscreen')}
+          {isMobile && (isFullscreen ? "Exit Fullscreen" : "Fullscreen")}
         </Button>
         <Button
-          variant="secondary"
-          size={isMobile ? 'sm' : 'icon'}
-          onClick={resetView}
           className="bg-background/50 hover:bg-background/80"
+          onClick={resetView}
+          size={isMobile ? "sm" : "icon"}
+          variant="secondary"
         >
           {/* biome-ignore lint/a11y/noSvgWithoutTitle: Not needed */}
           <svg
-            className={cn('h-4 w-4', isMobile && 'mr-2')}
+            className={cn("h-4 w-4", isMobile && "mr-2")}
             fill="none"
-            viewBox="0 0 24 24"
             stroke="currentColor"
+            viewBox="0 0 24 24"
           >
             <path
+              d="M4 4v5h5M4 20v-5h5M20 4v5h-5M20 20v-5h-5"
               strokeLinecap="round"
               strokeLinejoin="round"
               strokeWidth={2}
-              d="M4 4v5h5M4 20v-5h5M20 4v5h-5M20 20v-5h-5"
             />
           </svg>
-          {isMobile && 'Reset'}
+          {isMobile && "Reset"}
         </Button>
         {onDownload && (
           <Button
-            variant="secondary"
-            size={isMobile ? 'sm' : 'icon'}
-            onClick={onDownload}
             className="bg-background/50 hover:bg-background/80"
+            onClick={onDownload}
+            size={isMobile ? "sm" : "icon"}
+            variant="secondary"
           >
-            <Download className={cn('h-4 w-4', isMobile && 'mr-2')} />
-            {isMobile && 'Download'}
+            <Download className={cn("h-4 w-4", isMobile && "mr-2")} />
+            {isMobile && "Download"}
           </Button>
         )}
       </div>
@@ -286,19 +286,19 @@ export function SVGViewer({
 
   return (
     <div
-      ref={containerRef}
       className={cn(
-        'relative flex h-full w-full flex-col items-center justify-center',
+        "relative flex h-full w-full flex-col items-center justify-center",
         className
       )}
-      style={{ minHeight: '50vh' }}
+      ref={containerRef}
+      style={{ minHeight: "50vh" }}
     >
       {isMobile && (
         <Button
-          variant="ghost"
-          size="icon"
           className="absolute top-4 right-4 z-50 bg-background/50"
           onClick={() => setShowControls(!showControls)}
+          size="icon"
+          variant="ghost"
         >
           <Menu className="h-4 w-4" />
         </Button>
@@ -309,34 +309,41 @@ export function SVGViewer({
       <div
         className="relative h-full w-full flex-1 overflow-hidden"
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
         }}
       >
         {/* biome-ignore lint/nursery/noStaticElementInteractions: wfl */}
         <div
           className="cursor-move"
           onMouseDown={handleMouseDown}
+          onMouseLeave={handleMouseUp}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
+          onTouchMove={handleTouchMove}
+          onTouchStart={handleTouchStart}
           style={{
-            width: '100%',
-            height: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            width: "100%",
+            height: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
           }}
         >
           <iframe
-            ref={iframeRef}
-            title="SVG Viewer"
-            src={url}
             className="h-full w-full"
+            onError={() => {
+              setHasError(true);
+              onLoad?.();
+            }}
+            onLoad={(_e) => {
+              setHasError(false);
+              onLoad?.();
+            }}
+            ref={iframeRef}
+            src={url}
             style={{
               transform: `
                 translate(${position.x}px, ${position.y}px)
@@ -345,21 +352,14 @@ export function SVGViewer({
                 scaleX(${flipX ? -1 : 1})
                 scaleY(${flipY ? -1 : 1})
               `,
-              transformOrigin: 'center center',
-              transition: isDragging ? 'none' : 'transform 0.2s ease-in-out',
-              border: 'none',
-              maxWidth: '100%',
-              maxHeight: '100%',
-              objectFit: 'contain',
+              transformOrigin: "center center",
+              transition: isDragging ? "none" : "transform 0.2s ease-in-out",
+              border: "none",
+              maxWidth: "100%",
+              maxHeight: "100%",
+              objectFit: "contain",
             }}
-            onLoad={(_e) => {
-              setHasError(false);
-              onLoad?.();
-            }}
-            onError={() => {
-              setHasError(true);
-              onLoad?.();
-            }}
+            title="SVG Viewer"
           />
         </div>
       </div>

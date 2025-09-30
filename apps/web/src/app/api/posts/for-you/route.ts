@@ -1,20 +1,24 @@
-import type { Prisma } from '@prisma/client';
-import { validateRequest } from '@zephyr/auth/auth';
-import { type PostsPage, getPostDataInclude, prisma } from '@zephyr/db';
-import { tagCache } from '@zephyr/db';
-import { type NextRequest, NextResponse } from 'next/server';
+import type { Prisma } from "@prisma/client";
+import { validateRequest } from "@zephyr/auth/auth";
+import {
+  getPostDataInclude,
+  type PostsPage,
+  prisma,
+  tagCache,
+} from "@zephyr/db";
+import { type NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
   try {
-    const cursor = req.nextUrl.searchParams.get('cursor');
+    const cursor = req.nextUrl.searchParams.get("cursor");
     const tags = req.nextUrl.searchParams
-      .get('tags')
-      ?.split(',')
+      .get("tags")
+      ?.split(",")
       .filter((tag: string) => Boolean(tag));
 
     const { user } = await validateRequest();
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const pageSize = 8;
@@ -45,7 +49,7 @@ export async function GET(req: NextRequest) {
         },
         hnStoryShare: true, // Include HN story share data
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
       take: pageSize + 1,
       cursor: cursor ? { id: cursor } : undefined,
       where: tags?.length
@@ -109,18 +113,18 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(responseData, {
       headers: {
-        'Cache-Control': 'public, s-maxage=20, stale-while-revalidate=30',
+        "Cache-Control": "public, s-maxage=20, stale-while-revalidate=30",
       },
     });
   } catch (error) {
-    console.error('Error details:', {
-      message: error instanceof Error ? error.message : 'Unknown error',
-      name: error instanceof Error ? error.name : 'Unknown',
+    console.error("Error details:", {
+      message: error instanceof Error ? error.message : "Unknown error",
+      name: error instanceof Error ? error.name : "Unknown",
       stack: error instanceof Error ? error.stack : undefined,
     });
 
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }

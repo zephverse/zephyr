@@ -1,5 +1,5 @@
-import { prisma } from '@zephyr/db';
-import { NextResponse } from 'next/server';
+import { prisma } from "@zephyr/db";
+import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
@@ -20,7 +20,7 @@ export async function GET() {
       },
       orderBy: {
         posts: {
-          _count: 'desc',
+          _count: "desc",
         },
       },
       take: 10,
@@ -28,7 +28,7 @@ export async function GET() {
 
     return NextResponse.json({ tags });
   } catch (error) {
-    console.error('Error fetching popular tags:', error);
+    console.error("Error fetching popular tags:", error);
     return NextResponse.json({ tags: [] }, { status: 500 });
   }
 }

@@ -1,25 +1,25 @@
-import { Button } from '@zephyr/ui/shadui/button';
-import { Input } from '@zephyr/ui/shadui/input';
+import { Button } from "@zephyr/ui/shadui/button";
+import { Input } from "@zephyr/ui/shadui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@zephyr/ui/shadui/select';
-import { motion } from 'framer-motion';
-import { CATEGORIES, PRIORITIES } from '../../constants';
-import type { StepProps } from '../../types';
-import { stepVariants } from './variants';
+} from "@zephyr/ui/shadui/select";
+import { motion } from "framer-motion";
+import { CATEGORIES, PRIORITIES } from "../../constants";
+import type { StepProps } from "../../types";
+import { stepVariants } from "./variants";
 
 export function StepTwo({ formData, setFormData, onBack, onNext }: StepProps) {
   return (
     <motion.div
-      variants={stepVariants}
-      initial="enter"
       animate="center"
-      exit="exit"
       className="space-y-4"
+      exit="exit"
+      initial="enter"
+      variants={stepVariants}
     >
       <div className="space-y-2">
         <h3 className="font-semibold text-lg">Request Details</h3>
@@ -30,10 +30,10 @@ export function StepTwo({ formData, setFormData, onBack, onNext }: StepProps) {
 
       <div className="space-y-4">
         <Select
-          value={formData.category}
           onValueChange={(value) =>
             setFormData({ ...formData, category: value })
           }
+          value={formData.category}
         >
           <SelectTrigger className="w-full bg-background/50 backdrop-blur-sm">
             <SelectValue placeholder="Select category" />
@@ -48,10 +48,10 @@ export function StepTwo({ formData, setFormData, onBack, onNext }: StepProps) {
         </Select>
 
         <Select
-          value={formData.priority}
           onValueChange={(value) =>
             setFormData({ ...formData, priority: value })
           }
+          value={formData.priority}
         >
           <SelectTrigger className="w-full bg-background/50 backdrop-blur-sm">
             <SelectValue placeholder="Select priority" />
@@ -66,29 +66,29 @@ export function StepTwo({ formData, setFormData, onBack, onNext }: StepProps) {
         </Select>
 
         <Input
-          placeholder="Subject"
-          required
-          value={formData.subject}
+          className="w-full bg-background/50 backdrop-blur-sm"
           onChange={(e) =>
             setFormData({ ...formData, subject: e.target.value })
           }
-          className="w-full bg-background/50 backdrop-blur-sm"
+          placeholder="Subject"
+          required
+          value={formData.subject}
         />
 
         <div className="flex space-x-2">
           <Button
+            className="bg-background/50 backdrop-blur-sm"
+            onClick={onBack}
             type="button"
             variant="outline"
-            onClick={onBack}
-            className="bg-background/50 backdrop-blur-sm"
           >
             Back
           </Button>
           <Button
-            type="button"
             className="flex-1"
+            disabled={!(formData.category && formData.subject)}
             onClick={onNext}
-            disabled={!formData.category || !formData.subject}
+            type="button"
           >
             Continue
           </Button>

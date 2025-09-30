@@ -1,7 +1,7 @@
-import { validateRequest } from '@zephyr/auth/src';
-import { debugLog } from '@zephyr/config/debug';
-import { type FollowerInfo, followerInfoCache, prisma } from '@zephyr/db';
-import { suggestedUsersCache } from '../../suggested/route';
+import { validateRequest } from "@zephyr/auth/src";
+import { debugLog } from "@zephyr/config/debug";
+import { type FollowerInfo, followerInfoCache, prisma } from "@zephyr/db";
+import { suggestedUsersCache } from "../../suggested/route";
 
 const FOLLOW_AURA_REWARD = 5;
 
@@ -12,14 +12,14 @@ export async function POST(
   const params = await props.params;
   const { userId } = params;
 
-  debugLog.api('Processing follow request:', userId);
+  debugLog.api("Processing follow request:", userId);
 
   try {
     const { user: loggedInUser } = await validateRequest();
 
     if (!loggedInUser) {
-      debugLog.api('Unauthorized follow attempt');
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+      debugLog.api("Unauthorized follow attempt");
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const result = await prisma.$transaction(async (tx) => {
@@ -41,7 +41,7 @@ export async function POST(
         data: {
           issuerId: loggedInUser.id,
           recipientId: userId,
-          type: 'FOLLOW',
+          type: "FOLLOW",
         },
       });
 
@@ -52,10 +52,10 @@ export async function POST(
 
       await tx.auraLog.create({
         data: {
-          userId: userId,
+          userId,
           issuerId: loggedInUser.id,
           amount: FOLLOW_AURA_REWARD,
-          type: 'FOLLOW_GAINED',
+          type: "FOLLOW_GAINED",
         },
       });
 
@@ -72,10 +72,10 @@ export async function POST(
       return { follow, notification, userData };
     });
 
-    debugLog.api('Follow transaction completed:', result);
+    debugLog.api("Follow transaction completed:", result);
 
     if (!result.userData) {
-      return Response.json({ error: 'User data not found' }, { status: 404 });
+      return Response.json({ error: "User data not found" }, { status: 404 });
     }
 
     const followerInfo: FollowerInfo & {
@@ -92,8 +92,8 @@ export async function POST(
 
     return Response.json(followerInfo);
   } catch (error) {
-    debugLog.api('Follow request failed:', error);
-    return Response.json({ error: 'Internal server error' }, { status: 500 });
+    debugLog.api("Follow request failed:", error);
+    return Response.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
@@ -107,7 +107,7 @@ export async function GET(
   try {
     const { user: loggedInUser } = await validateRequest();
     if (!loggedInUser) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const cachedData = await followerInfoCache.get(userId);
@@ -135,7 +135,7 @@ export async function GET(
     ]);
 
     if (!user) {
-      return Response.json({ error: 'User not found' }, { status: 404 });
+      return Response.json({ error: "User not found" }, { status: 404 });
     }
 
     const data: FollowerInfo = {
@@ -147,8 +147,8 @@ export async function GET(
 
     return Response.json(data);
   } catch (error) {
-    console.error('GET follower info error:', error);
-    return Response.json({ error: 'Internal server error' }, { status: 500 });
+    console.error("GET follower info error:", error);
+    return Response.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
@@ -163,7 +163,7 @@ export async function DELETE(
     const { user: loggedInUser } = await validateRequest();
 
     if (!loggedInUser) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const result = await prisma.$transaction(async (tx) => {
@@ -178,7 +178,7 @@ export async function DELETE(
         where: {
           issuerId: loggedInUser.id,
           recipientId: userId,
-          type: 'FOLLOW',
+          type: "FOLLOW",
         },
       });
 
@@ -189,10 +189,10 @@ export async function DELETE(
 
       await tx.auraLog.create({
         data: {
-          userId: userId,
+          userId,
           issuerId: loggedInUser.id,
           amount: -FOLLOW_AURA_REWARD,
-          type: 'FOLLOW_GAINED',
+          type: "FOLLOW_GAINED",
         },
       });
 
@@ -209,7 +209,7 @@ export async function DELETE(
     });
 
     if (!result) {
-      return Response.json({ error: 'User not found' }, { status: 404 });
+      return Response.json({ error: "User not found" }, { status: 404 });
     }
 
     const followerInfo: FollowerInfo & {
@@ -229,7 +229,7 @@ export async function DELETE(
 
     return Response.json(followerInfo);
   } catch (error) {
-    console.error('Unfollow error:', error);
-    return Response.json({ error: 'Internal server error' }, { status: 500 });
+    console.error("Unfollow error:", error);
+    return Response.json({ error: "Internal server error" }, { status: 500 });
   }
 }

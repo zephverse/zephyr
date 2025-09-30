@@ -1,11 +1,8 @@
-'use client';
+"use client";
 
-import { LoadingButton } from '@/components/Auth/LoadingButton';
-import LinkAccountAlert from '@/components/Settings/LinkAccountAlert';
-import LinkedAccounts from '@/components/Settings/LinkedAccounts';
-import { zodResolver } from '@hookform/resolvers/zod';
-import type { UserData } from '@zephyr/db';
-import { useToast } from '@zephyr/ui/hooks/use-toast';
+import { zodResolver } from "@hookform/resolvers/zod";
+import type { UserData } from "@zephyr/db";
+import { useToast } from "@zephyr/ui/hooks/use-toast";
 import {
   Form,
   FormControl,
@@ -13,27 +10,30 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@zephyr/ui/shadui/form';
-import { Input } from '@zephyr/ui/shadui/input';
-import { Separator } from '@zephyr/ui/shadui/separator';
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
-import { useUpdateEmail, useUpdateUsername } from '../mutations';
+} from "@zephyr/ui/shadui/form";
+import { Input } from "@zephyr/ui/shadui/input";
+import { Separator } from "@zephyr/ui/shadui/separator";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { LoadingButton } from "@/components/Auth/LoadingButton";
+import LinkAccountAlert from "@/components/Settings/LinkAccountAlert";
+import LinkedAccounts from "@/components/Settings/LinkedAccounts";
+import { useUpdateEmail, useUpdateUsername } from "../mutations";
 
 const usernameSchema = z.object({
   username: z
     .string()
-    .min(3, 'Username must be at least 3 characters')
-    .max(20, 'Username must be at most 20 characters')
+    .min(3, "Username must be at least 3 characters")
+    .max(20, "Username must be at most 20 characters")
     .regex(
       /^[a-zA-Z0-9_]+$/,
-      'Username can only contain letters, numbers, and underscores'
+      "Username can only contain letters, numbers, and underscores"
     ),
 });
 
 const emailSchema = z.object({
-  email: z.string().email('Please enter a valid email address'),
+  email: z.string().email("Please enter a valid email address"),
 });
 
 type UsernameFormValues = z.infer<typeof usernameSchema>;
@@ -57,7 +57,7 @@ export default function AccountSettings({ user }: AccountSettingsProps) {
   const emailForm = useForm<EmailFormValues>({
     resolver: zodResolver(emailSchema),
     defaultValues: {
-      email: user.email || '',
+      email: user.email || "",
     },
   });
 
@@ -67,8 +67,8 @@ export default function AccountSettings({ user }: AccountSettingsProps) {
   async function onUsernameSubmit(values: UsernameFormValues) {
     if (values.username === user.username) {
       toast({
-        title: 'No changes made',
-        description: 'Please enter a different username',
+        title: "No changes made",
+        description: "Please enter a different username",
       });
       return;
     }
@@ -76,8 +76,8 @@ export default function AccountSettings({ user }: AccountSettingsProps) {
     usernameMutation.mutate(values, {
       onSuccess: () => {
         toast({
-          title: 'Username updated',
-          description: 'Your username has been updated successfully',
+          title: "Username updated",
+          description: "Your username has been updated successfully",
         });
       },
     });
@@ -86,8 +86,8 @@ export default function AccountSettings({ user }: AccountSettingsProps) {
   async function onEmailSubmit(values: EmailFormValues) {
     if (values.email === user.email) {
       toast({
-        title: 'No changes made',
-        description: 'Please enter a different email',
+        title: "No changes made",
+        description: "Please enter a different email",
       });
       return;
     }
@@ -96,8 +96,8 @@ export default function AccountSettings({ user }: AccountSettingsProps) {
       onSuccess: () => {
         setVerificationEmailSent(true);
         toast({
-          title: 'Verification email sent',
-          description: 'Please check your email to verify your new address',
+          title: "Verification email sent",
+          description: "Please check your email to verify your new address",
         });
       },
     });
@@ -122,8 +122,8 @@ export default function AccountSettings({ user }: AccountSettingsProps) {
         <h3 className="font-medium">Username</h3>
         <Form {...usernameForm}>
           <form
-            onSubmit={usernameForm.handleSubmit(onUsernameSubmit)}
             className="space-y-4"
+            onSubmit={usernameForm.handleSubmit(onUsernameSubmit)}
           >
             <FormField
               control={usernameForm.control}
@@ -139,7 +139,7 @@ export default function AccountSettings({ user }: AccountSettingsProps) {
               )}
             />
 
-            <LoadingButton type="submit" loading={usernameMutation.isPending}>
+            <LoadingButton loading={usernameMutation.isPending} type="submit">
               Update Username
             </LoadingButton>
           </form>
@@ -152,8 +152,8 @@ export default function AccountSettings({ user }: AccountSettingsProps) {
         <h3 className="font-medium">Email Address</h3>
         <Form {...emailForm}>
           <form
-            onSubmit={emailForm.handleSubmit(onEmailSubmit)}
             className="space-y-4"
+            onSubmit={emailForm.handleSubmit(onEmailSubmit)}
           >
             <FormField
               control={emailForm.control}
@@ -170,13 +170,13 @@ export default function AccountSettings({ user }: AccountSettingsProps) {
             />
 
             <LoadingButton
-              type="submit"
-              loading={emailMutation.isPending}
               disabled={verificationEmailSent}
+              loading={emailMutation.isPending}
+              type="submit"
             >
               {verificationEmailSent
-                ? 'Verification Email Sent'
-                : 'Update Email'}
+                ? "Verification Email Sent"
+                : "Update Email"}
             </LoadingButton>
           </form>
         </Form>
@@ -184,7 +184,7 @@ export default function AccountSettings({ user }: AccountSettingsProps) {
 
       <Separator />
 
-      <LinkedAccounts user={user} onLink={handleSocialLink} />
+      <LinkedAccounts onLink={handleSocialLink} user={user} />
     </div>
   );
 }

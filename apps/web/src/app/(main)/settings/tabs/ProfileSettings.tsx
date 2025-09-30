@@ -1,13 +1,12 @@
-'use client';
+"use client";
 
-import { LoadingButton } from '@/components/Auth/LoadingButton';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   type UpdateUserProfileValues,
   updateUserProfileSchema,
-} from '@zephyr/auth/validation';
-import type { UserData } from '@zephyr/db';
-import { useToast } from '@zephyr/ui/hooks/use-toast';
+} from "@zephyr/auth/validation";
+import type { UserData } from "@zephyr/db";
+import { useToast } from "@zephyr/ui/hooks/use-toast";
 import {
   Form,
   FormControl,
@@ -15,13 +14,14 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@zephyr/ui/shadui/form';
-import { Input } from '@zephyr/ui/shadui/input';
-import { Textarea } from '@zephyr/ui/shadui/textarea';
-import { motion } from 'framer-motion';
-import { UserCircle } from 'lucide-react';
-import { useForm } from 'react-hook-form';
-import { useUpdateProfileMutation } from '../../users/[username]/avatar-mutations';
+} from "@zephyr/ui/shadui/form";
+import { Input } from "@zephyr/ui/shadui/input";
+import { Textarea } from "@zephyr/ui/shadui/textarea";
+import { motion } from "framer-motion";
+import { UserCircle } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { LoadingButton } from "@/components/Auth/LoadingButton";
+import { useUpdateProfileMutation } from "../../users/[username]/avatar-mutations";
 
 interface ProfileSettingsProps {
   user: UserData;
@@ -33,7 +33,7 @@ export default function ProfileSettings({ user }: ProfileSettingsProps) {
     resolver: zodResolver(updateUserProfileSchema),
     defaultValues: {
       displayName: user.displayName,
-      bio: user.bio || '',
+      bio: user.bio || "",
     },
   });
 
@@ -48,8 +48,8 @@ export default function ProfileSettings({ user }: ProfileSettingsProps) {
       {
         onSuccess: () => {
           toast({
-            title: 'Profile updated',
-            description: 'Your profile has been updated successfully',
+            title: "Profile updated",
+            description: "Your profile has been updated successfully",
           });
         },
       }
@@ -58,11 +58,11 @@ export default function ProfileSettings({ user }: ProfileSettingsProps) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      // @ts-expect-error
       className="space-y-6"
+      initial={{ opacity: 0, y: 20 }}
+      // @ts-expect-error
+      transition={{ duration: 0.3 }}
     >
       <div className="relative overflow-hidden rounded-lg border border-border/50 bg-background/30 p-6 backdrop-blur-md">
         <div className="flex items-center gap-4">
@@ -81,12 +81,12 @@ export default function ProfileSettings({ user }: ProfileSettingsProps) {
 
         <Form {...form}>
           <form
-            onSubmit={form.handleSubmit(onSubmit)}
             className="mt-6 space-y-4"
+            onSubmit={form.handleSubmit(onSubmit)}
           >
             <motion.div
-              initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
+              initial={{ opacity: 0, x: -20 }}
               transition={{ delay: 0.1 }}
             >
               <FormField
@@ -108,8 +108,8 @@ export default function ProfileSettings({ user }: ProfileSettingsProps) {
             </motion.div>
 
             <motion.div
-              initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
+              initial={{ opacity: 0, x: -20 }}
               transition={{ delay: 0.2 }}
             >
               <FormField
@@ -121,8 +121,8 @@ export default function ProfileSettings({ user }: ProfileSettingsProps) {
                     <FormControl>
                       <Textarea
                         {...field}
-                        placeholder="Tell us about yourself"
                         className="min-h-[120px] resize-none bg-background/50 backdrop-blur-xs transition-all duration-200 hover:bg-background/70 focus:bg-background/70"
+                        placeholder="Tell us about yourself"
                       />
                     </FormControl>
                     <FormMessage />
@@ -132,16 +132,16 @@ export default function ProfileSettings({ user }: ProfileSettingsProps) {
             </motion.div>
 
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              // @ts-expect-error
               className="pt-2"
+              initial={{ opacity: 0, y: 20 }}
+              // @ts-expect-error
+              transition={{ delay: 0.3 }}
             >
               <LoadingButton
-                type="submit"
-                loading={mutation.isPending}
                 className="w-full sm:w-auto"
+                loading={mutation.isPending}
+                type="submit"
               >
                 Save Changes
               </LoadingButton>

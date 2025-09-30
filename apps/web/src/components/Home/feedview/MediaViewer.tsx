@@ -1,22 +1,22 @@
-'use client';
+"use client";
 
-import { MediaViewerSkeleton } from '@/components/Layouts/skeletons/MediaViewerSkeleton';
-import { getLanguageFromFileName } from '@/lib/codefileExtensions';
-import { formatFileName } from '@/lib/formatFileName';
-import { cn } from '@/lib/utils';
-import fallbackImage from '@assets/fallbacks/fallback.png';
-import type { Media } from '@prisma/client';
-import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
-import { useToast } from '@zephyr/ui/hooks/use-toast';
-import { Button } from '@zephyr/ui/shadui/button';
-import { Dialog, DialogContent, DialogTitle } from '@zephyr/ui/shadui/dialog';
-import { ChevronLeft, ChevronRight, Download, FileIcon, X } from 'lucide-react';
-import Image from 'next/image';
-import { useEffect, useState } from 'react';
-import { CodePreview } from './CodePreview';
-import { CustomVideoPlayer } from './CustomVideoPlayer';
-import { FileTypeWatermark } from './FileTypeWatermark';
-import { SVGViewer } from './SVGViewer';
+import fallbackImage from "@assets/fallbacks/fallback.png";
+import type { Media } from "@prisma/client";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { useToast } from "@zephyr/ui/hooks/use-toast";
+import { Button } from "@zephyr/ui/shadui/button";
+import { Dialog, DialogContent, DialogTitle } from "@zephyr/ui/shadui/dialog";
+import { ChevronLeft, ChevronRight, Download, FileIcon, X } from "lucide-react";
+import Image from "next/image";
+import { useEffect, useState } from "react";
+import { MediaViewerSkeleton } from "@/components/Layouts/skeletons/MediaViewerSkeleton";
+import { getLanguageFromFileName } from "@/lib/codefileExtensions";
+import { formatFileName } from "@/lib/formatFileName";
+import { cn } from "@/lib/utils";
+import { CodePreview } from "./CodePreview";
+import { CustomVideoPlayer } from "./CustomVideoPlayer";
+import { FileTypeWatermark } from "./FileTypeWatermark";
+import { SVGViewer } from "./SVGViewer";
 
 const FALLBACK_IMAGE = fallbackImage;
 
@@ -40,7 +40,7 @@ const MediaViewer = ({
 
   const currentMedia = media[currentIndex];
   const getMediaUrl = (mediaId: string, download = false) =>
-    `/api/media/${mediaId}${download ? '?download=true' : ''}`;
+    `/api/media/${mediaId}${download ? "?download=true" : ""}`;
 
   useEffect(() => {
     if (isOpen) {
@@ -62,9 +62,9 @@ const MediaViewer = ({
 
       if (!currentMedia) {
         toast({
-          title: 'Download Failed',
-          description: 'No media selected.',
-          variant: 'destructive',
+          title: "Download Failed",
+          description: "No media selected.",
+          variant: "destructive",
         });
         return;
       }
@@ -73,21 +73,21 @@ const MediaViewer = ({
       if (response.status === 429) {
         const data = await response.json();
         toast({
-          title: 'Download Rate Limited',
+          title: "Download Rate Limited",
           description: data.message,
-          variant: 'destructive',
+          variant: "destructive",
         });
         return;
       }
 
       if (!response.ok) {
-        throw new Error('Failed to download file');
+        throw new Error("Failed to download file");
       }
 
       const blob = await response.blob();
       const downloadUrl = window.URL.createObjectURL(blob);
 
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = downloadUrl;
       a.download = formatFileName(currentMedia.key);
       document.body.appendChild(a);
@@ -96,12 +96,12 @@ const MediaViewer = ({
       window.URL.revokeObjectURL(downloadUrl);
       document.body.removeChild(a);
     } catch (error) {
-      console.error('Download failed:', error);
+      console.error("Download failed:", error);
       toast({
-        title: 'Download Failed',
+        title: "Download Failed",
         description:
-          'There was an error downloading the file. Please try again.',
-        variant: 'destructive',
+          "There was an error downloading the file. Please try again.",
+        variant: "destructive",
       });
     } finally {
       setIsDownloading(false);
@@ -110,10 +110,10 @@ const MediaViewer = ({
 
   const DownloadButton = () => (
     <Button
-      onClick={handleDownload}
       className="flex items-center gap-2"
-      variant="secondary"
       disabled={isDownloading}
+      onClick={handleDownload}
+      variant="secondary"
     >
       {isDownloading ? (
         <>
@@ -123,7 +123,7 @@ const MediaViewer = ({
       ) : (
         <>
           <Download className="h-4 w-4" />
-          Download {currentMedia ? formatFileName(currentMedia.key) : ''}
+          Download {currentMedia ? formatFileName(currentMedia.key) : ""}
         </>
       )}
     </Button>
@@ -136,18 +136,18 @@ const MediaViewer = ({
         return;
       }
 
-      if (e.key === 'ArrowLeft') {
+      if (e.key === "ArrowLeft") {
         e.preventDefault();
         handlePrevious();
       }
-      if (e.key === 'ArrowRight') {
+      if (e.key === "ArrowRight") {
         e.preventDefault();
         handleNext();
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen]);
 
   // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: it's fine
@@ -157,25 +157,25 @@ const MediaViewer = ({
     }
 
     switch (currentMedia.type) {
-      case 'IMAGE': {
-        if (currentMedia.mimeType === 'image/svg+xml') {
+      case "IMAGE": {
+        if (currentMedia.mimeType === "image/svg+xml") {
           return (
             <div
               className="relative flex h-full w-full items-center justify-center"
-              style={{ minHeight: '85vh' }}
+              style={{ minHeight: "85vh" }}
             >
               {isLoading && <MediaViewerSkeleton type="IMAGE" />}
               <SVGViewer
-                url={getMediaUrl(currentMedia.id)}
                 className={cn(
-                  'flex h-full w-full items-center justify-center',
-                  isLoading && 'hidden'
+                  "flex h-full w-full items-center justify-center",
+                  isLoading && "hidden"
                 )}
-                onLoad={() => setIsLoading(false)}
                 onDownload={handleDownload}
+                onLoad={() => setIsLoading(false)}
+                url={getMediaUrl(currentMedia.id)}
               />
               {!isLoading && (
-                <FileTypeWatermark type="SVG" showCategory={false} />
+                <FileTypeWatermark showCategory={false} type="SVG" />
               )}
             </div>
           );
@@ -185,52 +185,52 @@ const MediaViewer = ({
           <div className="relative max-h-full max-w-full">
             {isLoading && <MediaViewerSkeleton type="IMAGE" />}
             <Image
-              src={getMediaUrl(currentMedia.id)}
               alt={`Media item ${currentIndex + 1}`}
-              width={1200}
-              height={800}
               className={cn(
-                'max-h-[85vh] object-contain',
-                isLoading && 'hidden'
+                "max-h-[85vh] object-contain",
+                isLoading && "hidden"
               )}
-              quality={100}
-              priority
-              sizes="95vw"
-              onLoadingComplete={() => setIsLoading(false)}
+              height={800}
               onError={(e) => {
-                console.error('Image load error:', e);
+                console.error("Image load error:", e);
                 e.currentTarget.src = FALLBACK_IMAGE.src;
                 setIsLoading(false);
               }}
+              onLoadingComplete={() => setIsLoading(false)}
+              priority
+              quality={100}
+              sizes="95vw"
+              src={getMediaUrl(currentMedia.id)}
+              width={1200}
             />
             {!isLoading && (
               <FileTypeWatermark
-                type={currentMedia.mimeType?.split('/')[1] || 'image'}
                 showCategory={false}
+                type={currentMedia.mimeType?.split("/")[1] || "image"}
               />
             )}
           </div>
         );
       }
 
-      case 'VIDEO':
+      case "VIDEO":
         return (
           <div className="relative max-h-full max-w-full focus-within:outline-none">
             {isLoading && <MediaViewerSkeleton type="VIDEO" />}
             <CustomVideoPlayer
-              src={getMediaUrl(currentMedia.id)}
               className={cn(
-                'max-h-[85vh] w-auto outline-hidden focus:outline-hidden focus-visible:outline-none',
-                'shadow-lg transition-transform duration-200',
-                isLoading && 'hidden'
+                "max-h-[85vh] w-auto outline-hidden focus:outline-hidden focus-visible:outline-none",
+                "shadow-lg transition-transform duration-200",
+                isLoading && "hidden"
               )}
-              onLoadedData={() => setIsLoading(false)}
               onError={() => setIsLoading(false)}
+              onLoadedData={() => setIsLoading(false)}
+              src={getMediaUrl(currentMedia.id)}
             />
           </div>
         );
 
-      case 'AUDIO':
+      case "AUDIO":
         return (
           <div className="flex flex-col items-center gap-4 rounded-lg bg-background/50 p-8">
             <div className="flex h-64 w-64 items-center justify-center rounded-full bg-primary/10">
@@ -241,17 +241,17 @@ const MediaViewer = ({
             </p>
             {/* biome-ignore lint/a11y/useMediaCaption:  */}
             <audio
-              src={getMediaUrl(currentMedia.id)}
-              controls
-              className="w-full max-w-md"
-              autoPlay
               aria-label={`Audio ${currentIndex + 1} of ${media.length}`}
+              autoPlay
+              className="w-full max-w-md"
+              controls
+              src={getMediaUrl(currentMedia.id)}
             />
             <DownloadButton />
           </div>
         );
 
-      case 'CODE':
+      case "CODE":
         return (
           <div className="w-full max-w-4xl rounded-lg bg-background/50 p-4">
             {isLoading ? (
@@ -268,26 +268,26 @@ const MediaViewer = ({
                     </p>
                   </div>
                   <Button
+                    disabled={isDownloading}
                     onClick={handleDownload}
                     variant="secondary"
-                    disabled={isDownloading}
                   >
                     <Download className="mr-2 h-4 w-4" />
                     Download
                   </Button>
                 </div>
                 <CodePreview
-                  mediaId={currentMedia.id}
-                  language={getLanguageFromFileName(currentMedia.key)}
-                  fileName={formatFileName(currentMedia.key)}
                   className="shadow-lg"
+                  fileName={formatFileName(currentMedia.key)}
+                  language={getLanguageFromFileName(currentMedia.key)}
+                  mediaId={currentMedia.id}
                 />
               </>
             )}
           </div>
         );
 
-      case 'DOCUMENT':
+      case "DOCUMENT":
         return (
           <div className="flex flex-col items-center gap-4 rounded-lg bg-background/50 p-8">
             <div className="flex h-32 w-32 items-center justify-center rounded-full bg-primary/10">
@@ -299,17 +299,17 @@ const MediaViewer = ({
             </p>
             <div className="flex gap-4">
               <Button
+                disabled={isDownloading}
                 onClick={handleDownload}
                 variant="secondary"
-                disabled={isDownloading}
               >
                 <Download className="mr-2 h-4 w-4" />
                 Download
               </Button>
-              {currentMedia.mimeType === 'application/pdf' && (
+              {currentMedia.mimeType === "application/pdf" && (
                 <Button
                   onClick={() =>
-                    window.open(getMediaUrl(currentMedia.id), '_blank')
+                    window.open(getMediaUrl(currentMedia.id), "_blank")
                   }
                   variant="outline"
                 >
@@ -326,7 +326,7 @@ const MediaViewer = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog onOpenChange={onClose} open={isOpen}>
       <DialogContent className="max-h-[95vh] max-w-[95vw] border-none bg-transparent p-0">
         <DialogTitle asChild>
           <VisuallyHidden>
@@ -338,11 +338,11 @@ const MediaViewer = ({
           <div className="absolute inset-0 bg-background/80 backdrop-blur-xl" />
 
           <Button
-            variant="ghost"
-            size="icon"
+            aria-label="Close viewer"
             className="absolute top-2 right-2 z-50 bg-background/50 hover:bg-background/80"
             onClick={onClose}
-            aria-label="Close viewer"
+            size="icon"
+            variant="ghost"
           >
             <X className="h-4 w-4" />
           </Button>
@@ -350,20 +350,20 @@ const MediaViewer = ({
           {media.length > 1 && (
             <>
               <Button
-                variant="ghost"
-                size="icon"
+                aria-label="Previous media"
                 className="-translate-y-1/2 absolute top-1/2 left-2 z-50 bg-background/50 hover:bg-background/80"
                 onClick={handlePrevious}
-                aria-label="Previous media"
+                size="icon"
+                variant="ghost"
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
               <Button
-                variant="ghost"
-                size="icon"
+                aria-label="Next media"
                 className="-translate-y-1/2 absolute top-1/2 right-2 z-50 bg-background/50 hover:bg-background/80"
                 onClick={handleNext}
-                aria-label="Next media"
+                size="icon"
+                variant="ghost"
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>

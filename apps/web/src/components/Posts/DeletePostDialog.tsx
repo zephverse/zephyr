@@ -1,7 +1,5 @@
-import LoadingButton from '@/components/Auth/LoadingButton';
-import { useDeletePostMutation } from '@/posts/mutations';
-import type { PostData } from '@zephyr/db';
-import { Button } from '@zephyr/ui/shadui/button';
+import type { PostData } from "@zephyr/db";
+import { Button } from "@zephyr/ui/shadui/button";
 import {
   Dialog,
   DialogContent,
@@ -9,7 +7,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@zephyr/ui/shadui/dialog';
+} from "@zephyr/ui/shadui/dialog";
+import LoadingButton from "@/components/Auth/LoadingButton";
+import { useDeletePostMutation } from "@/posts/mutations";
 
 interface DeletePostDialogProps {
   post: PostData;
@@ -25,13 +25,13 @@ export default function DeletePostDialog({
   const mutation = useDeletePostMutation();
 
   function handleOpenChange(open: boolean) {
-    if (!open || !mutation.isPending) {
+    if (!(open && mutation.isPending)) {
       onClose();
     }
   }
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog onOpenChange={handleOpenChange} open={open}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Delete Post</DialogTitle>
@@ -42,16 +42,16 @@ export default function DeletePostDialog({
         </DialogHeader>
         <DialogFooter>
           <LoadingButton
-            variant="destructive"
-            onClick={() => mutation.mutate(post.id, { onSuccess: onClose })}
             loading={mutation.isPending}
+            onClick={() => mutation.mutate(post.id, { onSuccess: onClose })}
+            variant="destructive"
           >
             Delete
           </LoadingButton>
           <Button
-            variant="outline"
-            onClick={onClose}
             disabled={mutation.isPending}
+            onClick={onClose}
+            variant="outline"
           >
             Cancel
           </Button>

@@ -1,5 +1,5 @@
-import { cn } from '@/lib/utils';
-import { motion } from 'framer-motion';
+import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 interface AnimatedWordCounterProps {
   current: number;
@@ -16,24 +16,24 @@ export function AnimatedWordCounter({
 
   return (
     <motion.div
+      animate={{ opacity: 1 }}
       className="relative flex items-center gap-1 text-xs"
       initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
       transition={{ duration: 0.2 }}
     >
       <motion.div
-        className={cn(
-          'font-medium',
-          isOverLimit
-            ? 'text-destructive'
-            : // biome-ignore lint/nursery/noNestedTernary: ignore
-              isNearLimit
-              ? 'text-warning'
-              : 'text-muted-foreground'
-        )}
         animate={{
           scale: isOverLimit ? [1, 1.1, 1] : 1,
         }}
+        className={cn(
+          "font-medium",
+          isOverLimit
+            ? "text-destructive"
+            : // biome-ignore lint/nursery/noNestedTernary: ignore
+              isNearLimit
+              ? "text-warning"
+              : "text-muted-foreground"
+        )}
         transition={{ duration: 0.2 }}
       >
         {current}
@@ -43,11 +43,11 @@ export function AnimatedWordCounter({
 
       {isNearLimit && (
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           className="-top-6 absolute left-0 text-warning"
+          initial={{ opacity: 0, y: 10 }}
         >
-          {isOverLimit ? 'Too many words' : 'Approaching limit'}
+          {isOverLimit ? "Too many words" : "Approaching limit"}
         </motion.div>
       )}
     </motion.div>

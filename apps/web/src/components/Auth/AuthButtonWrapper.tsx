@@ -1,5 +1,5 @@
-import { motion } from 'framer-motion';
-import type { ReactNode } from 'react';
+import { motion } from "framer-motion";
+import type { ReactNode } from "react";
 
 interface AuthButtonWrapperProps {
   children: ReactNode;
@@ -8,19 +8,19 @@ interface AuthButtonWrapperProps {
 
 export default function AuthButtonWrapper({
   children,
-  className = '',
+  className = "",
 }: AuthButtonWrapperProps) {
   return (
     <motion.div
-      className="mb-3 w-full"
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
-      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
+      className="mb-3 w-full"
+      initial={{ opacity: 0, y: 20 }}
       transition={{
         duration: 0.3,
-        ease: 'easeOut',
+        ease: "easeOut",
       }}
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
     >
       <div
         className={`group relative overflow-hidden rounded-lg backdrop-blur-md ${className}`}

@@ -1,16 +1,16 @@
-'use client';
+"use client";
 
-import { useTags } from '@/hooks/useTags';
-import { cn } from '@/lib/utils';
-import type { Tag } from '@prisma/client';
-import type { TagWithCount } from '@zephyr/db';
-import { useToast } from '@zephyr/ui/hooks/use-toast';
-import { Button } from '@zephyr/ui/shadui/button';
-import { Command } from 'cmdk';
-import { AnimatePresence, motion } from 'framer-motion';
-import { Hash, Loader2, Plus, Search, X } from 'lucide-react';
-import { useState } from 'react';
-import { useUpdateTagsMutation } from './mutations/tag-mention-mutation';
+import type { Tag } from "@prisma/client";
+import type { TagWithCount } from "@zephyr/db";
+import { useToast } from "@zephyr/ui/hooks/use-toast";
+import { Button } from "@zephyr/ui/shadui/button";
+import { Command } from "cmdk";
+import { AnimatePresence, motion } from "framer-motion";
+import { Hash, Loader2, Plus, Search, X } from "lucide-react";
+import { useState } from "react";
+import { useTags } from "@/hooks/useTags";
+import { cn } from "@/lib/utils";
+import { useUpdateTagsMutation } from "./mutations/tag-mention-mutation";
 
 const tagVariants = {
   initial: { opacity: 0, scale: 0.9, y: -10 },
@@ -19,7 +19,7 @@ const tagVariants = {
     scale: 1,
     y: 0,
     transition: {
-      type: 'spring',
+      type: "spring",
       stiffness: 200,
       damping: 20,
     },
@@ -55,7 +55,7 @@ export function TagEditor({
   onCloseAction,
   onTagsUpdateAction,
 }: TagEditorProps) {
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const { suggestions, searchTags } = useTags(postId);
   const { toast } = useToast();
   const [isFocused, setIsFocused] = useState(false);
@@ -65,9 +65,9 @@ export function TagEditor({
   const handleSelect = (tagName: string) => {
     if (selectedTags.length >= 5) {
       toast({
-        title: 'Maximum tags reached',
-        description: 'You can only add up to 5 tags per post',
-        variant: 'destructive',
+        title: "Maximum tags reached",
+        description: "You can only add up to 5 tags per post",
+        variant: "destructive",
       });
       return;
     }
@@ -88,7 +88,7 @@ export function TagEditor({
 
       onTagsUpdateAction(formattedTags);
     }
-    setSearch('');
+    setSearch("");
   };
 
   const handleRemove = (tagName: string) => {
@@ -125,9 +125,9 @@ export function TagEditor({
       // biome-ignore lint/correctness/noUnusedVariables: ignore
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'Failed to update tags. Please try again.',
-        variant: 'destructive',
+        title: "Error",
+        description: "Failed to update tags. Please try again.",
+        variant: "destructive",
       });
     }
   };
@@ -142,28 +142,28 @@ export function TagEditor({
   return (
     <div>
       <motion.div
-        variants={containerVariants}
-        initial="initial"
         animate="animate"
         className="space-y-4"
+        initial="initial"
+        variants={containerVariants}
       >
         <div className="flex min-h-[40px] flex-wrap gap-2">
           <AnimatePresence mode="popLayout">
             {selectedTags.map((tagName) => (
               <motion.div
-                key={tagName}
-                variants={tagVariants}
-                layout
                 className="group flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 backdrop-blur-[2px] transition-colors hover:border-primary/30 hover:bg-primary/15"
+                key={tagName}
+                layout
+                variants={tagVariants}
               >
                 <Hash className="h-3.5 w-3.5 text-primary/70" />
                 <span className="font-medium text-primary text-sm">
                   {tagName}
                 </span>
                 <button
-                  type="button"
-                  onClick={() => handleRemove(tagName)}
                   className="text-primary/50 transition-colors hover:text-primary"
+                  onClick={() => handleRemove(tagName)}
+                  type="button"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
@@ -174,28 +174,28 @@ export function TagEditor({
 
         <div
           className={cn(
-            'relative rounded-lg transition-all duration-200',
-            isFocused && 'ring-2 ring-primary/20 ring-offset-1'
+            "relative rounded-lg transition-all duration-200",
+            isFocused && "ring-2 ring-primary/20 ring-offset-1"
           )}
         >
           <Command className="overflow-hidden rounded-lg bg-muted/50">
             <div className="flex items-center border-border/50 border-b px-3">
               <Search className="mr-2 h-4 w-4 text-muted-foreground" />
               <Command.Input
-                value={search}
-                onValueChange={handleSearch}
-                onFocus={() => setIsFocused(true)}
-                onBlur={() => setIsFocused(false)}
-                placeholder="Search tags or create new..."
                 className="h-11 flex-1 border-0 bg-transparent text-sm outline-hidden placeholder:text-muted-foreground/70 focus:ring-0"
+                onBlur={() => setIsFocused(false)}
+                onFocus={() => setIsFocused(true)}
+                onValueChange={handleSearch}
+                placeholder="Search tags or create new..."
+                value={search}
               />
             </div>
             <Command.List className="max-h-[180px] overflow-y-auto p-2">
               {search && !suggestions?.includes(search) && (
                 <Command.Item
-                  value={search}
-                  onSelect={handleSelect}
                   className="group flex cursor-pointer items-center gap-2 rounded-md p-2 text-sm hover:bg-accent"
+                  onSelect={handleSelect}
+                  value={search}
                 >
                   <Plus className="h-4 w-4 text-primary/70 transition-colors group-hover:text-primary" />
                   <span>
@@ -206,10 +206,10 @@ export function TagEditor({
               {suggestions && suggestions.length > 0
                 ? suggestions.map((tagName: string) => (
                     <Command.Item
-                      key={tagName}
-                      value={tagName}
-                      onSelect={handleSelect}
                       className="group flex cursor-pointer items-center gap-2 rounded-md p-2 text-sm hover:bg-accent"
+                      key={tagName}
+                      onSelect={handleSelect}
+                      value={tagName}
                     >
                       <Hash className="h-4 w-4 text-primary/70 transition-colors group-hover:text-primary" />
                       <span className="font-medium">{tagName}</span>
@@ -226,21 +226,21 @@ export function TagEditor({
 
         <div className="flex justify-end gap-2 pt-2">
           <Button
-            variant="ghost"
-            onClick={onCloseAction}
             className="hover:bg-destructive/10 hover:text-destructive"
+            onClick={onCloseAction}
+            variant="ghost"
           >
             Cancel
           </Button>
           <Button
-            onClick={handleSave}
-            disabled={updateTags.isPending}
             className="min-w-[80px] bg-primary text-primary-foreground hover:bg-primary/90"
+            disabled={updateTags.isPending}
+            onClick={handleSave}
           >
             {updateTags.isPending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              'Save Changes'
+              "Save Changes"
             )}
           </Button>
         </div>

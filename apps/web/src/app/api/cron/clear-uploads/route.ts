@@ -1,6 +1,6 @@
-import { deleteAvatar } from '@/lib/minio';
-import { prisma } from '@zephyr/db';
-import { NextResponse } from 'next/server';
+import { prisma } from "@zephyr/db";
+import { NextResponse } from "next/server";
+import { deleteAvatar } from "@/lib/minio";
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex logic is required here
 async function clearUploads() {
@@ -21,14 +21,14 @@ async function clearUploads() {
   };
 
   try {
-    log('🚀 Starting uploads cleanup process');
+    log("🚀 Starting uploads cleanup process");
 
     // 1. Handle unused media files
-    log('\n🔍 Finding unused media files...');
+    log("\n🔍 Finding unused media files...");
     const unusedMedia = await prisma.media.findMany({
       where: {
         postId: null,
-        ...(process.env.NODE_ENV === 'production'
+        ...(process.env.NODE_ENV === "production"
           ? {
               createdAt: {
                 lte: new Date(Date.now() - 1000 * 60 * 60 * 24), // 24 hours
@@ -115,7 +115,7 @@ async function clearUploads() {
     }
 
     // 2. Handle orphaned avatars
-    log('\n🔍 Finding orphaned user avatars...');
+    log("\n🔍 Finding orphaned user avatars...");
     const orphanedAvatars = await prisma.user.findMany({
       where: {
         avatarKey: { not: null },
@@ -196,11 +196,11 @@ async function clearUploads() {
     return summary;
   } catch (error) {
     const errorMessage =
-      error instanceof Error ? error.message : 'Unknown error';
+      error instanceof Error ? error.message : "Unknown error";
     log(`❌ Uploads cleanup failed: ${errorMessage}`);
     console.error(
-      'Cleanup error stack:',
-      error instanceof Error ? error.stack : 'No stack trace'
+      "Cleanup error stack:",
+      error instanceof Error ? error.stack : "No stack trace"
     );
 
     return {
@@ -214,49 +214,49 @@ async function clearUploads() {
   } finally {
     try {
       await prisma.$disconnect();
-      log('👋 Database connection closed');
+      log("👋 Database connection closed");
     } catch (_error) {
-      log('❌ Error closing database connection');
+      log("❌ Error closing database connection");
     }
   }
 }
 
 export async function POST(request: Request) {
-  console.log('📥 Received uploads cleanup request');
+  console.log("📥 Received uploads cleanup request");
 
   try {
     if (!process.env.CRON_SECRET_KEY) {
-      console.error('❌ CRON_SECRET_KEY environment variable not set');
+      console.error("❌ CRON_SECRET_KEY environment variable not set");
       return NextResponse.json(
         {
-          error: 'Server configuration error',
+          error: "Server configuration error",
           timestamp: new Date().toISOString(),
         },
         {
           status: 500,
           headers: {
-            'Content-Type': 'application/json',
-            'Cache-Control': 'no-store',
+            "Content-Type": "application/json",
+            "Cache-Control": "no-store",
           },
         }
       );
     }
 
-    const authHeader = request.headers.get('authorization');
+    const authHeader = request.headers.get("authorization");
     const expectedAuth = `Bearer ${process.env.CRON_SECRET_KEY}`;
 
     if (!authHeader || authHeader !== expectedAuth) {
-      console.warn('⚠️ Unauthorized uploads cleanup attempt');
+      console.warn("⚠️ Unauthorized uploads cleanup attempt");
       return NextResponse.json(
         {
-          error: 'Unauthorized',
+          error: "Unauthorized",
           timestamp: new Date().toISOString(),
         },
         {
           status: 401,
           headers: {
-            'Content-Type': 'application/json',
-            'Cache-Control': 'no-store',
+            "Content-Type": "application/json",
+            "Cache-Control": "no-store",
           },
         }
       );
@@ -267,32 +267,32 @@ export async function POST(request: Request) {
     return NextResponse.json(results, {
       status: results.success ? 200 : 500,
       headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-store',
+        "Content-Type": "application/json",
+        "Cache-Control": "no-store",
       },
     });
   } catch (error) {
-    console.error('❌ Uploads cleanup route error:', {
-      error: error instanceof Error ? error.message : 'Unknown error',
+    console.error("❌ Uploads cleanup route error:", {
+      error: error instanceof Error ? error.message : "Unknown error",
       stack: error instanceof Error ? error.stack : undefined,
     });
 
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : "Unknown error",
         timestamp: new Date().toISOString(),
       },
       {
         status: 500,
         headers: {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-store',
+          "Content-Type": "application/json",
+          "Cache-Control": "no-store",
         },
       }
     );
   }
 }
 
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";

@@ -1,14 +1,14 @@
-import kyInstance from '@/lib/ky';
-import { useQuery } from '@tanstack/react-query';
-import type { VoteInfo } from '@zephyr/db';
+import { useQuery } from "@tanstack/react-query";
+import type { VoteInfo } from "@zephyr/db";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@zephyr/ui/shadui/tooltip';
-import { Flame } from 'lucide-react';
-import { useEffect, useState } from 'react';
+} from "@zephyr/ui/shadui/tooltip";
+import { Flame } from "lucide-react";
+import { useEffect, useState } from "react";
+import kyInstance from "@/lib/ky";
 
 interface AuraCountProps {
   postId: string;
@@ -16,7 +16,7 @@ interface AuraCountProps {
 }
 
 export default function AuraCount({ postId, initialAura }: AuraCountProps) {
-  const queryKey = ['vote-info', postId];
+  const queryKey = ["vote-info", postId];
   const [localAura, setLocalAura] = useState(initialAura);
 
   const { data } = useQuery<VoteInfo>({

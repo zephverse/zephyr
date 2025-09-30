@@ -1,17 +1,17 @@
-'use client';
+"use client";
 
-import { FossBanner } from '@/components/misc/foss-banner';
-import { useToast } from '@zephyr/ui/hooks/use-toast';
-import { AnimatePresence, motion } from 'framer-motion';
-import { AlertTriangle, ArrowLeft } from 'lucide-react';
-import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
-import type React from 'react';
-import { AnimatedZephyrText } from './components/AnimatedZephyrText';
-import { GithubIssueButton } from './components/GithubIssueButton';
-import { StepIndicator } from './components/StepIndicator';
-import { StepOne, StepThree, StepTwo } from './components/steps';
-import type { Attachment } from './types';
+import { useToast } from "@zephyr/ui/hooks/use-toast";
+import { AnimatePresence, motion } from "framer-motion";
+import { AlertTriangle, ArrowLeft } from "lucide-react";
+import Link from "next/link";
+import type React from "react";
+import { useEffect, useRef, useState } from "react";
+import { FossBanner } from "@/components/misc/foss-banner";
+import { AnimatedZephyrText } from "./components/AnimatedZephyrText";
+import { GithubIssueButton } from "./components/GithubIssueButton";
+import { StepIndicator } from "./components/StepIndicator";
+import { StepOne, StepThree, StepTwo } from "./components/steps";
+import type { Attachment } from "./types";
 
 export default function SupportForm() {
   const { toast } = useToast();
@@ -21,12 +21,12 @@ export default function SupportForm() {
   const [attachments, setAttachments] = useState<Attachment[]>([]);
 
   const [formData, setFormData] = useState({
-    email: '',
-    type: '',
-    category: '',
-    priority: 'medium',
-    subject: '',
-    message: '',
+    email: "",
+    type: "",
+    category: "",
+    priority: "medium",
+    subject: "",
+    message: "",
     os: navigator.platform,
     browser: navigator.userAgent,
   });
@@ -44,15 +44,15 @@ export default function SupportForm() {
       }[] = [];
       for (const file of attachments) {
         const formData = new FormData();
-        formData.append('file', file.file);
+        formData.append("file", file.file);
 
-        const response = await fetch('/api/support/upload', {
-          method: 'POST',
+        const response = await fetch("/api/support/upload", {
+          method: "POST",
           body: formData,
         });
 
         if (!response.ok) {
-          throw new Error('Failed to upload attachments');
+          throw new Error("Failed to upload attachments");
         }
 
         const data = await response.json();
@@ -64,9 +64,9 @@ export default function SupportForm() {
         });
       }
 
-      const response = await fetch('/api/support', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/support", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
           attachments: uploadedFiles,
@@ -75,21 +75,21 @@ export default function SupportForm() {
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Failed to send message');
+        throw new Error(data.error || "Failed to send message");
       }
 
       toast({
-        title: 'Message sent successfully',
+        title: "Message sent successfully",
         description: "We'll get back to you as soon as possible.",
       });
 
       setFormData({
-        email: '',
-        type: '',
-        category: '',
-        priority: 'medium',
-        subject: '',
-        message: '',
+        email: "",
+        type: "",
+        category: "",
+        priority: "medium",
+        subject: "",
+        message: "",
         os: navigator.platform,
         browser: navigator.userAgent,
       });
@@ -97,10 +97,10 @@ export default function SupportForm() {
       setStep(1);
     } catch (error: unknown) {
       toast({
-        title: 'Error',
+        title: "Error",
         description:
-          error instanceof Error ? error.message : 'Failed to send message',
-        variant: 'destructive',
+          error instanceof Error ? error.message : "Failed to send message",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -111,17 +111,17 @@ export default function SupportForm() {
   const handleFileUpload = async (files: FileList) => {
     const maxFiles = 3;
     const allowedTypes = [
-      'image/jpeg',
-      'image/png',
-      'image/gif',
-      'application/pdf',
-      'text/plain',
+      "image/jpeg",
+      "image/png",
+      "image/gif",
+      "application/pdf",
+      "text/plain",
     ];
     const maxSize = 5 * 1024 * 1024; // 5MB
 
     if (attachments.length + files.length > maxFiles) {
       toast({
-        title: 'Too many files',
+        title: "Too many files",
         description: `Maximum ${maxFiles} files allowed`,
       });
       return;
@@ -129,35 +129,35 @@ export default function SupportForm() {
 
     for (const file of Array.from(files)) {
       try {
-        if (!file.type || !allowedTypes.includes(file.type)) {
+        if (!(file.type && allowedTypes.includes(file.type))) {
           toast({
-            title: 'Invalid file type',
-            description: 'Please upload images, PDFs, or text files only',
+            title: "Invalid file type",
+            description: "Please upload images, PDFs, or text files only",
           });
           continue;
         }
 
         if (file.size > maxSize) {
           toast({
-            title: 'File too large',
-            description: 'Files must be less than 5MB',
+            title: "File too large",
+            description: "Files must be less than 5MB",
           });
           continue;
         }
 
         const formData = new FormData();
-        formData.append('file', file);
-        formData.append('fileName', file.name);
-        formData.append('fileType', file.type);
+        formData.append("file", file);
+        formData.append("fileName", file.name);
+        formData.append("fileType", file.type);
 
-        const response = await fetch('/api/support/upload', {
-          method: 'POST',
+        const response = await fetch("/api/support/upload", {
+          method: "POST",
           body: formData,
         });
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.error || 'Upload failed');
+          throw new Error(errorData.error || "Upload failed");
         }
 
         const data = await response.json();
@@ -177,16 +177,16 @@ export default function SupportForm() {
         ]);
 
         toast({
-          title: 'Success',
-          description: 'File uploaded successfully',
+          title: "Success",
+          description: "File uploaded successfully",
         });
       } catch (error: unknown) {
-        console.error('Upload error:', error);
+        console.error("Upload error:", error);
         toast({
-          title: 'Upload failed',
+          title: "Upload failed",
           description:
-            error instanceof Error ? error.message : 'Failed to upload file',
-          variant: 'destructive',
+            error instanceof Error ? error.message : "Failed to upload file",
+          variant: "destructive",
         });
       }
     }
@@ -211,64 +211,64 @@ export default function SupportForm() {
   return (
     <div className="relative">
       <Link
-        href="/"
         className="fixed top-8 left-8 flex items-center gap-2 text-muted-foreground transition-colors hover:text-primary"
+        href="/"
       >
         <ArrowLeft className="h-4 w-4" />
         Back to Home
       </Link>
 
       <motion.div
-        initial="hidden"
         animate="visible"
-        variants={formContainerVariants}
         className="mx-auto mt-8 max-w-2xl"
+        initial="hidden"
+        variants={formContainerVariants}
       >
         <div className="rounded-xl border bg-card/30 p-6 shadow-lg backdrop-blur-md">
           <StepIndicator currentStep={step} totalSteps={3} />
           <GithubIssueButton />
 
-          <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+          <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
             <AnimatePresence mode="wait">
               {step === 1 && (
                 <StepOne
                   formData={formData}
-                  setFormData={setFormData}
                   onNext={() => setStep(2)}
+                  setFormData={setFormData}
                 />
               )}
               {step === 2 && (
                 <StepTwo
                   formData={formData}
-                  setFormData={setFormData}
                   onBack={() => setStep(1)}
                   onNext={() => setStep(3)}
+                  setFormData={setFormData}
                 />
               )}
               {step === 3 && (
                 <StepThree
-                  formData={formData}
-                  setFormData={setFormData}
-                  // @ts-expect-error
-                  fileInputRef={fileInputRef}
                   attachments={attachments}
-                  setAttachments={setAttachments}
-                  loading={loading}
+                  fileInputRef={fileInputRef}
+                  // @ts-expect-error
+                  formData={formData}
                   handleFileUpload={handleFileUpload}
+                  loading={loading}
                   onBack={() => setStep(2)}
+                  setAttachments={setAttachments}
+                  setFormData={setFormData}
                 />
               )}
             </AnimatePresence>
 
             <motion.div
+              animate={{ scaleX: 1 }}
               className="h-2 w-full overflow-hidden rounded-full bg-muted/50 backdrop-blur-sm"
               initial={{ scaleX: 0 }}
-              animate={{ scaleX: 1 }}
             >
               <motion.div
-                className="h-full bg-primary"
-                initial={{ width: '33.33%' }}
                 animate={{ width: `${(step / 3) * 100}%` }}
+                className="h-full bg-primary"
+                initial={{ width: "33.33%" }}
                 transition={{ duration: 0.3 }}
               />
             </motion.div>
@@ -278,10 +278,10 @@ export default function SupportForm() {
         <FossBanner className="mt-6" />
 
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
           className="mt-6 rounded-lg border bg-card/30 p-4 text-muted-foreground text-sm backdrop-blur-md"
+          initial={{ opacity: 0, y: 20 }}
+          transition={{ delay: 0.5 }}
         >
           <div className="flex items-center gap-2">
             <AlertTriangle className="h-4 w-4" />

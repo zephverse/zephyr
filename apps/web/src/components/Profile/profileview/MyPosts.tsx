@@ -1,24 +1,24 @@
-'use client';
+"use client";
 
-import { DirectionAwareHover } from '@zephyr/ui/components/ui/direction-aware-hover';
-import { Badge } from '@zephyr/ui/shadui/badge';
-import { Button } from '@zephyr/ui/shadui/button';
-import { Card, CardContent } from '@zephyr/ui/shadui/card';
+import { DirectionAwareHover } from "@zephyr/ui/components/ui/direction-aware-hover";
+import { Badge } from "@zephyr/ui/shadui/badge";
+import { Button } from "@zephyr/ui/shadui/button";
+import { Card, CardContent } from "@zephyr/ui/shadui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@zephyr/ui/shadui/dropdown-menu';
+} from "@zephyr/ui/shadui/dropdown-menu";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from '@zephyr/ui/shadui/tabs';
-import { motion } from 'framer-motion';
-import { BookOpen, Edit, Plus, Settings, Upload } from 'lucide-react';
-import type React from 'react';
+} from "@zephyr/ui/shadui/tabs";
+import { motion } from "framer-motion";
+import { BookOpen, Edit, Plus, Settings, Upload } from "lucide-react";
+import type React from "react";
 
 interface MyPostsProps {
   data: {
@@ -47,8 +47,8 @@ const MyPosts: React.FC<MyPostsProps> = ({ data }) => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
-              size="sm"
               className="bg-primary text-primary-foreground hover:bg-primary/90"
+              size="sm"
             >
               <Plus className="mr-2 h-4 w-4" />
               New Post
@@ -70,17 +70,17 @@ const MyPosts: React.FC<MyPostsProps> = ({ data }) => (
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <Tabs defaultValue="blogs" className="mb-4">
+      <Tabs className="mb-4" defaultValue="blogs">
         <TabsList className="bg-muted">
           <TabsTrigger
-            value="blogs"
             className="text-muted-foreground transition-colors hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground"
+            value="blogs"
           >
             Blogs
           </TabsTrigger>
           <TabsTrigger
-            value="research"
             className="text-muted-foreground transition-colors hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground"
+            value="research"
           >
             Research Papers
           </TabsTrigger>
@@ -92,8 +92,8 @@ const MyPosts: React.FC<MyPostsProps> = ({ data }) => (
                 <motion.div key={index} whileHover={{ scale: 1.05 }}>
                   <div className="relative h-128 w-full">
                     <DirectionAwareHover
-                      imageUrl={post.image}
                       className="h-full w-full object-cover"
+                      imageUrl={post.image}
                     >
                       <div className="p-0">
                         <h3 className="font-semibold text-white">
@@ -120,8 +120,8 @@ const MyPosts: React.FC<MyPostsProps> = ({ data }) => (
           <div className="space-y-4">
             {data.researchPapers.map((paper, index) => (
               <div
-                key={index}
                 className="flex items-center justify-between rounded-lg bg-muted p-4"
+                key={index}
               >
                 <div>
                   <h3 className="font-semibold text-foreground">

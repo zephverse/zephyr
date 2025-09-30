@@ -1,25 +1,25 @@
-'use client';
+"use client";
 
-import FollowButton from '@/components/Layouts/FollowButton';
-import UserAvatar from '@/components/Layouts/UserAvatar';
-import Linkify from '@/helpers/global/Linkify';
-import { useFollowStates } from '@/hooks/useFollowStates';
-import { formatNumber } from '@/lib/utils';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import type { UserData } from '@zephyr/db';
-import { Card } from '@zephyr/ui/shadui/card';
-import { Skeleton } from '@zephyr/ui/shadui/skeleton';
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import type { UserData } from "@zephyr/db";
+import { Card } from "@zephyr/ui/shadui/card";
+import { Skeleton } from "@zephyr/ui/shadui/skeleton";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@zephyr/ui/shadui/tooltip';
-import { AnimatePresence, motion } from 'framer-motion';
-import { BadgeCheckIcon, MessageSquare, Sparkles, Users } from 'lucide-react';
-import Link from 'next/link';
-import { useCallback, useState } from 'react';
-import type React from 'react';
+} from "@zephyr/ui/shadui/tooltip";
+import { AnimatePresence, motion } from "framer-motion";
+import { BadgeCheckIcon, MessageSquare, Sparkles, Users } from "lucide-react";
+import Link from "next/link";
+import type React from "react";
+import { useCallback, useState } from "react";
+import FollowButton from "@/components/Layouts/FollowButton";
+import UserAvatar from "@/components/Layouts/UserAvatar";
+import Linkify from "@/helpers/global/Linkify";
+import { useFollowStates } from "@/hooks/useFollowStates";
+import { formatNumber } from "@/lib/utils";
 
 interface SuggestedUsersProps {
   userId?: string;
@@ -40,7 +40,7 @@ interface EnhancedUserData extends UserData {
 const MutualFollowers = ({
   followers,
 }: {
-  followers: NonNullable<EnhancedUserData['mutualFollowers']>;
+  followers: NonNullable<EnhancedUserData["mutualFollowers"]>;
 }) => {
   const [isHovered, setIsHovered] = useState(false);
 
@@ -68,8 +68,8 @@ const MutualFollowers = ({
                   <Link href={`/users/${follower.username}`}>
                     <UserAvatar
                       avatarUrl={follower.avatarUrl}
-                      size={24}
                       className="ring-2 ring-background transition-all duration-300 hover:ring-primary"
+                      size={24}
                     />
                   </Link>
                 </TooltipTrigger>
@@ -81,20 +81,20 @@ const MutualFollowers = ({
           ))}
         </div>
         <motion.p
-          initial={false}
           animate={{ opacity: isHovered ? 1 : 0.7 }}
           className="text-muted-foreground text-xs"
+          initial={false}
         >
-          Followed by{' '}
+          Followed by{" "}
           {displayedFollowers.map((follower, index) => (
             <span key={follower.username}>
               <Link
-                href={`/users/${follower.username}`}
                 className="font-medium text-foreground hover:underline"
+                href={`/users/${follower.username}`}
               >
                 {follower.displayName}
               </Link>
-              {index < displayedFollowers.length - 1 && ', '}
+              {index < displayedFollowers.length - 1 && ", "}
             </span>
           ))}
           {remainingCount > 0 && (
@@ -110,7 +110,7 @@ const MutualFollowers = ({
                     {followers
                       .slice(displayCount)
                       .map((f) => f.displayName)
-                      .join(', ')}
+                      .join(", ")}
                   </p>
                 </TooltipContent>
               </Tooltip>
@@ -137,21 +137,21 @@ const UserCard = ({
 
   return (
     <motion.div
-      layout
-      initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
+      className="relative"
       exit={{ opacity: 0, scale: 0.8, y: 20 }}
+      initial={{ opacity: 0, scale: 0.8 }}
+      layout
+      onHoverEnd={() => setIsHovered(false)}
+      onHoverStart={() => setIsHovered(true)}
       transition={{
         layout: { duration: 0.3 },
         opacity: { duration: 0.2 },
         scale: { duration: 0.2 },
-        type: 'spring',
+        type: "spring",
         stiffness: 200,
         damping: 20,
       }}
-      onHoverStart={() => setIsHovered(true)}
-      onHoverEnd={() => setIsHovered(false)}
-      className="relative"
     >
       <Card className="group relative h-full overflow-hidden bg-gradient-to-br from-background to-muted/50 transition-all duration-300 hover:shadow-lg hover:shadow-primary/10">
         <div className="absolute inset-0 opacity-5">
@@ -161,15 +161,15 @@ const UserCard = ({
         <div className="relative p-6">
           <div className="flex items-center justify-between">
             <motion.div
-              initial={false}
               animate={{ scale: isHovered ? 1.05 : 1 }}
+              initial={false}
               transition={{ duration: 0.2 }}
             >
               <Link href={`/users/${user.username}`}>
                 <UserAvatar
                   avatarUrl={user.avatarUrl}
-                  size={80}
                   className="ring-4 ring-background transition-all duration-300 hover:ring-primary"
+                  size={80}
                 />
               </Link>
             </motion.div>
@@ -180,8 +180,8 @@ const UserCard = ({
                   <TooltipTrigger asChild>
                     <motion.div
                       className="flex cursor-help items-center gap-2 text-muted-foreground"
-                      whileHover={{ scale: 1.05 }}
                       transition={{ duration: 0.2 }}
+                      whileHover={{ scale: 1.05 }}
                     >
                       <Users className="h-4 w-4" />
                       <span className="font-medium text-sm">
@@ -200,8 +200,8 @@ const UserCard = ({
                   <TooltipTrigger asChild>
                     <motion.div
                       className="flex cursor-help items-center gap-2 text-muted-foreground"
-                      whileHover={{ scale: 1.05 }}
                       transition={{ duration: 0.2 }}
+                      whileHover={{ scale: 1.05 }}
                     >
                       <MessageSquare className="h-4 w-4" />
                       <span className="font-medium text-sm">
@@ -222,28 +222,28 @@ const UserCard = ({
               <div className="space-y-1">
                 <motion.div
                   className="flex items-center gap-1"
-                  whileHover={{ scale: 1.02 }}
                   transition={{ duration: 0.2 }}
+                  whileHover={{ scale: 1.02 }}
                 >
                   <Link
-                    href={`/users/${user.username}`}
                     className="font-bold text-lg hover:underline"
+                    href={`/users/${user.username}`}
                   >
                     {user.displayName}
                   </Link>
                   <motion.div
-                    initial={{ rotate: -20, opacity: 0 }}
                     animate={{ rotate: 0, opacity: 1 }}
+                    initial={{ rotate: -20, opacity: 0 }}
                     transition={{ delay: index * 0.1 }}
                   >
                     <BadgeCheckIcon className="h-4 w-4 text-primary" />
                   </motion.div>
                 </motion.div>
                 <motion.div
-                  initial={{ opacity: 0, y: 5 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 + 0.1 }}
                   className="text-muted-foreground text-sm"
+                  initial={{ opacity: 0, y: 5 }}
+                  transition={{ delay: index * 0.1 + 0.1 }}
                 >
                   @{user.username}
                 </motion.div>
@@ -253,11 +253,11 @@ const UserCard = ({
             <AnimatePresence>
               {user.bio && (
                 <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.2 }}
+                  animate={{ opacity: 1, height: "auto" }}
                   className="overflow-hidden"
+                  exit={{ opacity: 0, height: 0 }}
+                  initial={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.2 }}
                 >
                   <Linkify>
                     <p className="line-clamp-2 text-muted-foreground text-sm">
@@ -272,43 +272,43 @@ const UserCard = ({
             )}
           </div>
           <motion.div
-            className="mt-4"
-            initial={false}
             animate={{
               y: isHovered ? 0 : 5,
               opacity: isHovered ? 1 : 0.9,
             }}
+            className="mt-4"
+            initial={false}
             transition={{ duration: 0.2 }}
           >
             <FollowButton
-              userId={user.id}
+              className="w-full bg-primary/90 hover:bg-primary"
               initialState={{
                 followers: user._count.followers,
                 isFollowedByUser: initialFollowState ?? false,
               }}
-              className="w-full bg-primary/90 hover:bg-primary"
               onFollowed={onFollowed}
+              userId={user.id}
             />
           </motion.div>
         </div>
 
         <motion.div
-          initial={false}
           animate={{
             opacity: isHovered ? 0.3 : 0.2,
             scale: isHovered ? 1.1 : 1,
           }}
-          transition={{ duration: 0.3 }}
           className="-right-4 -top-4 absolute h-20 w-20 rotate-45 bg-gradient-to-br from-primary/20 to-transparent blur-2xl"
+          initial={false}
+          transition={{ duration: 0.3 }}
         />
         <motion.div
-          initial={false}
           animate={{
             opacity: isHovered ? 0.3 : 0.2,
             scale: isHovered ? 1.1 : 1,
           }}
-          transition={{ duration: 0.3 }}
           className="-bottom-8 -left-8 absolute h-32 w-32 rounded-full bg-gradient-to-br from-primary/10 to-transparent blur-3xl"
+          initial={false}
+          transition={{ duration: 0.3 }}
         />
       </Card>
     </motion.div>
@@ -319,16 +319,16 @@ const SuggestedUsers: React.FC<SuggestedUsersProps> = ({ userId }) => {
   const queryClient = useQueryClient();
 
   const { data: users, isLoading } = useQuery<EnhancedUserData[]>({
-    queryKey: ['suggested-users', userId],
+    queryKey: ["suggested-users", userId],
     queryFn: async () => {
-      const response = await fetch('/api/users/suggested');
+      const response = await fetch("/api/users/suggested");
       if (!response.ok) {
-        throw new Error('Failed to fetch suggested users');
+        throw new Error("Failed to fetch suggested users");
       }
       return response.json();
     },
     enabled: !!userId,
-    staleTime: 30000,
+    staleTime: 30_000,
     refetchOnWindowFocus: false,
   });
 
@@ -342,7 +342,7 @@ const SuggestedUsers: React.FC<SuggestedUsersProps> = ({ userId }) => {
   const handleUserFollowed = useCallback(
     (followedUserId: string) => {
       queryClient.setQueryData<EnhancedUserData[]>(
-        ['suggested-users', userId],
+        ["suggested-users", userId],
         (oldData) => {
           if (!oldData) {
             return [];
@@ -352,7 +352,7 @@ const SuggestedUsers: React.FC<SuggestedUsersProps> = ({ userId }) => {
       );
 
       queryClient.invalidateQueries({
-        queryKey: ['suggested-users', userId],
+        queryKey: ["suggested-users", userId],
       });
     },
     [queryClient, userId]
@@ -362,7 +362,7 @@ const SuggestedUsers: React.FC<SuggestedUsersProps> = ({ userId }) => {
     return (
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {[...new Array(6)].map((_, i) => (
-          <Card key={i} className="p-6">
+          <Card className="p-6" key={i}>
             <div className="flex justify-between">
               <Skeleton className="h-20 w-20 rounded-full" />
               <div className="space-y-2">
@@ -383,10 +383,10 @@ const SuggestedUsers: React.FC<SuggestedUsersProps> = ({ userId }) => {
 
   return (
     <motion.div
-      initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
       className="space-y-6"
+      initial={{ opacity: 0 }}
+      transition={{ duration: 0.5 }}
     >
       <div className="flex items-center gap-2">
         <Sparkles className="h-6 w-6 text-yellow-500" />
@@ -399,17 +399,20 @@ const SuggestedUsers: React.FC<SuggestedUsersProps> = ({ userId }) => {
         <AnimatePresence mode="popLayout">
           {users?.map((user, index) => (
             <motion.div
-              key={user.id}
-              layout
-              initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
+              initial={{ opacity: 0, scale: 0.8 }}
+              key={user.id}
+              layout
               transition={{
                 duration: 0.2,
                 delay: index * 0.05,
               }}
             >
               <UserCard
+                index={index}
+                initialFollowState={user.followState?.isFollowedByUser}
+                onFollowed={() => handleUserFollowed(user.id)}
                 user={{
                   ...user,
                   _count: {
@@ -418,9 +421,6 @@ const SuggestedUsers: React.FC<SuggestedUsersProps> = ({ userId }) => {
                       user.followState?.followers ?? user._count.followers,
                   },
                 }}
-                index={index}
-                onFollowed={() => handleUserFollowed(user.id)}
-                initialFollowState={user.followState?.isFollowedByUser}
               />
             </motion.div>
           ))}
@@ -429,9 +429,9 @@ const SuggestedUsers: React.FC<SuggestedUsersProps> = ({ userId }) => {
 
       {users?.length === 0 && (
         <motion.div
-          initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           className="py-10 text-center text-muted-foreground"
+          initial={{ opacity: 0 }}
         >
           <p>No more suggestions available at the moment.</p>
         </motion.div>

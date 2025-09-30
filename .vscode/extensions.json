@@ -5,6 +5,6 @@
     "biomejs.biome",
     "wix.vscode-import-cost",
     "Prisma.prisma",
-    "bradlc.vscode-tailwindcss",
+    "bradlc.vscode-tailwindcss"
   ]
 }

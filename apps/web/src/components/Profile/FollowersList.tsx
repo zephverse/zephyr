@@ -1,19 +1,19 @@
-'use client';
+"use client";
 
-import FollowButton from '@/components/Layouts/FollowButton';
-import UserAvatar from '@/components/Layouts/UserAvatar';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@zephyr/ui/shadui/dialog';
-import { Input } from '@zephyr/ui/shadui/input';
-import { ScrollArea } from '@zephyr/ui/shadui/scroll-area';
-import { AnimatePresence, motion } from 'framer-motion';
-import { Ghost, SearchIcon, Users2 } from 'lucide-react';
-import { useState } from 'react';
+} from "@zephyr/ui/shadui/dialog";
+import { Input } from "@zephyr/ui/shadui/input";
+import { ScrollArea } from "@zephyr/ui/shadui/scroll-area";
+import { AnimatePresence, motion } from "framer-motion";
+import { Ghost, SearchIcon, Users2 } from "lucide-react";
+import { useState } from "react";
+import FollowButton from "@/components/Layouts/FollowButton";
+import UserAvatar from "@/components/Layouts/UserAvatar";
 
 interface FollowersListProps {
   userId: string;
@@ -35,11 +35,11 @@ interface Follower {
 }
 
 const emptyStateMessages = [
-  'No followers yet! Time to shine! ✨',
+  "No followers yet! Time to shine! ✨",
   "It's a bit quiet here... Too quiet! 🤫",
-  'Looking for your first follower? 👀',
-  'Your future followers are out there somewhere! 🌟',
-  'Empty follower list? Challenge accepted! 💪',
+  "Looking for your first follower? 👀",
+  "Your future followers are out there somewhere! 🌟",
+  "Empty follower list? Challenge accepted! 💪",
 ];
 
 export default function FollowersList({
@@ -48,18 +48,18 @@ export default function FollowersList({
   onCloseAction,
   loggedInUserId,
 }: FollowersListProps) {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [randomMessage] = useState(
     () =>
       emptyStateMessages[Math.floor(Math.random() * emptyStateMessages.length)]
   );
 
   const { data, isLoading } = useQuery({
-    queryKey: ['followers-list', userId],
+    queryKey: ["followers-list", userId],
     queryFn: async () => {
       const response = await fetch(`/api/users/${userId}/followers-list`);
       if (!response.ok) {
-        throw new Error('Failed to fetch followers');
+        throw new Error("Failed to fetch followers");
       }
       return response.json() as Promise<Follower[]>;
     },
@@ -73,13 +73,13 @@ export default function FollowersList({
   );
 
   return (
-    <Dialog open={isOpen} onOpenChange={onCloseAction}>
+    <Dialog onOpenChange={onCloseAction} open={isOpen}>
       <DialogContent className="max-h-[90vh] overflow-hidden border border-accent/20 bg-background/95 backdrop-blur-md sm:max-w-[425px]">
         <DialogHeader>
           <motion.div
-            initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             className="flex items-center justify-center gap-2"
+            initial={{ opacity: 0, y: -20 }}
           >
             <Users2 className="h-5 w-5 text-primary" />
             <DialogTitle>Followers</DialogTitle>
@@ -87,17 +87,17 @@ export default function FollowersList({
         </DialogHeader>
 
         <motion.div
-          initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.1 }}
           className="relative mb-4"
+          initial={{ opacity: 0 }}
+          transition={{ delay: 0.1 }}
         >
           <SearchIcon className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search followers..."
             className="border-accent/20 bg-background/50 pl-9 backdrop-blur-xs focus:border-primary/50"
-            value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search followers..."
+            value={searchQuery}
           />
         </motion.div>
 
@@ -107,11 +107,11 @@ export default function FollowersList({
               <div className="space-y-4">
                 {[...new Array(5)].map((_, i) => (
                   <motion.div
-                    key={`skeleton-${i}`}
-                    initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.1 }}
                     className="flex animate-pulse items-center space-x-4"
+                    initial={{ opacity: 0, y: 20 }}
+                    key={`skeleton-${i}`}
+                    transition={{ delay: i * 0.1 }}
                   >
                     <div className="h-10 w-10 rounded-full bg-muted" />
                     <div className="flex-1 space-y-2">
@@ -124,10 +124,10 @@ export default function FollowersList({
               // biome-ignore lint/nursery/noNestedTernary: ignore
             ) : !data || filteredFollowers?.length === 0 ? (
               <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
                 className="flex flex-col items-center justify-center space-y-4 py-12 text-center"
+                exit={{ opacity: 0, scale: 0.9 }}
+                initial={{ opacity: 0, scale: 0.9 }}
               >
                 <Ghost className="h-16 w-16 animate-bounce text-muted-foreground" />
                 <div className="space-y-2">
@@ -143,17 +143,17 @@ export default function FollowersList({
               <div className="space-y-2">
                 {filteredFollowers?.map((user, index) => (
                   <motion.div
-                    key={user.id}
-                    initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.05 }}
                     className="group relative flex items-center justify-between rounded-lg p-3 backdrop-blur-xs transition-all duration-200 hover:bg-accent/50"
+                    initial={{ opacity: 0, x: -20 }}
+                    key={user.id}
+                    transition={{ delay: index * 0.05 }}
                   >
                     <div className="flex items-center space-x-3">
                       <UserAvatar
                         avatarUrl={user.avatarUrl}
-                        size={40}
                         className="rounded-full ring-2 ring-background/50 transition-transform group-hover:scale-105"
+                        size={40}
                       />
                       <div>
                         <p className="line-clamp-1 font-medium">
@@ -170,11 +170,11 @@ export default function FollowersList({
                         whileTap={{ scale: 0.95 }}
                       >
                         <FollowButton
-                          userId={user.id}
                           initialState={{
                             isFollowedByUser: user.isFollowing,
                             followers: user._count.followers,
                           }}
+                          userId={user.id}
                         />
                       </motion.div>
                     )}

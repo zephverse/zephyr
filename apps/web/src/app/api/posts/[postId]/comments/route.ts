@@ -1,6 +1,6 @@
-import { validateRequest } from '@zephyr/auth/auth';
-import { getCommentDataInclude, prisma } from '@zephyr/db';
-import type { NextRequest } from 'next/server';
+import { validateRequest } from "@zephyr/auth/auth";
+import { getCommentDataInclude, prisma } from "@zephyr/db";
+import type { NextRequest } from "next/server";
 
 export async function POST(
   req: NextRequest,
@@ -13,7 +13,7 @@ export async function POST(
     const { user } = await validateRequest();
 
     if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await req.json();
@@ -21,7 +21,7 @@ export async function POST(
 
     if (!content?.trim()) {
       return Response.json(
-        { error: 'Comment content is required' },
+        { error: "Comment content is required" },
         { status: 400 }
       );
     }
@@ -42,7 +42,7 @@ export async function POST(
       });
 
       if (!post) {
-        throw new Error('Post not found');
+        throw new Error("Post not found");
       }
 
       await tx.user.update({
@@ -55,7 +55,7 @@ export async function POST(
           userId: user.id,
           issuerId: user.id,
           amount: 1,
-          type: 'COMMENT_CREATION',
+          type: "COMMENT_CREATION",
           postId,
           commentId: newComment.id,
         },
@@ -71,7 +71,7 @@ export async function POST(
           userId: post.userId,
           issuerId: user.id,
           amount: 5,
-          type: 'COMMENT_RECEIVED',
+          type: "COMMENT_RECEIVED",
           postId,
           commentId: newComment.id,
         },
@@ -83,7 +83,7 @@ export async function POST(
     return Response.json(comment);
   } catch (error) {
     console.error(error);
-    return Response.json({ error: 'Internal server error' }, { status: 500 });
+    return Response.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
@@ -94,13 +94,13 @@ export async function GET(
   const params = await props.params;
   const { postId } = params;
   const { searchParams } = new URL(req.url);
-  const cursor = searchParams.get('cursor');
+  const cursor = searchParams.get("cursor");
 
   try {
     const { user } = await validateRequest();
 
     if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const take = 10;
@@ -109,7 +109,7 @@ export async function GET(
       take,
       skip: cursor ? 1 : 0,
       cursor: cursor ? { id: cursor } : undefined,
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
       include: getCommentDataInclude(user.id),
     });
 
@@ -124,6 +124,6 @@ export async function GET(
     });
   } catch (error) {
     console.error(error);
-    return Response.json({ error: 'Internal server error' }, { status: 500 });
+    return Response.json({ error: "Internal server error" }, { status: 500 });
   }
 }

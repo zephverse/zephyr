@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { Avatar, AvatarFallback, AvatarImage } from '@zephyr/ui/shadui/avatar';
-import { Card, CardContent } from '@zephyr/ui/shadui/card';
-import type React from 'react';
+import { Avatar, AvatarFallback, AvatarImage } from "@zephyr/ui/shadui/avatar";
+import { Card, CardContent } from "@zephyr/ui/shadui/card";
+import type React from "react";
 
 interface FriendsProps {
   friends: Array<{
@@ -20,13 +20,13 @@ const Friends: React.FC<FriendsProps> = ({ friends }) => (
       </h2>
       <div className="space-y-4">
         {friends.map((friend, index) => (
-          <div key={index} className="flex items-center space-x-3">
+          <div className="flex items-center space-x-3" key={index}>
             <Avatar>
               <AvatarImage
-                src={friend.avatar}
                 alt={friend.name}
-                width={40}
                 height={40}
+                src={friend.avatar}
+                width={40}
               />
               <AvatarFallback>{friend.name[0]}</AvatarFallback>
             </Avatar>

@@ -1,20 +1,20 @@
-import { cn } from '@/lib/utils';
-import { Button } from '@zephyr/ui/shadui/button';
+import { Button } from "@zephyr/ui/shadui/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@zephyr/ui/shadui/tooltip';
-import { FileAudioIcon, FileCode, FileIcon, ImageIcon } from 'lucide-react';
-import { type RefObject, useEffect, useRef, useState } from 'react';
+} from "@zephyr/ui/shadui/tooltip";
+import { FileAudioIcon, FileCode, FileIcon, ImageIcon } from "lucide-react";
+import { type RefObject, useEffect, useRef, useState } from "react";
+import { cn } from "@/lib/utils";
 
 interface FileInputProps {
   onFilesSelected: (files: File[]) => void;
   disabled: boolean;
 }
 
-type FileButtonType = 'image' | 'audio' | 'document' | 'code';
+type FileButtonType = "image" | "audio" | "document" | "code";
 
 interface FileButtonProps {
   icon:
@@ -39,9 +39,9 @@ const useIsMobile = () => {
     };
 
     checkMobile();
-    window.addEventListener('resize', checkMobile);
+    window.addEventListener("resize", checkMobile);
 
-    return () => window.removeEventListener('resize', checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
   return isMobile;
@@ -76,40 +76,40 @@ export function FileInput({ onFilesSelected, disabled }: FileInputProps) {
   }: FileButtonProps) => {
     const ButtonContent = (
       <Button
-        variant="ghost"
-        size="icon"
         className={cn(
-          'relative overflow-hidden transition-all duration-300 ease-in-out',
-          'hover:scale-110 active:scale-95',
-          'before:absolute before:inset-0 before:z-0 before:opacity-0 before:transition-opacity',
-          'before:duration-300 before:ease-in-out hover:before:opacity-100',
-          hoveredButton === buttonType ? 'ring-2 ring-primary' : '',
-          buttonType === 'image' &&
-            'before:bg-gradient-to-r before:from-pink-500/10 before:to-purple-500/10',
-          buttonType === 'audio' &&
-            'before:bg-gradient-to-r before:from-blue-500/10 before:to-cyan-500/10',
-          buttonType === 'document' &&
-            'before:bg-gradient-to-r before:from-green-500/10 before:to-emerald-500/10',
-          buttonType === 'code' &&
-            'before:bg-gradient-to-r before:from-orange-500/10 before:to-amber-500/10',
-          disabled && 'cursor-not-allowed opacity-50'
+          "relative overflow-hidden transition-all duration-300 ease-in-out",
+          "hover:scale-110 active:scale-95",
+          "before:absolute before:inset-0 before:z-0 before:opacity-0 before:transition-opacity",
+          "before:duration-300 before:ease-in-out hover:before:opacity-100",
+          hoveredButton === buttonType ? "ring-2 ring-primary" : "",
+          buttonType === "image" &&
+            "before:bg-gradient-to-r before:from-pink-500/10 before:to-purple-500/10",
+          buttonType === "audio" &&
+            "before:bg-gradient-to-r before:from-blue-500/10 before:to-cyan-500/10",
+          buttonType === "document" &&
+            "before:bg-gradient-to-r before:from-green-500/10 before:to-emerald-500/10",
+          buttonType === "code" &&
+            "before:bg-gradient-to-r before:from-orange-500/10 before:to-amber-500/10",
+          disabled && "cursor-not-allowed opacity-50"
         )}
         disabled={disabled}
         onClick={() => inputRef.current?.click()}
         onMouseEnter={() => !isMobile && setHoveredButton(type)}
         onMouseLeave={() => !isMobile && setHoveredButton(null)}
+        size="icon"
+        variant="ghost"
       >
         <Icon
-          size={20}
           className={cn(
-            'relative z-10 text-muted-foreground transition-transform duration-300',
-            hoveredButton === buttonType && 'rotate-12 transform'
+            "relative z-10 text-muted-foreground transition-transform duration-300",
+            hoveredButton === buttonType && "rotate-12 transform"
           )}
+          size={20}
         />
         <span
           className={cn(
-            'absolute inset-0 z-0 bg-gradient-to-r opacity-0 transition-opacity duration-300',
-            hoveredButton === buttonType && 'opacity-10'
+            "absolute inset-0 z-0 bg-gradient-to-r opacity-0 transition-opacity duration-300",
+            hoveredButton === buttonType && "opacity-10"
           )}
         />
       </Button>
@@ -121,17 +121,17 @@ export function FileInput({ onFilesSelected, disabled }: FileInputProps) {
           <>
             {ButtonContent}
             <input
-              type="file"
               accept={accept}
-              // @ts-expect-error
               capture={capture}
-              multiple
-              ref={inputRef}
+              // @ts-expect-error
               className="sr-only"
+              multiple
               onChange={(e) => {
                 handleFileSelect(e.target.files);
-                e.target.value = '';
+                e.target.value = "";
               }}
+              ref={inputRef}
+              type="file"
             />
           </>
         ) : (
@@ -139,29 +139,29 @@ export function FileInput({ onFilesSelected, disabled }: FileInputProps) {
             <TooltipTrigger asChild>{ButtonContent}</TooltipTrigger>
             <TooltipContent
               className={cn(
-                'fade-in-50 zoom-in-95 animate-in',
-                'bg-gradient-to-r shadow-lg',
-                buttonType === 'image' && 'from-pink-500/5 to-purple-500/5',
-                buttonType === 'audio' && 'from-blue-500/5 to-cyan-500/5',
-                buttonType === 'document' &&
-                  'from-green-500/5 to-emerald-500/5',
-                buttonType === 'code' && 'from-orange-500/5 to-amber-500/5'
+                "fade-in-50 zoom-in-95 animate-in",
+                "bg-gradient-to-r shadow-lg",
+                buttonType === "image" && "from-pink-500/5 to-purple-500/5",
+                buttonType === "audio" && "from-blue-500/5 to-cyan-500/5",
+                buttonType === "document" &&
+                  "from-green-500/5 to-emerald-500/5",
+                buttonType === "code" && "from-orange-500/5 to-amber-500/5"
               )}
             >
               <p className="font-medium">{label}</p>
             </TooltipContent>
             <input
-              type="file"
               accept={accept}
-              // @ts-expect-error
               capture={capture}
-              multiple
-              ref={inputRef}
+              // @ts-expect-error
               className="sr-only"
+              multiple
               onChange={(e) => {
                 handleFileSelect(e.target.files);
-                e.target.value = '';
+                e.target.value = "";
               }}
+              ref={inputRef}
+              type="file"
             />
           </Tooltip>
         )}
@@ -174,84 +174,84 @@ export function FileInput({ onFilesSelected, disabled }: FileInputProps) {
       {isMobile ? (
         <div className="flex items-center gap-3">
           <FileButton
+            accept="image/*,video/*,.png,.jpg,.jpeg,.gif,.mp4,.mov,.avi"
+            buttonType="image"
+            capture="environment"
             icon={ImageIcon}
+            inputRef={imageInputRef}
+            // @ts-expect-error
             label="Photos & Videos"
             type="image"
-            accept="image/*,video/*,.png,.jpg,.jpeg,.gif,.mp4,.mov,.avi"
-            capture="environment"
-            // @ts-expect-error
-            inputRef={imageInputRef}
-            buttonType="image"
           />
           <FileButton
+            accept="audio/*,.mp3,.wav,.ogg,.m4a"
+            buttonType="audio"
+            capture="user"
             icon={FileAudioIcon}
+            inputRef={audioInputRef}
+            // @ts-expect-error
             label="Audio Files"
             type="audio"
-            accept="audio/*,.mp3,.wav,.ogg,.m4a"
-            capture="user"
-            // @ts-expect-error
-            inputRef={audioInputRef}
-            buttonType="audio"
           />
           <FileButton
+            accept=".pdf,.doc,.docx,.txt,.md"
+            buttonType="document"
             icon={FileIcon}
+            inputRef={documentInputRef}
+            // @ts-expect-error
             label="Documents"
             type="document"
-            accept=".pdf,.doc,.docx,.txt,.md"
-            // @ts-expect-error
-            inputRef={documentInputRef}
-            buttonType="document"
           />
           <FileButton
+            accept=".ts,.tsx,.js,.jsx,.html,.css,.scss,.less,.json,.md,.py,.java,.c,.cpp,.cs,.rb,.php,.rs,.go,.kt,.swift,.xml,.yaml,.yml,.sql"
+            buttonType="code"
             icon={FileCode}
+            inputRef={codeInputRef}
+            // @ts-expect-error
             label="Code Files"
             type="code"
-            accept=".ts,.tsx,.js,.jsx,.html,.css,.scss,.less,.json,.md,.py,.java,.c,.cpp,.cs,.rb,.php,.rs,.go,.kt,.swift,.xml,.yaml,.yml,.sql"
-            // @ts-expect-error
-            inputRef={codeInputRef}
-            buttonType="code"
           />
         </div>
       ) : (
         <TooltipProvider>
           <div className="flex items-center gap-3">
             <FileButton
+              accept="image/*,video/*,.png,.jpg,.jpeg,.gif,.mp4,.mov,.avi"
+              buttonType="image"
+              capture="environment"
               icon={ImageIcon}
+              inputRef={imageInputRef}
+              // @ts-expect-error
               label="Photos & Videos"
               type="image"
-              accept="image/*,video/*,.png,.jpg,.jpeg,.gif,.mp4,.mov,.avi"
-              capture="environment"
-              // @ts-expect-error
-              inputRef={imageInputRef}
-              buttonType="image"
             />
             <FileButton
+              accept="audio/*,.mp3,.wav,.ogg,.m4a"
+              buttonType="audio"
+              capture="user"
               icon={FileAudioIcon}
+              inputRef={audioInputRef}
+              // @ts-expect-error
               label="Audio Files"
               type="audio"
-              accept="audio/*,.mp3,.wav,.ogg,.m4a"
-              capture="user"
-              // @ts-expect-error
-              inputRef={audioInputRef}
-              buttonType="audio"
             />
             <FileButton
+              accept=".pdf,.doc,.docx,.txt,.md"
+              buttonType="document"
               icon={FileIcon}
+              inputRef={documentInputRef}
+              // @ts-expect-error
               label="Documents"
               type="document"
-              accept=".pdf,.doc,.docx,.txt,.md"
-              // @ts-expect-error
-              inputRef={documentInputRef}
-              buttonType="document"
             />
             <FileButton
+              accept=".ts,.tsx,.js,.jsx,.html,.css,.scss,.less,.json,.md,.py,.java,.c,.cpp,.cs,.rb,.php,.rs,.go,.kt,.swift,.xml,.yaml,.yml,.sql"
+              buttonType="code"
               icon={FileCode}
+              inputRef={codeInputRef}
+              // @ts-expect-error
               label="Code Files"
               type="code"
-              accept=".ts,.tsx,.js,.jsx,.html,.css,.scss,.less,.json,.md,.py,.java,.c,.cpp,.cs,.rb,.php,.rs,.go,.kt,.swift,.xml,.yaml,.yml,.sql"
-              // @ts-expect-error
-              inputRef={codeInputRef}
-              buttonType="code"
             />
           </div>
         </TooltipProvider>

@@ -1,9 +1,9 @@
-import UserAvatar from '@/components/Layouts/UserAvatar';
-import { cn } from '@/lib/utils';
-import type { NotificationData, NotificationType } from '@zephyr/db';
-import { AtSign, Heart, MessageCircle, User2 } from 'lucide-react';
-import Link from 'next/link';
-import type { JSX } from 'react';
+import type { NotificationData, NotificationType } from "@zephyr/db";
+import { AtSign, Heart, MessageCircle, User2 } from "lucide-react";
+import Link from "next/link";
+import type { JSX } from "react";
+import UserAvatar from "@/components/Layouts/UserAvatar";
+import { cn } from "@/lib/utils";
 
 interface NotificationProps {
   notification: NotificationData & {
@@ -42,18 +42,18 @@ export default function Notification({ notification }: NotificationProps) {
   const { message, icon, href } = notificationTypeMap[type];
 
   return (
-    <Link href={href} className="block">
+    <Link className="block" href={href}>
       <article
         className={cn(
-          'flex gap-3 rounded-2xl bg-card p-5 shadow-xs transition-colors hover:bg-card/70',
-          !notification.read && 'bg-primary/10'
+          "flex gap-3 rounded-2xl bg-card p-5 shadow-xs transition-colors hover:bg-card/70",
+          !notification.read && "bg-primary/10"
         )}
       >
         <div className="my-1">{icon}</div>
         <div className="space-y-3">
           <UserAvatar avatarUrl={notification.issuer.avatarUrl} size={36} />
           <div>
-            <span className="font-bold">{notification.issuer.displayName}</span>{' '}
+            <span className="font-bold">{notification.issuer.displayName}</span>{" "}
             <span>{message}</span>
           </div>
           {notification.post && (

@@ -1,6 +1,6 @@
-import { Card, CardContent } from '@zephyr/ui/shadui/card';
-import { Skeleton } from '@zephyr/ui/shadui/skeleton';
-import type React from 'react';
+import { Card, CardContent } from "@zephyr/ui/shadui/card";
+import { Skeleton } from "@zephyr/ui/shadui/skeleton";
+import type React from "react";
 
 const StoryCardSkeleton: React.FC = () => (
   <Card className="h-[300px] w-[200px] shrink-0 overflow-hidden bg-card shadow-lg">

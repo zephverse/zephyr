@@ -1,26 +1,26 @@
-'use client';
+"use client";
 
-import FollowButton from '@/components/Layouts/FollowButton';
-import UserAvatar from '@/components/Layouts/UserAvatar';
-import useDebounce from '@/hooks/useDebounce';
-import { formatNumber } from '@/lib/utils';
-import { useQuery } from '@tanstack/react-query';
-import type { UserData as BaseUserData } from '@zephyr/db';
-import { Card } from '@zephyr/ui/shadui/card';
-import { Input } from '@zephyr/ui/shadui/input';
+import { useQuery } from "@tanstack/react-query";
+import type { UserData as BaseUserData } from "@zephyr/db";
+import { Card } from "@zephyr/ui/shadui/card";
+import { Input } from "@zephyr/ui/shadui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@zephyr/ui/shadui/select';
-import { Skeleton } from '@zephyr/ui/shadui/skeleton';
-import { motion } from 'framer-motion';
-import { BadgeCheckIcon, Search, Users } from 'lucide-react';
-import Link from 'next/link';
-import { useState } from 'react';
-import type React from 'react';
+} from "@zephyr/ui/shadui/select";
+import { Skeleton } from "@zephyr/ui/shadui/skeleton";
+import { motion } from "framer-motion";
+import { BadgeCheckIcon, Search, Users } from "lucide-react";
+import Link from "next/link";
+import type React from "react";
+import { useState } from "react";
+import FollowButton from "@/components/Layouts/FollowButton";
+import UserAvatar from "@/components/Layouts/UserAvatar";
+import useDebounce from "@/hooks/useDebounce";
+import { formatNumber } from "@/lib/utils";
 
 interface UserData extends BaseUserData {
   followState?: {
@@ -34,12 +34,12 @@ interface BrowseUsersProps {
 }
 
 const BrowseUsers: React.FC<BrowseUsersProps> = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState('followers');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState("followers");
   const debouncedSearch = useDebounce(searchTerm, 300);
 
   const { data: users, isLoading } = useQuery<UserData[]>({
-    queryKey: ['browse-users', debouncedSearch, sortBy],
+    queryKey: ["browse-users", debouncedSearch, sortBy],
     queryFn: async () => {
       const params = new URLSearchParams({
         search: debouncedSearch,
@@ -48,9 +48,9 @@ const BrowseUsers: React.FC<BrowseUsersProps> = () => {
       const response = await fetch(`/api/users/browse?${params}`);
       const users = await response.json();
 
-      const followStates = await fetch('/api/users/follow-states', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const followStates = await fetch("/api/users/follow-states", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userIds: users.map((u: UserData) => u.id) }),
       }).then((r) => r.json());
 
@@ -66,7 +66,7 @@ const BrowseUsers: React.FC<BrowseUsersProps> = () => {
       <div className="mr-2 flex items-center justify-between">
         <h2 className="font-bold text-2xl">Browse Users</h2>
         <div className="flex items-center gap-2">
-          <Select value={sortBy} onValueChange={setSortBy}>
+          <Select onValueChange={setSortBy} value={sortBy}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Sort by" />
             </SelectTrigger>
@@ -84,10 +84,10 @@ const BrowseUsers: React.FC<BrowseUsersProps> = () => {
         <div className="relative">
           <Search className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 text-muted-foreground" />
           <Input
+            className="pl-9"
+            onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search users..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9"
           />
         </div>
       </Card>
@@ -96,36 +96,36 @@ const BrowseUsers: React.FC<BrowseUsersProps> = () => {
         <div className="grid gap-4 md:grid-cols-2">
           {[...new Array(6)].map((_, i) => (
             <Skeleton
-              key={i}
               className="h-[100px] w-full rounded-lg bg-muted"
+              key={i}
             />
           ))}
         </div>
       ) : (
         <motion.div
-          initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.5 }}
           className="grid gap-4 md:grid-cols-2"
+          initial={{ opacity: 0 }}
+          transition={{ duration: 0.5 }}
         >
           {users?.map((user, index) => (
             <motion.div
-              key={user.id}
-              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, y: 20 }}
+              key={user.id}
               transition={{ delay: index * 0.1 }}
             >
               <Card className="flex items-center gap-4 p-4 hover:bg-muted/50">
                 <UserAvatar
                   avatarUrl={user.avatarUrl}
-                  size={56}
                   className="shrink-0"
+                  size={56}
                 />
                 <div className="min-w-0 flex-grow">
                   <div className="flex items-center gap-1">
                     <Link
-                      href={`/users/${user.username}`}
                       className="truncate font-semibold hover:underline"
+                      href={`/users/${user.username}`}
                     >
                       {user.displayName}
                     </Link>
@@ -142,15 +142,15 @@ const BrowseUsers: React.FC<BrowseUsersProps> = () => {
                   </div>
                 </div>
                 <FollowButton
-                  userId={user.id}
                   initialState={
                     user.followState || {
                       followers: user._count.followers,
                       isFollowedByUser: false,
                     }
                   }
-                  // @ts-expect-error
                   size="sm"
+                  // @ts-expect-error
+                  userId={user.id}
                 />
               </Card>
             </motion.div>

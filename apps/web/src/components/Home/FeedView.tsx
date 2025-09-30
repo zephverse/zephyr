@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import { useQueryClient } from '@tanstack/react-query';
-import type { PostData } from '@zephyr/db';
-import { Card, CardContent } from '@zephyr/ui/shadui/card';
-import { Separator } from '@zephyr/ui/shadui/separator';
+import { useQueryClient } from "@tanstack/react-query";
+import type { PostData } from "@zephyr/db";
+import { Card, CardContent } from "@zephyr/ui/shadui/card";
+import { Separator } from "@zephyr/ui/shadui/separator";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from '@zephyr/ui/shadui/tabs';
-import { motion } from 'framer-motion';
-import React, { useEffect, useMemo, useState } from 'react';
-import PostCard from './feedview/postCard';
+} from "@zephyr/ui/shadui/tabs";
+import { motion } from "framer-motion";
+import React, { useEffect, useMemo, useState } from "react";
+import PostCard from "./feedview/postCard";
 
 interface FeedViewProps {
   posts: PostData[];
@@ -29,7 +29,7 @@ export const FeedView: React.FC<FeedViewProps> = ({ posts: initialPosts }) => {
         const feedQueries = queryClient.getQueriesData<{
           pages: { posts: PostData[] }[];
         }>({
-          queryKey: ['post-feed', 'for-you'],
+          queryKey: ["post-feed", "for-you"],
         });
 
         if (feedQueries.length > 0) {
@@ -74,36 +74,36 @@ export const FeedView: React.FC<FeedViewProps> = ({ posts: initialPosts }) => {
       all: sorted,
       scribbles: sorted.filter((post) => post.attachments.length === 0),
       snapshots: sorted.filter((post) =>
-        post.attachments.some((att) => att.type === 'IMAGE')
+        post.attachments.some((att) => att.type === "IMAGE")
       ),
       media: sorted.filter((post) =>
         post.attachments.some(
-          (att) => att.type === 'VIDEO' || att.type === 'AUDIO'
+          (att) => att.type === "VIDEO" || att.type === "AUDIO"
         )
       ),
       files: sorted.filter((post) =>
         post.attachments.some(
-          (att) => att.type === 'DOCUMENT' || att.type === 'CODE'
+          (att) => att.type === "DOCUMENT" || att.type === "CODE"
         )
       ),
     };
   }, [posts]);
 
   const tabConfig = [
-    { value: 'all', label: 'All', mobileLabel: 'All' },
-    { value: 'scribbles', label: 'Fleets', mobileLabel: 'Fleets' },
-    { value: 'snapshots', label: 'Snapshots', mobileLabel: 'Snaps' },
-    { value: 'media', label: 'Reels', mobileLabel: 'Reels' },
-    { value: 'files', label: 'Wisps', mobileLabel: 'Wisps' },
+    { value: "all", label: "All", mobileLabel: "All" },
+    { value: "scribbles", label: "Fleets", mobileLabel: "Fleets" },
+    { value: "snapshots", label: "Snapshots", mobileLabel: "Snaps" },
+    { value: "media", label: "Reels", mobileLabel: "Reels" },
+    { value: "files", label: "Wisps", mobileLabel: "Wisps" },
   ];
 
   return (
     <main className="flex-1 overflow-y-auto bg-background p-2 pb-24 sm:p-4">
       <motion.div
-        initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
         className="w-full max-w-full overflow-hidden"
+        initial={{ opacity: 0 }}
+        transition={{ duration: 0.5 }}
       >
         <Card className="mb-6 bg-card shadow-lg sm:mb-8">
           <CardContent className="p-3 sm:p-4">
@@ -114,7 +114,7 @@ export const FeedView: React.FC<FeedViewProps> = ({ posts: initialPosts }) => {
               Check out the latest fleets from around the world.
             </p>
 
-            <Tabs defaultValue="all" className="w-full">
+            <Tabs className="w-full" defaultValue="all">
               <div className="mb-3 flex justify-center sm:mb-4">
                 <TabsList className="grid w-full max-w-2xl grid-cols-5 text-xs sm:text-sm">
                   {tabConfig.map((tab) => (
@@ -136,7 +136,7 @@ export const FeedView: React.FC<FeedViewProps> = ({ posts: initialPosts }) => {
                             {index > 0 && (
                               <Separator className="my-1.5 sm:my-4" />
                             )}
-                            <MemoizedPostCard post={post} isJoined={true} />
+                            <MemoizedPostCard isJoined={true} post={post} />
                           </React.Fragment>
                         )
                       )}

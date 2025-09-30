@@ -1,7 +1,7 @@
-import { MediaPreviews } from '@/components/Home/feedview/MediaPreviews';
-import { AttachmentPreview } from '@/components/Posts/editor/AttachmentPreview';
-import type { Media } from '@prisma/client';
-import type { Attachment } from '../types';
+import type { Media } from "@prisma/client";
+import { MediaPreviews } from "@/components/Home/feedview/MediaPreviews";
+import { AttachmentPreview } from "@/components/Posts/editor/AttachmentPreview";
+import type { Attachment } from "../types";
 
 interface SupportMediaPreviewProps {
   attachments: Attachment[];
@@ -18,11 +18,11 @@ export function SupportMediaPreview({
     <div className="space-y-4">
       {attachments.map((attachment, index) => (
         <AttachmentPreview
-          key={index}
           attachment={{
             file: attachment.file,
             isUploading: false,
           }}
+          key={index}
           onRemoveClick={() => {
             if (attachment.previewUrl) {
               URL.revokeObjectURL(attachment.previewUrl);

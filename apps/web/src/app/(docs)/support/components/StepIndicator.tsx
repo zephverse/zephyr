@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import { motion } from "framer-motion";
 
 interface StepIndicatorProps {
   currentStep: number;
@@ -15,13 +15,13 @@ export function StepIndicator({ currentStep, totalSteps }: StepIndicatorProps) {
         <div className="h-2 w-2 rounded-full bg-primary/50" />
       </div>
       <motion.div
+        animate={{ opacity: 1 }}
         className="text-muted-foreground text-sm"
         initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
       >
-        {currentStep === 1 && 'Basic Information'}
-        {currentStep === 2 && 'Request Details'}
-        {currentStep === 3 && 'Additional Information'}
+        {currentStep === 1 && "Basic Information"}
+        {currentStep === 2 && "Request Details"}
+        {currentStep === 3 && "Additional Information"}
       </motion.div>
     </div>
   );

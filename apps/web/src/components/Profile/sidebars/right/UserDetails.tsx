@@ -1,36 +1,36 @@
-'use client';
+"use client";
 
-import EditProfileButton from '@/components/Layouts/EditProfileButton';
-import FollowButton from '@/components/Layouts/FollowButton';
-import UserAvatar from '@/components/Layouts/UserAvatar';
-import Linkify from '@/helpers/global/Linkify';
-import { formatNumber } from '@/lib/utils';
-import { getSecureImageUrl } from '@/lib/utils/imageUrl';
-import { useQuery } from '@tanstack/react-query';
-import type { UserData } from '@zephyr/db';
-import { useToast } from '@zephyr/ui/hooks/use-toast';
-import { Button } from '@zephyr/ui/shadui/button';
-import { Card, CardContent } from '@zephyr/ui/shadui/card';
-import { Skeleton } from '@zephyr/ui/shadui/skeleton';
+import { useQuery } from "@tanstack/react-query";
+import type { UserData } from "@zephyr/db";
+import { useToast } from "@zephyr/ui/hooks/use-toast";
+import { Button } from "@zephyr/ui/shadui/button";
+import { Card, CardContent } from "@zephyr/ui/shadui/card";
+import { Skeleton } from "@zephyr/ui/shadui/skeleton";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@zephyr/ui/shadui/tooltip';
-import { formatDate, parseISO } from 'date-fns';
-import { motion } from 'framer-motion';
+} from "@zephyr/ui/shadui/tooltip";
+import { formatDate, parseISO } from "date-fns";
+import { motion } from "framer-motion";
 import {
   BadgeCheckIcon,
   Flame,
   MoreVertical,
   UserPlus,
   Users,
-} from 'lucide-react';
-import type React from 'react';
-import { useMemo, useState } from 'react';
-import FollowersList from '../../FollowersList';
-import FollowingList from '../../FollowingList';
+} from "lucide-react";
+import type React from "react";
+import { useMemo, useState } from "react";
+import EditProfileButton from "@/components/Layouts/EditProfileButton";
+import FollowButton from "@/components/Layouts/FollowButton";
+import UserAvatar from "@/components/Layouts/UserAvatar";
+import Linkify from "@/helpers/global/Linkify";
+import { formatNumber } from "@/lib/utils";
+import { getSecureImageUrl } from "@/lib/utils/imageUrl";
+import FollowersList from "../../FollowersList";
+import FollowingList from "../../FollowingList";
 
 interface UserDetailsProps {
   userData: UserData;
@@ -50,18 +50,18 @@ const UserDetails: React.FC<UserDetailsProps> = ({
     error,
     isLoading,
   } = useQuery({
-    queryKey: ['user', initialUserData.id],
+    queryKey: ["user", initialUserData.id],
     queryFn: async () => {
       try {
         const response = await fetch(`/api/users/${initialUserData.id}`);
         if (!response.ok) {
-          throw new Error('Failed to fetch user data');
+          throw new Error("Failed to fetch user data");
         }
         const userData = await response.json();
 
-        const followStates = await fetch('/api/users/follow-states', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const followStates = await fetch("/api/users/follow-states", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ userIds: [userData.id] }),
         }).then((r) => r.json());
 
@@ -71,9 +71,9 @@ const UserDetails: React.FC<UserDetailsProps> = ({
         };
       } catch (_err) {
         toast({
-          title: 'Error',
-          description: 'Failed to load user data. Using cached data.',
-          variant: 'destructive',
+          title: "Error",
+          description: "Failed to load user data. Using cached data.",
+          variant: "destructive",
         });
         return initialUserData;
       }
@@ -83,9 +83,10 @@ const UserDetails: React.FC<UserDetailsProps> = ({
     retry: 1,
   });
 
-  const avatarUrl = useMemo(() => {
-    return userData?.avatarUrl ? getSecureImageUrl(userData.avatarUrl) : null;
-  }, [userData?.avatarUrl]);
+  const avatarUrl = useMemo(
+    () => (userData?.avatarUrl ? getSecureImageUrl(userData.avatarUrl) : null),
+    [userData?.avatarUrl]
+  );
 
   if (isLoading) {
     return <UserDetailsSkeleton />;
@@ -105,56 +106,56 @@ const UserDetails: React.FC<UserDetailsProps> = ({
   const formatCreatedAt = (date: Date | string | undefined | null) => {
     try {
       if (!date) {
-        return 'Unknown date';
+        return "Unknown date";
       }
-      const parsedDate = typeof date === 'string' ? parseISO(date) : date;
-      return formatDate(parsedDate, 'MMM d, yyyy');
+      const parsedDate = typeof date === "string" ? parseISO(date) : date;
+      return formatDate(parsedDate, "MMM d, yyyy");
     } catch (error) {
-      console.error('Error formatting date:', error);
-      return 'Unknown date';
+      console.error("Error formatting date:", error);
+      return "Unknown date";
     }
   };
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0, y: 20 }}
       transition={{ duration: 0.5 }}
     >
       <Card className="sticky top-0 overflow-hidden bg-card text-card-foreground">
         <motion.div
+          animate={{ opacity: 1 }}
           className="relative h-32"
           initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
           transition={{ delay: 0.2, duration: 0.5 }}
         >
           <div
             className="absolute inset-0 bg-center bg-cover"
             style={{
-              backgroundImage: avatarUrl ? `url(${avatarUrl})` : 'none',
-              filter: 'blur(8px) brightness(0.9)',
-              transform: 'scale(1.1)',
+              backgroundImage: avatarUrl ? `url(${avatarUrl})` : "none",
+              filter: "blur(8px) brightness(0.9)",
+              transform: "scale(1.1)",
             }}
           />
         </motion.div>
         <CardContent className="relative p-6">
           <div className="flex flex-col">
             <motion.div
+              animate={{ scale: 1, opacity: 1 }}
               className="-mt-20 relative mb-4"
               initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.3, duration: 0.5 }}
             >
               <UserAvatar
                 avatarUrl={avatarUrl}
-                size={120}
                 className="rounded-full ring-4 ring-background"
+                size={120}
               />
             </motion.div>
             <motion.div
+              animate={{ opacity: 1, x: 0 }}
               className="w-full space-y-3"
               initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.4, duration: 0.5 }}
             >
               <div className="mb-3 flex items-center justify-between">
@@ -167,7 +168,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({
                           <TooltipTrigger>
                             <div className="flex items-center justify-end font-semibold text-foreground text-lg">
                               <Flame className="mr-1 h-6 w-6 text-orange-500" />
-                              {formatNumber(userData?.aura ?? 0)}{' '}
+                              {formatNumber(userData?.aura ?? 0)}{" "}
                             </div>
                           </TooltipTrigger>
                           <TooltipContent>
@@ -181,9 +182,9 @@ const UserDetails: React.FC<UserDetailsProps> = ({
                     </Tooltip>
                   </TooltipProvider>
                   <motion.div
-                    initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     className="flex items-center justify-end gap-1.5 text-sm"
+                    initial={{ opacity: 0 }}
                   >
                     <span className="font-medium">
                       {formatNumber(userData?._count?.posts ?? 0)}
@@ -199,22 +200,22 @@ const UserDetails: React.FC<UserDetailsProps> = ({
                   <BadgeCheckIcon className="ml-1 h-4 w-4" />
                 </div>
                 <div className="text-muted-foreground">
-                  Member since{' '}
+                  Member since{" "}
                   {userData?.createdAt
                     ? formatCreatedAt(userData.createdAt)
-                    : 'Unknown date'}
+                    : "Unknown date"}
                 </div>
 
                 <div className="flex items-center gap-4">
                   <motion.div
-                    initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.45 }}
                     className="relative"
+                    initial={{ opacity: 0, y: 20 }}
+                    transition={{ delay: 0.45 }}
                   >
                     <motion.button
-                      onClick={() => setShowFollowers(true)}
                       className="flex items-center gap-1.5 rounded-md px-3 py-1.5 transition-all duration-200 hover:bg-accent/50"
+                      onClick={() => setShowFollowers(true)}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                     >
@@ -222,21 +223,21 @@ const UserDetails: React.FC<UserDetailsProps> = ({
                       <span>
                         <span className="font-semibold">
                           {formatNumber(followerInfo.followers)}
-                        </span>{' '}
+                        </span>{" "}
                         <span className="text-muted-foreground">Followers</span>
                       </span>
                     </motion.button>
                   </motion.div>
 
                   <motion.div
-                    initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5 }}
                     className="relative"
+                    initial={{ opacity: 0, y: 20 }}
+                    transition={{ delay: 0.5 }}
                   >
                     <motion.button
-                      onClick={() => setShowFollowing(true)}
                       className="flex items-center gap-1.5 rounded-md px-3 py-1.5 transition-all duration-200 hover:bg-accent/50"
+                      onClick={() => setShowFollowing(true)}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                     >
@@ -244,7 +245,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({
                       <span>
                         <span className="font-semibold">
                           {formatNumber(userData?._count?.following ?? 0)}
-                        </span>{' '}
+                        </span>{" "}
                         <span className="text-muted-foreground">Following</span>
                       </span>
                     </motion.button>
@@ -256,20 +257,20 @@ const UserDetails: React.FC<UserDetailsProps> = ({
                   <EditProfileButton user={userData} />
                 ) : (
                   <FollowButton
-                    userId={userData.id}
                     initialState={
                       userData.followState || {
                         followers: userData._count.followers,
                         isFollowedByUser: false,
                       }
                     }
+                    userId={userData.id}
                   />
                 )}
                 <Button
-                  variant="ghost"
-                  size="icon"
                   aria-label="More options"
                   disabled
+                  size="icon"
+                  variant="ghost"
                 >
                   <MoreVertical className="h-4 w-4" />
                 </Button>
@@ -278,8 +279,8 @@ const UserDetails: React.FC<UserDetailsProps> = ({
           </div>
           {userData.bio && (
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, y: 20 }}
               transition={{ delay: 0.5, duration: 0.5 }}
             >
               <hr className="my-4" />
@@ -293,16 +294,16 @@ const UserDetails: React.FC<UserDetailsProps> = ({
         </CardContent>
       </Card>
       <FollowersList
-        userId={userData?.id ?? ''}
         isOpen={showFollowers}
-        onCloseAction={() => setShowFollowers(false)}
         loggedInUserId={loggedInUserId}
+        onCloseAction={() => setShowFollowers(false)}
+        userId={userData?.id ?? ""}
       />
       <FollowingList
-        userId={userData?.id ?? ''}
         isOpen={showFollowing}
-        onCloseAction={() => setShowFollowing(false)}
         loggedInUserId={loggedInUserId}
+        onCloseAction={() => setShowFollowing(false)}
+        userId={userData?.id ?? ""}
       />
     </motion.div>
   );

@@ -1,16 +1,16 @@
-'use client';
+"use client";
 
-import { getRandomFact } from '@/components/Constants/loading-facts';
-import { GooeyText } from '@zephyr/ui/components/ui/gooey-text-morphing';
-import { SpiralAnimation } from '@zephyr/ui/components/ui/spiral-animation';
-import { Button } from '@zephyr/ui/shadui/button';
-import { AnimatePresence, motion } from 'framer-motion';
-import { Home } from 'lucide-react';
-import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { GooeyText } from "@zephyr/ui/components/ui/gooey-text-morphing";
+import { SpiralAnimation } from "@zephyr/ui/components/ui/spiral-animation";
+import { Button } from "@zephyr/ui/shadui/button";
+import { AnimatePresence, motion } from "framer-motion";
+import { Home } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { getRandomFact } from "@/components/Constants/loading-facts";
 
 export default function Loading() {
-  const [funFact, setFunFact] = useState('');
+  const [funFact, setFunFact] = useState("");
   const [showHomeLink, setShowHomeLink] = useState(false);
 
   useEffect(() => {
@@ -21,7 +21,7 @@ export default function Loading() {
   }, []);
 
   useEffect(() => {
-    const timer = setTimeout(() => setShowHomeLink(true), 10000);
+    const timer = setTimeout(() => setShowHomeLink(true), 10_000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -34,19 +34,19 @@ export default function Loading() {
       <div className="relative flex min-h-screen w-full flex-col items-center justify-center">
         <div className="relative z-10 flex flex-col items-center justify-center space-y-16">
           <GooeyText
-            texts={['Loading', 'लोडिंग', '積載中', 'Carregando', 'Загрузка']}
-            morphTime={2}
-            cooldownTime={0.25}
             className="pb-2 text-foreground opacity-60"
+            cooldownTime={0.25}
+            morphTime={2}
+            texts={["Loading", "लोडिंग", "積載中", "Carregando", "Загрузка"]}
           />
 
           <AnimatePresence mode="wait">
             <motion.div
-              key={funFact}
-              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
               className="max-w-md px-8 text-center"
+              exit={{ opacity: 0, y: -10 }}
+              initial={{ opacity: 0, y: 10 }}
+              key={funFact}
             >
               <p className="mb-3 text-base text-foreground/60">Did you know?</p>
               <p className="text-base text-foreground/80">{funFact}</p>
@@ -58,15 +58,15 @@ export default function Loading() {
           <AnimatePresence>
             {showHomeLink && (
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 20 }}
                 className="flex justify-center"
+                exit={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 20 }}
               >
                 <Link href="/">
                   <Button
-                    variant="ghost"
                     className="text-foreground/60 transition-colors hover:text-foreground/80"
+                    variant="ghost"
                   >
                     <Home className="mr-2 h-4 w-4" />
                     Taking too long? Return Home

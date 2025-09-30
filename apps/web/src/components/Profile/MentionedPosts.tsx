@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useQuery } from '@tanstack/react-query';
-import { Separator } from '@zephyr/ui/shadui/separator';
-import { Skeleton } from '@zephyr/ui/shadui/skeleton';
-import { motion } from 'framer-motion';
-import { AtSignIcon, MessageSquareIcon } from 'lucide-react';
-import React, { useMemo } from 'react';
-import PostCard from '../Home/feedview/postCard';
+import { useQuery } from "@tanstack/react-query";
+import { Separator } from "@zephyr/ui/shadui/separator";
+import { Skeleton } from "@zephyr/ui/shadui/skeleton";
+import { motion } from "framer-motion";
+import { AtSignIcon, MessageSquareIcon } from "lucide-react";
+import React, { useMemo } from "react";
+import PostCard from "../Home/feedview/postCard";
 
 interface MentionedPostsProps {
   userId: string;
@@ -18,11 +18,11 @@ const MentionedPosts: React.FC<MentionedPostsProps> = ({ userId }) => {
     isLoading,
     error,
   } = useQuery({
-    queryKey: ['mentioned-posts', userId],
+    queryKey: ["mentioned-posts", userId],
     queryFn: async () => {
       const response = await fetch(`/api/users/${userId}/mentions`);
       if (!response.ok) {
-        throw new Error('Failed to fetch mentioned posts');
+        throw new Error("Failed to fetch mentioned posts");
       }
       return response.json();
     },
@@ -30,7 +30,7 @@ const MentionedPosts: React.FC<MentionedPostsProps> = ({ userId }) => {
   });
 
   const posts = useMemo(() => {
-    if (!rawPosts || !Array.isArray(rawPosts)) {
+    if (!(rawPosts && Array.isArray(rawPosts))) {
       return [];
     }
 
@@ -64,12 +64,12 @@ const MentionedPosts: React.FC<MentionedPostsProps> = ({ userId }) => {
   if (isLoading) {
     return (
       <div
-        className="space-y-6"
         aria-busy="true"
         aria-label="Loading mentioned posts"
+        className="space-y-6"
       >
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="space-y-3">
+          <div className="space-y-3" key={i}>
             <div className="flex items-center space-x-3">
               <Skeleton className="h-10 w-10 rounded-full" />
               <div className="space-y-1">
@@ -89,12 +89,12 @@ const MentionedPosts: React.FC<MentionedPostsProps> = ({ userId }) => {
   }
 
   if (error) {
-    console.error('Error in MentionedPosts:', error);
+    console.error("Error in MentionedPosts:", error);
     return (
       <motion.div
-        initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         className="flex flex-col items-center justify-center rounded-lg border border-border bg-background p-10 text-center"
+        initial={{ opacity: 0 }}
       >
         <MessageSquareIcon className="mb-4 h-12 w-12 text-muted-foreground" />
         <h3 className="mb-2 font-semibold text-xl">Oops!</h3>
@@ -108,9 +108,9 @@ const MentionedPosts: React.FC<MentionedPostsProps> = ({ userId }) => {
   if (!posts?.length) {
     return (
       <motion.div
-        initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         className="flex flex-col items-center justify-center rounded-lg border border-border bg-background p-10 text-center"
+        initial={{ opacity: 0 }}
       >
         <AtSignIcon className="mb-4 h-12 w-12 text-muted-foreground" />
         <h3 className="mb-2 font-semibold text-xl">No Mentions</h3>
@@ -128,7 +128,7 @@ const MentionedPosts: React.FC<MentionedPostsProps> = ({ userId }) => {
       {posts.map((post, index) => (
         <React.Fragment key={post.id}>
           {index > 0 && <Separator className="my-1.5 sm:my-4" />}
-          <MemoizedPostCard post={post} isJoined={true} />
+          <MemoizedPostCard isJoined={true} post={post} />
         </React.Fragment>
       ))}
     </div>

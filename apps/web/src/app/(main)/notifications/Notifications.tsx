@@ -1,17 +1,17 @@
-'use client';
+"use client";
 
-import InfiniteScrollContainer from '@/components/Layouts/InfiniteScrollContainer';
-import LoadMoreSkeleton from '@/components/Layouts/skeletons/LoadMoreSkeleton';
-import PostsOnlyLoadingSkeleton from '@/components/Layouts/skeletons/PostOnlyLoadingSkeleton';
-import kyInstance from '@/lib/ky';
 import {
   useInfiniteQuery,
   useMutation,
   useQueryClient,
-} from '@tanstack/react-query';
-import type { NotificationsPage } from '@zephyr/db';
-import { useEffect } from 'react';
-import Notification from './Notification';
+} from "@tanstack/react-query";
+import type { NotificationsPage } from "@zephyr/db";
+import { useEffect } from "react";
+import InfiniteScrollContainer from "@/components/Layouts/InfiniteScrollContainer";
+import LoadMoreSkeleton from "@/components/Layouts/skeletons/LoadMoreSkeleton";
+import PostsOnlyLoadingSkeleton from "@/components/Layouts/skeletons/PostOnlyLoadingSkeleton";
+import kyInstance from "@/lib/ky";
+import Notification from "./Notification";
 
 export default function Notifications() {
   const {
@@ -22,11 +22,11 @@ export default function Notifications() {
     isFetchingNextPage,
     status,
   } = useInfiniteQuery({
-    queryKey: ['notifications'],
+    queryKey: ["notifications"],
     queryFn: ({ pageParam }) =>
       kyInstance
         .get(
-          '/api/notifications',
+          "/api/notifications",
           pageParam ? { searchParams: { cursor: pageParam } } : {}
         )
         .json<NotificationsPage>(),
@@ -37,14 +37,14 @@ export default function Notifications() {
   const queryClient = useQueryClient();
 
   const { mutate } = useMutation({
-    mutationFn: () => kyInstance.patch('/api/notifications/mark-as-read'),
+    mutationFn: () => kyInstance.patch("/api/notifications/mark-as-read"),
     onSuccess: () => {
-      queryClient.setQueryData(['unread-notification-count'], {
+      queryClient.setQueryData(["unread-notification-count"], {
         unreadCount: 0,
       });
     },
     onError(error) {
-      console.error('Failed to mark notifications as read', error);
+      console.error("Failed to mark notifications as read", error);
     },
   });
 
@@ -54,11 +54,11 @@ export default function Notifications() {
 
   const notifications = data?.pages.flatMap((page) => page.notifications) || [];
 
-  if (status === 'pending') {
+  if (status === "pending") {
     return <PostsOnlyLoadingSkeleton />;
   }
 
-  if (status === 'success' && !notifications.length && !hasNextPage) {
+  if (status === "success" && !notifications.length && !hasNextPage) {
     return (
       <p className="text-center text-muted-foreground">
         You don&apos;t have any rustles yet.
@@ -66,7 +66,7 @@ export default function Notifications() {
     );
   }
 
-  if (status === 'error') {
+  if (status === "error") {
     return (
       <p className="text-center text-destructive">
         An error occurred while loading rustles.

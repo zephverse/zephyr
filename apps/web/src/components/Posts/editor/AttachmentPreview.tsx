@@ -1,9 +1,9 @@
-import { getLanguageFromFileName } from '@/lib/codefileExtensions';
-import { formatFileName } from '@/lib/formatFileName';
-import { cn } from '@/lib/utils';
-import { FileAudioIcon, FileCode, FileIcon, X } from 'lucide-react';
-import Image from 'next/image';
-import { memo, useEffect, useState } from 'react';
+import { FileAudioIcon, FileCode, FileIcon, X } from "lucide-react";
+import Image from "next/image";
+import { memo, useEffect, useState } from "react";
+import { getLanguageFromFileName } from "@/lib/codefileExtensions";
+import { formatFileName } from "@/lib/formatFileName";
+import { cn } from "@/lib/utils";
 
 interface AttachmentPreviewProps {
   attachment: {
@@ -18,7 +18,7 @@ export const AttachmentPreview = memo(function AttachmentPreview({
   attachment: { file, isUploading, previewUrl: existingPreviewUrl },
   onRemoveClick,
 }: AttachmentPreviewProps) {
-  const [objectUrl, setObjectUrl] = useState<string>(existingPreviewUrl || '');
+  const [objectUrl, setObjectUrl] = useState<string>(existingPreviewUrl || "");
   const fileName = file.name;
 
   useEffect(() => {
@@ -34,24 +34,24 @@ export const AttachmentPreview = memo(function AttachmentPreview({
       return null;
     }
 
-    if (file.type.startsWith('image')) {
+    if (file.type.startsWith("image")) {
       return (
         <div className="relative flex aspect-[16/9] w-full items-center justify-center overflow-hidden rounded-2xl bg-primary/5">
           <Image
-            src={objectUrl}
             alt={fileName}
             className="h-full w-full rounded-2xl object-cover"
             layout="fill"
             objectFit="cover"
+            src={objectUrl}
           />
         </div>
       );
     }
 
     if (
-      file.type.startsWith('text/') ||
-      file.type === 'application/json' ||
-      file.type === 'application/xml'
+      file.type.startsWith("text/") ||
+      file.type === "application/json" ||
+      file.type === "application/xml"
     ) {
       const language = getLanguageFromFileName(fileName);
       return (
@@ -73,13 +73,13 @@ export const AttachmentPreview = memo(function AttachmentPreview({
       );
     }
 
-    if (file.type.startsWith('video')) {
+    if (file.type.startsWith("video")) {
       return (
         <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl bg-primary/5">
           {/* biome-ignore lint/a11y/useMediaCaption: ignore */}
           <video
-            controls
             className="h-full w-full object-cover"
+            controls
             preload="metadata"
           >
             <source src={objectUrl} type={file.type} />
@@ -89,7 +89,7 @@ export const AttachmentPreview = memo(function AttachmentPreview({
       );
     }
 
-    if (file.type.startsWith('audio')) {
+    if (file.type.startsWith("audio")) {
       return (
         <div className="w-full rounded-2xl bg-primary/5 p-6">
           <div className="flex flex-col items-center gap-4">
@@ -102,7 +102,7 @@ export const AttachmentPreview = memo(function AttachmentPreview({
               </p>
             </div>
             {/* biome-ignore lint/a11y/useMediaCaption: ignore */}
-            <audio controls className="w-full max-w-md" preload="metadata">
+            <audio className="w-full max-w-md" controls preload="metadata">
               <source src={objectUrl} type={file.type} />
               Your browser does not support the audio element.
             </audio>
@@ -122,7 +122,7 @@ export const AttachmentPreview = memo(function AttachmentPreview({
               {formatFileName(fileName)}
             </p>
             <p className="text-center text-muted-foreground text-xs">
-              {file.type || 'Document'}
+              {file.type || "Document"}
             </p>
           </div>
         </div>
@@ -133,17 +133,17 @@ export const AttachmentPreview = memo(function AttachmentPreview({
   return (
     <div
       className={cn(
-        'relative w-full transition-opacity duration-200',
-        isUploading && 'opacity-50'
+        "relative w-full transition-opacity duration-200",
+        isUploading && "opacity-50"
       )}
     >
       {renderPreview()}
       {!isUploading && (
         <button
-          type="button"
-          onClick={onRemoveClick}
-          className="absolute top-3 right-3 rounded-full bg-foreground p-1.5 text-background transition-colors hover:bg-foreground/60 focus:outline-hidden focus:ring-2 focus:ring-primary"
           aria-label="Remove attachment"
+          className="absolute top-3 right-3 rounded-full bg-foreground p-1.5 text-background transition-colors hover:bg-foreground/60 focus:outline-hidden focus:ring-2 focus:ring-primary"
+          onClick={onRemoveClick}
+          type="button"
         >
           <X size={20} />
         </button>

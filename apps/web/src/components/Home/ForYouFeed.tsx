@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import InfiniteScrollContainer from '@/components/Layouts/InfiniteScrollContainer';
-import FeedViewSkeleton from '@/components/Layouts/skeletons/FeedViewSkeleton';
-import LoadMoreSkeleton from '@/components/Layouts/skeletons/LoadMoreSkeleton';
-import kyInstance from '@/lib/ky';
-import { useInfiniteQuery } from '@tanstack/react-query';
-import type { PostsPage } from '@zephyr/db';
-import { useMemo } from 'react';
-import FeedView from './FeedView';
+import { useInfiniteQuery } from "@tanstack/react-query";
+import type { PostsPage } from "@zephyr/db";
+import { useMemo } from "react";
+import InfiniteScrollContainer from "@/components/Layouts/InfiniteScrollContainer";
+import FeedViewSkeleton from "@/components/Layouts/skeletons/FeedViewSkeleton";
+import LoadMoreSkeleton from "@/components/Layouts/skeletons/LoadMoreSkeleton";
+import kyInstance from "@/lib/ky";
+import FeedView from "./FeedView";
 
 export default function ForYouFeed() {
   const {
@@ -18,11 +18,11 @@ export default function ForYouFeed() {
     isFetchingNextPage,
     status,
   } = useInfiniteQuery({
-    queryKey: ['post-feed', 'for-you'],
+    queryKey: ["post-feed", "for-you"],
     queryFn: async ({ pageParam }) => {
       const result = await kyInstance
         .get(
-          '/api/posts/for-you',
+          "/api/posts/for-you",
           pageParam ? { searchParams: { cursor: pageParam } } : {}
         )
         .json<PostsPage>();
@@ -36,15 +36,16 @@ export default function ForYouFeed() {
     refetchOnReconnect: false,
   });
 
-  const posts = useMemo(() => {
-    return data?.pages.flatMap((page) => page.posts) || [];
-  }, [data?.pages]);
+  const posts = useMemo(
+    () => data?.pages.flatMap((page) => page.posts) || [],
+    [data?.pages]
+  );
 
-  if (status === 'pending') {
+  if (status === "pending") {
     return <FeedViewSkeleton />;
   }
 
-  if (status === 'success' && !posts.length && !hasNextPage) {
+  if (status === "success" && !posts.length && !hasNextPage) {
     return (
       <div className="p-4 text-center">
         <p className="text-muted-foreground text-sm sm:text-base">
@@ -57,7 +58,7 @@ export default function ForYouFeed() {
     );
   }
 
-  if (status === 'error') {
+  if (status === "error") {
     return (
       <div className="p-4 text-center">
         <p className="text-destructive text-sm sm:text-base">

@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import type { Session, User } from 'lucia';
-import type React from 'react';
-import { createContext, useContext } from 'react';
+import type { Session, User } from "lucia";
+import type React from "react";
+import { createContext, useContext } from "react";
 
 interface SessionContext {
   user: User;
@@ -23,7 +23,7 @@ export default function SessionProvider({
 export function useSession() {
   const context = useContext(SessionContext);
   if (!context) {
-    throw new Error('useSession must be used within a SessionProvider');
+    throw new Error("useSession must be used within a SessionProvider");
   }
   return context;
 }

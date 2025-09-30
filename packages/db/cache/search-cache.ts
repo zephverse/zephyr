@@ -1,4 +1,4 @@
-import { redis } from '../src/redis';
+import { redis } from "../src/redis";
 
 export interface SearchSuggestion {
   query: string;
@@ -18,7 +18,7 @@ export const searchSuggestionsCache = {
       }
 
       const normalizedQuery = query.toLowerCase().trim();
-      const key = 'search:suggestions';
+      const key = "search:suggestions";
 
       const pipeline = redis.pipeline();
       pipeline.zincrby(key, 1, normalizedQuery);
@@ -27,7 +27,7 @@ export const searchSuggestionsCache = {
 
       await pipeline.exec();
     } catch (error) {
-      console.error('Error adding search suggestion:', error);
+      console.error("Error adding search suggestion:", error);
     }
   },
 
@@ -38,17 +38,17 @@ export const searchSuggestionsCache = {
       }
 
       const normalizedPrefix = prefix.toLowerCase().trim();
-      const key = 'search:suggestions';
+      const key = "search:suggestions";
 
-      const results = await redis.zrevrange(key, 0, -1, 'WITHSCORES');
+      const results = await redis.zrevrange(key, 0, -1, "WITHSCORES");
       const suggestions: SearchSuggestion[] = [];
       for (let i = 0; i < results.length; i += 2) {
         const query = results[i];
-        const count = Number.parseInt(results[i + 1] || '0', 10);
+        const count = Number.parseInt(results[i + 1] || "0", 10);
 
-        // @ts-ignore
+        // @ts-expect-error
         if (query.startsWith(normalizedPrefix)) {
-          // @ts-ignore
+          // @ts-expect-error
           suggestions.push({ query, count });
           if (suggestions.length >= limit) {
             break;
@@ -58,7 +58,7 @@ export const searchSuggestionsCache = {
 
       return suggestions;
     } catch (error) {
-      console.error('Error getting search suggestions:', error);
+      console.error("Error getting search suggestions:", error);
       return [];
     }
   },
@@ -80,7 +80,7 @@ export const searchSuggestionsCache = {
 
       await pipeline.exec();
     } catch (error) {
-      console.error('Error adding to search history:', error);
+      console.error("Error adding to search history:", error);
     }
   },
 
@@ -89,7 +89,7 @@ export const searchSuggestionsCache = {
       const key = `user:${userId}:search:history`;
       return await redis.zrevrange(key, 0, MAX_HISTORY_ITEMS - 1);
     } catch (error) {
-      console.error('Error getting search history:', error);
+      console.error("Error getting search history:", error);
       return [];
     }
   },
@@ -98,7 +98,7 @@ export const searchSuggestionsCache = {
     try {
       await redis.del(`user:${userId}:search:history`);
     } catch (error) {
-      console.error('Error clearing search history:', error);
+      console.error("Error clearing search history:", error);
     }
   },
 
@@ -107,7 +107,7 @@ export const searchSuggestionsCache = {
       const key = `user:${userId}:search:history`;
       await redis.zrem(key, query);
     } catch (error) {
-      console.error('Error removing history item:', error);
+      console.error("Error removing history item:", error);
     }
   },
 };

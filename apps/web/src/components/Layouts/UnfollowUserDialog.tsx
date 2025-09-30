@@ -1,8 +1,6 @@
-import LoadingButton from '@/components/Auth/LoadingButton';
-import { useUnfollowUserMutation } from '@/hooks/userMutations';
-import { useQueryClient } from '@tanstack/react-query';
-import type { UserData } from '@zephyr/db';
-import { Button } from '@zephyr/ui/shadui/button';
+import { useQueryClient } from "@tanstack/react-query";
+import type { UserData } from "@zephyr/db";
+import { Button } from "@zephyr/ui/shadui/button";
 import {
   Dialog,
   DialogContent,
@@ -10,8 +8,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@zephyr/ui/shadui/dialog';
-import { useState } from 'react';
+} from "@zephyr/ui/shadui/dialog";
+import { useState } from "react";
+import LoadingButton from "@/components/Auth/LoadingButton";
+import { useUnfollowUserMutation } from "@/hooks/userMutations";
 
 interface UnfollowUserDialogProps {
   user: UserData;
@@ -29,7 +29,7 @@ export default function UnfollowUserDialog({
   const [isUnfollowing, setIsUnfollowing] = useState(false);
 
   function handleOpenChange(open: boolean) {
-    if (!open || (!mutation.isPending && !isUnfollowing)) {
+    if (!open || !(mutation.isPending || isUnfollowing)) {
       onClose();
     }
   }
@@ -38,7 +38,7 @@ export default function UnfollowUserDialog({
     setIsUnfollowing(true);
 
     // Optimistic update
-    queryClient.setQueryData<UserData[]>(['followed-users'], (old) =>
+    queryClient.setQueryData<UserData[]>(["followed-users"], (old) =>
       (old || []).filter((u) => u.id !== user.id)
     );
 
@@ -49,7 +49,7 @@ export default function UnfollowUserDialog({
       },
       onError: () => {
         // Revert the optimistic update if there's an error
-        queryClient.invalidateQueries({ queryKey: ['followed-users'] });
+        queryClient.invalidateQueries({ queryKey: ["followed-users"] });
       },
       onSettled: () => {
         setIsUnfollowing(false);
@@ -61,7 +61,7 @@ export default function UnfollowUserDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog onOpenChange={handleOpenChange} open={open}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Unfollow User</DialogTitle>
@@ -72,13 +72,13 @@ export default function UnfollowUserDialog({
         </DialogHeader>
         <DialogFooter>
           <LoadingButton
-            variant="destructive"
-            onClick={handleUnfollow}
             loading={isUnfollowing}
+            onClick={handleUnfollow}
+            variant="destructive"
           >
             Unfollow
           </LoadingButton>
-          <Button variant="outline" onClick={onClose} disabled={isUnfollowing}>
+          <Button disabled={isUnfollowing} onClick={onClose} variant="outline">
             Cancel
           </Button>
         </DialogFooter>

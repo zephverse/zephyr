@@ -1,23 +1,23 @@
-import { useSession } from '@/app/(main)/SessionProvider';
-import LoadingButton from '@/components/Auth/LoadingButton';
-import UserAvatar from '@/components/Layouts/UserAvatar';
-import useDebounce from '@/hooks/useDebounce';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { useToast } from '@zephyr/ui/hooks/use-toast';
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useToast } from "@zephyr/ui/hooks/use-toast";
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@zephyr/ui/shadui/dialog';
-import { Check, Loader2, SearchIcon, X } from 'lucide-react';
-import { type Key, useState } from 'react';
-import type { UserResponse } from 'stream-chat';
+} from "@zephyr/ui/shadui/dialog";
+import { Check, Loader2, SearchIcon, X } from "lucide-react";
+import { type Key, useState } from "react";
+import type { UserResponse } from "stream-chat";
 import {
   type DefaultStreamChatGenerics,
   useChatContext,
-} from 'stream-chat-react';
+} from "stream-chat-react";
+import { useSession } from "@/app/(main)/SessionProvider";
+import LoadingButton from "@/components/Auth/LoadingButton";
+import UserAvatar from "@/components/Layouts/UserAvatar";
+import useDebounce from "@/hooks/useDebounce";
 
 interface NewChatDialogProps {
   onOpenChange: (open: boolean) => void;
@@ -32,18 +32,18 @@ export default function NewChatDialog({
   const { client, setActiveChannel } = useChatContext();
   const { toast } = useToast();
   const { user: loggedInUser } = useSession();
-  const [searchInput, setSearchInput] = useState('');
+  const [searchInput, setSearchInput] = useState("");
   const searchInputDebounced = useDebounce(searchInput);
   const [selectedUsers, setSelectedUsers] = useState<
     UserResponse<DefaultStreamChatGenerics>[]
   >([]);
   const { data, isFetching, isError, isSuccess } = useQuery({
-    queryKey: ['stream-users', searchInputDebounced],
+    queryKey: ["stream-users", searchInputDebounced],
     queryFn: async () =>
       client.queryUsers(
         {
           id: { $ne: loggedInUser.id },
-          role: { $ne: 'admin' },
+          role: { $ne: "admin" },
           ...(searchInputDebounced
             ? {
                 $or: [
@@ -60,11 +60,11 @@ export default function NewChatDialog({
 
   const mutation = useMutation({
     mutationFn: async () => {
-      const channel = client.channel('messaging', {
+      const channel = client.channel("messaging", {
         members: [loggedInUser.id, ...selectedUsers.map((u) => u.id)],
         name:
           selectedUsers.length > 1
-            ? `${loggedInUser.displayName}, ${selectedUsers.map((u) => u.name).join(', ')}`
+            ? `${loggedInUser.displayName}, ${selectedUsers.map((u) => u.name).join(", ")}`
             : undefined,
       });
       await channel.create();
@@ -75,16 +75,16 @@ export default function NewChatDialog({
       onChatCreated(channel);
     },
     onError(error) {
-      console.error('Error starting chat', error);
+      console.error("Error starting chat", error);
       toast({
-        variant: 'destructive',
-        description: 'Error starting chat. Please try again.',
+        variant: "destructive",
+        description: "Error starting chat. Please try again.",
       });
     },
   });
 
   return (
-    <Dialog open onOpenChange={onOpenChange}>
+    <Dialog onOpenChange={onOpenChange} open>
       <DialogContent className="bg-card p-0">
         <DialogHeader className="px-6 pt-6">
           <DialogTitle>New whisper</DialogTitle>
@@ -93,10 +93,10 @@ export default function NewChatDialog({
           <div className="group relative">
             <SearchIcon className="-translate-y-1/2 absolute top-1/2 left-5 size-5 transform text-muted-foreground group-focus-within:text-primary" />
             <input
-              placeholder="Search zephyrian..."
               className="h-12 w-full ps-14 pe-4 focus:outline-none"
-              value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Search zephyrian..."
+              value={searchInput}
             />
           </div>
           {!!selectedUsers.length && (
@@ -104,12 +104,12 @@ export default function NewChatDialog({
               {selectedUsers.map((user) => (
                 <SelectedUserTag
                   key={user.id}
-                  user={user}
                   onRemove={() => {
                     setSelectedUsers((prev) =>
                       prev.filter((u) => u.id !== user.id)
                     );
                   }}
+                  user={user}
                 />
               ))}
             </div>
@@ -120,8 +120,6 @@ export default function NewChatDialog({
               data.users.map((user: { id: Key | null | undefined }) => (
                 <UserResult
                   key={user.id}
-                  user={user}
-                  selected={selectedUsers.some((u) => u.id === user.id)}
                   onClick={() => {
                     setSelectedUsers((prev) =>
                       prev.some((u) => u.id === user.id)
@@ -129,6 +127,8 @@ export default function NewChatDialog({
                         : [...prev, user]
                     );
                   }}
+                  selected={selectedUsers.some((u) => u.id === user.id)}
+                  user={user}
                 />
               ))}
             {isSuccess && !data.users.length && (
@@ -167,9 +167,9 @@ interface UserResultProps {
 function UserResult({ user, selected, onClick }: UserResultProps) {
   return (
     <button
-      type="button"
       className="flex w-full items-center justify-between px-4 py-2.5 transition-colors hover:bg-muted/50"
       onClick={onClick}
+      type="button"
     >
       <div className="flex items-center gap-2">
         <UserAvatar avatarUrl={user.image} />
@@ -191,9 +191,9 @@ interface SelectedUserTagProps {
 function SelectedUserTag({ user, onRemove }: SelectedUserTagProps) {
   return (
     <button
-      type="button"
-      onClick={onRemove}
       className="flex items-center gap-2 rounded-full border p-1 hover:bg-muted/50"
+      onClick={onRemove}
+      type="button"
     >
       <UserAvatar avatarUrl={user.image} size={24} />
       <p className="font-bold">{user.name}</p>

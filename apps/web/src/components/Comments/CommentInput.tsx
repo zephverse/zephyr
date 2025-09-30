@@ -1,17 +1,17 @@
-import type { PostData } from '@zephyr/db';
-import { Button } from '@zephyr/ui/shadui/button';
-import { Input } from '@zephyr/ui/shadui/input';
-import { Loader2, SendHorizonal } from 'lucide-react';
-import { useState } from 'react';
-import type React from 'react';
-import { useSubmitCommentMutation } from './mutations';
+import type { PostData } from "@zephyr/db";
+import { Button } from "@zephyr/ui/shadui/button";
+import { Input } from "@zephyr/ui/shadui/input";
+import { Loader2, SendHorizonal } from "lucide-react";
+import type React from "react";
+import { useState } from "react";
+import { useSubmitCommentMutation } from "./mutations";
 
 interface CommentInputProps {
   post: PostData;
 }
 
 export default function CommentInput({ post }: CommentInputProps) {
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
 
   const mutation = useSubmitCommentMutation(post.id);
 
@@ -28,7 +28,7 @@ export default function CommentInput({ post }: CommentInputProps) {
         content: input,
       },
       {
-        onSuccess: () => setInput(''),
+        onSuccess: () => setInput(""),
       }
     );
   }
@@ -36,16 +36,16 @@ export default function CommentInput({ post }: CommentInputProps) {
   return (
     <form className="flex w-full items-center gap-2" onSubmit={onSubmit}>
       <Input
+        autoFocus
+        onChange={(e) => setInput(e.target.value)}
         placeholder="Add your Eddie to the flow..."
         value={input}
-        onChange={(e) => setInput(e.target.value)}
-        autoFocus
       />
       <Button
+        disabled={!input.trim() || mutation.isPending}
+        size="icon"
         type="submit"
         variant="ghost"
-        size="icon"
-        disabled={!input.trim() || mutation.isPending}
       >
         {mutation.isPending ? (
           <Loader2 className="animate-spin" />

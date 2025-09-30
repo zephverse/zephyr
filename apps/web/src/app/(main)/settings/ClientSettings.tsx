@@ -1,19 +1,19 @@
-'use client';
+"use client";
 
-import { AnimatedZephyrText } from '@/app/(auth)/client/ClientLoginPage';
-import { LegalLinksCard } from '@/components/misc/LegalLinksCard';
-import { FossBanner } from '@/components/misc/foss-banner';
-import type { UserData } from '@zephyr/db';
+import type { UserData } from "@zephyr/db";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from '@zephyr/ui/shadui/tabs';
-import { motion } from 'framer-motion';
-import AccountSettings from './tabs/AccountSettings';
-import ProfileSettings from './tabs/ProfileSettings';
-import SecuritySettings from './tabs/SecuritySettings';
+} from "@zephyr/ui/shadui/tabs";
+import { motion } from "framer-motion";
+import { AnimatedZephyrText } from "@/app/(auth)/client/ClientLoginPage";
+import { FossBanner } from "@/components/misc/foss-banner";
+import { LegalLinksCard } from "@/components/misc/LegalLinksCard";
+import AccountSettings from "./tabs/AccountSettings";
+import ProfileSettings from "./tabs/ProfileSettings";
+import SecuritySettings from "./tabs/SecuritySettings";
 
 interface ClientSettingsProps {
   user: UserData;
@@ -23,34 +23,34 @@ export default function ClientSettings({ user }: ClientSettingsProps) {
   return (
     <div className="flex min-h-[calc(100vh-4rem)] w-full items-start justify-center">
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        // @ts-expect-error
         className="container max-w-4xl px-4 py-8 md:px-8 md:py-12 lg:py-16"
+        initial={{ opacity: 0, y: 20 }}
+        // @ts-expect-error
+        transition={{ duration: 0.5 }}
       >
         <h1 className="mb-10 bg-gradient-to-r from-primary to-secondary bg-clip-text text-center font-bold text-2xl text-transparent md:text-3xl lg:text-4xl">
           Settings
         </h1>
 
         <div className="relative mx-auto rounded-xl border border-border/50 bg-background/30 p-4 shadow-lg backdrop-blur-lg sm:p-6">
-          <Tabs defaultValue="profile" className="w-full">
+          <Tabs className="w-full" defaultValue="profile">
             <TabsList className="mb-6 w-full justify-start bg-background/50 backdrop-blur-md">
               <TabsTrigger
-                value="profile"
                 className="data-[state=active]:bg-primary/20"
+                value="profile"
               >
                 Profile
               </TabsTrigger>
               <TabsTrigger
-                value="account"
                 className="data-[state=active]:bg-primary/20"
+                value="account"
               >
                 Account
               </TabsTrigger>
               <TabsTrigger
-                value="security"
                 className="data-[state=active]:bg-primary/20"
+                value="security"
               >
                 Security
               </TabsTrigger>
@@ -58,12 +58,12 @@ export default function ClientSettings({ user }: ClientSettingsProps) {
 
             <div className="mt-6 space-y-6">
               <TabsContent
-                value="profile"
                 className="focus-visible:outline-none"
+                value="profile"
               >
                 <motion.div
-                  initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
+                  initial={{ opacity: 0, x: -20 }}
                   transition={{ duration: 0.3 }}
                 >
                   <ProfileSettings user={user} />
@@ -71,12 +71,12 @@ export default function ClientSettings({ user }: ClientSettingsProps) {
               </TabsContent>
 
               <TabsContent
-                value="account"
                 className="focus-visible:outline-none"
+                value="account"
               >
                 <motion.div
-                  initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
+                  initial={{ opacity: 0, x: -20 }}
                   transition={{ duration: 0.3 }}
                 >
                   <AccountSettings user={user} />
@@ -84,12 +84,12 @@ export default function ClientSettings({ user }: ClientSettingsProps) {
               </TabsContent>
 
               <TabsContent
-                value="security"
                 className="focus-visible:outline-none"
+                value="security"
               >
                 <motion.div
-                  initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
+                  initial={{ opacity: 0, x: -20 }}
                   transition={{ duration: 0.3 }}
                 >
                   <SecuritySettings user={user} />

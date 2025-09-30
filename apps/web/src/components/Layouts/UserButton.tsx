@@ -1,12 +1,7 @@
-'use client';
+"use client";
 
-import { logout } from '@/app/(auth)/actions';
-import { useSession } from '@/app/(main)/SessionProvider';
-import UserAvatar from '@/components/Layouts/UserAvatar';
-import { cn } from '@/lib/utils';
-import { getSecureImageUrl } from '@/lib/utils/imageUrl';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Button } from '@zephyr/ui/shadui/button';
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@zephyr/ui/shadui/button";
 import {
   Dialog,
   DialogContent,
@@ -14,7 +9,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@zephyr/ui/shadui/dialog';
+} from "@zephyr/ui/shadui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,8 +21,8 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from '@zephyr/ui/shadui/dropdown-menu';
-import { motion } from 'framer-motion';
+} from "@zephyr/ui/shadui/dropdown-menu";
+import { motion } from "framer-motion";
 import {
   Check,
   LogOutIcon,
@@ -36,14 +31,19 @@ import {
   Settings2Icon,
   Sun,
   UserIcon,
-} from 'lucide-react';
-import { useTheme } from 'next-themes';
-import Link from 'next/link';
-import type React from 'react';
-import { useEffect, useState } from 'react';
-import { useMediaQuery } from 'usehooks-ts';
-import { getRandomJoke } from './constants/LogoutMessages';
-import { MobileUserMenu } from './mobile/MobileUserMenu';
+} from "lucide-react";
+import Link from "next/link";
+import { useTheme } from "next-themes";
+import type React from "react";
+import { useEffect, useState } from "react";
+import { useMediaQuery } from "usehooks-ts";
+import { logout } from "@/app/(auth)/actions";
+import { useSession } from "@/app/(main)/SessionProvider";
+import UserAvatar from "@/components/Layouts/UserAvatar";
+import { cn } from "@/lib/utils";
+import { getSecureImageUrl } from "@/lib/utils/imageUrl";
+import { getRandomJoke } from "./constants/LogoutMessages";
+import { MobileUserMenu } from "./mobile/MobileUserMenu";
 
 interface UserButtonProps {
   className?: string;
@@ -64,12 +64,12 @@ export default function UserButton({
   const [logoutJoke, setLogoutJoke] = useState(getRandomJoke());
 
   const { data: avatarData } = useQuery({
-    queryKey: ['avatar', user.id],
+    queryKey: ["avatar", user.id],
     queryFn: async () => {
       try {
         const response = await fetch(`/api/users/avatar/${user.id}`);
         if (!response.ok) {
-          throw new Error('Failed to fetch avatar');
+          throw new Error("Failed to fetch avatar");
         }
         const data = await response.json();
         return {
@@ -97,7 +97,7 @@ export default function UserButton({
     setIsMounted(true);
   }, []);
 
-  const isMobile = useMediaQuery('(max-width: 768px)');
+  const isMobile = useMediaQuery("(max-width: 768px)");
   const [menuOpen, setMenuOpen] = useState(false);
 
   if (!isMounted) {
@@ -112,9 +112,9 @@ export default function UserButton({
 
   const handleLogout = async () => {
     setShowLogoutDialog(false);
-    queryClient.removeQueries({ queryKey: ['user'] });
-    queryClient.removeQueries({ queryKey: ['avatar'] });
-    queryClient.removeQueries({ queryKey: ['post-feed'] });
+    queryClient.removeQueries({ queryKey: ["user"] });
+    queryClient.removeQueries({ queryKey: ["avatar"] });
+    queryClient.removeQueries({ queryKey: ["post-feed"] });
     queryClient.clear();
 
     try {
@@ -122,32 +122,32 @@ export default function UserButton({
       if (result.redirect) {
         window.location.href = result.redirect;
       } else if (result.error) {
-        console.error('Logout error:', result.error);
+        console.error("Logout error:", result.error);
       }
     } catch (error) {
-      console.error('Failed to logout:', error);
+      console.error("Failed to logout:", error);
     }
   };
 
   const UserTrigger = () => (
     <motion.div
+      className="group relative"
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
-      className="group relative"
     >
       <div className="-inset-[2px] absolute rounded-full bg-gradient-to-r from-primary/20 via-primary/30 to-primary/20 opacity-0 blur-md transition-opacity duration-300 group-hover:opacity-100" />
       <Button
-        variant="ghost"
         className={cn(
-          'relative flex-none cursor-pointer rounded-full border border-border/50 bg-background/40 p-0 shadow-xs backdrop-blur-md transition-all duration-200 hover:border-border/80 hover:bg-background/60 hover:shadow-md',
+          "relative flex-none cursor-pointer rounded-full border border-border/50 bg-background/40 p-0 shadow-xs backdrop-blur-md transition-all duration-200 hover:border-border/80 hover:bg-background/60 hover:shadow-md",
           className
         )}
+        variant="ghost"
       >
         <UserAvatar
           avatarUrl={avatarData?.url}
-          size={35}
           className="transition-transform duration-200"
           priority
+          size={35}
         />
       </Button>
     </motion.div>
@@ -165,17 +165,17 @@ export default function UserButton({
         <MobileUserMenu
           isOpen={isMobileMenuOpen}
           onCloseAction={() => setIsMobileMenuOpen(false)}
+          onLogoutAction={handleOpenDialog}
+          setThemeAction={setTheme}
+          theme={theme}
           user={{
             ...user,
             avatarUrl: avatarData?.url,
-            email: user.email || 'No email provided',
+            email: user.email || "No email provided",
           }}
-          theme={theme}
-          setThemeAction={setTheme}
-          onLogoutAction={handleOpenDialog}
         />
 
-        <Dialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+        <Dialog onOpenChange={setShowLogoutDialog} open={showLogoutDialog}>
           <DialogContent className="fixed top-[50%] left-[50%] w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] rounded-2xl border border-border/50 bg-background/95 p-6 backdrop-blur-md duration-200 sm:w-full sm:max-w-md">
             <DialogHeader>
               <DialogTitle className="text-center font-semibold text-xl">
@@ -187,16 +187,16 @@ export default function UserButton({
             </DialogHeader>
             <DialogFooter className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:gap-2">
               <Button
-                variant="ghost"
-                onClick={() => setShowLogoutDialog(false)}
                 className="w-full sm:w-auto"
+                onClick={() => setShowLogoutDialog(false)}
+                variant="ghost"
               >
                 Cancel
               </Button>
               <Button
-                variant="destructive"
-                onClick={handleLogout}
                 className="w-full sm:w-auto"
+                onClick={handleLogout}
+                variant="destructive"
               >
                 Logout
               </Button>
@@ -209,22 +209,22 @@ export default function UserButton({
 
   return (
     <>
-      <DropdownMenu modal={false} open={menuOpen} onOpenChange={setMenuOpen}>
+      <DropdownMenu modal={false} onOpenChange={setMenuOpen} open={menuOpen}>
         <DropdownMenuTrigger asChild>
           {asChild ? (
             <div
               className={cn(
-                'z-40 flex cursor-pointer items-center gap-2',
+                "z-40 flex cursor-pointer items-center gap-2",
                 className
               )}
             >
               <UserAvatar
                 avatarUrl={avatarData?.url}
-                size={32}
                 className="transition-transform duration-200"
                 priority
+                size={32}
               />
-              {typeof children === 'function' ? children(menuOpen) : children}
+              {typeof children === "function" ? children(menuOpen) : children}
             </div>
           ) : (
             <div className="z-40">
@@ -238,19 +238,20 @@ export default function UserButton({
           sideOffset={8}
         >
           <motion.div
-            initial="closed"
             animate="open"
+            className="relative"
+            initial="closed"
             variants={{
               closed: {
                 opacity: 0,
                 scale: 0.96,
-                transformOrigin: 'top right',
+                transformOrigin: "top right",
               },
               open: {
                 opacity: 1,
                 scale: 1,
                 transition: {
-                  type: 'spring',
+                  type: "spring",
                   stiffness: 400,
                   damping: 25,
                   mass: 0.8,
@@ -258,22 +259,21 @@ export default function UserButton({
                 },
               },
             }}
-            className="relative"
           >
             <motion.div
+              className="relative overflow-hidden"
               variants={{
                 closed: { opacity: 0, y: -10 },
                 open: {
                   opacity: 1,
                   y: 0,
                   transition: {
-                    type: 'spring',
+                    type: "spring",
                     stiffness: 400,
                     damping: 25,
                   },
                 },
               }}
-              className="relative overflow-hidden"
             >
               <DropdownMenuLabel className="relative font-normal">
                 <div className="flex flex-col space-y-1 p-2">
@@ -285,7 +285,7 @@ export default function UserButton({
                           opacity: 1,
                           x: 0,
                           transition: {
-                            type: 'spring',
+                            type: "spring",
                             stiffness: 400,
                             damping: 25,
                           },
@@ -304,7 +304,7 @@ export default function UserButton({
                         opacity: 1,
                         x: 0,
                         transition: {
-                          type: 'spring',
+                          type: "spring",
                           stiffness: 400,
                           damping: 25,
                           delay: 0.05,
@@ -324,8 +324,8 @@ export default function UserButton({
 
             <div className="p-1">
               <MenuItem
-                icon={<UserIcon className="mr-2 size-4" />}
                 href={`/users/${user.username}`}
+                icon={<UserIcon className="mr-2 size-4" />}
                 label="Profile"
               />
 
@@ -337,33 +337,33 @@ export default function UserButton({
                 <DropdownMenuPortal>
                   <DropdownMenuSubContent className="animate-in cursor-pointer rounded-xl border border-border/50 bg-background/90 shadow-lg backdrop-blur-xl">
                     {[
-                      { icon: Monitor, label: 'System', value: 'system' },
-                      { icon: Sun, label: 'Light', value: 'light' },
-                      { icon: Moon, label: 'Dark', value: 'dark' },
+                      { icon: Monitor, label: "System", value: "system" },
+                      { icon: Sun, label: "Light", value: "light" },
+                      { icon: Moon, label: "Dark", value: "dark" },
                     ].map(({ icon: Icon, label, value }) => (
                       <motion.div
                         key={value}
                         whileHover={{
-                          backgroundColor: 'rgba(var(--primary), 0.1)',
+                          backgroundColor: "rgba(var(--primary), 0.1)",
                           transition: { duration: 0.2 },
                         }}
                       >
                         <DropdownMenuItem
-                          onClick={() => setTheme(value)}
                           className="cursor-pointer pr-2 focus:bg-primary/10"
+                          onClick={() => setTheme(value)}
                         >
                           <Icon className="mr-2 size-4" />
                           <span>{label}</span>
                           {theme === value && (
                             <motion.div
-                              initial={{ scale: 0, rotate: -90 }}
                               animate={{ scale: 1, rotate: 0 }}
+                              className="ml-auto pl-4"
+                              initial={{ scale: 0, rotate: -90 }}
                               transition={{
-                                type: 'spring',
+                                type: "spring",
                                 stiffness: 400,
                                 damping: 17,
                               }}
-                              className="ml-auto pl-4"
                             >
                               <Check className="size-4" />
                             </motion.div>
@@ -376,8 +376,8 @@ export default function UserButton({
               </DropdownMenuSub>
 
               <MenuItem
-                icon={<Settings2Icon className="mr-2 size-4" />}
                 href="/settings"
+                icon={<Settings2Icon className="mr-2 size-4" />}
                 label="Settings"
               />
 
@@ -386,17 +386,17 @@ export default function UserButton({
               <DropdownMenuSeparator />
 
               <motion.div
+                transition={{ duration: 0.2 }}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                transition={{ duration: 0.2 }}
               >
                 <DropdownMenuItem
-                  onClick={handleOpenDialog}
                   className="group cursor-pointer rounded-md text-red-500 hover:bg-red-500/10 focus:bg-red-500/10 focus:text-red-500"
+                  onClick={handleOpenDialog}
                 >
                   <motion.div
+                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
                     whileHover={{ rotate: 15 }}
-                    transition={{ type: 'spring', stiffness: 400, damping: 17 }}
                   >
                     <LogOutIcon className="mr-2 size-4" />
                   </motion.div>
@@ -408,7 +408,7 @@ export default function UserButton({
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <Dialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+      <Dialog onOpenChange={setShowLogoutDialog} open={showLogoutDialog}>
         <DialogContent className="fixed top-[50%] left-[50%] w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] rounded-2xl border border-border/50 bg-background/95 p-6 backdrop-blur-md duration-200 sm:w-full sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-left font-semibold text-xl">
@@ -420,16 +420,16 @@ export default function UserButton({
           </DialogHeader>
           <DialogFooter className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:gap-2">
             <Button
-              variant="ghost"
-              onClick={() => setShowLogoutDialog(false)}
               className="w-full sm:w-auto"
+              onClick={() => setShowLogoutDialog(false)}
+              variant="ghost"
             >
               Cancel
             </Button>
             <Button
-              variant="destructive"
-              onClick={handleLogout}
               className="w-full border border-red-600/20 bg-red-500/75 font-medium text-white shadow-xs backdrop-blur-md transition-all duration-200 hover:bg-red-600/90 sm:w-auto"
+              onClick={handleLogout}
+              variant="destructive"
             >
               Logout
             </Button>
@@ -449,7 +449,7 @@ const MenuItem = ({ icon, label, href }: any) => (
         opacity: 1,
         x: 0,
         transition: {
-          type: 'spring',
+          type: "spring",
           stiffness: 400,
           damping: 25,
         },
@@ -457,26 +457,26 @@ const MenuItem = ({ icon, label, href }: any) => (
     }}
   >
     <motion.div
-      whileHover={{ scale: 1.02, x: 4 }}
-      whileTap={{ scale: 0.98 }}
       transition={{
-        type: 'spring',
+        type: "spring",
         stiffness: 400,
         damping: 17,
       }}
+      whileHover={{ scale: 1.02, x: 4 }}
+      whileTap={{ scale: 0.98 }}
     >
       <DropdownMenuItem
         asChild
         className="cursor-pointer rounded-md transition-colors duration-200 hover:bg-primary/10 focus:bg-primary/10"
       >
-        <Link href={href} className="flex items-center">
+        <Link className="flex items-center" href={href}>
           <motion.div
-            whileHover={{ rotate: 10, scale: 1.1 }}
             transition={{
-              type: 'spring',
+              type: "spring",
               stiffness: 400,
               damping: 17,
             }}
+            whileHover={{ rotate: 10, scale: 1.1 }}
           >
             {icon}
           </motion.div>

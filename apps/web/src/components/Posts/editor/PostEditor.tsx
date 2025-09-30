@@ -1,28 +1,28 @@
-'use client';
+"use client";
 
-import { useSession } from '@/app/(main)/SessionProvider';
-import LoadingButton from '@/components/Auth/LoadingButton';
-import UserAvatar from '@/components/Layouts/UserAvatar';
-import { cn } from '@/lib/utils';
-import { useSubmitPostMutation } from '@/posts/editor/mutations';
-import Placeholder from '@tiptap/extension-placeholder';
-import { EditorContent, useEditor } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import { AnimatePresence, motion } from 'framer-motion';
-import { Loader2, Wind } from 'lucide-react';
-import { type ClipboardEvent, useCallback, useEffect, useState } from 'react';
-import { useDropzone } from 'react-dropzone';
-import { AttachmentPreview } from './AttachmentPreview';
-import { FileInput } from './FileInput';
-import './styles.css';
-import { MentionTags } from '@/components/Tags/MentionTags';
-import { Tags } from '@/components/Tags/Tags';
-import kyInstance from '@/lib/ky';
-import { useQuery } from '@tanstack/react-query';
-import type { TagWithCount, UserData } from '@zephyr/db';
-import { useHNShareStore } from '@zephyr/ui/store/hnShareStore';
-import { HNStoryPreview } from './HNStoryPreview';
-import useMediaUpload, { type Attachment } from './useMediaUpload';
+import Placeholder from "@tiptap/extension-placeholder";
+import { EditorContent, useEditor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import { AnimatePresence, motion } from "framer-motion";
+import { Loader2, Wind } from "lucide-react";
+import { type ClipboardEvent, useCallback, useEffect, useState } from "react";
+import { useDropzone } from "react-dropzone";
+import { useSession } from "@/app/(main)/SessionProvider";
+import LoadingButton from "@/components/Auth/LoadingButton";
+import UserAvatar from "@/components/Layouts/UserAvatar";
+import { cn } from "@/lib/utils";
+import { useSubmitPostMutation } from "@/posts/editor/mutations";
+import { AttachmentPreview } from "./AttachmentPreview";
+import { FileInput } from "./FileInput";
+import "./styles.css";
+import { useQuery } from "@tanstack/react-query";
+import type { TagWithCount, UserData } from "@zephyr/db";
+import { useHNShareStore } from "@zephyr/ui/store/hnShareStore";
+import { MentionTags } from "@/components/Tags/MentionTags";
+import { Tags } from "@/components/Tags/Tags";
+import kyInstance from "@/lib/ky";
+import { HNStoryPreview } from "./HNStoryPreview";
+import useMediaUpload, { type Attachment } from "./useMediaUpload";
 
 const containerVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -47,7 +47,7 @@ const textVariants = {
     x: [0, 2, 0, -2, 0],
     transition: {
       duration: 3,
-      ease: 'easeInOut',
+      ease: "easeInOut",
       repeat: Number.POSITIVE_INFINITY,
     },
   },
@@ -61,7 +61,7 @@ export default function PostEditor() {
   const isHNSharing = hnShareStore.isSharing;
 
   const { data: userData } = useQuery({
-    queryKey: ['user', user.id],
+    queryKey: ["user", user.id],
     queryFn: () => kyInstance.get(`/api/users/${user.id}`).json<UserData>(),
     initialData: user,
     staleTime: 1000 * 60 * 5,
@@ -81,15 +81,15 @@ export default function PostEditor() {
     onDrop: async (acceptedFiles: any[]) => {
       const validFiles = acceptedFiles.filter(
         (file: { type: string }) =>
-          file.type.startsWith('image/') || file.type.startsWith('video/')
+          file.type.startsWith("image/") || file.type.startsWith("video/")
       );
       if (validFiles.length) {
         await startUpload(validFiles);
       }
     },
     accept: {
-      'image/*': [],
-      'video/*': [],
+      "image/*": [],
+      "video/*": [],
     },
     maxSize: 128 * 1024 * 1024,
   });
@@ -108,7 +108,7 @@ export default function PostEditor() {
     ],
     editorProps: {
       attributes: {
-        class: 'focus:outline-none',
+        class: "focus:outline-none",
       },
       handleDOMEvents: {
         focus: () => {
@@ -120,7 +120,7 @@ export default function PostEditor() {
     immediatelyRender: false,
   });
 
-  const input = editor?.getText({ blockSeparator: '\n' }) || '';
+  const input = editor?.getText({ blockSeparator: "\n" }) || "";
   const [isEditorFocused, setIsEditorFocused] = useState(false);
   const [selectedTags, setSelectedTags] = useState<TagWithCount[]>([]);
   const [selectedMentions, setSelectedMentions] = useState<UserData[]>([]);
@@ -148,7 +148,7 @@ export default function PostEditor() {
   }, [isHNSharing, sharedHNStory, editor]);
 
   const onSubmit = useCallback(() => {
-    if (!input.trim() && !isHNSharing) {
+    if (!(input.trim() || isHNSharing)) {
       return;
     }
 
@@ -174,7 +174,7 @@ export default function PostEditor() {
         : {}),
     };
 
-    if (!payload.content && !isHNSharing) {
+    if (!(payload.content || isHNSharing)) {
       return;
     }
 
@@ -206,7 +206,7 @@ export default function PostEditor() {
   const onPaste = useCallback(
     (e: ClipboardEvent<HTMLInputElement>) => {
       const files = Array.from(e.clipboardData.items)
-        .filter((item) => item.kind === 'file')
+        .filter((item) => item.kind === "file")
         .map((item) => item.getAsFile()) as File[];
       startUpload(files);
     },
@@ -215,17 +215,17 @@ export default function PostEditor() {
 
   return (
     <motion.div
-      variants={containerVariants}
-      initial="hidden"
       animate="visible"
       className="flex flex-col gap-5 rounded-2xl border border-border bg-card p-5 transition-shadow duration-300 hover:shadow-lg"
+      initial="hidden"
+      variants={containerVariants}
     >
-      <motion.div variants={itemVariants} className="flex gap-5">
+      <motion.div className="flex gap-5" variants={itemVariants}>
         <div className="hidden sm:inline">
           <motion.div
+            transition={{ type: "spring", stiffness: 400, damping: 17 }}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 17 }}
           >
             <UserAvatar avatarUrl={userData.avatarUrl} />
           </motion.div>
@@ -234,22 +234,22 @@ export default function PostEditor() {
           <AnimatePresence>
             {isEditorFocused && (
               <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
                 className="mb-3 space-y-3"
+                exit={{ opacity: 0, height: 0 }}
+                initial={{ opacity: 0, height: 0 }}
               >
                 <Tags
-                  tags={selectedTags}
-                  isOwner={true}
                   className="px-1"
+                  isOwner={true}
                   onTagsChange={handleTagsChange}
                   postId={undefined}
+                  tags={selectedTags}
                 />
                 <MentionTags
-                  mentions={selectedMentions}
-                  isOwner={true}
                   className="px-1"
+                  isOwner={true}
+                  mentions={selectedMentions}
                   onMentionsChange={handleMentionsChange}
                 />
               </motion.div>
@@ -257,28 +257,28 @@ export default function PostEditor() {
           </AnimatePresence>
 
           <motion.div
-            variants={itemVariants}
             className={cn(
-              'relative rounded-2xl transition-all duration-300',
-              isDragActive && 'ring-2 ring-primary ring-offset-2'
+              "relative rounded-2xl transition-all duration-300",
+              isDragActive && "ring-2 ring-primary ring-offset-2"
             )}
+            variants={itemVariants}
           >
             <EditorContent
-              editor={editor}
               className={cn(
-                'max-h-[20rem] w-full overflow-y-auto rounded-2xl bg-[hsl(var(--background-alt))] px-5 py-3 text-foreground',
-                'transition-all duration-300 ease-in-out',
-                'focus-within:ring-2 focus-within:ring-primary',
-                isDragActive && 'outline-dashed outline-primary'
+                "max-h-[20rem] w-full overflow-y-auto rounded-2xl bg-[hsl(var(--background-alt))] px-5 py-3 text-foreground",
+                "transition-all duration-300 ease-in-out",
+                "focus-within:ring-2 focus-within:ring-primary",
+                isDragActive && "outline-dashed outline-primary"
               )}
+              editor={editor}
               onPaste={onPaste}
             />
             {isDragActive && (
               <motion.div
-                initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
                 className="absolute inset-0 flex items-center justify-center rounded-2xl bg-primary/10 backdrop-blur-sm"
+                exit={{ opacity: 0 }}
+                initial={{ opacity: 0 }}
               >
                 <p className="font-medium text-lg text-primary">
                   Drop files here
@@ -288,8 +288,8 @@ export default function PostEditor() {
             {isHNSharing && sharedHNStory && (
               <div className="mt-3">
                 <HNStoryPreview
-                  story={sharedHNStory}
                   onRemoveAction={() => hnShareStore.clearState()}
+                  story={sharedHNStory}
                 />
               </div>
             )}
@@ -301,10 +301,10 @@ export default function PostEditor() {
       <AnimatePresence mode="wait">
         {!!attachments.length && (
           <motion.div
-            layout
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
+            animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
+            initial={{ opacity: 0, height: 0 }}
+            layout
             transition={{ duration: 0.3 }}
           >
             <AttachmentPreviews
@@ -316,19 +316,19 @@ export default function PostEditor() {
       </AnimatePresence>
 
       <motion.div
-        variants={itemVariants}
         className="flex items-center justify-between gap-3"
+        variants={itemVariants}
       >
         <motion.div
-          variants={itemVariants}
           className="flex items-center justify-between gap-3"
+          variants={itemVariants}
         >
           <div className="flex items-center gap-2 text-muted-foreground">
             <Wind className="h-4 w-4 hover:text-primary" />
             <motion.div
-              variants={textVariants}
               animate="animate"
               className="pointer-events-none font-medium text-xs hover:text-primary"
+              variants={textVariants}
             >
               Zephyr
             </motion.div>
@@ -339,10 +339,10 @@ export default function PostEditor() {
           <AnimatePresence>
             {isUploading && (
               <motion.div
-                initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
                 className="flex items-center gap-2"
+                exit={{ opacity: 0, x: -20 }}
+                initial={{ opacity: 0, x: -20 }}
               >
                 <span className="font-medium text-sm tabular-nums">
                   {(uploadProgress ?? 0).toFixed(1)}%
@@ -353,16 +353,16 @@ export default function PostEditor() {
           </AnimatePresence>
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
             <FileInput
-              onFilesSelected={startUpload}
               disabled={isUploading || attachments.length >= 5}
+              onFilesSelected={startUpload}
             />
           </motion.div>
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
             <LoadingButton
-              onClick={onSubmit}
-              loading={mutation.isPending}
-              disabled={!input.trim() || isUploading}
               className="min-w-20 bg-primary text-primary-foreground hover:bg-primary/90"
+              disabled={!input.trim() || isUploading}
+              loading={mutation.isPending}
+              onClick={onSubmit}
             >
               Post
             </LoadingButton>
@@ -384,27 +384,27 @@ function AttachmentPreviews({
 }: AttachmentPreviewsProps) {
   return (
     <motion.div
-      variants={containerVariants}
-      initial="hidden"
       animate="visible"
       className={cn(
-        'flex flex-col gap-3',
-        attachments.length > 1 && 'sm:grid sm:grid-cols-2'
+        "flex flex-col gap-3",
+        attachments.length > 1 && "sm:grid sm:grid-cols-2"
       )}
+      initial="hidden"
+      variants={containerVariants}
     >
       {attachments.map((attachment, index) => (
         <motion.div
+          animate={{ opacity: 1, scale: 1 }}
+          custom={index}
+          exit={{ opacity: 0, scale: 0.8 }}
+          initial={{ opacity: 0, scale: 0.8 }}
           key={attachment.file.name}
           layoutId={attachment.file.name}
-          variants={itemVariants}
-          custom={index}
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.8 }}
           transition={{
             duration: 0.2,
             layout: { duration: 0.2 },
           }}
+          variants={itemVariants}
         >
           <AttachmentPreview
             attachment={attachment}

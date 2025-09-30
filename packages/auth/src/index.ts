@@ -1,27 +1,24 @@
-export * from './stream/services';
-
 // Core exports
 export {
-  lucia,
-  validateRequest,
   createBlankSessionCookie,
   createSessionCookie,
-} from './core/lucia';
+  lucia,
+  validateRequest,
+} from "./core/lucia";
+// Email service exports (from previous restructuring)
+export { sendPasswordResetEmail, sendVerificationEmail } from "./email/service";
 
 // OAuth providers
-export { google, github, discord, twitter } from './providers/oauth';
-
+export { discord, github, google, twitter } from "./providers/oauth";
+export * from "./stream/services";
 // Validation exports
-export { DISPOSABLE_EMAIL_DOMAINS } from './validation/constants';
+export { DISPOSABLE_EMAIL_DOMAINS } from "./validation/constants";
 export {
-  signUpSchema,
-  loginSchema,
   createPostSchema,
-  updateUserProfileSchema,
-  type SignUpValues,
   type LoginValues,
+  loginSchema,
+  type SignUpValues,
+  signUpSchema,
   type UpdateUserProfileValues,
-} from './validation/schemas';
-
-// Email service exports (from previous restructuring)
-export { sendVerificationEmail, sendPasswordResetEmail } from './email/service';
+  updateUserProfileSchema,
+} from "./validation/schemas";

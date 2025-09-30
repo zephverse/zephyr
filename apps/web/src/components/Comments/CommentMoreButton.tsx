@@ -1,14 +1,14 @@
-import type { CommentData } from '@zephyr/db';
-import { Button } from '@zephyr/ui/shadui/button';
+import type { CommentData } from "@zephyr/db";
+import { Button } from "@zephyr/ui/shadui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@zephyr/ui/shadui/dropdown-menu';
-import { MoreHorizontal, Trash2 } from 'lucide-react';
-import { useState } from 'react';
-import DeleteCommentDialog from './DeleteCommentDialog';
+} from "@zephyr/ui/shadui/dropdown-menu";
+import { MoreHorizontal, Trash2 } from "lucide-react";
+import { useState } from "react";
+import DeleteCommentDialog from "./DeleteCommentDialog";
 
 interface CommentMoreButtonProps {
   comment: CommentData;
@@ -25,7 +25,7 @@ export default function CommentMoreButton({
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button size="icon" variant="ghost" className={className}>
+          <Button className={className} size="icon" variant="ghost">
             <MoreHorizontal className="size-5 text-muted-foreground" />
           </Button>
         </DropdownMenuTrigger>
@@ -40,8 +40,8 @@ export default function CommentMoreButton({
       </DropdownMenu>
       <DeleteCommentDialog
         comment={comment}
-        open={showDeleteDialog}
         onClose={() => setShowDeleteDialog(false)}
+        open={showDeleteDialog}
       />
     </>
   );

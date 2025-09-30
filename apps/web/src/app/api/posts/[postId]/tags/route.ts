@@ -1,6 +1,6 @@
-import { validateRequest } from '@zephyr/auth/src';
-import { prisma, tagCache } from '@zephyr/db';
-import { type NextRequest, NextResponse } from 'next/server';
+import { validateRequest } from "@zephyr/auth/src";
+import { prisma, tagCache } from "@zephyr/db";
+import { type NextRequest, NextResponse } from "next/server";
 
 export async function POST(
   req: NextRequest,
@@ -13,13 +13,13 @@ export async function POST(
     ]);
 
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { postId } = params;
     if (!postId) {
       return NextResponse.json(
-        { error: 'Post ID is required' },
+        { error: "Post ID is required" },
         { status: 400 }
       );
     }
@@ -36,11 +36,11 @@ export async function POST(
     });
 
     if (!post) {
-      return NextResponse.json({ error: 'Post not found' }, { status: 404 });
+      return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
     if (post.user.id !== user.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     await prisma.post.update({
@@ -83,9 +83,9 @@ export async function POST(
 
     return NextResponse.json({ tags: updatedPost.tags });
   } catch (error) {
-    console.error('Error updating post tags:', error);
+    console.error("Error updating post tags:", error);
     return NextResponse.json(
-      { error: 'Failed to update tags' },
+      { error: "Failed to update tags" },
       { status: 500 }
     );
   }

@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import type { HNStoryType } from '@zephyr/ui/components';
-import { Badge } from '@zephyr/ui/shadui/badge';
-import { Card } from '@zephyr/ui/shadui/card';
-import { motion } from 'framer-motion';
+import type { HNStoryType } from "@zephyr/ui/components";
+import { Badge } from "@zephyr/ui/shadui/badge";
+import { Card } from "@zephyr/ui/shadui/card";
+import { motion } from "framer-motion";
 import {
   ExternalLink,
   Link,
@@ -11,7 +11,7 @@ import {
   ThumbsUp,
   User,
   X,
-} from 'lucide-react';
+} from "lucide-react";
 
 interface HNStoryPreviewProps {
   story: HNStoryType;
@@ -23,9 +23,9 @@ export function HNStoryPreview({ story, onRemoveAction }: HNStoryPreviewProps) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className="relative mb-4"
+      initial={{ opacity: 0, y: 20 }}
     >
       <Card className="overflow-hidden border-orange-500/20 bg-muted/30 p-3">
         <div className="flex items-start justify-between">
@@ -36,9 +36,9 @@ export function HNStoryPreview({ story, onRemoveAction }: HNStoryPreviewProps) {
             <span className="text-muted-foreground text-xs">Hacker News</span>
           </div>
           <button
-            type="button"
-            onClick={onRemoveAction}
             className="rounded-full p-1 text-muted-foreground hover:bg-foreground/10 hover:text-foreground"
+            onClick={onRemoveAction}
+            type="button"
           >
             <X className="h-4 w-4" />
           </button>
@@ -46,12 +46,12 @@ export function HNStoryPreview({ story, onRemoveAction }: HNStoryPreviewProps) {
 
         <div className="mt-2">
           <a
+            className="font-medium hover:text-orange-500"
             href={
               story.url || `https://news.ycombinator.com/item?id=${story.id}`
             }
-            target="_blank"
             rel="noopener noreferrer"
-            className="font-medium hover:text-orange-500"
+            target="_blank"
           >
             {story.title}
           </a>
@@ -59,8 +59,8 @@ export function HNStoryPreview({ story, onRemoveAction }: HNStoryPreviewProps) {
           {domain && (
             <div className="mt-1">
               <Badge
-                variant="secondary"
                 className="text-xs hover:bg-orange-500/10 hover:text-orange-500"
+                variant="secondary"
               >
                 <Link className="mr-1 h-3 w-3" />
                 {domain}
@@ -88,12 +88,12 @@ export function HNStoryPreview({ story, onRemoveAction }: HNStoryPreviewProps) {
           <div className="ml-auto flex items-center gap-1">
             <ExternalLink className="h-3 w-3" />
             <a
+              className="hover:text-orange-500"
               href={
                 story.url || `https://news.ycombinator.com/item?id=${story.id}`
               }
-              target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-orange-500"
+              target="_blank"
             >
               View original
             </a>

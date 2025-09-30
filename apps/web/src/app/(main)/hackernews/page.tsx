@@ -1,10 +1,10 @@
-import FeedViewSkeleton from '@/components/Layouts/skeletons/FeedViewSkeleton';
-import { HNFeed } from '@zephyr/ui/components/hackernews/HNFeed';
-import { Suspense } from 'react';
+import { HNFeed } from "@zephyr/ui/components/hackernews/HNFeed";
+import { Suspense } from "react";
+import FeedViewSkeleton from "@/components/Layouts/skeletons/FeedViewSkeleton";
 
 export const metadata = {
-  title: 'HackerNews',
-  description: 'Explore the latest stories from HackerNews',
+  title: "HackerNews",
+  description: "Explore the latest stories from HackerNews",
 };
 
 export default function HackerNewsPage() {

@@ -1,11 +1,11 @@
-import { useSession } from '@/app/(main)/SessionProvider';
-import UserAvatar from '@/components/Layouts/UserAvatar';
-import UserTooltip from '@/components/Layouts/UserTooltip';
-import Linkify from '@/helpers/global/Linkify';
-import { formatRelativeDate } from '@/lib/utils';
-import type { CommentData } from '@zephyr/db';
-import Link from 'next/link';
-import CommentMoreButton from './CommentMoreButton';
+import type { CommentData } from "@zephyr/db";
+import Link from "next/link";
+import { useSession } from "@/app/(main)/SessionProvider";
+import UserAvatar from "@/components/Layouts/UserAvatar";
+import UserTooltip from "@/components/Layouts/UserTooltip";
+import Linkify from "@/helpers/global/Linkify";
+import { formatRelativeDate } from "@/lib/utils";
+import CommentMoreButton from "./CommentMoreButton";
 
 interface CommentProps {
   comment: CommentData;
@@ -27,8 +27,8 @@ export default function Comment({ comment }: CommentProps) {
         <div className="flex items-center gap-1 text-sm">
           <UserTooltip user={comment.user}>
             <Link
-              href={`/users/${comment.user.username}`}
               className="font-medium hover:underline"
+              href={`/users/${comment.user.username}`}
             >
               {comment.user.displayName}
             </Link>
@@ -43,8 +43,8 @@ export default function Comment({ comment }: CommentProps) {
       </div>
       {comment.user.id === user.id && (
         <CommentMoreButton
-          comment={comment}
           className="ms-auto opacity-0 transition-opacity group-hover/comment:opacity-100"
+          comment={comment}
         />
       )}
     </div>

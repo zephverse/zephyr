@@ -1,13 +1,13 @@
-'use server';
+"use server";
 
-import { createPostSchema, validateRequest } from '@zephyr/auth/src';
-import type { CreatePostInput } from '@zephyr/auth/validation';
+import { createPostSchema, validateRequest } from "@zephyr/auth/src";
+import type { CreatePostInput } from "@zephyr/auth/validation";
 import {
   getPostDataInclude,
   postViewsCache,
   prisma,
   tagCache,
-} from '@zephyr/db';
+} from "@zephyr/db";
 
 type ExtendedCreatePostInput = CreatePostInput & {
   hnStory?: {
@@ -49,7 +49,7 @@ const AURA_REWARDS = {
   MAX_TOTAL: 150, // Reasonable max total per post
 };
 
-type AttachmentType = 'IMAGE' | 'VIDEO' | 'AUDIO' | 'CODE';
+type AttachmentType = "IMAGE" | "VIDEO" | "AUDIO" | "CODE";
 
 async function calculateAuraReward(mediaIds: string[], hasHNStory: boolean) {
   let totalAura = hasHNStory
@@ -97,7 +97,7 @@ export async function submitPost(input: ExtendedCreatePostInput) {
   try {
     const { user } = await validateRequest();
     if (!user) {
-      throw new Error('Unauthorized');
+      throw new Error("Unauthorized");
     }
 
     const validatedInput = createPostSchema.parse({
@@ -191,7 +191,7 @@ export async function submitPost(input: ExtendedCreatePostInput) {
           validatedInput.mentions.map((userId) =>
             tx.notification.create({
               data: {
-                type: 'MENTION',
+                type: "MENTION",
                 recipientId: userId,
                 issuerId: user.id,
                 postId: post.id,
@@ -211,7 +211,7 @@ export async function submitPost(input: ExtendedCreatePostInput) {
           userId: user.id,
           issuerId: user.id,
           amount: AURA_REWARDS.BASE_POST,
-          type: 'POST_CREATION',
+          type: "POST_CREATION",
           postId: post.id,
         },
       });
@@ -222,7 +222,7 @@ export async function submitPost(input: ExtendedCreatePostInput) {
             userId: user.id,
             issuerId: user.id,
             amount: AURA_REWARDS.HN_SHARE,
-            type: 'POST_ATTACHMENT_BONUS',
+            type: "POST_ATTACHMENT_BONUS",
             postId: post.id,
           },
         });
@@ -238,7 +238,7 @@ export async function submitPost(input: ExtendedCreatePostInput) {
             userId: user.id,
             issuerId: user.id,
             amount: attachmentBonus,
-            type: 'POST_ATTACHMENT_BONUS',
+            type: "POST_ATTACHMENT_BONUS",
             postId: post.id,
           },
         });
@@ -270,7 +270,7 @@ export async function submitPost(input: ExtendedCreatePostInput) {
 
     return newPost;
   } catch (error) {
-    console.error('Error in submitPost:', error);
+    console.error("Error in submitPost:", error);
     throw error;
   }
 }
@@ -286,7 +286,7 @@ export async function getPostViews(postId: string) {
 export async function updatePostTags(postId: string, tags: string[]) {
   const { user } = await validateRequest();
   if (!user) {
-    throw new Error('Unauthorized');
+    throw new Error("Unauthorized");
   }
 
   const post = await prisma.post.findUnique({
@@ -295,10 +295,10 @@ export async function updatePostTags(postId: string, tags: string[]) {
   });
 
   if (!post) {
-    throw new Error('Post not found');
+    throw new Error("Post not found");
   }
   if (post.userId !== user.id) {
-    throw new Error('Unauthorized');
+    throw new Error("Unauthorized");
   }
 
   const oldTags = post.tags.map((t) => t.name);
@@ -333,7 +333,7 @@ export async function updatePostMentions(postId: string, mentions: string[]) {
   try {
     const { user } = await validateRequest();
     if (!user) {
-      throw new Error('Unauthorized');
+      throw new Error("Unauthorized");
     }
 
     const post = await prisma.post.findUnique({
@@ -342,10 +342,10 @@ export async function updatePostMentions(postId: string, mentions: string[]) {
     });
 
     if (!post) {
-      throw new Error('Post not found');
+      throw new Error("Post not found");
     }
     if (post.userId !== user.id) {
-      throw new Error('Unauthorized');
+      throw new Error("Unauthorized");
     }
 
     return await prisma.$transaction(async (tx) => {
@@ -363,7 +363,7 @@ export async function updatePostMentions(postId: string, mentions: string[]) {
 
         await tx.notification.createMany({
           data: mentions.map((userId) => ({
-            type: 'MENTION',
+            type: "MENTION",
             recipientId: userId,
             issuerId: user.id,
             postId,
@@ -380,7 +380,7 @@ export async function updatePostMentions(postId: string, mentions: string[]) {
       });
     });
   } catch (error) {
-    console.error('Error updating mentions:', error);
+    console.error("Error updating mentions:", error);
     throw error;
   }
 }

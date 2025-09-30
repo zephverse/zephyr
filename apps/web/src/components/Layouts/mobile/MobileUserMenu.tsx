@@ -1,9 +1,7 @@
-'use client';
+"use client";
 
-import UserAvatar from '@/components/Layouts/UserAvatar';
-import { getSecureImageUrl } from '@/lib/utils/imageUrl';
-import { useQuery } from '@tanstack/react-query';
-import { AnimatePresence, type Variants, motion } from 'framer-motion';
+import { useQuery } from "@tanstack/react-query";
+import { AnimatePresence, motion, type Variants } from "framer-motion";
 import {
   LogOutIcon,
   Monitor,
@@ -13,9 +11,11 @@ import {
   Sun,
   UserIcon,
   X,
-} from 'lucide-react';
-import Link from 'next/link';
-import type React from 'react';
+} from "lucide-react";
+import Link from "next/link";
+import type React from "react";
+import UserAvatar from "@/components/Layouts/UserAvatar";
+import { getSecureImageUrl } from "@/lib/utils/imageUrl";
 
 interface MobileUserMenuProps {
   isOpen: boolean;
@@ -45,7 +45,7 @@ const menuVariants: Variants = {
     scale: 1,
     y: 0,
     transition: {
-      type: 'spring',
+      type: "spring",
       stiffness: 300,
       damping: 30,
     },
@@ -69,12 +69,12 @@ export function MobileUserMenu({
   onLogoutAction,
 }: MobileUserMenuProps) {
   const { data: avatarData } = useQuery({
-    queryKey: ['avatar', user.id],
+    queryKey: ["avatar", user.id],
     queryFn: async () => {
       try {
         const response = await fetch(`/api/users/avatar/${user.id}`);
         if (!response.ok) {
-          throw new Error('Failed to fetch avatar');
+          throw new Error("Failed to fetch avatar");
         }
         const data = await response.json();
         return {
@@ -100,37 +100,37 @@ export function MobileUserMenu({
       {isOpen && (
         <div className="fixed inset-0 z-[200]">
           <motion.div
-            initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
             className="fixed inset-0 bg-background/90 backdrop-blur-lg"
+            exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }}
             onClick={onCloseAction}
+            transition={{ duration: 0.2 }}
           />
           <div className="fixed inset-0 z-[201] flex items-start justify-center p-4 pt-20">
             <div className="w-full max-w-md">
               <motion.div
-                variants={menuVariants}
-                initial="hidden"
                 animate="visible"
-                exit="exit"
                 className="w-full"
+                exit="exit"
+                initial="hidden"
+                variants={menuVariants}
               >
                 <div className="relative overflow-hidden rounded-2xl border border-border/50 bg-background/100 p-6 shadow-lg backdrop-blur-xl">
                   <motion.button
+                    className="absolute top-4 right-4 rounded-full p-2 text-muted-foreground hover:bg-primary/10"
+                    onClick={onCloseAction}
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
-                    onClick={onCloseAction}
-                    className="absolute top-4 right-4 rounded-full p-2 text-muted-foreground hover:bg-primary/10"
                   >
                     <X className="size-6" />
                   </motion.button>
 
                   <div className="mt-4 flex flex-col items-center space-y-4">
                     <motion.div
+                      className="relative"
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      className="relative"
                     >
                       <div className="-inset-4 absolute rounded-full bg-gradient-to-r from-primary/20 via-primary/30 to-primary/20 opacity-75 blur-md" />
                       <Link
@@ -139,9 +139,9 @@ export function MobileUserMenu({
                       >
                         <UserAvatar
                           avatarUrl={avatarData?.url}
-                          size={100}
                           className="relative border-4 border-background shadow-xl"
                           priority
+                          size={100}
                         />
                       </Link>
                     </motion.div>
@@ -173,15 +173,15 @@ export function MobileUserMenu({
                     }}
                   >
                     <MobileMenuItem
-                      icon={<UserIcon className="size-5" />}
                       href={`/users/${user.username}`}
+                      icon={<UserIcon className="size-5" />}
                       label="Profile"
                       onClick={onCloseAction}
                     />
 
                     <MobileMenuItem
-                      icon={<Settings2Icon className="size-5" />}
                       href="/settings"
+                      icon={<Settings2Icon className="size-5" />}
                       label="Settings"
                       onClick={onCloseAction}
                     />
@@ -193,23 +193,23 @@ export function MobileUserMenu({
                       </div>
                       <div className="grid grid-cols-3 gap-2">
                         {[
-                          { icon: Sun, label: 'Light', value: 'light' },
-                          { icon: Moon, label: 'Dark', value: 'dark' },
-                          { icon: Monitor, label: 'System', value: 'system' },
+                          { icon: Sun, label: "Light", value: "light" },
+                          { icon: Moon, label: "Dark", value: "dark" },
+                          { icon: Monitor, label: "System", value: "system" },
                         ].map(({ icon: Icon, label, value }) => (
                           <motion.button
+                            className={`flex flex-col items-center gap-1 rounded-lg p-3 transition-colors ${
+                              theme === value
+                                ? "bg-primary/20 text-primary"
+                                : "hover:bg-primary/10"
+                            }`}
                             key={value}
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
                             onClick={() => {
                               setThemeAction(value);
                               onCloseAction();
                             }}
-                            className={`flex flex-col items-center gap-1 rounded-lg p-3 transition-colors ${
-                              theme === value
-                                ? 'bg-primary/20 text-primary'
-                                : 'hover:bg-primary/10'
-                            }`}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
                           >
                             <Icon className="size-5" />
                             <span className="text-xs">{label}</span>
@@ -219,10 +219,10 @@ export function MobileUserMenu({
                     </div>
 
                     <motion.button
+                      className="w-full rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-red-500 transition-colors hover:bg-red-500/20"
+                      onClick={onLogoutAction}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
-                      onClick={onLogoutAction}
-                      className="w-full rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-red-500 transition-colors hover:bg-red-500/20"
                     >
                       <div className="flex items-center justify-center gap-2">
                         <LogOutIcon className="size-5" />
@@ -251,9 +251,9 @@ function MobileMenuItem({ icon, label, href, onClick }: MobileMenuItemProps) {
   return (
     <Link href={href} onClick={onClick}>
       <motion.div
+        className="flex items-center gap-2 rounded-lg border border-border/50 p-3 transition-colors hover:bg-primary/10"
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
-        className="flex items-center gap-2 rounded-lg border border-border/50 p-3 transition-colors hover:bg-primary/10"
       >
         {icon}
         <span>{label}</span>

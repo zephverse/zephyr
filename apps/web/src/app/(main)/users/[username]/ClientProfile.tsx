@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import ScrollUpButton from '@/components/Layouts/ScrollUpButton';
-import StickyFooter from '@/components/Layouts/StinkyFooter';
-import ProfileFeedView from '@/components/Profile/ProfileFeedView';
-import LeftSidebar from '@/components/Profile/sidebars/ProfileLeftSideBar';
-import RightSidebar from '@/components/Profile/sidebars/ProfileRightSideBar';
-import type { UserData } from '@zephyr/db';
-import type React from 'react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import type { UserData } from "@zephyr/db";
+import type React from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import ScrollUpButton from "@/components/Layouts/ScrollUpButton";
+import StickyFooter from "@/components/Layouts/StinkyFooter";
+import ProfileFeedView from "@/components/Profile/ProfileFeedView";
+import LeftSidebar from "@/components/Profile/sidebars/ProfileLeftSideBar";
+import RightSidebar from "@/components/Profile/sidebars/ProfileRightSideBar";
 
 interface ProfilePageProps {
   username: string;
@@ -39,9 +39,9 @@ const ClientProfile: React.FC<ProfilePageProps> = ({
   }, []);
 
   useEffect(() => {
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
     return () => {
-      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener("scroll", handleScroll);
     };
   }, [handleScroll]);
 
@@ -50,16 +50,16 @@ const ClientProfile: React.FC<ProfilePageProps> = ({
       <div className="flex flex-1">
         {showLeftSidebar && <LeftSidebar />}
         <main
-          ref={mainRef}
           className={`flex-1 overflow-y-auto ${
-            !showLeftSidebar && !showRightSidebar ? 'w-full' : ''
+            showLeftSidebar || showRightSidebar ? "" : "w-full"
           }`}
+          ref={mainRef}
         >
           <div className="mx-auto max-w-5xl p-0 md:p-4">
             <ProfileFeedView
-              username={username}
-              userData={userData}
               loggedInUserId={loggedInUserId}
+              userData={userData}
+              username={username}
             />
           </div>
         </main>
@@ -67,14 +67,14 @@ const ClientProfile: React.FC<ProfilePageProps> = ({
           <div className="relative hidden w-96 bg-[hsl(var(--background-alt))] md:block">
             <div ref={rightSidebarRef}>
               <RightSidebar
-                username={username}
-                userData={userData}
                 loggedInUserId={loggedInUserId}
+                userData={userData}
+                username={username}
               />
             </div>
             <div
               className={`transition-all duration-300 ${
-                isFooterSticky ? 'fixed top-0 right-0 mt-20 w-96' : ''
+                isFooterSticky ? "fixed top-0 right-0 mt-20 w-96" : ""
               }`}
             >
               <StickyFooter />

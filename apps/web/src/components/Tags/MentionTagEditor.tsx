@@ -1,15 +1,15 @@
-'use client';
+"use client";
 
-import { useSession } from '@/app/(main)/SessionProvider';
-import { useUpdateMentionsMutation } from '@/posts/editor/mutations';
-import type { UserData } from '@zephyr/db';
-import { useToast } from '@zephyr/ui/hooks/use-toast';
-import { Button } from '@zephyr/ui/shadui/button';
-import { Command } from 'cmdk';
-import { AnimatePresence, motion } from 'framer-motion';
-import { Loader2, Search, X } from 'lucide-react';
-import { useState } from 'react';
-import UserAvatar from '../Layouts/UserAvatar';
+import type { UserData } from "@zephyr/db";
+import { useToast } from "@zephyr/ui/hooks/use-toast";
+import { Button } from "@zephyr/ui/shadui/button";
+import { Command } from "cmdk";
+import { AnimatePresence, motion } from "framer-motion";
+import { Loader2, Search, X } from "lucide-react";
+import { useState } from "react";
+import { useSession } from "@/app/(main)/SessionProvider";
+import { useUpdateMentionsMutation } from "@/posts/editor/mutations";
+import UserAvatar from "../Layouts/UserAvatar";
 
 const tagVariants = {
   initial: { opacity: 0, scale: 0.9, y: -10 },
@@ -18,7 +18,7 @@ const tagVariants = {
     scale: 1,
     y: 0,
     transition: {
-      type: 'spring',
+      type: "spring",
       stiffness: 200,
       damping: 20,
     },
@@ -54,7 +54,7 @@ export function MentionTagEditor({
   onCloseAction,
   onMentionsUpdateAction,
 }: MentionTagEditorProps) {
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<UserData[]>([]);
   const { toast } = useToast();
@@ -75,17 +75,17 @@ export function MentionTagEditor({
         `/api/users/search?q=${encodeURIComponent(query)}`
       );
       if (!res.ok) {
-        throw new Error('Failed to search users');
+        throw new Error("Failed to search users");
       }
       const data = await res.json();
 
       setSuggestions(data.users);
     } catch (error) {
-      console.error('Error searching users:', error);
+      console.error("Error searching users:", error);
       toast({
-        title: 'Error searching users',
-        description: 'Please try again later',
-        variant: 'destructive',
+        title: "Error searching users",
+        description: "Please try again later",
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
@@ -95,9 +95,9 @@ export function MentionTagEditor({
   const handleSelect = (user: UserData) => {
     if (selectedMentions.length >= 5) {
       toast({
-        title: 'Maximum mentions reached',
-        description: 'You can only mention up to 5 users per post',
-        variant: 'destructive',
+        title: "Maximum mentions reached",
+        description: "You can only mention up to 5 users per post",
+        variant: "destructive",
       });
       return;
     }
@@ -107,7 +107,7 @@ export function MentionTagEditor({
       setSelectedMentions(newMentions);
       onMentionsUpdateAction(newMentions);
     }
-    setSearch('');
+    setSearch("");
   };
 
   const handleRemove = (userId: string) => {
@@ -124,35 +124,33 @@ export function MentionTagEditor({
       await updateMentions.mutateAsync(selectedMentions.map((m) => m.id));
     } catch {
       toast({
-        title: 'Error',
-        description: 'Failed to update mentions. Please try again.',
-        variant: 'destructive',
+        title: "Error",
+        description: "Failed to update mentions. Please try again.",
+        variant: "destructive",
       });
     }
   };
 
-  const isCurrentUser = (userId: string) => {
-    return currentUser?.id === userId;
-  };
+  const isCurrentUser = (userId: string) => currentUser?.id === userId;
 
   return (
     <div>
       <motion.div
-        variants={containerVariants}
-        initial="initial"
         animate="animate"
         className="space-y-2"
+        initial="initial"
+        variants={containerVariants}
       >
         <div className="flex min-h-[40px] flex-wrap gap-2">
           <AnimatePresence mode="popLayout">
             {selectedMentions.map((user) => (
               <motion.div
-                key={user.id}
-                variants={tagVariants}
-                layout
                 className="group flex items-center gap-2 rounded-full border border-blue-500/20 bg-blue-500/10 px-3 py-1.5 backdrop-blur-[2px] transition-colors hover:border-blue-500/30 hover:bg-blue-500/15"
+                key={user.id}
+                layout
+                variants={tagVariants}
               >
-                <UserAvatar user={user} size={20} />
+                <UserAvatar size={20} user={user} />
                 <span className="font-medium text-blue-500 text-sm">
                   @{user.username}
                   {isCurrentUser(user.id) && (
@@ -160,9 +158,9 @@ export function MentionTagEditor({
                   )}
                 </span>
                 <button
-                  type="button"
-                  onClick={() => handleRemove(user.id)}
                   className="text-blue-500/50 transition-colors hover:text-blue-500"
+                  onClick={() => handleRemove(user.id)}
+                  type="button"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
@@ -176,25 +174,25 @@ export function MentionTagEditor({
             <div className="flex items-center border-border/50 border-b px-3">
               <Search className="mr-2 h-4 w-4 text-muted-foreground" />
               <Command.Input
-                value={search}
+                className="h-11 flex-1 border-0 bg-transparent text-sm outline-hidden placeholder:text-muted-foreground/70 focus:ring-0"
                 onValueChange={(value) => {
                   setSearch(value);
                   searchUsers(value);
                 }}
                 placeholder="Search users to mention..."
-                className="h-11 flex-1 border-0 bg-transparent text-sm outline-hidden placeholder:text-muted-foreground/70 focus:ring-0"
+                value={search}
               />
               {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
             </div>
             <Command.List className="max-h-[180px] overflow-y-auto p-2">
               {suggestions.map((user) => (
                 <Command.Item
-                  key={user.id}
-                  value={user.username}
-                  onSelect={() => handleSelect(user)}
                   className="group flex cursor-pointer items-center gap-2 rounded-md p-2 text-sm hover:bg-accent"
+                  key={user.id}
+                  onSelect={() => handleSelect(user)}
+                  value={user.username}
                 >
-                  <UserAvatar user={user} size={24} />
+                  <UserAvatar size={24} user={user} />
                   <div className="flex flex-col">
                     <span className="font-medium">{user.displayName}</span>
                     <span className="text-muted-foreground text-xs">
@@ -217,15 +215,15 @@ export function MentionTagEditor({
 
         <div className="flex justify-end gap-2 pt-2">
           <Button
-            variant="ghost"
-            onClick={onCloseAction}
             className="hover:bg-destructive/10 hover:text-destructive"
+            onClick={onCloseAction}
+            variant="ghost"
           >
             Cancel
           </Button>
           <Button
-            onClick={handleSave}
             className="min-w-[80px] bg-primary text-primary-foreground hover:bg-primary/90"
+            onClick={handleSave}
           >
             Save Changes
           </Button>

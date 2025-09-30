@@ -1,6 +1,5 @@
-import LoadingButton from '@/components/Auth/LoadingButton';
-import type { CommentData } from '@zephyr/db';
-import { Button } from '@zephyr/ui/shadui/button';
+import type { CommentData } from "@zephyr/db";
+import { Button } from "@zephyr/ui/shadui/button";
 import {
   Dialog,
   DialogContent,
@@ -8,8 +7,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@zephyr/ui/shadui/dialog';
-import { useDeleteCommentMutation } from './mutations';
+} from "@zephyr/ui/shadui/dialog";
+import LoadingButton from "@/components/Auth/LoadingButton";
+import { useDeleteCommentMutation } from "./mutations";
 
 interface DeleteCommentDialogProps {
   comment: CommentData;
@@ -25,13 +25,13 @@ export default function DeleteCommentDialog({
   const mutation = useDeleteCommentMutation();
 
   function handleOpenChange(open: boolean) {
-    if (!open || !mutation.isPending) {
+    if (!(open && mutation.isPending)) {
       onClose();
     }
   }
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog onOpenChange={handleOpenChange} open={open}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Delete Eddy?</DialogTitle>
@@ -42,16 +42,16 @@ export default function DeleteCommentDialog({
         </DialogHeader>
         <DialogFooter>
           <LoadingButton
-            variant="destructive"
-            onClick={() => mutation.mutate(comment.id, { onSuccess: onClose })}
             loading={mutation.isPending}
+            onClick={() => mutation.mutate(comment.id, { onSuccess: onClose })}
+            variant="destructive"
           >
             Delete
           </LoadingButton>
           <Button
-            variant="outline"
-            onClick={onClose}
             disabled={mutation.isPending}
+            onClick={onClose}
+            variant="outline"
           >
             Cancel
           </Button>

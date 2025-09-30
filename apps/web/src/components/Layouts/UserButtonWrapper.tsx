@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useSession } from '@/app/(main)/SessionProvider';
-import UserButton from '@/components/Layouts/UserButton';
-import { cn } from '@/lib/utils';
-import { ChevronDown } from 'lucide-react';
-import type React from 'react';
+import { ChevronDown } from "lucide-react";
+import type React from "react";
+import { useSession } from "@/app/(main)/SessionProvider";
+import UserButton from "@/components/Layouts/UserButton";
+import { cn } from "@/lib/utils";
 
 interface UserButtonWrapperProps {
   className?: string;
@@ -17,7 +17,7 @@ const UserButtonWrapper: React.FC<UserButtonWrapperProps> = ({ className }) => {
     <UserButton
       asChild
       className={cn(
-        'group h-11 items-center gap-2 overflow-hidden rounded-xl border border-border/50 bg-card/70 px-1 py-1.5 shadow-xs backdrop-blur-md transition-colors duration-200 hover:bg-card/80',
+        "group h-11 items-center gap-2 overflow-hidden rounded-xl border border-border/50 bg-card/70 px-1 py-1.5 shadow-xs backdrop-blur-md transition-colors duration-200 hover:bg-card/80",
         className
       )}
     >
@@ -34,8 +34,8 @@ const UserButtonWrapper: React.FC<UserButtonWrapperProps> = ({ className }) => {
             </div>
             <ChevronDown
               className={cn(
-                'h-4 w-4 text-primary transition-transform duration-200 group-hover:text-primary/80',
-                open ? 'rotate-180' : 'rotate-0'
+                "h-4 w-4 text-primary transition-transform duration-200 group-hover:text-primary/80",
+                open ? "rotate-180" : "rotate-0"
               )}
             />
           </div>

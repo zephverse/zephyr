@@ -1,13 +1,13 @@
-import { validateRequest } from '@zephyr/auth/auth';
-import { getUserDataSelect, prisma } from '@zephyr/db';
-import { redirect } from 'next/navigation';
-import ClientSettings from './ClientSettings';
+import { validateRequest } from "@zephyr/auth/auth";
+import { getUserDataSelect, prisma } from "@zephyr/db";
+import { redirect } from "next/navigation";
+import ClientSettings from "./ClientSettings";
 
 export default async function SettingsPage() {
   const { user: authUser } = await validateRequest();
 
   if (!authUser) {
-    redirect('/login');
+    redirect("/login");
   }
 
   const user = await prisma.user.findUnique({
@@ -16,7 +16,7 @@ export default async function SettingsPage() {
   });
 
   if (!user) {
-    redirect('/login');
+    redirect("/login");
   }
 
   return <ClientSettings user={user} />;

@@ -1,19 +1,19 @@
-'use client';
+"use client";
 
-import { useSession } from '@/app/(main)/SessionProvider';
-import Linkify from '@/helpers/global/Linkify';
-import type { FollowerInfo, UserData } from '@zephyr/db';
+import type { FollowerInfo, UserData } from "@zephyr/db";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@zephyr/ui/shadui/tooltip';
-import Link from 'next/link';
-import { type PropsWithChildren, useEffect, useState } from 'react';
-import FollowButton from './FollowButton';
-import FollowerCount from './FollowerCount';
-import UserAvatar from './UserAvatar';
+} from "@zephyr/ui/shadui/tooltip";
+import Link from "next/link";
+import { type PropsWithChildren, useEffect, useState } from "react";
+import { useSession } from "@/app/(main)/SessionProvider";
+import Linkify from "@/helpers/global/Linkify";
+import FollowButton from "./FollowButton";
+import FollowerCount from "./FollowerCount";
+import UserAvatar from "./UserAvatar";
 
 interface UserTooltipProps extends PropsWithChildren {
   user: UserData;
@@ -24,15 +24,15 @@ export default function UserTooltip({ children, user }: UserTooltipProps) {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       setIsMobile(window.innerWidth < 768);
       const handleResize = () => {
         setIsMobile(window.innerWidth < 768);
       };
 
-      window.addEventListener('resize', handleResize);
+      window.addEventListener("resize", handleResize);
       return () => {
-        window.removeEventListener('resize', handleResize);
+        window.removeEventListener("resize", handleResize);
       };
     }
   }, []);
@@ -58,10 +58,10 @@ export default function UserTooltip({ children, user }: UserTooltipProps) {
           <div className="flex max-w-80 flex-col gap-3 break-words px-1 py-2.5 md:min-w-52">
             <div className="flex items-center justify-between gap-2">
               <Link href={`/users/${user.username}`}>
-                <UserAvatar size={70} avatarUrl={user.avatarUrl} />
+                <UserAvatar avatarUrl={user.avatarUrl} size={70} />
               </Link>
               {loggedInUser && loggedInUser.id !== user.id && (
-                <FollowButton userId={user.id} initialState={followerState} />
+                <FollowButton initialState={followerState} userId={user.id} />
               )}
             </div>
             <div>
@@ -80,7 +80,7 @@ export default function UserTooltip({ children, user }: UserTooltipProps) {
               </Linkify>
             )}
             <div className="text-card-foreground">
-              <FollowerCount userId={user.id} initialState={followerState} />
+              <FollowerCount initialState={followerState} userId={user.id} />
             </div>
           </div>
         </TooltipContent>

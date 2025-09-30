@@ -1,6 +1,6 @@
-import { validateRequest } from '@zephyr/auth/auth';
-import type { BookmarkInfo } from '@zephyr/db';
-import { prisma } from '@zephyr/db';
+import { validateRequest } from "@zephyr/auth/auth";
+import type { BookmarkInfo } from "@zephyr/db";
+import { prisma } from "@zephyr/db";
 
 export async function GET(
   _req: Request,
@@ -12,7 +12,7 @@ export async function GET(
   try {
     const { user: loggedInUser } = await validateRequest();
     if (!loggedInUser) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const bookmark = await prisma.bookmark.findUnique({
@@ -31,7 +31,7 @@ export async function GET(
     return Response.json(data);
   } catch (error) {
     console.error(error);
-    return Response.json({ error: 'Internal server error' }, { status: 500 });
+    return Response.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
@@ -46,7 +46,7 @@ export async function POST(
     const { user: loggedInUser } = await validateRequest();
 
     if (!loggedInUser) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     await prisma.$transaction(async (tx) => {
@@ -70,7 +70,7 @@ export async function POST(
       });
 
       if (!post) {
-        throw new Error('Post not found');
+        throw new Error("Post not found");
       }
 
       await tx.user.update({
@@ -83,7 +83,7 @@ export async function POST(
           userId: loggedInUser.id,
           issuerId: loggedInUser.id,
           amount: 2,
-          type: 'POST_BOOKMARKED',
+          type: "POST_BOOKMARKED",
           postId,
         },
       });
@@ -98,7 +98,7 @@ export async function POST(
           userId: post.userId,
           issuerId: loggedInUser.id,
           amount: 10,
-          type: 'POST_BOOKMARK_RECEIVED',
+          type: "POST_BOOKMARK_RECEIVED",
           postId,
         },
       });
@@ -107,7 +107,7 @@ export async function POST(
     return new Response();
   } catch (error) {
     console.error(error);
-    return Response.json({ error: 'Internal server error' }, { status: 500 });
+    return Response.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
@@ -122,7 +122,7 @@ export async function DELETE(
     const { user: loggedInUser } = await validateRequest();
 
     if (!loggedInUser) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     await prisma.$transaction(async (tx) => {
@@ -139,7 +139,7 @@ export async function DELETE(
       });
 
       if (!post) {
-        throw new Error('Post not found');
+        throw new Error("Post not found");
       }
 
       await tx.user.update({
@@ -156,6 +156,6 @@ export async function DELETE(
     return new Response();
   } catch (error) {
     console.error(error);
-    return Response.json({ error: 'Internal server error' }, { status: 500 });
+    return Response.json({ error: "Internal server error" }, { status: 500 });
   }
 }

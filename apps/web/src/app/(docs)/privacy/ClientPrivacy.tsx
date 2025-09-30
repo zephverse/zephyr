@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import ScrollUpButton from '@/components/Layouts/ScrollUpButton';
-import { FossBanner } from '@/components/misc/foss-banner';
-import { Button } from '@zephyr/ui/shadui/button';
-import { ArrowLeft, LockKeyhole } from 'lucide-react';
-import Link from 'next/link';
-import React, { useEffect } from 'react';
+import { Button } from "@zephyr/ui/shadui/button";
+import { ArrowLeft, LockKeyhole } from "lucide-react";
+import Link from "next/link";
+import React, { useEffect } from "react";
+import ScrollUpButton from "@/components/Layouts/ScrollUpButton";
+import { FossBanner } from "@/components/misc/foss-banner";
 
 export default function PrivacyPolicyPage() {
   const [isVisible, setIsVisible] = React.useState(false);
@@ -19,10 +19,10 @@ export default function PrivacyPolicyPage() {
       }
     };
 
-    window.addEventListener('scroll', toggleVisibility);
+    window.addEventListener("scroll", toggleVisibility);
 
     return () => {
-      window.removeEventListener('scroll', toggleVisibility);
+      window.removeEventListener("scroll", toggleVisibility);
     };
   }, []);
 
@@ -31,8 +31,8 @@ export default function PrivacyPolicyPage() {
       <div className="mb-8 flex items-center justify-between">
         <Link href="/">
           <Button
-            variant="ghost"
             className="group flex items-center gap-2 text-muted-foreground hover:text-foreground"
+            variant="ghost"
           >
             <ArrowLeft className="group-hover:-translate-x-1 h-4 w-4 transition-transform" />
             Drift
@@ -41,8 +41,8 @@ export default function PrivacyPolicyPage() {
 
         <Link href="/toc">
           <Button
-            variant="ghost"
             className="group flex items-center gap-2 text-muted-foreground hover:text-foreground"
+            variant="ghost"
           >
             Terms of Service
             <ArrowLeft className="h-4 w-4 rotate-180 transition-transform group-hover:translate-x-1" />
@@ -209,10 +209,10 @@ export default function PrivacyPolicyPage() {
                 intuitive and accessible, empowering users to make informed
                 decisions about their privacy. To exercise any of these rights
                 or discuss privacy concerns, our dedicated privacy team can be
-                reached at{' '}
+                reached at{" "}
                 <Link
-                  href="mailto:zephyyrrnyx@gmail.com"
                   className="text-primary hover:underline"
+                  href="mailto:zephyyrrnyx@gmail.com"
                 >
                   zephyyrrnyx@gmail.com
                 </Link>
@@ -355,10 +355,10 @@ export default function PrivacyPolicyPage() {
               <div className="rounded-lg bg-muted p-4">
                 <p>Zephyr FOSS</p>
                 <p>
-                  Email:{' '}
+                  Email:{" "}
                   <Link
-                    href="mailto:zephyyrrnyx@gmail.com"
                     className="text-primary hover:underline"
+                    href="mailto:zephyyrrnyx@gmail.com"
                   >
                     zephyyrrnyx@gmail.com
                   </Link>

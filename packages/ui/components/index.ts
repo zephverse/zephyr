@@ -1,2 +1,2 @@
 // Aggregator Components
-export * from './hackernews';
+export * from "./hackernews";

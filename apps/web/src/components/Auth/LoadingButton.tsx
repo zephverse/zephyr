@@ -1,7 +1,6 @@
-import { Loader2 } from 'lucide-react';
-
-import { cn } from '@/lib/utils';
-import { Button, type ButtonProps } from '@zephyr/ui/shadui/button';
+import { Button, type ButtonProps } from "@zephyr/ui/shadui/button";
+import { Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface LoadingButtonProps extends ButtonProps {
   loading: boolean;
@@ -15,8 +14,8 @@ export default function LoadingButton({
 }: LoadingButtonProps) {
   return (
     <Button
+      className={cn("flex items-center gap-2", className)}
       disabled={loading || disabled}
-      className={cn('flex items-center gap-2', className)}
       {...props}
     >
       {loading && <Loader2 className="size-5 animate-spin" />}

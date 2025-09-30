@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { gsap } from 'gsap';
-import { useEffect, useRef, useState } from 'react';
+import { gsap } from "gsap";
+import { useEffect, useRef, useState } from "react";
 
 class Vector2D {
   x: number;
@@ -69,8 +69,8 @@ class AnimationController {
     const customRandom = () => {
       let seed = 1234;
       return () => {
-        seed = (seed * 9301 + 49297) % 233280;
-        return seed / 233280;
+        seed = (seed * 9301 + 49_297) % 233_280;
+        return seed / 233_280;
       };
     };
 
@@ -90,13 +90,13 @@ class AnimationController {
     this.timeline.to(this, {
       time: 1,
       duration: 8,
-      ease: 'none',
+      ease: "none",
       onUpdate: () => this.render(),
     });
     this.timeline.to(this, {
       time: 0,
       duration: 8,
-      ease: 'none',
+      ease: "none",
       onUpdate: () => this.render(),
     });
     this.timeline.repeat(-1);
@@ -216,7 +216,7 @@ class AnimationController {
       return;
     }
 
-    ctx.fillStyle = 'black';
+    ctx.fillStyle = "black";
     ctx.fillRect(0, 0, this.size, this.size);
 
     ctx.save();
@@ -228,7 +228,7 @@ class AnimationController {
     // Disable initial spin/rotation
     // ctx.rotate(-Math.PI * this.ease(t2, 2.7));
 
-    ctx.fillStyle = 'white';
+    ctx.fillStyle = "white";
     for (const star of this.stars) {
       star.render(t1, this);
     }
@@ -243,10 +243,10 @@ class AnimationController {
       const f = this.map(i, 0, this.trailLength, 1.1, 0.1);
       const sw = (1.3 * (1 - t1) + 3.0 * Math.sin(Math.PI * t1)) * f;
 
-      this.ctx.fillStyle = 'white';
+      this.ctx.fillStyle = "white";
       this.ctx.lineWidth = sw;
 
-      const pathTime = t1 - 0.00015 * i;
+      const pathTime = t1 - 0.000_15 * i;
       const position = this.spiralPath(pathTime);
 
       const basePos = position;
@@ -427,8 +427,8 @@ export function SpiralAnimation() {
     };
 
     handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   useEffect(() => {
@@ -436,11 +436,11 @@ export function SpiralAnimation() {
     if (!canvas) {
       return;
     }
-    if (!dimensions.width || !dimensions.height) {
+    if (!(dimensions.width && dimensions.height)) {
       return;
     }
 
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     if (!ctx) {
       return;
     }
@@ -464,7 +464,7 @@ export function SpiralAnimation() {
 
   return (
     <div className="relative h-full w-full">
-      <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
+      <canvas className="absolute inset-0 h-full w-full" ref={canvasRef} />
     </div>
   );
 }

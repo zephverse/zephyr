@@ -1,15 +1,15 @@
-'use client';
+"use client";
 
-import { useTags } from '@/hooks/useTags';
-import { cn, formatNumber } from '@/lib/utils';
-import type { Tag } from '@prisma/client';
-import { useQueryClient } from '@tanstack/react-query';
-import { Button } from '@zephyr/ui/shadui/button';
-import { Card, CardContent } from '@zephyr/ui/shadui/card';
-import { AnimatePresence, motion } from 'framer-motion';
-import { Hash, RefreshCw } from 'lucide-react';
-import Link from 'next/link';
-import { useCallback, useEffect, useState, useTransition } from 'react';
+import type { Tag } from "@prisma/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { Button } from "@zephyr/ui/shadui/button";
+import { Card, CardContent } from "@zephyr/ui/shadui/card";
+import { AnimatePresence, motion } from "framer-motion";
+import { Hash, RefreshCw } from "lucide-react";
+import Link from "next/link";
+import { useCallback, useEffect, useState, useTransition } from "react";
+import { useTags } from "@/hooks/useTags";
+import { cn, formatNumber } from "@/lib/utils";
 
 interface TagWithCount extends Tag {
   _count: {
@@ -44,11 +44,11 @@ const TagsBar = () => {
 
   const handleRefresh = useCallback(() => {
     startTransition(() => {
-      queryClient.invalidateQueries({ queryKey: ['popularTags'] });
+      queryClient.invalidateQueries({ queryKey: ["popularTags"] });
     });
   }, [queryClient]);
 
-  if (!localTags.length && !isLoading) {
+  if (!(localTags.length || isLoading)) {
     return null;
   }
 
@@ -58,10 +58,10 @@ const TagsBar = () => {
         <div className="mb-3 flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.5 }}
               className="rounded-full bg-primary/10 p-1"
+              initial={{ scale: 0.8, opacity: 0 }}
+              transition={{ duration: 0.5 }}
             >
               <Hash className="h-3.5 w-3.5 text-primary" />
             </motion.div>
@@ -70,17 +70,17 @@ const TagsBar = () => {
             </h2>
           </div>
           <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleRefresh}
-            disabled={isPending || isLoading}
             className="h-6 w-6 hover:bg-primary/10"
+            disabled={isPending || isLoading}
+            onClick={handleRefresh}
+            size="icon"
+            variant="ghost"
           >
             <RefreshCw
               className={`h-3.5 w-3.5 transition-all duration-300 ${
                 isPending || isLoading
-                  ? 'animate-spin text-primary'
-                  : 'text-muted-foreground'
+                  ? "animate-spin text-primary"
+                  : "text-muted-foreground"
               }`}
             />
           </Button>
@@ -90,29 +90,29 @@ const TagsBar = () => {
           <AnimatePresence mode="popLayout">
             {localTags.map((tag, index) => (
               <motion.li
-                key={tag.id}
-                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, x: -10 }}
-                transition={{ delay: index * 0.05 }}
                 className="group relative"
-                onHoverStart={() => setHoveredTag(tag.id)}
+                exit={{ opacity: 0, x: -10 }}
+                initial={{ opacity: 0, y: 10 }}
+                key={tag.id}
                 onHoverEnd={() => setHoveredTag(null)}
+                onHoverStart={() => setHoveredTag(tag.id)}
+                transition={{ delay: index * 0.05 }}
               >
                 <Link
-                  href={`/tags/${tag.name}`}
                   className={cn(
-                    'relative block rounded-md p-2 transition-all duration-300',
-                    'hover:bg-primary/5 group-hover:border-primary/30'
+                    "relative block rounded-md p-2 transition-all duration-300",
+                    "hover:bg-primary/5 group-hover:border-primary/30"
                   )}
+                  href={`/tags/${tag.name}`}
                 >
                   <AnimatePresence>
                     {hoveredTag === tag.id && (
                       <motion.div
-                        initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 0.04, scale: 1 }}
-                        exit={{ opacity: 0, scale: 1.1 }}
                         className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden rounded-md"
+                        exit={{ opacity: 0, scale: 1.1 }}
+                        initial={{ opacity: 0, scale: 0.9 }}
                       >
                         <span className="truncate font-bold text-2xl text-primary">
                           #{tag.name}
@@ -131,18 +131,18 @@ const TagsBar = () => {
                           #{tag.name}
                         </p>
                         <p className="text-muted-foreground text-xs">
-                          {formatNumber(tag._count?.posts ?? 0)}{' '}
-                          {tag._count?.posts === 1 ? 'post' : 'posts'}
+                          {formatNumber(tag._count?.posts ?? 0)}{" "}
+                          {tag._count?.posts === 1 ? "post" : "posts"}
                         </p>
                       </div>
                     </div>
                     <motion.div
-                      initial={false}
                       animate={{
                         opacity: hoveredTag === tag.id ? 1 : 0,
                         x: hoveredTag === tag.id ? 0 : -4,
                       }}
                       className="text-primary text-sm"
+                      initial={false}
                     >
                       →
                     </motion.div>
@@ -157,10 +157,10 @@ const TagsBar = () => {
       <AnimatePresence>
         {(isPending || isLoading) && (
           <motion.div
-            initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
             className="absolute inset-0 z-20 flex items-center justify-center bg-background/50 backdrop-blur-sm"
+            exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }}
           >
             <RefreshCw className="h-5 w-5 animate-spin text-primary" />
           </motion.div>

@@ -1,7 +1,7 @@
-import UserLinkWithTooltip from '@/components/Layouts/UserLinkWithTooltip';
-import Link from 'next/link';
-import type React from 'react';
-import { LinkIt, LinkItUrl } from 'react-linkify-it';
+import Link from "next/link";
+import type React from "react";
+import { LinkIt, LinkItUrl } from "react-linkify-it";
+import UserLinkWithTooltip from "@/components/Layouts/UserLinkWithTooltip";
 
 interface LinkifyProps {
   children: React.ReactNode;
@@ -28,12 +28,12 @@ function LinkifyUrl({ children }: LinkifyProps) {
 function LinkifyUsername({ children }: LinkifyProps) {
   return (
     <LinkIt
-      regex={usernameRegex}
       component={(match, key) => (
         <UserLinkWithTooltip key={key} username={match.slice(1)}>
           {match}
         </UserLinkWithTooltip>
       )}
+      regex={usernameRegex}
     >
       {children}
     </LinkIt>
@@ -43,16 +43,16 @@ function LinkifyUsername({ children }: LinkifyProps) {
 function LinkifyHashtag({ children }: LinkifyProps) {
   return (
     <LinkIt
-      regex={hashtagRegex}
       component={(match, key) => (
         <Link
-          key={key}
-          href={`/hashtag/${match.slice(1)}`}
           className="text-primary hover:underline"
+          href={`/hashtag/${match.slice(1)}`}
+          key={key}
         >
           {match}
         </Link>
       )}
+      regex={hashtagRegex}
     >
       {children}
     </LinkIt>

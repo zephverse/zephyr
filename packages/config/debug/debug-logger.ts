@@ -1,4 +1,4 @@
-const DEBUG = process.env.NODE_ENV === 'development';
+const DEBUG = process.env.NODE_ENV === "development";
 
 export const debugLog = {
   // biome-ignore lint/suspicious/noExplicitAny: any is used to allow for any number of arguments

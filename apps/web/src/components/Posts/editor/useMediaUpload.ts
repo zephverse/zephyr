@@ -1,6 +1,6 @@
-import { validateFile } from '@/lib/utils/file-validation';
-import { useToast } from '@zephyr/ui/hooks/use-toast';
-import { useState } from 'react';
+import { useToast } from "@zephyr/ui/hooks/use-toast";
+import { useState } from "react";
+import { validateFile } from "@/lib/utils/file-validation";
 
 export interface Attachment {
   file: File;
@@ -19,37 +19,37 @@ export default function useMediaUpload() {
       validateFile(file);
 
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append("file", file);
 
-      const response = await fetch('/api/upload', {
-        method: 'POST',
+      const response = await fetch("/api/upload", {
+        method: "POST",
         body: formData,
       });
 
       if (!response.ok) {
-        throw new Error('Upload failed');
+        throw new Error("Upload failed");
       }
 
       const { mediaId, url } = await response.json();
       return { mediaId, url };
     } catch (error: unknown) {
-      throw new Error(error.message || 'Upload failed');
+      throw new Error(error.message || "Upload failed");
     }
   }
 
   async function handleStartUpload(files: File[]) {
     if (isUploading) {
       toast({
-        variant: 'destructive',
-        description: 'Please wait for the current upload to finish.',
+        variant: "destructive",
+        description: "Please wait for the current upload to finish.",
       });
       return;
     }
 
     if (attachments.length + files.length > 5) {
       toast({
-        variant: 'destructive',
-        description: 'You can only upload up to 5 attachments per post.',
+        variant: "destructive",
+        description: "You can only upload up to 5 attachments per post.",
       });
       return;
     }
@@ -77,7 +77,7 @@ export default function useMediaUpload() {
             setUploadProgress((completed / files.length) * 100);
           } catch (error: unknown) {
             toast({
-              variant: 'destructive',
+              variant: "destructive",
               description: error.message,
             });
             setAttachments((prev) => prev.filter((a) => a.file !== file));

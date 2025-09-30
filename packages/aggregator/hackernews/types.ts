@@ -35,6 +35,6 @@ export class HackerNewsError extends Error {
     public context?: unknown
   ) {
     super(message);
-    this.name = 'HackerNewsError';
+    this.name = "HackerNewsError";
   }
 }

@@ -1,4 +1,4 @@
-import type { HNStory } from '@zephyr/aggregator/hackernews';
+import type { HNStory } from "@zephyr/aggregator/hackernews";
 
 export interface FetchStoriesParams {
   page: number;
@@ -35,7 +35,7 @@ export const hackerNewsMutations = {
     if (sort) {
       params.sort = sort;
     }
-    if (type && type !== 'all') {
+    if (type && type !== "all") {
       params.type = type;
     }
 
@@ -44,19 +44,19 @@ export const hackerNewsMutations = {
     );
 
     if (!response.ok) {
-      throw new Error('Failed to fetch stories');
+      throw new Error("Failed to fetch stories");
     }
 
     return response.json();
   },
 
   refreshCache: async (): Promise<{ success: boolean }> => {
-    const response = await fetch('/api/hackernews', {
-      method: 'POST',
+    const response = await fetch("/api/hackernews", {
+      method: "POST",
     });
 
     if (!response.ok) {
-      throw new Error('Failed to refresh cache');
+      throw new Error("Failed to refresh cache");
     }
 
     return response.json();

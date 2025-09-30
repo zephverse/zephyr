@@ -1,15 +1,15 @@
-'use client';
+"use client";
 
-import type { SearchSuggestion } from '@zephyr/db';
-import { Button } from '@zephyr/ui/shadui/button';
+import type { SearchSuggestion } from "@zephyr/db";
+import { Button } from "@zephyr/ui/shadui/button";
 import {
   Command,
   CommandEmpty,
   CommandGroup,
   CommandItem,
   CommandList,
-} from '@zephyr/ui/shadui/command';
-import { History, TrendingUp, X } from 'lucide-react';
+} from "@zephyr/ui/shadui/command";
+import { History, TrendingUp, X } from "lucide-react";
 
 interface SearchCommandListProps {
   input: string;
@@ -31,20 +31,20 @@ export function SearchCommandList({
   return (
     <Command className="rounded-xl border bg-popover/95 shadow-lg backdrop-blur-xl">
       <CommandList>
-        {!input && !suggestions?.length && !history?.length && (
+        {!(input || suggestions?.length || history?.length) && (
           <CommandEmpty className="py-6 text-center text-sm">
             No results found.
           </CommandEmpty>
         )}
 
         {suggestions && suggestions.length > 0 && (
-          <CommandGroup heading="Suggestions" className="space-y-1.5">
+          <CommandGroup className="space-y-1.5" heading="Suggestions">
             {suggestions.map((suggestion) => (
               <CommandItem
-                key={suggestion.query}
-                value={suggestion.query}
-                onSelect={onSelectAction}
                 className="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 hover:bg-primary/10"
+                key={suggestion.query}
+                onSelect={onSelectAction}
+                value={suggestion.query}
               >
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
                 <span>{suggestion.query}</span>
@@ -62,13 +62,13 @@ export function SearchCommandList({
               <span className="font-medium text-sm">Recent Searches</span>
               {onClearHistory && (
                 <Button
-                  variant="ghost"
-                  size="sm"
                   className="h-auto px-2 py-1 text-muted-foreground text-xs hover:text-primary"
                   onClick={(e) => {
                     e.preventDefault();
                     onClearHistory();
                   }}
+                  size="sm"
+                  variant="ghost"
                 >
                   Clear all
                 </Button>
@@ -76,23 +76,23 @@ export function SearchCommandList({
             </div>
             {history.map((query) => (
               <CommandItem
-                key={query}
-                value={query}
-                onSelect={onSelectAction}
                 className="group flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 hover:bg-primary/10"
+                key={query}
+                onSelect={onSelectAction}
+                value={query}
               >
                 <History className="h-4 w-4 text-muted-foreground" />
                 <span className="flex-1">{query}</span>
                 {onRemoveHistoryItem && (
                   <Button
-                    variant="ghost"
-                    size="sm"
                     className="h-auto p-1 opacity-0 group-hover:opacity-100"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
                       onRemoveHistoryItem(query);
                     }}
+                    size="sm"
+                    variant="ghost"
                   >
                     <X className="h-3 w-3 text-muted-foreground hover:text-primary" />
                   </Button>

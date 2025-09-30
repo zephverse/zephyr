@@ -1,7 +1,7 @@
-import { debugLog } from '@zephyr/config/debug';
-import { Button } from '@zephyr/ui/shadui/button';
-import { AlertCircle } from 'lucide-react';
-import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { debugLog } from "@zephyr/config/debug";
+import { Button } from "@zephyr/ui/shadui/button";
+import { AlertCircle } from "lucide-react";
+import { Component, type ErrorInfo, type ReactNode } from "react";
 
 interface Props {
   children: ReactNode;
@@ -28,7 +28,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    debugLog.component('Error boundary caught error:', { error, errorInfo });
+    debugLog.component("Error boundary caught error:", { error, errorInfo });
   }
 
   private handleReset = () => {
@@ -66,7 +66,7 @@ export function ErrorFallback({
       <AlertCircle className="mb-4 h-12 w-12 text-destructive" />
       <h2 className="mb-2 font-semibold text-lg">Something went wrong</h2>
       <p className="mb-4 text-muted-foreground text-sm">
-        {error?.message || 'An unexpected error occurred'}
+        {error?.message || "An unexpected error occurred"}
       </p>
       <Button onClick={resetErrorBoundary}>Try again</Button>
     </div>

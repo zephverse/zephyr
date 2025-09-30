@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { FaGithub } from 'react-icons/fa';
-import { GitHubLogoIcon } from '@radix-ui/react-icons';
-import { Button } from '@zephyr/ui/shadui/button';
-import { motion } from 'framer-motion';
-import { ChevronRight, Code2, GitPullRequest, Star } from 'lucide-react';
-import Link from 'next/link';
+import { GitHubLogoIcon } from "@radix-ui/react-icons";
+import { Button } from "@zephyr/ui/shadui/button";
+import { motion } from "framer-motion";
+import { ChevronRight, Code2, GitPullRequest, Star } from "lucide-react";
+import Link from "next/link";
+import { FaGithub } from "react-icons/fa";
 
 interface ContributeCardProps {
   isCollapsed: boolean;
@@ -16,15 +16,15 @@ export default function ContributeCard({ isCollapsed }: ContributeCardProps) {
     return (
       <div className="rounded-xl border bg-card p-2">
         <Button
-          variant="ghost"
-          size="icon"
-          className="h-auto w-full p-2"
           asChild
+          className="h-auto w-full p-2"
+          size="icon"
+          variant="ghost"
         >
           <Link
             href="https://github.com/parazeeknova/zephyr"
-            target="_blank"
             rel="noopener noreferrer"
+            target="_blank"
           >
             <FaGithub className="h-5 w-5 text-muted-foreground transition-colors hover:text-primary" />
           </Link>
@@ -47,10 +47,10 @@ export default function ContributeCard({ isCollapsed }: ContributeCardProps) {
 
         <div className="space-y-2">
           <Link
-            href="https://github.com/parazeeknova/zephyr"
-            target="_blank"
-            rel="noopener noreferrer"
             className="group flex items-center justify-between rounded-lg p-2 transition-colors hover:bg-accent"
+            href="https://github.com/parazeeknova/zephyr"
+            rel="noopener noreferrer"
+            target="_blank"
           >
             <div className="flex items-center gap-2">
               <GitHubLogoIcon className="h-4 w-4 text-muted-foreground transition-colors group-hover:text-primary" />
@@ -60,10 +60,10 @@ export default function ContributeCard({ isCollapsed }: ContributeCardProps) {
           </Link>
 
           <Link
-            href="https://github.com/parazeeknova/zephyr/issues"
-            target="_blank"
-            rel="noopener noreferrer"
             className="group flex items-center justify-between rounded-lg p-2 transition-colors hover:bg-accent"
+            href="https://github.com/parazeeknova/zephyr/issues"
+            rel="noopener noreferrer"
+            target="_blank"
           >
             <div className="flex items-center gap-2">
               <Code2 className="h-4 w-4 text-muted-foreground transition-colors group-hover:text-primary" />
@@ -74,16 +74,16 @@ export default function ContributeCard({ isCollapsed }: ContributeCardProps) {
         </div>
 
         <motion.div
-          initial={false}
           animate={{ opacity: 1 }}
-          // @ts-expect-error
           className="border-t pt-2"
+          // @ts-expect-error
+          initial={false}
         >
-          <Button variant="outline" size="sm" className="w-full gap-2" asChild>
+          <Button asChild className="w-full gap-2" size="sm" variant="outline">
             <Link
               href="https://github.com/parazeeknova/zephyr"
-              target="_blank"
               rel="noopener noreferrer"
+              target="_blank"
             >
               <Star className="h-4 w-4" />
               Star on GitHub

@@ -1,27 +1,27 @@
-'use client';
+"use client";
 
-import FollowButton, {
-  preloadFollowButton,
-} from '@/components/Layouts/FollowButton';
-import UserAvatar from '@/components/Layouts/UserAvatar';
-import UserTooltip from '@/components/Layouts/UserTooltip';
-import SuggestedConnectionsSkeleton from '@/components/Layouts/skeletons/SCSkeleton';
-import { useQuery } from '@tanstack/react-query';
-import { toast } from '@zephyr/ui/hooks/use-toast';
-import { Button } from '@zephyr/ui/shadui/button';
+import { useQuery } from "@tanstack/react-query";
+import { toast } from "@zephyr/ui/hooks/use-toast";
+import { Button } from "@zephyr/ui/shadui/button";
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
   CardTitle,
-} from '@zephyr/ui/shadui/card';
-import { AnimatePresence, motion } from 'framer-motion';
-import { RefreshCw, UserRound, Users } from 'lucide-react';
-import Link from 'next/link';
-import type React from 'react';
-import { useEffect, useState } from 'react';
-import { getSuggestedConnections } from './UserActions';
+} from "@zephyr/ui/shadui/card";
+import { AnimatePresence, motion } from "framer-motion";
+import { RefreshCw, UserRound, Users } from "lucide-react";
+import Link from "next/link";
+import type React from "react";
+import { useEffect, useState } from "react";
+import FollowButton, {
+  preloadFollowButton,
+} from "@/components/Layouts/FollowButton";
+import SuggestedConnectionsSkeleton from "@/components/Layouts/skeletons/SCSkeleton";
+import UserAvatar from "@/components/Layouts/UserAvatar";
+import UserTooltip from "@/components/Layouts/UserTooltip";
+import { getSuggestedConnections } from "./UserActions";
 
 interface SerializableUserData {
   followState: {
@@ -53,16 +53,16 @@ const SuggestedConnections: React.FC = () => {
     error,
     refetch,
   } = useQuery<SerializableUserData[]>({
-    queryKey: ['suggested-connections'],
+    queryKey: ["suggested-connections"],
     queryFn: async () => {
       const result = await getSuggestedConnections();
       if (result instanceof Error) {
         throw result;
       }
 
-      const followStates = await fetch('/api/users/follow-states', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const followStates = await fetch("/api/users/follow-states", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userIds: result.map((user: { id: string }) => user.id),
         }),
@@ -83,16 +83,16 @@ const SuggestedConnections: React.FC = () => {
       setIsRefreshing(true);
       await refetch();
       toast({
-        title: 'Refreshed',
-        description: 'Suggestions have been updated.',
+        title: "Refreshed",
+        description: "Suggestions have been updated.",
         duration: 3000,
       });
       // biome-ignore lint/correctness/noUnusedVariables: unused error variable
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'Failed to refresh suggestions. Please try again.',
-        variant: 'destructive',
+        title: "Error",
+        description: "Failed to refresh suggestions. Please try again.",
+        variant: "destructive",
         duration: 3000,
       });
     } finally {
@@ -122,10 +122,10 @@ const SuggestedConnections: React.FC = () => {
               {error instanceof Error ? error.message : String(error)}
             </p>
             <Button
-              variant="outline"
-              size="sm"
               className="mt-4"
               onClick={() => refetch()}
+              size="sm"
+              variant="outline"
             >
               Try Again
             </Button>
@@ -150,19 +150,19 @@ const SuggestedConnections: React.FC = () => {
         <AnimatePresence mode="wait">
           {connections && connections.length > 0 ? (
             <motion.ul
-              className="space-y-1"
-              initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
+              className="space-y-1"
               exit={{ opacity: 0 }}
+              initial={{ opacity: 0 }}
             >
               {connections.map((connection, index) => (
                 <motion.li
-                  key={connection.id}
-                  initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ delay: index * 0.05 }}
                   className="group flex items-center justify-between rounded-md px-2 py-1.5 transition-colors hover:bg-accent/5"
+                  exit={{ opacity: 0, y: -10 }}
+                  initial={{ opacity: 0, y: 10 }}
+                  key={connection.id}
+                  transition={{ delay: index * 0.05 }}
                 >
                   {/* @ts-expect-error */}
                   <UserTooltip user={connection}>
@@ -170,8 +170,8 @@ const SuggestedConnections: React.FC = () => {
                       <Link href={`/users/${connection.username}`}>
                         <UserAvatar
                           avatarUrl={connection.avatarUrl}
-                          size={28}
                           className="transition-transform duration-200 hover:scale-105"
+                          size={28}
                         />
                       </Link>
                       <div className="min-w-0 flex-1">
@@ -196,27 +196,27 @@ const SuggestedConnections: React.FC = () => {
                     </div>
                   </UserTooltip>
                   <FollowButton
-                    userId={connection.id}
+                    className="opacity-80 transition-opacity group-hover:opacity-100"
                     initialState={
                       connection.followState || {
                         followers: connection._count.followers,
                         isFollowedByUser: false,
                       }
                     }
-                    className="opacity-80 transition-opacity group-hover:opacity-100"
-                    // @ts-expect-error
-                    variant="outline"
                     size="xs"
+                    // @ts-expect-error
+                    userId={connection.id}
+                    variant="outline"
                   />
                 </motion.li>
               ))}
             </motion.ul>
           ) : (
             <motion.div
-              initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
               className="py-3 text-center"
+              exit={{ opacity: 0 }}
+              initial={{ opacity: 0 }}
             >
               <UserRound className="mx-auto mb-2 h-8 w-8 text-muted-foreground/20" />
               <p className="text-muted-foreground text-xs">
@@ -228,23 +228,23 @@ const SuggestedConnections: React.FC = () => {
       </CardContent>
       <CardFooter className="border-border/10 border-t p-2">
         <Button
-          variant="ghost"
-          // @ts-expect-error
-          size="xs"
           className="h-7 w-full text-[11px] text-muted-foreground hover:text-primary"
-          onClick={handleRefresh}
+          // @ts-expect-error
           disabled={isRefreshing}
+          onClick={handleRefresh}
+          size="xs"
+          variant="ghost"
         >
           <RefreshCw
-            className={`mr-1.5 h-3 w-3 ${isRefreshing ? 'animate-spin' : ''}`}
+            className={`mr-1.5 h-3 w-3 ${isRefreshing ? "animate-spin" : ""}`}
           />
-          {isRefreshing ? 'Refreshing...' : 'Refresh'}
+          {isRefreshing ? "Refreshing..." : "Refresh"}
         </Button>
       </CardFooter>
     </Card>
   );
 };
 
-SuggestedConnections.displayName = 'SuggestedConnections';
+SuggestedConnections.displayName = "SuggestedConnections";
 
 export default SuggestedConnections;

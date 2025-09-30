@@ -1,19 +1,19 @@
-'use client';
-import UnfollowUserDialog from '@/components/Layouts/UnfollowUserDialog';
-import FriendsSkeleton from '@/components/Layouts/skeletons/FriendsSkeleton';
-import { useFollowedUsers } from '@/hooks/userFollowerInfo';
-import { useUnfollowUserMutation } from '@/hooks/userMutations';
-import { useQueryClient } from '@tanstack/react-query';
-import type { UserData } from '@zephyr/db';
-import { Card, CardContent, CardTitle } from '@zephyr/ui/shadui/card';
-import { ScrollArea } from '@zephyr/ui/shadui/scroll-area';
-import { AnimatePresence, motion } from 'framer-motion';
-import { Users } from 'lucide-react';
-import { useState } from 'react';
-import type React from 'react';
-import { FriendListItem } from './FriendListItem';
-import { ViewSwitcher } from './ViewSwitcher';
-import { getRandomTitle } from './randomTitles';
+"use client";
+import { useQueryClient } from "@tanstack/react-query";
+import type { UserData } from "@zephyr/db";
+import { Card, CardContent, CardTitle } from "@zephyr/ui/shadui/card";
+import { ScrollArea } from "@zephyr/ui/shadui/scroll-area";
+import { AnimatePresence, motion } from "framer-motion";
+import { Users } from "lucide-react";
+import type React from "react";
+import { useState } from "react";
+import FriendsSkeleton from "@/components/Layouts/skeletons/FriendsSkeleton";
+import UnfollowUserDialog from "@/components/Layouts/UnfollowUserDialog";
+import { useFollowedUsers } from "@/hooks/userFollowerInfo";
+import { useUnfollowUserMutation } from "@/hooks/userMutations";
+import { FriendListItem } from "./FriendListItem";
+import { getRandomTitle } from "./randomTitles";
+import { ViewSwitcher } from "./ViewSwitcher";
 
 interface FriendsProps {
   isCollapsed: boolean;
@@ -21,7 +21,7 @@ interface FriendsProps {
 
 interface FriendsListProps {
   followedUsers: UserData[];
-  viewType: 'grid' | 'list';
+  viewType: "grid" | "list";
   onUnfollow: (user: UserData) => void;
 }
 
@@ -32,16 +32,16 @@ const FriendsList: React.FC<FriendsListProps> = ({
 }) => (
   <AnimatePresence mode="wait">
     <motion.div
-      layout
       className={`grid gap-3 ${
-        viewType === 'grid' ? 'grid-cols-2' : 'grid-cols-1'
+        viewType === "grid" ? "grid-cols-2" : "grid-cols-1"
       }`}
+      layout
     >
       {followedUsers?.map((user) => (
         <FriendListItem
           key={user.id}
-          user={user}
           onUnfollow={onUnfollow}
+          user={user}
           viewType={viewType}
         />
       ))}
@@ -55,7 +55,7 @@ const Friends: React.FC<FriendsProps> = ({ isCollapsed }) => {
   const queryClient = useQueryClient();
   const unfollowMutation = useUnfollowUserMutation();
   const [userToUnfollow, setUserToUnfollow] = useState<UserData | null>(null);
-  const [viewType, setViewType] = useState<'grid' | 'list'>('list');
+  const [viewType, setViewType] = useState<"grid" | "list">("list");
 
   const handleUnfollow = (user: UserData) => setUserToUnfollow(user);
   const handleCloseDialog = () => setUserToUnfollow(null);
@@ -63,10 +63,10 @@ const Friends: React.FC<FriendsProps> = ({ isCollapsed }) => {
   const performUnfollow = async (userId: string) => {
     try {
       await unfollowMutation.mutateAsync(userId);
-      queryClient.invalidateQueries({ queryKey: ['followed-users'] });
+      queryClient.invalidateQueries({ queryKey: ["followed-users"] });
       handleCloseDialog();
     } catch (error) {
-      console.error('Failed to unfollow user:', error);
+      console.error("Failed to unfollow user:", error);
     }
   };
 
@@ -79,13 +79,13 @@ const Friends: React.FC<FriendsProps> = ({ isCollapsed }) => {
 
   const getContentHeight = () => {
     if (showScrollArea) {
-      return 'calc(100vh - 300px)';
+      return "calc(100vh - 300px)";
     }
     const baseHeight = 64;
-    const itemHeight = viewType === 'grid' ? 100 : 56;
+    const itemHeight = viewType === "grid" ? 100 : 56;
     const gap = 12;
     const rows =
-      viewType === 'grid' ? Math.ceil((friendCount || 0) / 2) : friendCount;
+      viewType === "grid" ? Math.ceil((friendCount || 0) / 2) : friendCount;
     return `${baseHeight + (rows * itemHeight) + (rows - 1) * gap}px`;
   };
 
@@ -93,12 +93,12 @@ const Friends: React.FC<FriendsProps> = ({ isCollapsed }) => {
     <>
       <Card
         className={`bg-card/80 backdrop-blur-xs transition-all duration-300 ease-in-out ${
-          isCollapsed ? 'w-12 overflow-hidden' : 'w-full'
+          isCollapsed ? "w-12 overflow-hidden" : "w-full"
         }`}
       >
         <CardContent
           className={`transition-all duration-300 ${
-            isCollapsed ? 'flex justify-center p-2' : 'p-4'
+            isCollapsed ? "flex justify-center p-2" : "p-4"
           }`}
         >
           {isCollapsed ? (
@@ -120,7 +120,7 @@ const Friends: React.FC<FriendsProps> = ({ isCollapsed }) => {
                   )}
                 </div>
 
-                <ViewSwitcher view={viewType} onChange={setViewType} />
+                <ViewSwitcher onChange={setViewType} view={viewType} />
               </div>
 
               <div
@@ -131,15 +131,15 @@ const Friends: React.FC<FriendsProps> = ({ isCollapsed }) => {
                   <ScrollArea className="h-full pr-4">
                     <FriendsList
                       followedUsers={followedUsers || []}
-                      viewType={viewType}
                       onUnfollow={handleUnfollow}
+                      viewType={viewType}
                     />
                   </ScrollArea>
                 ) : (
                   <FriendsList
                     followedUsers={followedUsers || []}
-                    viewType={viewType}
                     onUnfollow={handleUnfollow}
+                    viewType={viewType}
                   />
                 )}
               </div>
@@ -150,11 +150,11 @@ const Friends: React.FC<FriendsProps> = ({ isCollapsed }) => {
 
       {userToUnfollow && (
         <UnfollowUserDialog
-          user={userToUnfollow}
-          open={!!userToUnfollow}
-          onClose={handleCloseDialog}
-          // @ts-expect-error
           handleUnfollow={() => performUnfollow(userToUnfollow.id)}
+          onClose={handleCloseDialog}
+          open={!!userToUnfollow}
+          // @ts-expect-error
+          user={userToUnfollow}
         />
       )}
     </>

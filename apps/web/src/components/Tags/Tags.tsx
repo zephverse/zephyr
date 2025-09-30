@@ -1,20 +1,20 @@
-'use client';
+"use client";
 
-import { cn, formatNumber } from '@/lib/utils';
-import { useQueryClient } from '@tanstack/react-query';
-import type { TagWithCount } from '@zephyr/db';
-import { Button } from '@zephyr/ui/shadui/button';
+import { useQueryClient } from "@tanstack/react-query";
+import type { TagWithCount } from "@zephyr/db";
+import { Button } from "@zephyr/ui/shadui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogTitle,
-} from '@zephyr/ui/shadui/dialog';
-import { AnimatePresence, motion } from 'framer-motion';
-import { Hash, Plus } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
-import { TagEditor } from './TagEditor';
-import { useUpdateTagsMutation } from './mutations/tag-mention-mutation';
+} from "@zephyr/ui/shadui/dialog";
+import { AnimatePresence, motion } from "framer-motion";
+import { Hash, Plus } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { cn, formatNumber } from "@/lib/utils";
+import { useUpdateTagsMutation } from "./mutations/tag-mention-mutation";
+import { TagEditor } from "./TagEditor";
 
 interface TagsProps {
   tags: TagWithCount[];
@@ -30,7 +30,7 @@ const containerVariants = {
     opacity: 1,
     transition: {
       staggerChildren: 0.04,
-      when: 'beforeChildren',
+      when: "beforeChildren",
     },
   },
 };
@@ -41,7 +41,7 @@ const tagVariants = {
     opacity: 1,
     y: 0,
     transition: {
-      type: 'spring',
+      type: "spring",
       stiffness: 120,
       damping: 20,
     },
@@ -49,7 +49,7 @@ const tagVariants = {
   hover: {
     y: -1,
     transition: {
-      type: 'spring',
+      type: "spring",
       stiffness: 150,
       damping: 15,
     },
@@ -59,7 +59,7 @@ const tagVariants = {
     scale: 0.95,
     transition: {
       duration: 0.15,
-      ease: 'easeOut',
+      ease: "easeOut",
     },
   },
 };
@@ -69,11 +69,11 @@ const glowVariants = {
   animate: {
     opacity: [0.25, 0.4, 0.25],
     scale: [0.95, 1.05, 0.95],
-    filter: ['blur(6px)', 'blur(10px)', 'blur(6px)'],
+    filter: ["blur(6px)", "blur(10px)", "blur(6px)"],
     transition: {
       duration: 2,
       repeat: Number.POSITIVE_INFINITY,
-      ease: 'easeInOut',
+      ease: "easeInOut",
     },
   },
 };
@@ -89,7 +89,7 @@ const hashIconVariants = {
 };
 
 const baseTagClass =
-  'flex items-center gap-1.5 rounded-full border px-3 py-1 shadow-xs h-7';
+  "flex items-center gap-1.5 rounded-full border px-3 py-1 shadow-xs h-7";
 
 export function Tags({
   tags: initialTags,
@@ -119,12 +119,12 @@ export function Tags({
 
         if (postId) {
           await updateTags.mutateAsync(updatedTags.map((t) => t.name));
-          queryClient.invalidateQueries({ queryKey: ['popularTags'] });
-          queryClient.invalidateQueries({ queryKey: ['post', postId] });
+          queryClient.invalidateQueries({ queryKey: ["popularTags"] });
+          queryClient.invalidateQueries({ queryKey: ["post", postId] });
         }
       } catch (error) {
         setLocalTags(initialTags);
-        console.error('Failed to update tags:', error);
+        console.error("Failed to update tags:", error);
       }
     },
     [postId, updateTags, queryClient, initialTags, onTagsChange]
@@ -134,18 +134,18 @@ export function Tags({
     const nameLength = tag.name.length;
 
     if (nameLength <= 5) {
-      return 'w-auto min-w-[70px]';
+      return "w-auto min-w-[70px]";
     }
     if (nameLength <= 10) {
-      return 'w-auto min-w-[90px]';
+      return "w-auto min-w-[90px]";
     }
     if (nameLength <= 15) {
-      return 'w-auto min-w-[110px]';
+      return "w-auto min-w-[110px]";
     }
     if (nameLength <= 20) {
-      return 'w-auto min-w-[130px]';
+      return "w-auto min-w-[130px]";
     }
-    return 'w-auto min-w-[150px]';
+    return "w-auto min-w-[150px]";
   };
 
   return (
@@ -156,42 +156,42 @@ export function Tags({
           <span>Tags</span>
         </h3>
         <motion.div
-          variants={containerVariants}
-          initial="initial"
           animate="animate"
-          className={cn('flex flex-wrap gap-2', className)}
+          className={cn("flex flex-wrap gap-2", className)}
+          initial="initial"
+          variants={containerVariants}
         >
           <AnimatePresence mode="sync">
             {localTags.map((tag) => (
               <motion.div
-                key={tag.id}
-                variants={tagVariants}
-                layout
-                whileHover="hover"
-                onHoverStart={() => setHoveredTag(tag.id)}
-                onHoverEnd={() => setHoveredTag(null)}
                 className="group relative cursor-pointer"
+                key={tag.id}
+                layout
+                onHoverEnd={() => setHoveredTag(null)}
+                onHoverStart={() => setHoveredTag(tag.id)}
+                variants={tagVariants}
+                whileHover="hover"
               >
                 {hoveredTag === tag.id && (
                   <motion.div
-                    variants={glowVariants}
-                    initial="initial"
                     animate="animate"
                     className="-z-10 absolute inset-0 rounded-full bg-primary/20"
+                    initial="initial"
+                    variants={glowVariants}
                   />
                 )}
                 <div
                   className={cn(
                     baseTagClass,
                     getTagWidth(tag),
-                    'border-primary/20 bg-primary/5 text-primary hover:border-primary/30 hover:bg-primary/10',
-                    'backdrop-blur-xs backdrop-filter'
+                    "border-primary/20 bg-primary/5 text-primary hover:border-primary/30 hover:bg-primary/10",
+                    "backdrop-blur-xs backdrop-filter"
                   )}
                 >
                   <motion.div
-                    variants={hashIconVariants}
                     className="flex items-center justify-center text-primary/70"
                     initial="initial"
+                    variants={hashIconVariants}
                     whileHover="hover"
                   >
                     <Hash className="h-3.5 w-3.5" />
@@ -214,31 +214,31 @@ export function Tags({
 
             {isOwner && (
               <motion.div
-                variants={tagVariants}
-                layout
-                whileHover="hover"
                 className="relative"
+                layout
+                variants={tagVariants}
+                whileHover="hover"
               >
                 <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsEditing(true)}
                   className={cn(
                     baseTagClass,
-                    'h-7 border-primary/15 bg-primary/5 hover:border-primary/30 hover:bg-primary/10',
-                    'font-normal'
+                    "h-7 border-primary/15 bg-primary/5 hover:border-primary/30 hover:bg-primary/10",
+                    "font-normal"
                   )}
+                  onClick={() => setIsEditing(true)}
+                  size="sm"
+                  variant="outline"
                 >
                   <Plus className="mr-1 h-3 w-3 text-primary" />
                   <span className="text-primary text-xs">Add tag</span>
                 </Button>
                 <motion.div
+                  className="-z-10 absolute inset-0 rounded-full bg-primary/20 blur-md"
                   initial={{ opacity: 0 }}
                   whileHover={{
                     opacity: 1,
                     transition: { duration: 0.2 },
                   }}
-                  className="-z-10 absolute inset-0 rounded-full bg-primary/20 blur-md"
                 />
               </motion.div>
             )}
@@ -246,23 +246,23 @@ export function Tags({
         </motion.div>
       </div>
 
-      <Dialog open={isEditing} onOpenChange={setIsEditing}>
+      <Dialog onOpenChange={setIsEditing} open={isEditing}>
         <DialogContent className="rounded-xl border border-primary/15 shadow-lg shadow-primary/5 sm:max-w-[400px]">
           <DialogTitle className="flex items-center gap-2 font-medium text-base">
             <Hash className="h-3.5 w-3.5 text-primary" />
             Edit Tags
           </DialogTitle>
           <DialogDescription
-            className="text-muted-foreground text-xs"
             aria-describedby="tag-editor"
+            className="text-muted-foreground text-xs"
           >
             Edit tags for your post
           </DialogDescription>
           <TagEditor
-            postId={postId}
             initialTags={localTags.map((t) => t.name)}
             onCloseAction={() => setIsEditing(false)}
             onTagsUpdateAction={handleTagsUpdate}
+            postId={postId}
           />
         </DialogContent>
       </Dialog>

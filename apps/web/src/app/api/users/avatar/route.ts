@@ -1,23 +1,22 @@
-import { deleteAvatar, uploadAvatar } from '@/lib/minio'; // Add deleteAvatar import
-import { getStreamClient } from '@zephyr/auth/src';
-import { prisma } from '@zephyr/db';
-import { avatarCache } from '@zephyr/db';
-import { NextResponse } from 'next/server';
+import { getStreamClient } from "@zephyr/auth/src";
+import { avatarCache, prisma } from "@zephyr/db";
+import { NextResponse } from "next/server";
+import { deleteAvatar, uploadAvatar } from "@/lib/minio"; // Add deleteAvatar import
 
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
-    const file = formData.get('file') as File;
-    const userId = formData.get('userId') as string;
-    const oldAvatarKey = formData.get('oldAvatarKey') as string;
+    const file = formData.get("file") as File;
+    const userId = formData.get("userId") as string;
+    const oldAvatarKey = formData.get("oldAvatarKey") as string;
 
-    if (!file || !userId) {
-      return new NextResponse('Missing required fields', { status: 400 });
+    if (!(file && userId)) {
+      return new NextResponse("Missing required fields", { status: 400 });
     }
 
-    console.log('Avatar update started:', {
+    console.log("Avatar update started:", {
       userId,
-      oldAvatarKey: oldAvatarKey || 'none',
+      oldAvatarKey: oldAvatarKey || "none",
       newFile: {
         name: file.name,
         type: file.type,
@@ -28,23 +27,23 @@ export async function POST(request: Request) {
     const result = await uploadAvatar(file, userId);
 
     const avatarUrl =
-      process.env.NODE_ENV === 'production'
-        ? result.url.replace('http://', 'https://')
+      process.env.NODE_ENV === "production"
+        ? result.url.replace("http://", "https://")
         : result.url;
 
     if (oldAvatarKey) {
       try {
         await deleteAvatar(oldAvatarKey);
-        console.log('Old avatar deleted successfully:', oldAvatarKey);
+        console.log("Old avatar deleted successfully:", oldAvatarKey);
       } catch (deleteError) {
-        console.error('Failed to delete old avatar:', deleteError);
+        console.error("Failed to delete old avatar:", deleteError);
       }
     }
 
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: {
-        avatarUrl: avatarUrl,
+        avatarUrl,
         avatarKey: result.key,
       },
     });
@@ -64,13 +63,13 @@ export async function POST(request: Request) {
             image: avatarUrl,
           },
         });
-        console.log('Stream user avatar updated successfully');
+        console.log("Stream user avatar updated successfully");
       }
     } catch (streamError) {
-      console.error('Failed to update Stream user avatar:', streamError);
+      console.error("Failed to update Stream user avatar:", streamError);
     }
 
-    console.log('Avatar update completed successfully:', {
+    console.log("Avatar update completed successfully:", {
       userId,
       newAvatarKey: result.key,
     });
@@ -80,11 +79,11 @@ export async function POST(request: Request) {
       avatar: { ...result, url: avatarUrl },
     });
   } catch (error) {
-    console.error('Avatar update error:', error);
+    console.error("Avatar update error:", error);
     return NextResponse.json(
       {
         error:
-          error instanceof Error ? error.message : 'Failed to update avatar',
+          error instanceof Error ? error.message : "Failed to update avatar",
       },
       { status: 500 }
     );
@@ -95,8 +94,8 @@ export async function DELETE(request: Request) {
   try {
     const { avatarKey, userId } = await request.json();
 
-    if (!avatarKey || !userId) {
-      return new NextResponse('Missing required fields', { status: 400 });
+    if (!(avatarKey && userId)) {
+      return new NextResponse("Missing required fields", { status: 400 });
     }
     await deleteAvatar(avatarKey);
 
@@ -121,16 +120,16 @@ export async function DELETE(request: Request) {
         });
       }
     } catch (streamError) {
-      console.error('Failed to update Stream user avatar:', streamError);
+      console.error("Failed to update Stream user avatar:", streamError);
     }
 
     return NextResponse.json({ success: true, user: updatedUser });
   } catch (error) {
-    console.error('Avatar deletion error:', error);
+    console.error("Avatar deletion error:", error);
     return NextResponse.json(
       {
         error:
-          error instanceof Error ? error.message : 'Failed to delete avatar',
+          error instanceof Error ? error.message : "Failed to delete avatar",
       },
       { status: 500 }
     );
@@ -156,7 +155,7 @@ export async function GET(
     });
 
     if (!user?.avatarUrl) {
-      return new NextResponse('Avatar not found', { status: 404 });
+      return new NextResponse("Avatar not found", { status: 404 });
     }
 
     await avatarCache.set(userId, {
@@ -171,11 +170,11 @@ export async function GET(
       key: user.avatarKey,
     });
   } catch (error) {
-    console.error('Error fetching avatar:', error);
+    console.error("Error fetching avatar:", error);
     return NextResponse.json(
       {
         error:
-          error instanceof Error ? error.message : 'Failed to fetch avatar',
+          error instanceof Error ? error.message : "Failed to fetch avatar",
       },
       { status: 500 }
     );

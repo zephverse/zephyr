@@ -1,39 +1,41 @@
-'use client';
+"use client";
 
-import useDebounce from '@/hooks/useDebounce';
-import kyInstance from '@/lib/ky';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { SearchSuggestion } from '@zephyr/db';
-import { Input } from '@zephyr/ui/shadui/input';
-import { AnimatePresence, motion } from 'framer-motion';
-import { HashIcon } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
-import type React from 'react';
-import { SearchCommandList } from '../Search/SearchCommandList';
-import { searchMutations } from '../Search/mutations';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { SearchSuggestion } from "@zephyr/db";
+import { Input } from "@zephyr/ui/shadui/input";
+import { AnimatePresence, motion } from "framer-motion";
+import { HashIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
+import type React from "react";
+import { useEffect, useRef, useState } from "react";
+import useDebounce from "@/hooks/useDebounce";
+import kyInstance from "@/lib/ky";
+import { searchMutations } from "../Search/mutations";
+import { SearchCommandList } from "../Search/SearchCommandList";
 
 export default function SearchField({
   onAfterSearch,
-}: { onAfterSearch?: () => void } = {}) {
+}: {
+  onAfterSearch?: () => void;
+} = {}) {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
   const [open, setOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const commandRef = useRef<HTMLDivElement>(null);
   const debouncedInput = useDebounce(input, 300);
 
   const { data: suggestions } = useQuery({
-    queryKey: ['search-suggestions', debouncedInput],
+    queryKey: ["search-suggestions", debouncedInput],
     // biome-ignore lint/suspicious/useAwait: This is a valid use case for useQuery
     queryFn: async () => {
       if (!debouncedInput) {
         return [];
       }
       return kyInstance
-        .get('/api/search', {
-          searchParams: { q: debouncedInput, type: 'suggestions' },
+        .get("/api/search", {
+          searchParams: { q: debouncedInput, type: "suggestions" },
         })
         .json<SearchSuggestion[]>();
     },
@@ -41,10 +43,10 @@ export default function SearchField({
   });
 
   const { data: history } = useQuery({
-    queryKey: ['search-history'],
+    queryKey: ["search-history"],
     queryFn: async () =>
       kyInstance
-        .get('/api/search', { searchParams: { type: 'history' } })
+        .get("/api/search", { searchParams: { type: "history" } })
         .json<string[]>(),
     enabled: open,
   });
@@ -52,22 +54,22 @@ export default function SearchField({
   const searchMutation = useMutation({
     mutationFn: searchMutations.addSearch,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['search-suggestions'] });
-      queryClient.invalidateQueries({ queryKey: ['search-history'] });
+      queryClient.invalidateQueries({ queryKey: ["search-suggestions"] });
+      queryClient.invalidateQueries({ queryKey: ["search-history"] });
     },
   });
 
   const clearHistoryMutation = useMutation({
     mutationFn: searchMutations.clearHistory,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['search-history'] });
+      queryClient.invalidateQueries({ queryKey: ["search-history"] });
     },
   });
 
   const removeHistoryItemMutation = useMutation({
     mutationFn: searchMutations.removeHistoryItem,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['search-history'] });
+      queryClient.invalidateQueries({ queryKey: ["search-history"] });
     },
   });
 
@@ -82,8 +84,8 @@ export default function SearchField({
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleSearch = (searchQuery: string) => {
@@ -103,13 +105,13 @@ export default function SearchField({
 
   const placeholders = [
     "Type a thought… maybe it's brilliant, maybe it's coffee.",
-    'Find posts, people, and probably your next obsession.',
-    'Ask me anything… except my browser history.',
-    'Searching is caring. Start caring loudly.',
-    'What’s on your mind? Don’t say ‘nothing’.',
-    'Discover whispers, rants, and everything in between.',
-    'Pro tip: type faster, look smarter.',
-    'Find the needle. Ignore the haystack.',
+    "Find posts, people, and probably your next obsession.",
+    "Ask me anything… except my browser history.",
+    "Searching is caring. Start caring loudly.",
+    "What’s on your mind? Don’t say ‘nothing’.",
+    "Discover whispers, rants, and everything in between.",
+    "Pro tip: type faster, look smarter.",
+    "Find the needle. Ignore the haystack.",
   ];
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [isFocused, setIsFocused] = useState(false);
@@ -123,18 +125,19 @@ export default function SearchField({
         }
         return next;
       });
-    }, 10000);
+    }, 10_000);
     return () => clearInterval(interval);
   }, []);
 
   return (
     <div className="relative w-full max-w-md">
-      <form onSubmit={handleSubmit} className="relative">
+      <form className="relative" onSubmit={handleSubmit}>
         <HashIcon className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 text-muted-foreground" />
         <Input
-          ref={inputRef}
-          type="text"
-          value={input}
+          aria-label="Search"
+          autoComplete="off"
+          className="h-10 rounded-xl bg-muted pl-9 outline-none ring-0 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 md:h-11"
+          onBlur={() => setIsFocused(false)}
           onChange={(e) => {
             setInput(e.target.value);
             setOpen(true);
@@ -143,24 +146,23 @@ export default function SearchField({
             setOpen(true);
             setIsFocused(true);
           }}
-          onBlur={() => setIsFocused(false)}
           placeholder=""
-          className="h-10 rounded-xl bg-muted pl-9 outline-none ring-0 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 md:h-11"
-          autoComplete="off"
-          aria-label="Search"
+          ref={inputRef}
+          type="text"
+          value={input}
         />
 
-        {!input && !isFocused && (
+        {!(input || isFocused) && (
           <div className="pointer-events-none absolute inset-0 flex items-center pl-9">
             <div className="relative h-4 overflow-hidden">
-              <AnimatePresence mode="wait" initial={false}>
+              <AnimatePresence initial={false} mode="wait">
                 <motion.span
-                  key={placeholderIndex}
-                  initial={{ y: 8, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
-                  exit={{ y: -8, opacity: 0 }}
-                  transition={{ duration: 0.25 }}
                   className="block w-full truncate pr-2 text-muted-foreground text-xs"
+                  exit={{ y: -8, opacity: 0 }}
+                  initial={{ y: 8, opacity: 0 }}
+                  key={placeholderIndex}
+                  transition={{ duration: 0.25 }}
                 >
                   {placeholders[placeholderIndex]}
                 </motion.span>
@@ -172,21 +174,21 @@ export default function SearchField({
 
       {open && (input || (history && history.length > 0)) && (
         <div
-          ref={commandRef}
           className="-translate-x-1/2 absolute left-1/2 z-[205] mt-2 w-[min(90vw,28rem)] md:left-0 md:z-50 md:w-full md:translate-x-0"
+          ref={commandRef}
         >
           <SearchCommandList
-            input={input}
-            suggestions={suggestions}
             history={history}
-            onSelectAction={(value) => {
-              setInput(value);
-              handleSearch(value);
-            }}
+            input={input}
             onClearHistory={() => clearHistoryMutation.mutate()}
             onRemoveHistoryItem={(query) =>
               removeHistoryItemMutation.mutate(query)
             }
+            onSelectAction={(value) => {
+              setInput(value);
+              handleSearch(value);
+            }}
+            suggestions={suggestions}
           />
         </div>
       )}

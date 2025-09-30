@@ -1,13 +1,12 @@
-'use client';
-import { cn } from '@/lib/utils';
-import { Slider } from '@zephyr/ui/shadui/slider';
+"use client";
+import { Slider } from "@zephyr/ui/shadui/slider";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@zephyr/ui/shadui/tooltip';
-import { AnimatePresence, motion } from 'framer-motion';
+} from "@zephyr/ui/shadui/tooltip";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   FastForward,
   Maximize,
@@ -18,8 +17,9 @@ import {
   Settings,
   Volume2,
   VolumeX,
-} from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { cn } from "@/lib/utils";
 
 interface CustomVideoPlayerProps {
   src: string;
@@ -56,18 +56,19 @@ export const CustomVideoPlayer = ({
   const [isBuffering, setIsBuffering] = useState(false);
   const [showHotkeys, setShowHotkeys] = useState(false);
 
-  useEffect(() => {
-    return () => {
+  useEffect(
+    () => () => {
       if (controlsTimeoutRef.current) {
         clearTimeout(controlsTimeoutRef.current);
       }
-    };
-  }, []);
+    },
+    []
+  );
 
   const formatTime = (time: number) => {
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60);
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
   };
 
   useEffect(() => {
@@ -82,20 +83,20 @@ export const CustomVideoPlayer = ({
       setIsFullscreen(!!document.fullscreenElement);
     };
 
-    video.addEventListener('timeupdate', handleTimeUpdate);
-    video.addEventListener('durationchange', handleDurationChange);
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    video.addEventListener("timeupdate", handleTimeUpdate);
+    video.addEventListener("durationchange", handleDurationChange);
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
 
     return () => {
-      video.removeEventListener('timeupdate', handleTimeUpdate);
-      video.removeEventListener('durationchange', handleDurationChange);
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      video.removeEventListener("timeupdate", handleTimeUpdate);
+      video.removeEventListener("durationchange", handleDurationChange);
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
     };
   }, []);
 
   useEffect(() => {
     const keyboardControls: KeyboardControls = {
-      ' ': handlePlayPause,
+      " ": handlePlayPause,
       k: handlePlayPause,
       m: toggleMute,
       f: toggleFullscreen,
@@ -114,8 +115,8 @@ export const CustomVideoPlayer = ({
     const handleKeyPress = (e: KeyboardEvent) => {
       if (
         !showControls ||
-        (e.target as HTMLElement)?.tagName === 'INPUT' ||
-        (e.target as HTMLElement)?.tagName === 'TEXTAREA'
+        (e.target as HTMLElement)?.tagName === "INPUT" ||
+        (e.target as HTMLElement)?.tagName === "TEXTAREA"
       ) {
         return;
       }
@@ -128,8 +129,8 @@ export const CustomVideoPlayer = ({
       }
     };
 
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
+    window.addEventListener("keydown", handleKeyPress);
+    return () => window.removeEventListener("keydown", handleKeyPress);
   }, [volume, showControls]);
 
   const handlePlayPause = () => {
@@ -171,12 +172,12 @@ export const CustomVideoPlayer = ({
     const handleWaiting = () => setIsBuffering(true);
     const handlePlaying = () => setIsBuffering(false);
 
-    video.addEventListener('waiting', handleWaiting);
-    video.addEventListener('playing', handlePlaying);
+    video.addEventListener("waiting", handleWaiting);
+    video.addEventListener("playing", handlePlaying);
 
     return () => {
-      video.removeEventListener('waiting', handleWaiting);
-      video.removeEventListener('playing', handlePlaying);
+      video.removeEventListener("waiting", handleWaiting);
+      video.removeEventListener("playing", handlePlaying);
     };
   }, []);
 
@@ -242,24 +243,24 @@ export const CustomVideoPlayer = ({
   return (
     // biome-ignore lint/nursery/noStaticElementInteractions: ignore
     <div
-      ref={containerRef}
       className={cn(
-        'group relative w-full overflow-hidden rounded-lg',
-        isFullscreen && 'h-screen',
+        "group relative w-full overflow-hidden rounded-lg",
+        isFullscreen && "h-screen",
         className
       )}
-      onMouseMove={handleMouseMove}
       onMouseLeave={() => isPlaying && setShowControls(false)}
+      onMouseMove={handleMouseMove}
+      ref={containerRef}
     >
       {/* biome-ignore lint/a11y/useKeyWithClickEvents: ignore */}
       {/* biome-ignore lint/a11y/useMediaCaption: ignore */}
       <video
+        className="h-full w-full select-none outline-hidden focus:outline-hidden focus-visible:outline-none"
+        onClick={handlePlayPause}
+        onError={onError}
+        onLoadedData={onLoadedData}
         ref={videoRef}
         src={src}
-        className="h-full w-full select-none outline-hidden focus:outline-hidden focus-visible:outline-none"
-        onLoadedData={onLoadedData}
-        onError={onError}
-        onClick={handlePlayPause}
       />
 
       <div className="absolute top-4 left-4 z-40 opacity-30 transition-opacity duration-300 hover:opacity-60">
@@ -286,10 +287,10 @@ export const CustomVideoPlayer = ({
       <AnimatePresence>
         {isBuffering && (
           <motion.div
-            initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
             className="absolute inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm"
+            exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }}
           >
             <div className="rounded-full bg-black/50 p-4 backdrop-blur-sm">
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-white/20 border-t-white" />
@@ -301,34 +302,34 @@ export const CustomVideoPlayer = ({
       <AnimatePresence>
         {showControls && (
           <motion.div
-            initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
             className="absolute inset-0 z-40 flex flex-col justify-between bg-gradient-to-t from-black/60 to-black/0"
+            exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
           >
             <motion.div
-              initial={{ y: -20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              exit={{ y: -20, opacity: 0 }}
               className="flex items-center justify-end gap-2 p-4"
+              exit={{ y: -20, opacity: 0 }}
+              initial={{ y: -20, opacity: 0 }}
             >
               <div className="relative">
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <motion.button
+                        className="rounded-full bg-black/30 p-2 backdrop-blur-md transition-all duration-200 hover:bg-black/50"
+                        onClick={() => setShowSpeedMenu(!showSpeedMenu)}
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        onClick={() => setShowSpeedMenu(!showSpeedMenu)}
-                        className="rounded-full bg-black/30 p-2 backdrop-blur-md transition-all duration-200 hover:bg-black/50"
                       >
                         <Settings className="h-4 w-4 text-white/90" />
                       </motion.button>
                     </TooltipTrigger>
                     <TooltipContent
-                      side="bottom"
                       className="bg-black/80 backdrop-blur-md"
+                      side="bottom"
                     >
                       <p className="text-xs">Playback Settings</p>
                     </TooltipContent>
@@ -338,24 +339,24 @@ export const CustomVideoPlayer = ({
                 <AnimatePresence>
                   {showSpeedMenu && (
                     <motion.div
-                      initial={{ opacity: 0, y: -5, scale: 0.95 }}
                       animate={{
                         opacity: 1,
                         y: 0,
                         scale: 1,
                         transition: {
-                          type: 'spring',
+                          type: "spring",
                           stiffness: 300,
                           damping: 30,
                         },
                       }}
+                      className="absolute top-full right-0 mt-2 origin-top-right"
                       exit={{
                         opacity: 0,
                         y: -5,
                         scale: 0.95,
                         transition: { duration: 0.15 },
                       }}
-                      className="absolute top-full right-0 mt-2 origin-top-right"
+                      initial={{ opacity: 0, y: -5, scale: 0.95 }}
                     >
                       <div className="overflow-hidden rounded-lg border border-white/10 bg-black/80 shadow-lg backdrop-blur-md">
                         <div className="p-2">
@@ -365,27 +366,27 @@ export const CustomVideoPlayer = ({
                           <div className="space-y-0.5">
                             {PLAYBACK_SPEEDS.map((speed) => (
                               <motion.button
+                                className={cn(
+                                  "w-full rounded-md px-3 py-1.5 text-left text-xs transition-all",
+                                  playbackSpeed === speed
+                                    ? "bg-white/20 text-white"
+                                    : "text-white/70 hover:text-white"
+                                )}
                                 key={speed}
-                                whileHover={{
-                                  backgroundColor: 'rgba(255,255,255,0.1)',
-                                }}
                                 onClick={() =>
                                   handlePlaybackSpeedChange(speed.toString())
                                 }
-                                className={cn(
-                                  'w-full rounded-md px-3 py-1.5 text-left text-xs transition-all',
-                                  playbackSpeed === speed
-                                    ? 'bg-white/20 text-white'
-                                    : 'text-white/70 hover:text-white'
-                                )}
+                                whileHover={{
+                                  backgroundColor: "rgba(255,255,255,0.1)",
+                                }}
                               >
                                 <div className="flex items-center justify-between">
                                   <span>{speed}x</span>
                                   {playbackSpeed === speed && (
                                     <motion.div
-                                      initial={{ scale: 0 }}
                                       animate={{ scale: 1 }}
                                       className="h-1.5 w-1.5 rounded-full bg-white"
+                                      initial={{ scale: 0 }}
                                     />
                                   )}
                                 </div>
@@ -403,10 +404,10 @@ export const CustomVideoPlayer = ({
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <motion.button
+                      className="rounded-full bg-black/30 p-2 backdrop-blur-xs transition-colors hover:bg-black/70"
+                      onClick={toggleFullscreen}
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
-                      onClick={toggleFullscreen}
-                      className="rounded-full bg-black/30 p-2 backdrop-blur-xs transition-colors hover:bg-black/70"
                     >
                       {isFullscreen ? (
                         <MinimizeIcon className="h-4 w-4 text-white/90" />
@@ -416,17 +417,17 @@ export const CustomVideoPlayer = ({
                     </motion.button>
                   </TooltipTrigger>
                   <TooltipContent side="bottom">
-                    <p>{isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}</p>
+                    <p>{isFullscreen ? "Exit Fullscreen" : "Fullscreen"}</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             </motion.div>
 
             <motion.div
-              initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              exit={{ y: 20, opacity: 0 }}
               className="space-y-2 p-4"
+              exit={{ y: 20, opacity: 0 }}
+              initial={{ y: 20, opacity: 0 }}
             >
               {/* biome-ignore lint/nursery/noStaticElementInteractions: ignore */}
               <div
@@ -434,12 +435,12 @@ export const CustomVideoPlayer = ({
                 onMouseEnter={() => setShowControls(true)}
               >
                 <Slider
-                  value={[currentTime]}
-                  min={0}
-                  max={duration}
-                  step={0.1}
-                  onValueChange={handleProgressChange}
                   className="h-1 transition-all group-hover:h-1.5"
+                  max={duration}
+                  min={0}
+                  onValueChange={handleProgressChange}
+                  step={0.1}
+                  value={[currentTime]}
                 />
                 <div className="mt-1 flex justify-between text-white/80 text-xs">
                   <span>{formatTime(currentTime)}</span>
@@ -453,10 +454,10 @@ export const CustomVideoPlayer = ({
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <motion.button
+                          className="rounded-full bg-black/50 p-2 backdrop-blur-xs transition-colors hover:bg-black/70"
+                          onClick={() => skip(-10)}
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
-                          onClick={() => skip(-10)}
-                          className="rounded-full bg-black/50 p-2 backdrop-blur-xs transition-colors hover:bg-black/70"
                         >
                           <Rewind className="h-5 w-5 text-white" />
                         </motion.button>
@@ -471,10 +472,10 @@ export const CustomVideoPlayer = ({
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <motion.button
+                          className="rounded-full bg-black/50 p-3 backdrop-blur-xs transition-colors hover:bg-black/70"
+                          onClick={handlePlayPause}
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
-                          onClick={handlePlayPause}
-                          className="rounded-full bg-black/50 p-3 backdrop-blur-xs transition-colors hover:bg-black/70"
                         >
                           {isPlaying ? (
                             <Pause className="h-6 w-6 text-white" />
@@ -493,10 +494,10 @@ export const CustomVideoPlayer = ({
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <motion.button
+                          className="rounded-full bg-black/50 p-2 backdrop-blur-xs transition-colors hover:bg-black/70"
+                          onClick={() => skip(10)}
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
-                          onClick={() => skip(10)}
-                          className="rounded-full bg-black/50 p-2 backdrop-blur-xs transition-colors hover:bg-black/70"
                         >
                           <FastForward className="h-5 w-5 text-white" />
                         </motion.button>
@@ -514,11 +515,11 @@ export const CustomVideoPlayer = ({
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
+                            className="rounded-full bg-black/30 p-2 backdrop-blur-md transition-all duration-200 hover:bg-black/50"
                             onClick={toggleMute}
                             onMouseEnter={() => setShowVolumeSlider(true)}
-                            className="rounded-full bg-black/30 p-2 backdrop-blur-md transition-all duration-200 hover:bg-black/50"
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
                           >
                             {isMuted || volume === 0 ? (
                               <VolumeX className="h-4 w-4 text-white/90" />
@@ -528,8 +529,8 @@ export const CustomVideoPlayer = ({
                           </motion.button>
                         </TooltipTrigger>
                         <TooltipContent
-                          side="top"
                           className="bg-black/80 backdrop-blur-md"
+                          side="top"
                         >
                           <p className="text-xs">Mute (M)</p>
                         </TooltipContent>
@@ -539,13 +540,12 @@ export const CustomVideoPlayer = ({
                     <AnimatePresence>
                       {showVolumeSlider && (
                         <motion.div
-                          initial={{ width: 0, opacity: 0 }}
                           animate={{
-                            width: '140px',
+                            width: "140px",
                             opacity: 1,
                             transition: {
                               width: {
-                                type: 'spring',
+                                type: "spring",
                                 stiffness: 300,
                                 damping: 30,
                               },
@@ -554,6 +554,7 @@ export const CustomVideoPlayer = ({
                               },
                             },
                           }}
+                          className="ml-2 overflow-hidden"
                           exit={{
                             width: 0,
                             opacity: 0,
@@ -566,34 +567,34 @@ export const CustomVideoPlayer = ({
                               },
                             },
                           }}
-                          className="ml-2 overflow-hidden"
+                          initial={{ width: 0, opacity: 0 }}
                           onMouseLeave={() => setShowVolumeSlider(false)}
                         >
                           <motion.div
+                            animate={{ scale: 1 }}
                             className="flex items-center gap-3 rounded-full bg-black/30 px-3 py-2 backdrop-blur-md"
                             initial={{ scale: 0.95 }}
-                            animate={{ scale: 1 }}
                           >
                             <Slider
-                              value={[volume]}
-                              min={0}
-                              max={1}
-                              step={0.01}
-                              onValueChange={handleVolumeChange}
                               className="relative flex h-4 w-full touch-none select-none items-center"
+                              max={1}
+                              min={0}
+                              onValueChange={handleVolumeChange}
+                              step={0.01}
+                              value={[volume]}
                             >
                               <motion.div
                                 className="relative h-1 w-full grow overflow-hidden rounded-full bg-white/20"
-                                whileHover={{ height: '6px' }}
                                 transition={{ duration: 0.2 }}
+                                whileHover={{ height: "6px" }}
                               >
                                 <motion.div
-                                  className="absolute h-full bg-white/90"
-                                  style={{ width: `${volume * 100}%` }}
-                                  initial={{ width: 0 }}
                                   animate={{ width: `${volume * 100}%` }}
+                                  className="absolute h-full bg-white/90"
+                                  initial={{ width: 0 }}
+                                  style={{ width: `${volume * 100}%` }}
                                   transition={{
-                                    type: 'spring',
+                                    type: "spring",
                                     stiffness: 300,
                                     damping: 30,
                                   }}
@@ -618,10 +619,10 @@ export const CustomVideoPlayer = ({
       <AnimatePresence>
         {showHotkeys && (
           <motion.div
-            initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
             className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+            exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }}
             onClick={() => setShowHotkeys(false)}
           >
             <div className="grid max-w-md gap-8 rounded-lg bg-black/90 p-6 text-white backdrop-blur-xs sm:grid-cols-2">

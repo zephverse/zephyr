@@ -1,15 +1,15 @@
-'use server';
+"use server";
 
-import { Prisma } from '@prisma/client';
-import { validateRequest } from '@zephyr/auth/auth';
-import { prisma } from '@zephyr/db';
+import { Prisma } from "@prisma/client";
+import { validateRequest } from "@zephyr/auth/auth";
+import { prisma } from "@zephyr/db";
 
 export async function getSuggestedConnections() {
   try {
     const { user } = await validateRequest();
 
     if (!user) {
-      throw new Error('User not authenticated');
+      throw new Error("User not authenticated");
     }
 
     const suggestedUsers = await prisma.user.findMany({
@@ -57,7 +57,7 @@ export async function getSuggestedConnections() {
 
     return JSON.parse(JSON.stringify(shuffled));
   } catch (error) {
-    console.error('Error in getSuggestedConnections:', error);
-    throw new Error('Failed to fetch suggested connections');
+    console.error("Error in getSuggestedConnections:", error);
+    throw new Error("Failed to fetch suggested connections");
   }
 }

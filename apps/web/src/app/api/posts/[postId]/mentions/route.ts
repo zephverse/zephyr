@@ -1,12 +1,12 @@
-import { NotificationType } from '@prisma/client';
-import { validateRequest } from '@zephyr/auth/auth';
-import { prisma } from '@zephyr/db';
+import { NotificationType } from "@prisma/client";
+import { validateRequest } from "@zephyr/auth/auth";
+import { prisma } from "@zephyr/db";
 
 export async function GET({ params }: { params: { postId: string } }) {
   try {
     const { user } = await validateRequest();
     if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const mentions = await prisma.mention.findMany({
@@ -27,8 +27,8 @@ export async function GET({ params }: { params: { postId: string } }) {
 
     return Response.json({ mentions: mentions.map((m) => m.user) });
   } catch (error) {
-    console.error('Error fetching mentions:', error);
-    return Response.json({ error: 'Internal server error' }, { status: 500 });
+    console.error("Error fetching mentions:", error);
+    return Response.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
@@ -39,7 +39,7 @@ export async function POST(
   try {
     const { user } = await validateRequest();
     if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { userIds } = await request.json();
@@ -54,11 +54,11 @@ export async function POST(
     });
 
     if (!post) {
-      return Response.json({ error: 'Post not found' }, { status: 404 });
+      return Response.json({ error: "Post not found" }, { status: 404 });
     }
 
     if (post.userId !== user.id) {
-      return Response.json({ error: 'Unauthorized' }, { status: 403 });
+      return Response.json({ error: "Unauthorized" }, { status: 403 });
     }
 
     await prisma.$transaction(async (tx) => {
@@ -107,7 +107,7 @@ export async function POST(
 
     return Response.json({ mentions: updatedMentions.map((m) => m.user) });
   } catch (error) {
-    console.error('Error updating mentions:', error);
-    return Response.json({ error: 'Internal server error' }, { status: 500 });
+    console.error("Error updating mentions:", error);
+    return Response.json({ error: "Internal server error" }, { status: 500 });
   }
 }

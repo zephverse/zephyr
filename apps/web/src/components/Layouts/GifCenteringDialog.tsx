@@ -1,15 +1,13 @@
-import { useUpdateAvatarMutation } from '@/app/(main)/users/[username]/avatar-mutations';
-import LoadingButton from '@/components/Auth/LoadingButton';
-import { useToast } from '@zephyr/ui/hooks/use-toast';
-import { Button } from '@zephyr/ui/shadui/button';
+import { useToast } from "@zephyr/ui/hooks/use-toast";
+import { Button } from "@zephyr/ui/shadui/button";
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@zephyr/ui/shadui/dialog';
-import { motion } from 'framer-motion';
+} from "@zephyr/ui/shadui/dialog";
+import { motion } from "framer-motion";
 import {
   ChevronDown,
   ChevronLeft,
@@ -17,8 +15,10 @@ import {
   ChevronUp,
   ZoomIn,
   ZoomOut,
-} from 'lucide-react';
-import { useRef, useState } from 'react';
+} from "lucide-react";
+import { useRef, useState } from "react";
+import { useUpdateAvatarMutation } from "@/app/(main)/users/[username]/avatar-mutations";
+import LoadingButton from "@/components/Auth/LoadingButton";
 
 interface GifCenteringDialogProps {
   gifFile: File;
@@ -49,16 +49,16 @@ export default function GifCenteringDialog({
   const MIN_ZOOM = 0.5;
   const MAX_ZOOM = 2;
 
-  const handleMove = (direction: 'up' | 'down' | 'left' | 'right') => {
+  const handleMove = (direction: "up" | "down" | "left" | "right") => {
     setPosition((prev) => {
       switch (direction) {
-        case 'up':
+        case "up":
           return { ...prev, y: prev.y + MOVE_AMOUNT };
-        case 'down':
+        case "down":
           return { ...prev, y: prev.y - MOVE_AMOUNT };
-        case 'left':
+        case "left":
           return { ...prev, x: prev.x + MOVE_AMOUNT };
-        case 'right':
+        case "right":
           return { ...prev, x: prev.x - MOVE_AMOUNT };
         default:
           return prev;
@@ -85,7 +85,7 @@ export default function GifCenteringDialog({
       const transformedFileName = `avatar_${timestamp}_x${safePosition.x}_y${safePosition.y}_z${safePosition.z}.gif`;
 
       const file = new File([gifFile], transformedFileName, {
-        type: 'image/gif',
+        type: "image/gif",
       });
 
       await mutation.mutateAsync({
@@ -96,17 +96,17 @@ export default function GifCenteringDialog({
 
       onClose();
     } catch (error) {
-      console.error('Error processing GIF:', error);
+      console.error("Error processing GIF:", error);
       toast({
-        title: 'Error',
-        description: 'Failed to update avatar. Please try again.',
-        variant: 'destructive',
+        title: "Error",
+        description: "Failed to update avatar. Please try again.",
+        variant: "destructive",
       });
     }
   };
 
   return (
-    <Dialog open onOpenChange={onClose}>
+    <Dialog onOpenChange={onClose} open>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Center Your GIF</DialogTitle>
@@ -114,29 +114,29 @@ export default function GifCenteringDialog({
 
         <div className="flex flex-col items-center gap-4">
           <div
-            ref={containerRef}
             className="relative size-64 overflow-hidden rounded-full border-2 border-border bg-secondary"
+            ref={containerRef}
           >
             <motion.div
-              className="absolute inset-0 flex items-center justify-center"
               animate={{
                 x: position.x,
                 y: position.y,
                 scale: zoom,
               }}
-              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              className="absolute inset-0 flex items-center justify-center"
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
             >
               <Image
-                ref={gifRef}
-                src={URL.createObjectURL(gifFile)}
                 alt="GIF preview"
                 className="max-w-none"
-                style={{
-                  transformOrigin: 'center',
-                }}
                 draggable={false}
                 layout="fill"
                 objectFit="contain"
+                ref={gifRef}
+                src={URL.createObjectURL(gifFile)}
+                style={{
+                  transformOrigin: "center",
+                }}
               />
             </motion.div>
           </div>
@@ -145,20 +145,20 @@ export default function GifCenteringDialog({
             <div className="grid grid-cols-3 gap-2">
               <div />
               <Button
-                variant="outline"
-                size="icon"
-                onClick={() => handleMove('up')}
                 disabled={mutation.isPending}
+                onClick={() => handleMove("up")}
+                size="icon"
+                variant="outline"
               >
                 <ChevronUp className="size-4" />
               </Button>
               <div />
 
               <Button
-                variant="outline"
-                size="icon"
-                onClick={() => handleMove('left')}
                 disabled={mutation.isPending}
+                onClick={() => handleMove("left")}
+                size="icon"
+                variant="outline"
               >
                 <ChevronLeft className="size-4" />
               </Button>
@@ -166,20 +166,20 @@ export default function GifCenteringDialog({
                 <span className="text-muted-foreground text-sm">Move</span>
               </div>
               <Button
-                variant="outline"
-                size="icon"
-                onClick={() => handleMove('right')}
                 disabled={mutation.isPending}
+                onClick={() => handleMove("right")}
+                size="icon"
+                variant="outline"
               >
                 <ChevronRight className="size-4" />
               </Button>
 
               <div />
               <Button
-                variant="outline"
-                size="icon"
-                onClick={() => handleMove('down')}
                 disabled={mutation.isPending}
+                onClick={() => handleMove("down")}
+                size="icon"
+                variant="outline"
               >
                 <ChevronDown className="size-4" />
               </Button>
@@ -188,10 +188,10 @@ export default function GifCenteringDialog({
 
             <div className="flex items-center justify-center gap-2">
               <Button
-                variant="outline"
-                size="icon"
-                onClick={() => handleZoom(false)}
                 disabled={zoom <= MIN_ZOOM || mutation.isPending}
+                onClick={() => handleZoom(false)}
+                size="icon"
+                variant="outline"
               >
                 <ZoomOut className="size-4" />
               </Button>
@@ -199,10 +199,10 @@ export default function GifCenteringDialog({
                 {(zoom * 100).toFixed(0)}%
               </span>
               <Button
-                variant="outline"
-                size="icon"
-                onClick={() => handleZoom(true)}
                 disabled={zoom >= MAX_ZOOM || mutation.isPending}
+                onClick={() => handleZoom(true)}
+                size="icon"
+                variant="outline"
               >
                 <ZoomIn className="size-4" />
               </Button>
@@ -212,13 +212,13 @@ export default function GifCenteringDialog({
 
         <DialogFooter>
           <Button
-            variant="ghost"
-            onClick={onClose}
             disabled={mutation.isPending}
+            onClick={onClose}
+            variant="ghost"
           >
             Cancel
           </Button>
-          <LoadingButton onClick={handleComplete} loading={mutation.isPending}>
+          <LoadingButton loading={mutation.isPending} onClick={handleComplete}>
             Apply Changes
           </LoadingButton>
         </DialogFooter>

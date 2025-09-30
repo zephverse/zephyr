@@ -1,19 +1,19 @@
-'use client';
+"use client";
 
-import EditProfileButton from '@/components/Layouts/EditProfileButton';
-import FollowButton from '@/components/Layouts/FollowButton';
-import UserAvatar from '@/components/Layouts/UserAvatar';
-import Linkify from '@/helpers/global/Linkify';
-import kyInstance from '@/lib/ky';
-import { cn } from '@/lib/utils';
-import { useInfiniteQuery } from '@tanstack/react-query';
-import type { UserData } from '@zephyr/db';
-import { Alert, AlertDescription } from '@zephyr/ui/shadui/alert';
-import { Button } from '@zephyr/ui/shadui/button';
-import { motion } from 'framer-motion';
-import { Users2, VerifiedIcon } from 'lucide-react';
-import Link from 'next/link';
-import { useSession } from '../SessionProvider';
+import { useInfiniteQuery } from "@tanstack/react-query";
+import type { UserData } from "@zephyr/db";
+import { Alert, AlertDescription } from "@zephyr/ui/shadui/alert";
+import { Button } from "@zephyr/ui/shadui/button";
+import { motion } from "framer-motion";
+import { Users2, VerifiedIcon } from "lucide-react";
+import Link from "next/link";
+import EditProfileButton from "@/components/Layouts/EditProfileButton";
+import FollowButton from "@/components/Layouts/FollowButton";
+import UserAvatar from "@/components/Layouts/UserAvatar";
+import Linkify from "@/helpers/global/Linkify";
+import kyInstance from "@/lib/ky";
+import { cn } from "@/lib/utils";
+import { useSession } from "../SessionProvider";
 
 interface UsersResponse {
   users: UserData[];
@@ -38,18 +38,17 @@ const item = {
 export default function UserSearchResults({ query }: { query: string }) {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, status } =
     useInfiniteQuery({
-      queryKey: ['user-search', query],
+      queryKey: ["user-search", query],
       // biome-ignore lint/suspicious/useAwait: This is a React Query function
-      queryFn: async ({ pageParam }) => {
-        return kyInstance
-          .get('/api/search/users', {
+      queryFn: async ({ pageParam }) =>
+        kyInstance
+          .get("/api/search/users", {
             searchParams: {
               q: query,
               ...(pageParam ? { cursor: pageParam } : {}),
             },
           })
-          .json<UsersResponse>();
-      },
+          .json<UsersResponse>(),
       initialPageParam: null as string | null,
       getNextPageParam: (lastPage) => lastPage.nextCursor,
       enabled: Boolean(query),
@@ -57,7 +56,7 @@ export default function UserSearchResults({ query }: { query: string }) {
 
   const users = data?.pages.flatMap((page) => page.users) || [];
 
-  if (status === 'pending') {
+  if (status === "pending") {
     return (
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {[...new Array(4)].map((_, i) => (
@@ -67,7 +66,7 @@ export default function UserSearchResults({ query }: { query: string }) {
     );
   }
 
-  if (status === 'error') {
+  if (status === "error") {
     return (
       <Alert variant="destructive">
         <AlertDescription>
@@ -92,10 +91,10 @@ export default function UserSearchResults({ query }: { query: string }) {
       </div>
 
       <motion.div
-        variants={container}
-        initial="hidden"
         animate="show"
         className="grid grid-cols-1 gap-4 md:grid-cols-2"
+        initial="hidden"
+        variants={container}
       >
         {users.map((user) => (
           <UserCard key={user.id} user={user} />
@@ -104,18 +103,18 @@ export default function UserSearchResults({ query }: { query: string }) {
 
       {hasNextPage && (
         <motion.div
-          initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
           className="mt-6"
+          initial={{ opacity: 0 }}
+          transition={{ delay: 0.3 }}
         >
           <Button
-            variant="outline"
             className="w-full"
-            onClick={() => fetchNextPage()}
             disabled={isFetchingNextPage}
+            onClick={() => fetchNextPage()}
+            variant="outline"
           >
-            {isFetchingNextPage ? 'Loading more people...' : 'Show more people'}
+            {isFetchingNextPage ? "Loading more people..." : "Show more people"}
           </Button>
         </motion.div>
       )}
@@ -129,22 +128,22 @@ function UserCard({ user }: { user: UserData }) {
 
   return (
     <motion.div
-      variants={item}
       className="group relative rounded-xl border bg-card transition-all duration-300 hover:bg-muted"
+      variants={item}
     >
       <div className="p-4">
         <div className="flex items-start gap-4">
-          <Link href={`/users/${user.username}`} className="shrink-0">
+          <Link className="shrink-0" href={`/users/${user.username}`}>
             <UserAvatar
-              user={user}
               className="h-16 w-16 ring-2 ring-primary/10 ring-offset-2 ring-offset-background transition-all group-hover:ring-primary/20"
+              user={user}
             />
           </Link>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5">
               <Link
-                href={`/users/${user.username}`}
                 className="truncate font-medium transition-colors hover:text-primary"
+                href={`/users/${user.username}`}
               >
                 {user.displayName}
               </Link>
@@ -166,38 +165,38 @@ function UserCard({ user }: { user: UserData }) {
               <span className="text-muted-foreground">
                 <span className="font-medium text-foreground">
                   {user._count.followers}
-                </span>{' '}
+                </span>{" "}
                 followers
               </span>
               <span className="text-muted-foreground">
                 <span className="font-medium text-foreground">
                   {user._count.posts}
-                </span>{' '}
+                </span>{" "}
                 posts
               </span>
             </div>
             {isOwnProfile && (
               <div className="mt-4">
                 <EditProfileButton
-                  user={user}
                   className="w-full transition-all"
+                  user={user}
                 />
               </div>
             )}
             {!isOwnProfile && (
               <div className="mt-4">
                 <FollowButton
-                  userId={user.id}
+                  className={cn(
+                    "w-full transition-all",
+                    user.followers.length > 0
+                      ? "hover:bg-destructive/10 hover:text-destructive"
+                      : "hover:bg-primary/10 hover:text-primary"
+                  )}
                   initialState={{
                     followers: user._count.followers,
                     isFollowedByUser: user.followers.length > 0,
                   }}
-                  className={cn(
-                    'w-full transition-all',
-                    user.followers.length > 0
-                      ? 'hover:bg-destructive/10 hover:text-destructive'
-                      : 'hover:bg-primary/10 hover:text-primary'
-                  )}
+                  userId={user.id}
                 />
               </div>
             )}

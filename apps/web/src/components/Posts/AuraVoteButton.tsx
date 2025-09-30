@@ -1,15 +1,15 @@
-import kyInstance from '@/lib/ky';
-import { cn } from '@/lib/utils';
 import {
   type QueryKey,
   useMutation,
   useQuery,
   useQueryClient,
-} from '@tanstack/react-query';
-import type { VoteInfo } from '@zephyr/db';
-import { useToast } from '@zephyr/ui/hooks/use-toast';
-import { Button } from '@zephyr/ui/shadui/button';
-import { ArrowBigDown, ArrowBigUp } from 'lucide-react';
+} from "@tanstack/react-query";
+import type { VoteInfo } from "@zephyr/db";
+import { useToast } from "@zephyr/ui/hooks/use-toast";
+import { Button } from "@zephyr/ui/shadui/button";
+import { ArrowBigDown, ArrowBigUp } from "lucide-react";
+import kyInstance from "@/lib/ky";
+import { cn } from "@/lib/utils";
 
 interface AuraVoteButtonProps {
   postId: string;
@@ -24,7 +24,7 @@ export default function AuraVoteButton({
 }: AuraVoteButtonProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const queryKey: QueryKey = ['vote-info', postId];
+  const queryKey: QueryKey = ["vote-info", postId];
 
   const { data } = useQuery({
     queryKey,
@@ -63,7 +63,7 @@ export default function AuraVoteButton({
       });
 
       // biome-ignore lint/suspicious/noExplicitAny: any
-      queryClient.setQueryData(['post', postId], (oldPost: any) => {
+      queryClient.setQueryData(["post", postId], (oldPost: any) => {
         if (!oldPost) {
           return oldPost;
         }
@@ -75,7 +75,7 @@ export default function AuraVoteButton({
           ...oldPost,
           aura: oldPost.aura + voteChange,
           vote:
-            newVote === 0 ? [] : [{ userId: 'currentUser', value: newVote }],
+            newVote === 0 ? [] : [{ userId: "currentUser", value: newVote }],
         };
       });
       return { previousState };
@@ -111,8 +111,8 @@ export default function AuraVoteButton({
       queryClient.setQueryData(queryKey, context?.previousState);
       console.error(error);
       toast({
-        variant: 'destructive',
-        description: 'Something went wrong. Please try again.',
+        variant: "destructive",
+        description: "Something went wrong. Please try again.",
       });
     },
   });
@@ -130,19 +130,19 @@ export default function AuraVoteButton({
   return (
     <div className="flex items-center gap-2">
       <Button
+        className={cn(
+          "group rounded-md p-1 text-muted-foreground hover:border hover:border-orange-500 hover:bg-orange-100 hover:bg-orange/10 hover:shadow-md",
+          data.userVote === 1 && "bg-orange-100/10"
+        )}
+        onClick={() => mutate(1)}
         type="button"
         variant="ghost"
-        onClick={() => mutate(1)}
-        className={cn(
-          'group rounded-md p-1 text-muted-foreground hover:border hover:border-orange-500 hover:bg-orange-100 hover:bg-orange/10 hover:shadow-md',
-          data.userVote === 1 && 'bg-orange-100/10'
-        )}
       >
         <div className="flex items-center overflow-hidden hover:text-orange-500">
           <ArrowBigUp
             className={cn(
-              'size-6',
-              data.userVote === 1 && 'fill-orange-500 text-orange-500'
+              "size-6",
+              data.userVote === 1 && "fill-orange-500 text-orange-500"
             )}
           />
           <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-300 group-hover:ml-2 group-hover:max-w-xs">
@@ -151,19 +151,19 @@ export default function AuraVoteButton({
         </div>
       </Button>
       <Button
+        className={cn(
+          "group rounded-md p-1 text-muted-foreground hover:border hover:border-violet-500 hover:bg-violet-100 hover:bg-violet/10 hover:shadow-md",
+          data.userVote === -1 && "bg-violet-100/10"
+        )}
+        onClick={() => mutate(-1)}
         type="button"
         variant="ghost"
-        onClick={() => mutate(-1)}
-        className={cn(
-          'group rounded-md p-1 text-muted-foreground hover:border hover:border-violet-500 hover:bg-violet-100 hover:bg-violet/10 hover:shadow-md',
-          data.userVote === -1 && 'bg-violet-100/10'
-        )}
       >
         <div className="flex items-center overflow-hidden hover:text-violet-500">
           <ArrowBigDown
             className={cn(
-              'size-6',
-              data.userVote === -1 && 'fill-violet-500 text-violet-500'
+              "size-6",
+              data.userVote === -1 && "fill-violet-500 text-violet-500"
             )}
           />
           <span className="max-w-0 overflow-hidden whitespace-nowrap text-violet-500 transition-all duration-300 group-hover:ml-2 group-hover:max-w-xs">

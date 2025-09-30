@@ -1,6 +1,6 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import type { HNStoryType } from '../components/hackernews';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import type { HNStoryType } from "../components/hackernews";
 
 interface HNShareState {
   story: HNStoryType | null;
@@ -22,7 +22,7 @@ export const useHNShareStore = create<HNShareState>()(
       clearState: () => set({ story: null, isSharing: false }),
     }),
     {
-      name: 'hn-share-storage',
+      name: "hn-share-storage",
     }
   )
 );

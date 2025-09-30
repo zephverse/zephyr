@@ -1,7 +1,7 @@
-import Header from '@/components/Layouts/Header';
-import { validateRequest } from '@zephyr/auth/auth';
-import { getStreamClient } from '@zephyr/auth/src';
-import { prisma } from '@zephyr/db';
+import { validateRequest } from "@zephyr/auth/auth";
+import { getStreamClient } from "@zephyr/auth/src";
+import { prisma } from "@zephyr/db";
+import Header from "@/components/Layouts/Header";
 
 export default async function Navbar() {
   const { user } = await validateRequest();
@@ -38,7 +38,7 @@ export default async function Navbar() {
             }
             return 0;
           } catch (error) {
-            console.error('Failed to get stream unread count:', error);
+            console.error("Failed to get stream unread count:", error);
             return 0;
           }
         })(),
@@ -48,15 +48,15 @@ export default async function Navbar() {
     unreadMessageCount = streamCounts;
     totalBookmarkCount = postBookmarks + hnBookmarks;
   } catch (error) {
-    console.error('Error fetching counts:', error);
+    console.error("Error fetching counts:", error);
   }
 
   return (
     <div className="sticky top-0 z-50">
       <Header
         bookmarkCount={totalBookmarkCount}
-        unreadNotificationCount={unreadNotificationCount}
         unreadMessageCount={unreadMessageCount}
+        unreadNotificationCount={unreadNotificationCount}
       />
     </div>
   );
