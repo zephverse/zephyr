@@ -1,17 +1,16 @@
-'use client';
+"use client";
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { toast } from '@zephyr/ui/hooks/use-toast';
-import { cn } from '@zephyr/ui/lib/utils';
-import { Badge } from '@zephyr/ui/shadui/badge';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "@zephyr/ui/hooks/use-toast";
+import { Badge } from "@zephyr/ui/shadui/badge";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@zephyr/ui/shadui/tooltip';
-import { formatDistanceToNow } from 'date-fns';
-import { motion } from 'framer-motion';
+} from "@zephyr/ui/shadui/tooltip";
+import { formatDistanceToNow } from "date-fns";
+import { motion } from "framer-motion";
 import {
   Bookmark,
   Clock,
@@ -22,16 +21,17 @@ import {
   ThumbsUp,
   User,
   // @ts-expect-error - lucide-react is not typed
-} from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import type React from 'react';
-import { useHNShareStore } from '../../store/hnShareStore';
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import type React from "react";
+import { cn } from "../../lib/utils";
+import { useHNShareStore } from "../../store/hnShareStore";
 
 const storyVariants = {
   initial: { opacity: 0, y: 20 },
   animate: { opacity: 1, y: 0 },
   hover: {
-    backgroundColor: 'var(--background-hover)',
+    backgroundColor: "var(--background-hover)",
     transition: { duration: 0.2 },
   },
 };
@@ -41,7 +41,7 @@ const iconButtonVariants = {
   hover: { scale: 1.1 },
 };
 
-interface HNStoryProps {
+type HNStoryProps = {
   story: {
     id: number;
     title: string;
@@ -51,7 +51,7 @@ interface HNStoryProps {
     score: number;
     descendants: number;
   };
-}
+};
 
 export function HNStory({ story }: HNStoryProps) {
   const domain = story.url ? new URL(story.url).hostname : null;
@@ -71,10 +71,10 @@ export function HNStory({ story }: HNStoryProps) {
       descendants: story.descendants,
     });
     toast({
-      title: 'Story ready to share',
-      description: 'Add your thoughts and share with your followers',
+      title: "Story ready to share",
+      description: "Add your thoughts and share with your followers",
     });
-    router.push('/');
+    router.push("/");
   };
 
   const handleShare = async () => {
@@ -89,68 +89,66 @@ export function HNStory({ story }: HNStoryProps) {
           story.url || `https://news.ycombinator.com/item?id=${story.id}`
         );
         toast({
-          title: 'Copied to clipboard',
-          description: 'Link has been copied to your clipboard',
+          title: "Copied to clipboard",
+          description: "Link has been copied to your clipboard",
         });
       }
-    } catch (error) {
-      console.error('Error sharing:', error);
-    }
+    } catch (error) {}
   };
 
   const handleVisit = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.stopPropagation(); // Prevent event bubbling
-    window.open(story.url, '_blank', 'noopener,noreferrer');
+    window.open(story.url, "_blank", "noopener,noreferrer");
   };
 
   const handleCommentClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.stopPropagation(); // Prevent event bubbling
     window.open(
       `https://news.ycombinator.com/item?id=${story.id}`,
-      '_blank',
-      'noopener,noreferrer'
+      "_blank",
+      "noopener,noreferrer"
     );
   };
 
   const queryClient = useQueryClient();
 
   const { data: bookmarkData } = useQuery({
-    queryKey: ['hn-bookmark', story.id],
+    queryKey: ["hn-bookmark", story.id],
     queryFn: async () => {
       const response = await fetch(`/api/hackernews/${story.id}/bookmark`);
       if (!response.ok) {
-        throw new Error('Failed to fetch bookmark status');
+        throw new Error("Failed to fetch bookmark status");
       }
       return response.json();
     },
-    staleTime: 30000,
+    staleTime: 30_000,
     refetchOnWindowFocus: false,
     retry: false,
   });
 
   const { mutate: toggleBookmark } = useMutation({
     mutationFn: async () => {
-      const method = bookmarkData?.isBookmarked ? 'DELETE' : 'POST';
+      const method = bookmarkData?.isBookmarked ? "DELETE" : "POST";
       await fetch(`/api/hackernews/${story.id}/bookmark`, { method });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['hn-bookmark', story.id] });
-      queryClient.invalidateQueries({ queryKey: ['hn-bookmarks'] });
+      queryClient.invalidateQueries({ queryKey: ["hn-bookmark", story.id] });
+      queryClient.invalidateQueries({ queryKey: ["hn-bookmarks"] });
     },
   });
 
   return (
     <motion.div
-      variants={storyVariants}
-      initial="initial"
       animate="animate"
-      whileHover="hover"
       className="group relative px-2 py-4 sm:px-4 sm:py-6"
+      initial="initial"
+      variants={storyVariants}
+      whileHover="hover"
     >
       <motion.div
+        animate={{ opacity: 0 }}
         className="-z-10 absolute inset-0 bg-gradient-to-r from-orange-500/10 to-transparent opacity-0 transition-opacity group-hover:opacity-100"
         initial={false}
-        animate={{ opacity: 0 }}
         whileHover={{ opacity: 0.1 }}
       />
 
@@ -159,11 +157,11 @@ export function HNStory({ story }: HNStoryProps) {
           <div className="flex-1 space-y-2">
             <div className="flex flex-wrap items-center gap-2">
               <motion.a
-                href={story.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={handleVisit}
                 className="relative z-10 cursor-pointer font-medium text-xl transition-colors hover:text-orange-500"
+                href={story.url}
+                onClick={handleVisit}
+                rel="noopener noreferrer"
+                target="_blank"
                 whileHover={{ x: 2 }}
               >
                 {story.title}
@@ -173,16 +171,16 @@ export function HNStory({ story }: HNStoryProps) {
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <motion.a
-                        href={story.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={handleVisit}
                         className="inline-flex items-center"
+                        href={story.url}
+                        onClick={handleVisit}
+                        rel="noopener noreferrer"
+                        target="_blank"
                         whileHover={{ scale: 1.05 }}
                       >
                         <Badge
-                          variant="secondary"
                           className="cursor-pointer text-xs hover:bg-orange-500/10 hover:text-orange-500"
+                          variant="secondary"
                         >
                           <Link className="mr-1 h-3 w-3" />
                           {domain}
@@ -200,10 +198,10 @@ export function HNStory({ story }: HNStoryProps) {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <motion.a
-                      href={`https://news.ycombinator.com/user?id=${story.by}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
                       className="flex items-center gap-1 hover:text-orange-500"
+                      href={`https://news.ycombinator.com/user?id=${story.by}`}
+                      rel="noopener noreferrer"
+                      target="_blank"
                       whileHover={{ scale: 1.05 }}
                     >
                       <User className="h-4 w-4" />
@@ -239,8 +237,8 @@ export function HNStory({ story }: HNStoryProps) {
         <div className="relative z-10 flex flex-wrap items-center gap-2 sm:gap-4">
           <motion.button
             // @ts-expect-error
-            onClick={handleCommentClick}
             className="group flex cursor-pointer items-center gap-2 text-muted-foreground text-sm transition-colors hover:text-orange-500"
+            onClick={handleCommentClick}
             whileHover={{ scale: 1.05 }}
           >
             <MessageCircle className="h-4 w-4" />
@@ -248,8 +246,8 @@ export function HNStory({ story }: HNStoryProps) {
           </motion.button>
 
           <motion.button
-            onClick={handleShare}
             className="group flex cursor-pointer items-center gap-2 text-muted-foreground text-sm transition-colors hover:text-orange-500"
+            onClick={handleShare}
             whileHover={{ scale: 1.05 }}
           >
             <Share2 className="h-4 w-4" />
@@ -257,8 +255,8 @@ export function HNStory({ story }: HNStoryProps) {
           </motion.button>
 
           <motion.button
-            onClick={handleShareToZephyr}
             className="group flex cursor-pointer items-center gap-2 text-muted-foreground text-sm transition-colors hover:text-orange-500"
+            onClick={handleShareToZephyr}
             whileHover={{ scale: 1.05 }}
           >
             <Share2 className="h-4 w-4 rotate-90" />
@@ -266,24 +264,24 @@ export function HNStory({ story }: HNStoryProps) {
           </motion.button>
 
           <motion.button
-            onClick={() => toggleBookmark()}
             className={cn(
-              'group flex cursor-pointer items-center gap-2 text-sm transition-colors',
+              "group flex cursor-pointer items-center gap-2 text-sm transition-colors",
               bookmarkData?.isBookmarked
-                ? 'text-orange-500'
-                : 'text-muted-foreground hover:text-orange-500'
+                ? "text-orange-500"
+                : "text-muted-foreground hover:text-orange-500"
             )}
+            onClick={() => toggleBookmark()}
             whileHover={{ scale: 1.05 }}
           >
             <Bookmark className="h-4 w-4" />
-            <span>{bookmarkData?.isBookmarked ? 'Saved' : 'Save'}</span>
+            <span>{bookmarkData?.isBookmarked ? "Saved" : "Save"}</span>
           </motion.button>
 
           {story.url && (
             <motion.button
               // @ts-expect-error
-              onClick={handleVisit}
               className="group ml-auto flex cursor-pointer items-center gap-2 text-muted-foreground text-sm transition-colors hover:text-orange-500"
+              onClick={handleVisit}
               whileHover={{ scale: 1.05 }}
             >
               <ExternalLink className="h-4 w-4" />

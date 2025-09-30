@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
-import type { HNApiResponse } from '@zephyr/aggregator/hackernews';
-import { useToast } from '@zephyr/ui/hooks/use-toast';
-import { Button } from '@zephyr/ui/shadui/button';
-import { Card } from '@zephyr/ui/shadui/card';
-import { Tabs, TabsContent } from '@zephyr/ui/shadui/tabs';
-import { AnimatePresence, motion } from 'framer-motion';
+import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
+import type { HNApiResponse } from "@zephyr/aggregator/hackernews";
+import { useToast } from "@zephyr/ui/hooks/use-toast";
+import { Button } from "@zephyr/ui/shadui/button";
+import { Card } from "@zephyr/ui/shadui/card";
+import { Tabs, TabsContent } from "@zephyr/ui/shadui/tabs";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   Briefcase,
   ChevronDown,
@@ -14,18 +14,17 @@ import {
   Newspaper,
   RefreshCw,
   Search,
-  // @ts-expect-error - lucide-react is not typed
-} from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import {
   HNSidebar,
   SORT_OPTIONS,
   type SortOption,
   TAB_CONFIG,
-} from './HNSidebar';
-import { HNStory } from './HNStory';
-import { MobileSidebarToggle } from './mobile/MobileSidebarToggle';
-import { hackerNewsMutations } from './mutations';
+} from "./HNSidebar";
+import { HNStory } from "./HNStory";
+import { MobileSidebarToggle } from "./mobile/MobileSidebarToggle";
+import { hackerNewsMutations } from "./mutations";
 
 const ITEMS_PER_PAGE = 20;
 
@@ -41,9 +40,9 @@ const contentVariants = {
 };
 
 export function HNFeed() {
-  const [searchInput, setSearchInput] = useState('');
+  const [searchInput, setSearchInput] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>(SORT_OPTIONS.SCORE);
-  const [activeTab, setActiveTab] = useState('all');
+  const [activeTab, setActiveTab] = useState("all");
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -57,7 +56,7 @@ export function HNFeed() {
     isFetching,
     isFetchingNextPage,
   } = useInfiniteQuery<HNApiResponse>({
-    queryKey: ['hackernews', searchInput, sortBy, activeTab],
+    queryKey: ["hackernews", searchInput, sortBy, activeTab],
     queryFn: async ({ pageParam = 0 }) => {
       const response = await hackerNewsMutations.fetchStories({
         page: pageParam as number,
@@ -69,27 +68,24 @@ export function HNFeed() {
       return response;
     },
     initialPageParam: 0,
-    getNextPageParam: (lastPage) => {
-      return lastPage.hasMore
-        ? lastPage.stories.length / ITEMS_PER_PAGE
-        : undefined;
-    },
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore ? lastPage.stories.length / ITEMS_PER_PAGE : undefined,
     staleTime: 1000 * 60 * 5,
   });
 
   const handleRefresh = async () => {
     try {
       await hackerNewsMutations.refreshCache();
-      await queryClient.invalidateQueries({ queryKey: ['hackernews'] });
+      await queryClient.invalidateQueries({ queryKey: ["hackernews"] });
       toast({
-        title: 'Refreshed',
-        description: 'Stories have been updated',
+        title: "Refreshed",
+        description: "Stories have been updated",
       });
     } catch (error) {
       toast({
-        title: 'Error',
-        description: (error as Error)?.message || 'Failed to refresh stories',
-        variant: 'destructive',
+        title: "Error",
+        description: (error as Error)?.message || "Failed to refresh stories",
+        variant: "destructive",
       });
     }
   };
@@ -97,9 +93,9 @@ export function HNFeed() {
   useEffect(() => {
     if (isError) {
       toast({
-        title: 'Error',
-        description: 'Failed to fetch stories. Please try again later.',
-        variant: 'destructive',
+        title: "Error",
+        description: "Failed to fetch stories. Please try again later.",
+        variant: "destructive",
       });
     }
   }, [isError, toast]);
@@ -129,12 +125,12 @@ export function HNFeed() {
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-    queryClient.resetQueries({ queryKey: ['hackernews'] });
+    queryClient.resetQueries({ queryKey: ["hackernews"] });
   };
 
   const handleSortChange = (value: SortOption) => {
     setSortBy(value);
-    queryClient.resetQueries({ queryKey: ['hackernews'] });
+    queryClient.resetQueries({ queryKey: ["hackernews"] });
   };
 
   const handleLoadMore = async () => {
@@ -143,9 +139,9 @@ export function HNFeed() {
       await fetchNextPage();
     } catch (_error) {
       toast({
-        title: 'Error',
-        description: 'Failed to load more stories',
-        variant: 'destructive',
+        title: "Error",
+        description: "Failed to load more stories",
+        variant: "destructive",
       });
     } finally {
       setIsLoadingMore(false);
@@ -160,16 +156,16 @@ export function HNFeed() {
           <div className="hidden w-80 shrink-0 md:block">
             <div className="fixed w-80">
               <HNSidebar
-                searchInput={searchInput}
-                setSearchInputAction={setSearchInput}
-                sortBy={sortBy}
-                setSortByAction={handleSortChange}
                 activeTab={activeTab}
-                setActiveTabAction={handleTabChange}
-                totalStories={totalStories}
-                totalPoints={totalPoints}
                 isFetching={isFetching}
                 onRefreshAction={handleRefresh}
+                searchInput={searchInput}
+                setActiveTabAction={handleTabChange}
+                setSearchInputAction={setSearchInput}
+                setSortByAction={handleSortChange}
+                sortBy={sortBy}
+                totalPoints={totalPoints}
+                totalStories={totalStories}
               />
             </div>
           </div>
@@ -177,32 +173,32 @@ export function HNFeed() {
           <div className="md:hidden">
             <MobileSidebarToggle>
               <HNSidebar
-                searchInput={searchInput}
-                setSearchInputAction={setSearchInput}
-                sortBy={sortBy}
-                setSortByAction={handleSortChange}
                 activeTab={activeTab}
-                setActiveTabAction={handleTabChange}
-                totalStories={totalStories}
-                totalPoints={totalPoints}
                 isFetching={isFetching}
                 onRefreshAction={handleRefresh}
+                searchInput={searchInput}
+                setActiveTabAction={handleTabChange}
+                setSearchInputAction={setSearchInput}
+                setSortByAction={handleSortChange}
+                sortBy={sortBy}
+                totalPoints={totalPoints}
+                totalStories={totalStories}
               />
             </MobileSidebarToggle>
           </div>
 
           <motion.div
-            variants={contentVariants}
-            initial="hidden"
             animate="visible"
             className="flex-1"
+            initial="hidden"
+            variants={contentVariants}
           >
-            <Tabs value={activeTab} onValueChange={handleTabChange}>
+            <Tabs onValueChange={handleTabChange} value={activeTab}>
               {TAB_CONFIG.map((tab) => (
                 <TabsContent
+                  className="mt-0 focus-visible:outline-hidden focus-visible:ring-0"
                   key={tab.id}
                   value={tab.id}
-                  className="mt-0 focus-visible:outline-hidden focus-visible:ring-0"
                 >
                   {isLoading ? (
                     <LoadingState />
@@ -213,16 +209,16 @@ export function HNFeed() {
                           <>
                             <div className="divide-y divide-border/50">
                               {sortedStories.map((story) => (
-                                <div key={story.id} className="relative">
+                                <div className="relative" key={story.id}>
                                   <motion.div
-                                    initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
+                                    className="relative"
                                     exit={{ opacity: 0, y: -20 }}
+                                    initial={{ opacity: 0, y: 20 }}
                                     transition={{
-                                      type: 'spring',
+                                      type: "spring",
                                       stiffness: 100,
                                     }}
-                                    className="relative"
                                   >
                                     <HNStory story={story} />
                                   </motion.div>
@@ -232,24 +228,24 @@ export function HNFeed() {
 
                             {hasNextPage && (
                               <motion.div
-                                initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 className="flex justify-center py-8"
+                                initial={{ opacity: 0 }}
                               >
                                 <Button
-                                  size="lg"
-                                  onClick={handleLoadMore}
-                                  disabled={isLoadingMore || isFetchingNextPage}
                                   className="relative overflow-hidden bg-orange-500 text-white hover:bg-orange-600"
+                                  disabled={isLoadingMore || isFetchingNextPage}
+                                  onClick={handleLoadMore}
+                                  size="lg"
                                 >
                                   {isLoadingMore || isFetchingNextPage ? (
                                     <>
                                       <motion.div
-                                        className="absolute inset-0 bg-orange-600"
                                         animate={{
-                                          x: ['0%', '100%'],
+                                          x: ["0%", "100%"],
                                           opacity: [0.5, 0],
                                         }}
+                                        className="absolute inset-0 bg-orange-600"
                                         transition={{
                                           duration: 1,
                                           repeat: Number.POSITIVE_INFINITY,
@@ -269,7 +265,7 @@ export function HNFeed() {
                             )}
                           </>
                         ) : (
-                          <EmptyState type={tab.id} onRefresh={handleRefresh} />
+                          <EmptyState onRefresh={handleRefresh} type={tab.id} />
                         )}
                       </div>
                     </AnimatePresence>
@@ -288,7 +284,7 @@ function LoadingState() {
   return (
     <div className="space-y-4">
       {[...new Array(5)].map((_, i) => (
-        <Card key={i} className="bg-background/50 p-4 backdrop-blur-sm">
+        <Card className="bg-background/50 p-4 backdrop-blur-sm" key={i}>
           <div className="space-y-3">
             <div className="h-6 w-3/4 animate-pulse rounded-sm bg-muted" />
             <div className="h-4 w-1/4 animate-pulse rounded-sm bg-muted" />
@@ -302,24 +298,27 @@ function LoadingState() {
 function EmptyState({
   type,
   onRefresh,
-}: { type: string; onRefresh: () => void }) {
+}: {
+  type: string;
+  onRefresh: () => void;
+}) {
   const messages = {
     job: {
-      title: 'No jobs available',
+      title: "No jobs available",
       description:
-        'There are currently no job postings available on HackerNews.',
+        "There are currently no job postings available on HackerNews.",
     },
     show: {
-      title: 'No Show HN posts',
-      description: 'There are currently no Show HN posts available.',
+      title: "No Show HN posts",
+      description: "There are currently no Show HN posts available.",
     },
     ask: {
-      title: 'No Ask HN posts',
-      description: 'There are currently no Ask HN questions available.',
+      title: "No Ask HN posts",
+      description: "There are currently no Ask HN questions available.",
     },
     default: {
-      title: 'No stories available',
-      description: 'There are currently no stories matching your criteria.',
+      title: "No stories available",
+      description: "There are currently no stories matching your criteria.",
     },
   };
 
@@ -327,15 +326,15 @@ function EmptyState({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className="flex flex-col items-center justify-center py-16"
+      initial={{ opacity: 0, y: 20 }}
     >
       <div className="relative rounded-full bg-orange-500/10 p-4">
-        {type === 'job' && <Briefcase className="h-8 w-8 text-orange-500" />}
-        {type === 'show' && <Search className="h-8 w-8 text-orange-500" />}
-        {type === 'ask' && <HelpCircle className="h-8 w-8 text-orange-500" />}
-        {!['job', 'show', 'ask'].includes(type) && (
+        {type === "job" && <Briefcase className="h-8 w-8 text-orange-500" />}
+        {type === "show" && <Search className="h-8 w-8 text-orange-500" />}
+        {type === "ask" && <HelpCircle className="h-8 w-8 text-orange-500" />}
+        {!["job", "show", "ask"].includes(type) && (
           <Newspaper className="h-8 w-8 text-orange-500" />
         )}
       </div>
@@ -344,9 +343,9 @@ function EmptyState({
         {message.description}
       </p>
       <Button
+        className="mt-4 hover:bg-orange-500/10 hover:text-orange-500"
         onClick={onRefresh}
         variant="outline"
-        className="mt-4 hover:bg-orange-500/10 hover:text-orange-500"
       >
         <RefreshCw className="mr-2 h-4 w-4" />
         Refresh

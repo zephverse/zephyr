@@ -1,15 +1,14 @@
-'use client';
+"use client";
 
-import { cn } from '@zephyr/ui/lib/utils';
-import { Button } from '@zephyr/ui/shadui/button';
-import { Card } from '@zephyr/ui/shadui/card';
+import { Button } from "@zephyr/ui/shadui/button";
+import { Card } from "@zephyr/ui/shadui/card";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@zephyr/ui/shadui/tooltip';
-import { motion } from 'framer-motion';
+} from "@zephyr/ui/shadui/tooltip";
+import { motion } from "framer-motion";
 import {
   Activity,
   Briefcase,
@@ -22,26 +21,27 @@ import {
   Search,
   TrendingUp,
   // @ts-expect-error - lucide-react is not typed
-} from 'lucide-react';
-import { HNSearchInput } from './HNSearchInput';
+} from "lucide-react";
+import { cn } from "../../lib/utils";
+import { HNSearchInput } from "./HNSearchInput";
 
 export const SORT_OPTIONS = {
-  SCORE: 'score',
-  TIME: 'time',
-  COMMENTS: 'comments',
+  SCORE: "score",
+  TIME: "time",
+  COMMENTS: "comments",
 } as const;
 
 export type SortOption = (typeof SORT_OPTIONS)[keyof typeof SORT_OPTIONS];
 
 export const TAB_CONFIG = [
-  { id: 'all', label: 'All Stories', icon: <Newspaper className="h-4 w-4" /> },
-  { id: 'story', label: 'News', icon: <Activity className="h-4 w-4" /> },
-  { id: 'job', label: 'Jobs', icon: <Briefcase className="h-4 w-4" /> },
-  { id: 'show', label: 'Show HN', icon: <Search className="h-4 w-4" /> },
-  { id: 'ask', label: 'Ask HN', icon: <HelpCircle className="h-4 w-4" /> },
+  { id: "all", label: "All Stories", icon: <Newspaper className="h-4 w-4" /> },
+  { id: "story", label: "News", icon: <Activity className="h-4 w-4" /> },
+  { id: "job", label: "Jobs", icon: <Briefcase className="h-4 w-4" /> },
+  { id: "show", label: "Show HN", icon: <Search className="h-4 w-4" /> },
+  { id: "ask", label: "Ask HN", icon: <HelpCircle className="h-4 w-4" /> },
 ];
 
-interface HNSidebarProps {
+type HNSidebarProps = {
   searchInput: string;
   setSearchInputAction: (value: string) => void;
   sortBy: SortOption;
@@ -52,14 +52,14 @@ interface HNSidebarProps {
   totalPoints: number;
   isFetching: boolean;
   onRefreshAction: () => void;
-}
+};
 
 const sidebarVariants = {
   hidden: { x: -50, opacity: 0 },
   visible: {
     x: 0,
     opacity: 1,
-    transition: { type: 'spring', stiffness: 100, damping: 15 },
+    transition: { type: "spring", stiffness: 100, damping: 15 },
   },
 };
 
@@ -77,19 +77,19 @@ export function HNSidebar({
 }: HNSidebarProps) {
   return (
     <motion.div
-      variants={sidebarVariants}
-      initial="hidden"
       animate="visible"
       className="h-[calc(100vh-2rem)] overflow-hidden rounded-lg border border-border/50 bg-background/95 backdrop-blur-xs md:h-[calc(100vh-2rem)]"
+      initial="hidden"
+      variants={sidebarVariants}
     >
       <div className="flex h-full flex-col">
         <div className="h-full overflow-y-auto rounded-lg border border-border/50 bg-background/95 backdrop-blur-sm">
           <div className="space-y-4">
             <div className="sticky top-0 z-20 bg-background/95 p-4 backdrop-blur-sm">
               <motion.div
-                initial={{ scale: 0.9 }}
                 animate={{ scale: 1 }}
                 className="flex items-center justify-between"
+                initial={{ scale: 0.9 }}
               >
                 <span className="bg-gradient-to-r from-orange-500 to-yellow-500 bg-clip-text font-bold text-2xl text-transparent">
                   HackerNews
@@ -98,14 +98,14 @@ export function HNSidebar({
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
-                        variant="ghost"
-                        size="sm"
                         onClick={onRefreshAction}
+                        size="sm"
+                        variant="ghost"
                       >
                         <RefreshCw
                           className={cn(
-                            'h-4 w-4 transition-all',
-                            isFetching ? 'animate-spin text-orange-500' : ''
+                            "h-4 w-4 transition-all",
+                            isFetching ? "animate-spin text-orange-500" : ""
                           )}
                         />
                       </Button>
@@ -117,9 +117,9 @@ export function HNSidebar({
 
               <div className="mt-4">
                 <HNSearchInput
-                  value={searchInput}
-                  onChangeAction={setSearchInputAction}
                   className="backdrop-blur-sm"
+                  onChangeAction={setSearchInputAction}
+                  value={searchInput}
                 />
               </div>
             </div>
@@ -132,22 +132,22 @@ export function HNSidebar({
                 <div className="mt-2 space-y-1">
                   {Object.entries(SORT_OPTIONS).map(([key, value]) => (
                     <Button
-                      key={key}
-                      variant="ghost"
-                      size="sm"
                       className={cn(
-                        'w-full justify-start',
+                        "w-full justify-start",
                         sortBy === value
-                          ? 'bg-orange-500/10 text-orange-500'
-                          : ''
+                          ? "bg-orange-500/10 text-orange-500"
+                          : ""
                       )}
+                      key={key}
                       onClick={() => setSortByAction(value)}
+                      size="sm"
+                      variant="ghost"
                     >
-                      {key === 'SCORE' && (
+                      {key === "SCORE" && (
                         <TrendingUp className="mr-2 h-4 w-4" />
                       )}
-                      {key === 'TIME' && <Clock className="mr-2 h-4 w-4" />}
-                      {key === 'COMMENTS' && (
+                      {key === "TIME" && <Clock className="mr-2 h-4 w-4" />}
+                      {key === "COMMENTS" && (
                         <MessageSquare className="mr-2 h-4 w-4" />
                       )}
                       {key.charAt(0) + key.slice(1).toLowerCase()}
@@ -163,16 +163,16 @@ export function HNSidebar({
                 <div className="space-y-1">
                   {TAB_CONFIG.map((tab) => (
                     <Button
-                      key={tab.id}
-                      variant="ghost"
-                      size="sm"
                       className={cn(
-                        'w-full justify-start',
+                        "w-full justify-start",
                         activeTab === tab.id
-                          ? 'bg-orange-500/10 text-orange-500'
-                          : ''
+                          ? "bg-orange-500/10 text-orange-500"
+                          : ""
                       )}
+                      key={tab.id}
                       onClick={() => setActiveTabAction(tab.id)}
+                      size="sm"
+                      variant="ghost"
                     >
                       {tab.icon}
                       <span className="ml-2">{tab.label}</span>
@@ -191,9 +191,9 @@ export function HNSidebar({
                 <div className="grid grid-cols-2 gap-4">
                   <div className="rounded-lg bg-background/50 p-3 text-center">
                     <motion.div
+                      animate={{ scale: 1 }}
                       className="font-bold text-2xl text-orange-500"
                       initial={{ scale: 0.5 }}
-                      animate={{ scale: 1 }}
                     >
                       {totalStories.toLocaleString()}
                     </motion.div>
@@ -201,9 +201,9 @@ export function HNSidebar({
                   </div>
                   <div className="rounded-lg bg-background/50 p-3 text-center">
                     <motion.div
+                      animate={{ scale: 1 }}
                       className="font-bold text-2xl text-orange-500"
                       initial={{ scale: 0.5 }}
-                      animate={{ scale: 1 }}
                     >
                       {totalPoints.toLocaleString()}
                     </motion.div>

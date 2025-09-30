@@ -24,7 +24,7 @@
     "zod": "^4.1.11"
   },
   "devDependencies": {
-    "@types/node": "^22.18.7",
+    "@types/node": "^24.6.0",
     "@zephyr/config": "workspace:*",
     "typescript": "^5.9.2"
   }
