@@ -10,12 +10,12 @@
   "dependencies": {
     "@zephyr/db": "workspace:*",
     "date-fns": "^4.1.0",
-    "ky": "^1.9.0",
+    "ky": "^1.11.0",
     "next": "15.2.4",
     "react": "19.0.0"
   },
   "devDependencies": {
-    "@types/node": "^22.17.2",
+    "@types/node": "^22.18.7",
     "@types/react": "19.0.10",
     "@zephyr/config": "workspace:*",
     "typescript": "^5.9.2"

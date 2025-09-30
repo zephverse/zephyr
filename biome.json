@@ -1,8 +1,9 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.2.0/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.2.4/schema.json",
   "extends": ["ultracite"],
   "files": {
     "includes": [
+      "**",
       "!packages/ui/shadui",
       "!packages/ui/hooks/use-toast.ts",
       "!packages/ui/hooks/use-mobile.tsx",
@@ -11,15 +12,5 @@
       "!.vscode/settings.json",
       "!apps/web/src/components/Messages/Theme.css"
     ]
-  },
-  "linter": {
-    "rules": {
-      "style": {
-        "useFilenamingConvention": "off"
-      },
-      "suspicious": {
-        "noConsole": "off"
-      }
-    }
   }
 }
