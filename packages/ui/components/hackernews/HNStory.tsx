@@ -1,14 +1,6 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "@zephyr/ui/hooks/use-toast";
-import { Badge } from "@zephyr/ui/shadui/badge";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@zephyr/ui/shadui/tooltip";
 import { formatDistanceToNow } from "date-fns";
 import { motion } from "framer-motion";
 import {
@@ -24,7 +16,15 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type React from "react";
+import { toast } from "../../hooks/use-toast";
 import { cn } from "../../lib/utils";
+import { Badge } from "../../shadui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../../shadui/tooltip";
 import { useHNShareStore } from "../../store/hnShareStore";
 
 const storyVariants = {
@@ -93,7 +93,7 @@ export function HNStory({ story }: HNStoryProps) {
           description: "Link has been copied to your clipboard",
         });
       }
-    } catch (error) {}
+    } catch (_errorr) {}
   };
 
   const handleVisit = (e: React.MouseEvent<HTMLAnchorElement>) => {

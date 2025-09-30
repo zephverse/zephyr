@@ -1,13 +1,5 @@
 "use client";
 
-import { Button } from "@zephyr/ui/shadui/button";
-import { Card } from "@zephyr/ui/shadui/card";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@zephyr/ui/shadui/tooltip";
 import { motion } from "framer-motion";
 import {
   Activity,
@@ -23,6 +15,14 @@ import {
   // @ts-expect-error - lucide-react is not typed
 } from "lucide-react";
 import { cn } from "../../lib/utils";
+import { Button } from "../../shadui/button";
+import { Card } from "../../shadui/card";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../../shadui/tooltip";
 import { HNSearchInput } from "./HNSearchInput";
 
 export const SORT_OPTIONS = {

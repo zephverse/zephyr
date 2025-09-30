@@ -1,11 +1,11 @@
 "use client";
 
-import { Input } from "@zephyr/ui/shadui/input";
 import { AnimatePresence, motion } from "framer-motion";
 // @ts-expect-error - no types available
 import { Search, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { cn } from "../../lib/utils";
+import { Input } from "../../shadui/input";
 
 type HNSearchInputProps = {
   value: string;

@@ -2,10 +2,6 @@
 
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import type { HNApiResponse } from "@zephyr/aggregator/hackernews";
-import { useToast } from "@zephyr/ui/hooks/use-toast";
-import { Button } from "@zephyr/ui/shadui/button";
-import { Card } from "@zephyr/ui/shadui/card";
-import { Tabs, TabsContent } from "@zephyr/ui/shadui/tabs";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Briefcase,
@@ -16,6 +12,10 @@ import {
   Search,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { useToast } from "../../hooks/use-toast";
+import { Button } from "../../shadui/button";
+import { Card } from "../../shadui/card";
+import { Tabs, TabsContent } from "../../shadui/tabs";
 import {
   HNSidebar,
   SORT_OPTIONS,
