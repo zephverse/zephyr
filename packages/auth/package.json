@@ -10,14 +10,13 @@
   },
   "dependencies": {
     "@lucia-auth/adapter-prisma": "^4.0.1",
-    "@node-rs/argon2": "^2.0.2",
     "@zephyr/db": "workspace:*",
     "arctic": "^3.7.0",
     "deep-email-validator": "^0.1.21",
     "email-validator": "^2.0.4",
     "jsonwebtoken": "^9.0.2",
     "lucia": "^3.2.2",
-    "next": "15.4.7",
+    "next": "15.5.4",
     "react": "19.0.0",
     "stream-chat": "^9.20.1",
     "unsend": "^1.5.1",
@@ -25,8 +24,6 @@
   },
   "devDependencies": {
     "@types/jsonwebtoken": "^9.0.10",
-    "@types/node": "^24.6.0",
-    "@types/react": "19.1.16",
     "@zephyr/config": "workspace:*",
     "typescript": "^5.9.2"
   }

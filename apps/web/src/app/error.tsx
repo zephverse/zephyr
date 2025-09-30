@@ -3,7 +3,7 @@
 import { HelpLink } from '@/components/Animations/ImageLinkPreview';
 // @ts-expect-error - Image optimization is not supported in this file
 import HOME from '@assets/previews/home.png';
-import { GitHub } from '@mui/icons-material';
+import { FaGithub } from 'react-icons/fa';
 import { Button } from '@zephyr/ui/shadui/button';
 import { motion } from 'framer-motion';
 import { AlertOctagon, Copy, RotateCcw } from 'lucide-react';
@@ -178,7 +178,7 @@ export default function Error({
               className="group relative w-full border-destructive/50 sm:w-auto"
             >
               <span className="relative z-10 flex items-center gap-2">
-                <GitHub className="h-4 w-4" />
+                <FaGithub className="h-4 w-4" />
                 Report on GitHub
               </span>
             </Button>

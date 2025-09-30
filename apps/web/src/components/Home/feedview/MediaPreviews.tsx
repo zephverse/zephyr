@@ -1,25 +1,25 @@
-import { getLanguageFromFileName } from '@/lib/codefileExtensions';
-import { formatFileName } from '@/lib/formatFileName';
-import { cn } from '@/lib/utils';
-import { PlayArrowOutlined } from '@mui/icons-material';
-import type { Media } from '@prisma/client';
-import { Button } from '@zephyr/ui/shadui/button';
-import { AnimatePresence, motion } from 'framer-motion';
-import { FileAudioIcon, FileCode, FileIcon } from 'lucide-react';
-import Image from 'next/image';
-import { useState } from 'react';
-import { useMediaQuery } from 'usehooks-ts';
-import { FileTypeWatermark } from './FileTypeWatermark';
-import MediaViewer from './MediaViewer';
+import type { Media } from "@prisma/client";
+import { Button } from "@zephyr/ui/shadui/button";
+import { AnimatePresence, motion } from "framer-motion";
+import { FileAudioIcon, FileCode, FileIcon } from "lucide-react";
+import Image from "next/image";
+import { useState } from "react";
+import { MdPlayArrow } from "react-icons/md";
+import { useMediaQuery } from "usehooks-ts";
+import { getLanguageFromFileName } from "@/lib/codefileExtensions";
+import { formatFileName } from "@/lib/formatFileName";
+import { cn } from "@/lib/utils";
+import { FileTypeWatermark } from "./FileTypeWatermark";
+import MediaViewer from "./MediaViewer";
 
-interface MediaPreviewsProps {
+type MediaPreviewsProps = {
   attachments: Media[];
-}
+};
 
 export function MediaPreviews({ attachments }: MediaPreviewsProps) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [showAll, setShowAll] = useState(false);
-  const isMobile = useMediaQuery('(max-width: 768px)');
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
   const getMediaUrl = (mediaId: string) => `/api/media/${mediaId}`;
 
@@ -40,21 +40,21 @@ export function MediaPreviews({ attachments }: MediaPreviewsProps) {
   // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: This function is not complex
   const renderPreview = (m: Media, _index: number, isSmall = false) => {
     const commonClasses = cn(
-      'mx-auto w-full rounded-lg object-cover transition-transform duration-300 group-hover:scale-105',
-      isSmall ? 'h-20' : 'h-48'
+      "mx-auto w-full rounded-lg object-cover transition-transform duration-300 group-hover:scale-105",
+      isSmall ? "h-20" : "h-48"
     );
 
     switch (m.type) {
-      case 'IMAGE': {
-        if (m.mimeType === 'image/svg+xml') {
+      case "IMAGE": {
+        if (m.mimeType === "image/svg+xml") {
           return (
             <div
-              className={cn('group relative w-full', isSmall ? 'h-20' : 'h-48')}
+              className={cn("group relative w-full", isSmall ? "h-20" : "h-48")}
             >
               <object
+                className={commonClasses}
                 data={getMediaUrl(m.id)}
                 type="image/svg+xml"
-                className={commonClasses}
               >
                 Your browser does not support SVG
               </object>
@@ -65,45 +65,45 @@ export function MediaPreviews({ attachments }: MediaPreviewsProps) {
         }
         return (
           <div
-            className={cn('group relative w-full', isSmall ? 'h-20' : 'h-48')}
+            className={cn("group relative w-full", isSmall ? "h-20" : "h-48")}
           >
             <Image
-              src={getMediaUrl(m.id)}
               alt="Attachment"
-              fill
               className={commonClasses}
-              style={{ objectFit: 'cover' }}
+              fill
+              src={getMediaUrl(m.id)}
+              style={{ objectFit: "cover" }}
             />
             <FileTypeWatermark
-              type={m.key.split('.').pop()?.toUpperCase() || 'FILE'}
+              type={m.key.split(".").pop()?.toUpperCase() || "FILE"}
             />
             <div className="absolute inset-0 bg-black/5 transition-opacity group-hover:opacity-0" />
           </div>
         );
       }
 
-      case 'VIDEO':
+      case "VIDEO":
         return (
           <div
             className={cn(
-              'group relative w-full overflow-hidden',
-              isSmall ? 'h-20' : 'h-48'
+              "group relative w-full overflow-hidden",
+              isSmall ? "h-20" : "h-48"
             )}
           >
-            {/* biome-ignore lint/a11y/useMediaCaption: */}
+            {/* biome-ignore lint/a11y/useMediaCaption: suppress */}
             <video
-              src={getMediaUrl(m.id)}
               className={commonClasses}
               preload="metadata"
+              src={getMediaUrl(m.id)}
             />
 
             <motion.div
-              initial="initial"
               animate="animate"
-              whileHover="hover"
-              exit="exit"
-              variants={videoOverlayVariants}
               className="absolute inset-0 flex items-center justify-center"
+              exit="exit"
+              initial="initial"
+              variants={videoOverlayVariants}
+              whileHover="hover"
             >
               <div className="relative">
                 <div className="-inset-4 absolute">
@@ -112,39 +112,39 @@ export function MediaPreviews({ attachments }: MediaPreviewsProps) {
                 </div>
 
                 <motion.div
-                  whileHover={{ scale: 1.1, rotate: 360 }}
-                  transition={{ type: 'spring', stiffness: 260, damping: 20 }}
                   className="relative z-10 flex h-12 w-12 items-center justify-center rounded-full bg-black/50 backdrop-blur-xs transition-colors duration-300 group-hover:bg-white/20"
+                  transition={{ type: "spring", stiffness: 260, damping: 20 }}
+                  whileHover={{ scale: 1.1, rotate: 360 }}
                 >
-                  <PlayArrowOutlined
+                  <MdPlayArrow
                     className={cn(
-                      'transition-all duration-300',
-                      isSmall ? 'h-6 w-6' : 'h-8 w-8',
-                      'text-white group-hover:text-white',
-                      'group-hover:scale-110'
+                      "transition-all duration-300",
+                      isSmall ? "h-6 w-6" : "h-8 w-8",
+                      "text-white group-hover:text-white",
+                      "group-hover:scale-110"
                     )}
                   />
                 </motion.div>
               </div>
 
-              <FileTypeWatermark type={m.key.split('.').pop() || 'FILE'} />
+              <FileTypeWatermark type={m.key.split(".").pop() || "FILE"} />
             </motion.div>
 
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-40 transition-all duration-300 group-hover:opacity-20" />
           </div>
         );
 
-      case 'AUDIO':
+      case "AUDIO":
         return (
           <div
-            className={cn('group relative w-full', isSmall ? 'h-20' : 'h-48')}
+            className={cn("group relative w-full", isSmall ? "h-20" : "h-48")}
           >
             <div className="h-full w-full rounded-lg bg-primary/5 p-4 transition-transform duration-300 group-hover:scale-105">
               <div className="flex h-full flex-col items-center justify-center gap-2">
                 <FileAudioIcon
                   className={cn(
-                    'text-primary',
-                    isSmall ? 'h-6 w-6' : 'h-12 w-12'
+                    "text-primary",
+                    isSmall ? "h-6 w-6" : "h-12 w-12"
                   )}
                 />
                 {!isSmall && (
@@ -155,22 +155,22 @@ export function MediaPreviews({ attachments }: MediaPreviewsProps) {
               </div>
             </div>
             <FileTypeWatermark
-              type={m.key.split('.').pop()?.toUpperCase() || 'FILE'}
+              type={m.key.split(".").pop()?.toUpperCase() || "FILE"}
             />
           </div>
         );
 
-      case 'CODE':
+      case "CODE":
         return (
           <div
-            className={cn('group relative w-full', isSmall ? 'h-20' : 'h-48')}
+            className={cn("group relative w-full", isSmall ? "h-20" : "h-48")}
           >
             <div className="h-full w-full rounded-lg bg-primary/5 p-4 transition-transform duration-300 group-hover:scale-105">
               <div className="flex h-full flex-col items-center justify-center gap-2">
                 <FileCode
                   className={cn(
-                    'text-primary',
-                    isSmall ? 'h-6 w-6' : 'h-12 w-12'
+                    "text-primary",
+                    isSmall ? "h-6 w-6" : "h-12 w-12"
                   )}
                 />
                 {!isSmall && (
@@ -186,22 +186,22 @@ export function MediaPreviews({ attachments }: MediaPreviewsProps) {
               </div>
             </div>
             <FileTypeWatermark
-              type={m.key.split('.').pop()?.toUpperCase() || 'FILE'}
+              type={m.key.split(".").pop()?.toUpperCase() || "FILE"}
             />
           </div>
         );
 
-      case 'DOCUMENT':
+      case "DOCUMENT":
         return (
           <div
-            className={cn('group relative w-full', isSmall ? 'h-20' : 'h-48')}
+            className={cn("group relative w-full", isSmall ? "h-20" : "h-48")}
           >
             <div className="h-full w-full rounded-lg bg-primary/5 p-4 transition-transform duration-300 group-hover:scale-105">
               <div className="flex h-full flex-col items-center justify-center gap-2">
                 <FileIcon
                   className={cn(
-                    'text-primary',
-                    isSmall ? 'h-6 w-6' : 'h-12 w-12'
+                    "text-primary",
+                    isSmall ? "h-6 w-6" : "h-12 w-12"
                   )}
                 />
                 {!isSmall && (
@@ -212,7 +212,7 @@ export function MediaPreviews({ attachments }: MediaPreviewsProps) {
               </div>
             </div>
             <FileTypeWatermark
-              type={m.key.split('.').pop()?.toUpperCase() || 'FILE'}
+              type={m.key.split(".").pop()?.toUpperCase() || "FILE"}
             />
           </div>
         );
@@ -225,25 +225,25 @@ export function MediaPreviews({ attachments }: MediaPreviewsProps) {
   const GridPreview = ({
     media,
     index,
-    size = 'large',
+    size = "large",
   }: {
     media: Media;
     index: number;
-    size?: 'small' | 'large';
+    size?: "small" | "large";
   }) => {
-    const isSmall = size === 'small';
+    const isSmall = size === "small";
     return (
       <motion.div
-        layout
-        initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -20 }}
-        transition={{ duration: 0.2, delay: index * 0.05 }}
-        onClick={() => setSelectedIndex(index)}
         className={cn(
-          'hover:-translate-y-0.5 relative cursor-pointer overflow-hidden rounded-lg shadow-xs transition-all duration-300 hover:shadow-md',
-          isSmall ? 'h-20' : 'h-48'
+          "hover:-translate-y-0.5 relative cursor-pointer overflow-hidden rounded-lg shadow-xs transition-all duration-300 hover:shadow-md",
+          isSmall ? "h-20" : "h-48"
         )}
+        exit={{ opacity: 0, y: -20 }}
+        initial={{ opacity: 0, y: 20 }}
+        layout
+        onClick={() => setSelectedIndex(index)}
+        transition={{ duration: 0.2, delay: index * 0.05 }}
       >
         {renderPreview(media, index, isSmall)}
       </motion.div>
@@ -254,11 +254,11 @@ export function MediaPreviews({ attachments }: MediaPreviewsProps) {
     if (isMobile) {
       return (
         <motion.div
-          layout
-          initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
           className="px-4 pb-4"
+          exit={{ opacity: 0 }}
+          initial={{ opacity: 0 }}
+          layout
         >
           <div className="relative w-full overflow-hidden rounded-lg bg-primary/5 p-4 shadow-xs transition-all duration-300">
             <div className="space-y-4">
@@ -267,9 +267,9 @@ export function MediaPreviews({ attachments }: MediaPreviewsProps) {
                   {remainingCount} more items
                 </p>
                 <Button
-                  variant="secondary"
-                  size="sm"
                   onClick={() => setShowAll(true)}
+                  size="sm"
+                  variant="secondary"
                 >
                   Show All
                 </Button>
@@ -278,9 +278,9 @@ export function MediaPreviews({ attachments }: MediaPreviewsProps) {
               <div className="grid grid-cols-3 gap-2">
                 {remainingAttachments.map((m, index) => (
                   <GridPreview
+                    index={index + initialCount}
                     key={m.id}
                     media={m}
-                    index={index + initialCount}
                     size="small"
                   />
                 ))}
@@ -293,27 +293,27 @@ export function MediaPreviews({ attachments }: MediaPreviewsProps) {
 
     return (
       <motion.div
-        layout
-        initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
         className="px-4 pb-4"
+        exit={{ opacity: 0 }}
+        initial={{ opacity: 0 }}
+        layout
       >
         {/* biome-ignore lint/nursery/noStaticElementInteractions:  */}
         {/* biome-ignore lint/a11y/useKeyWithClickEvents:  */}
         <div
-          onClick={() => setShowAll(true)}
           className="relative w-full cursor-pointer overflow-hidden rounded-lg bg-primary/5 shadow-xs transition-all duration-300 hover:bg-primary/10 hover:shadow-md"
+          onClick={() => setShowAll(true)}
         >
           <div className="flex h-32 items-center justify-between p-4">
             <div className="flex items-center gap-4">
               {remainingAttachments.slice(0, 2).map((m, index) => (
                 <motion.div
-                  key={m.id}
-                  initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.1 }}
                   className="relative h-24 w-24 overflow-hidden rounded-lg"
+                  initial={{ opacity: 0, x: -20 }}
+                  key={m.id}
+                  transition={{ delay: index * 0.1 }}
                 >
                   {renderPreview(m, index + initialCount)}
                   <div className="absolute inset-0 bg-black/10" />
@@ -322,9 +322,9 @@ export function MediaPreviews({ attachments }: MediaPreviewsProps) {
             </div>
 
             <motion.div
-              initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               className="flex flex-col items-end gap-2 pr-4"
+              initial={{ opacity: 0 }}
             >
               <p className="font-medium text-lg">Show {remainingCount} more</p>
               <Button variant="secondary">Expand</Button>
@@ -336,24 +336,24 @@ export function MediaPreviews({ attachments }: MediaPreviewsProps) {
   };
 
   return (
-    <motion.div layout className="w-full">
+    <motion.div className="w-full" layout>
       <div
         className={cn(
-          'grid gap-4 p-4',
+          "grid gap-4 p-4",
           visibleAttachments.length === 1
-            ? 'grid-cols-1'
+            ? "grid-cols-1"
             : // biome-ignore lint/nursery/noNestedTernary:
               isMobile
-              ? 'grid-cols-2'
+              ? "grid-cols-2"
               : // biome-ignore lint/nursery/noNestedTernary:
                 visibleAttachments.length === 2
-                ? 'grid-cols-2'
-                : 'grid-cols-3'
+                ? "grid-cols-2"
+                : "grid-cols-3"
         )}
       >
         <AnimatePresence mode="wait">
           {visibleAttachments.map((m, index) => (
-            <GridPreview key={m.id} media={m} index={index} />
+            <GridPreview index={index} key={m.id} media={m} />
           ))}
         </AnimatePresence>
       </div>
@@ -363,15 +363,15 @@ export function MediaPreviews({ attachments }: MediaPreviewsProps) {
       <AnimatePresence>
         {showAll && (
           <motion.div
-            initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
             className="flex justify-center pb-4"
+            exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }}
           >
             <Button
-              variant="ghost"
               onClick={() => setShowAll(false)}
-              size={isMobile ? 'sm' : 'default'}
+              size={isMobile ? "sm" : "default"}
+              variant="ghost"
             >
               Show Less
             </Button>
@@ -381,9 +381,9 @@ export function MediaPreviews({ attachments }: MediaPreviewsProps) {
 
       {selectedIndex !== null && (
         <MediaViewer
-          media={attachments}
           initialIndex={selectedIndex}
           isOpen={selectedIndex !== null}
+          media={attachments}
           onClose={() => setSelectedIndex(null)}
         />
       )}

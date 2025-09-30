@@ -1,4 +1,4 @@
-FROM node:latest AS base
+FROM node:24-alpine AS base
 
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV TURBO_TELEMETRY_DISABLED=1
@@ -12,32 +12,30 @@ ENV NEXT_PUBLIC_STREAM_KEY=$NEXT_PUBLIC_STREAM_KEY
 ENV STREAM_SECRET=$STREAM_SECRET
 
 FROM base AS builder
-RUN apt-get update && apt-get install -y git
+RUN apk add --no-cache git
 WORKDIR /app
 
-RUN npm install -g pnpm@latest turbo@latest && \
-  pnpm config set enable-pre-post-scripts true && \
+RUN npm install -g bun turbo@latest && \
   turbo telemetry disable
 
 COPY . .
 RUN turbo prune --scope=@zephyr/web --docker
 
 FROM base AS installer
-RUN apt-get update && apt-get install -y
+RUN apk add --no-cache
 
 WORKDIR /app
 
 COPY --from=builder /app/out/json/ .
-COPY --from=builder /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
+COPY --from=builder /app/out/bun.lock ./bun.lock
 COPY --from=builder /app/turbo.json ./turbo.json
 COPY --from=builder /app/packages/db/prisma ./packages/db/prisma
 
-RUN npm install -g pnpm@latest turbo@latest && \
-  pnpm config set enable-pre-post-scripts true && \
+RUN npm install -g bun turbo@latest && \
   turbo telemetry disable && \
-  pnpm install --frozen-lockfile --ignore-scripts
+  bun install --frozen-lockfile
 
-RUN cd packages/db && pnpm dlx prisma generate
+RUN cd packages/db && bunx prisma generate
 
 COPY --from=builder /app/out/full/ .
 
@@ -47,7 +45,7 @@ RUN if [ -n "$NEXT_PUBLIC_STREAM_KEY" ]; then \
   echo "Building without Stream key"; \
   fi
 
-RUN NEXT_TELEMETRY_DISABLED=1 TURBO_TELEMETRY_DISABLED=1 pnpm exec turbo build --filter=@zephyr/web... --force
+RUN NEXT_TELEMETRY_DISABLED=1 TURBO_TELEMETRY_DISABLED=1 bunx turbo build --filter=@zephyr/web... --force
 
 FROM base AS runner
 WORKDIR /app

@@ -1,9 +1,4 @@
-import withBundleAnalyzer from '@next/bundle-analyzer';
-// @ts-expect-error - This is a valid webpack plugin
-import { PrismaPlugin } from '@prisma/nextjs-monorepo-workaround-plugin';
 import type { NextConfig } from 'next';
-
-const otelRegex = /@opentelemetry\/instrumentation/;
 
 export const config: NextConfig = {
   transpilePackages: ['@zephyr/auth', '@zephyr/db', '@zephyr/config'],
@@ -37,42 +32,8 @@ export const config: NextConfig = {
     ],
     unoptimized: process.env.NODE_ENV === 'development',
   },
-  webpack(config, { isServer }) {
-    if (isServer) {
-      config.plugins = [...config.plugins, new PrismaPlugin()];
-    }
-
-    config.ignoreWarnings = [{ module: otelRegex }];
-
-    return config;
-  },
 };
-
-export const withAnalyzer = (sourceConfig: NextConfig): NextConfig =>
-  withBundleAnalyzer()(sourceConfig);
 
 export const withStreamConfig = (sourceConfig: NextConfig): NextConfig => ({
   ...sourceConfig,
-  webpack: (config, { isServer, ...options }) => {
-    const existingWebpack = sourceConfig.webpack;
-    const updatedConfig =
-      existingWebpack?.(config, { isServer, ...options }) ?? config;
-
-    if (!isServer) {
-      updatedConfig.resolve.fallback = {
-        ...updatedConfig.resolve.fallback,
-        fs: false,
-        net: false,
-        tls: false,
-        dns: false,
-        crypto: require.resolve('crypto-browserify'),
-        stream: require.resolve('stream-browserify'),
-        util: require.resolve('util/'),
-        buffer: require.resolve('buffer/'),
-        process: require.resolve('process/browser'),
-      };
-    }
-
-    return updatedConfig;
-  },
 });

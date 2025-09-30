@@ -2,22 +2,21 @@
 overlays = ["./.nixpacks/overlay.nix"]
 
 [phases.setup]
-nixPkgs = ["...", "nodejs_22", "prisma"]
+nixPkgs = ["...", "nodejs_24", "prisma", "bun"]
 
 [phases.install]
 cmds = [
-  "pnpm config set enable-pre-post-scripts true",
-  "pnpm install --frozen-lockfile --ignore-scripts"
+  "bun install --frozen-lockfile"
 ]
 
 [phases.build]
 cmds = [
-  "cd packages/db && pnpm dlx prisma generate",
-  "cd apps/web && NEXT_TELEMETRY_DISABLED=1 TURBO_TELEMETRY_DISABLED=1 pnpm run build"
+  "cd packages/db && bunx prisma generate",
+  "cd apps/web && NEXT_TELEMETRY_DISABLED=1 TURBO_TELEMETRY_DISABLED=1 bun run build"
 ]
 
 [start]
-cmd = "cd apps/web && pnpm start"
+cmd = "cd apps/web && bun start"
 
 [deploy]
 healthcheckPath = "/"
@@ -29,4 +28,3 @@ restartPolicyMaxRetries = 10
 NEXT_TELEMETRY_DISABLED = "1"
 TURBO_TELEMETRY_DISABLED = "1"
 NODE_ENV = "production"
-PNPM_HOME = "/tmp/.pnpm"

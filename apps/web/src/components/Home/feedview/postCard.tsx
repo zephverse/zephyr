@@ -1,30 +1,30 @@
-'use client';
+"use client";
 
-import { useSession } from '@/app/(main)/SessionProvider';
-import Comments from '@/components/Comments/Comments';
-import UserAvatar from '@/components/Layouts/UserAvatar';
-import UserTooltip from '@/components/Layouts/UserTooltip';
-import AuraCount from '@/components/Posts/AuraCount';
-import AuraVoteButton from '@/components/Posts/AuraVoteButton';
-import BookmarkButton from '@/components/Posts/BookmarkButton';
-import PostMoreButton from '@/components/Posts/PostMoreButton';
-import ViewTracker from '@/components/Posts/ViewCounter';
-import { MentionTags } from '@/components/Tags/MentionTags';
-import { Tags } from '@/components/Tags/Tags';
-import Linkify from '@/helpers/global/Linkify';
-import { formatNumber, formatRelativeDate } from '@/lib/utils';
-import type { PostData, TagWithCount } from '@zephyr/db';
-import { Button } from '@zephyr/ui/shadui/button';
-import { Card, CardContent } from '@zephyr/ui/shadui/card';
-import { Separator } from '@zephyr/ui/shadui/separator';
-import { motion } from 'framer-motion';
-import { ArrowUpRight, Eye, Flame, MessageSquare, Share2 } from 'lucide-react';
-import Link from 'next/link';
-import type React from 'react';
-import { useCallback, useEffect, useState } from 'react';
-import { HNStoryCard } from './HNStoryCard';
-import { MediaPreviews } from './MediaPreviews';
-import ShareButton from './ShareButton';
+import type { PostData, TagWithCount } from "@zephyr/db";
+import { Button } from "@zephyr/ui/shadui/button";
+import { Card, CardContent } from "@zephyr/ui/shadui/card";
+import { Separator } from "@zephyr/ui/shadui/separator";
+import { motion } from "framer-motion";
+import { ArrowUpRight, Eye, Flame, MessageSquare, Share2 } from "lucide-react";
+import Link from "next/link";
+import type React from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useSession } from "@/app/(main)/SessionProvider";
+import Comments from "@/components/Comments/Comments";
+import UserAvatar from "@/components/Layouts/UserAvatar";
+import UserTooltip from "@/components/Layouts/UserTooltip";
+import AuraCount from "@/components/Posts/AuraCount";
+import AuraVoteButton from "@/components/Posts/AuraVoteButton";
+import BookmarkButton from "@/components/Posts/BookmarkButton";
+import PostMoreButton from "@/components/Posts/PostMoreButton";
+import ViewTracker from "@/components/Posts/ViewCounter";
+import { MentionTags } from "@/components/Tags/MentionTags";
+import { Tags } from "@/components/Tags/Tags";
+import Linkify from "@/helpers/global/Linkify";
+import { formatNumber, formatRelativeDate } from "@/lib/utils";
+import { HNStoryCard } from "./HNStoryCard";
+import { MediaPreviews } from "./MediaPreviews";
+import ShareButton from "./ShareButton";
 
 type ExtendedPostData = PostData & {
   hnStoryShare?: {
@@ -38,10 +38,10 @@ type ExtendedPostData = PostData & {
   } | null;
 };
 
-interface PostCardProps {
+type PostCardProps = {
   post: ExtendedPostData;
   isJoined?: boolean;
-}
+};
 
 const PostCard: React.FC<PostCardProps> = ({
   post: initialPost,
@@ -64,10 +64,8 @@ const PostCard: React.FC<PostCardProps> = ({
       {post.mentions && post.mentions.length > 0 && (
         <div className="mt-2 mb-3">
           <MentionTags
-            // @ts-expect-error
-            mentions={post.mentions.map((m) => m.user)}
             isOwner={post.user.id === user.id}
-            postId={post.id}
+            mentions={post.mentions.map((m) => m.user)}
             onMentionsChange={(newMentions) => {
               handlePostUpdate({
                 ...post,
@@ -80,6 +78,7 @@ const PostCard: React.FC<PostCardProps> = ({
                 })),
               });
             }}
+            postId={post.id}
           />
         </div>
       )}
@@ -114,50 +113,50 @@ const PostCard: React.FC<PostCardProps> = ({
         <div className="flex shrink-0 items-center space-x-2">
           {post.user.id === user.id && (
             <PostMoreButton
-              post={post}
               className="opacity-0 transition-opacity group-hover/post:opacity-100"
               onUpdate={handlePostUpdate}
+              post={post}
             />
           )}
           <Button
-            variant="ghost"
-            size="sm"
             className="flex items-center space-x-2 text-muted-foreground"
+            size="sm"
+            variant="ghost"
           >
             <Eye className="h-4 w-4" />
             <span className="text-sm tabular-nums">{post.viewCount}</span>
           </Button>
           <BookmarkButton
-            postId={post.id}
             initialState={{
               isBookmarkedByUser: post.bookmarks.some(
                 (bookmark) => bookmark.userId === user.id
               ),
             }}
+            postId={post.id}
           />
         </div>
       </div>
 
-      <AuraCount postId={post.id} initialAura={post.aura} />
+      <AuraCount initialAura={post.aura} postId={post.id} />
 
       {post.tags && post.tags.length > 0 && (
         <div className="mt-2 mb-2">
           <Tags
-            tags={post.tags as TagWithCount[]}
             isOwner={post.user.id === user.id}
-            postId={post.id}
             onTagsChange={(newTags) => {
               handlePostUpdate({
                 ...post,
                 tags: newTags,
               });
             }}
+            postId={post.id}
+            tags={post.tags as TagWithCount[]}
           />
         </div>
       )}
 
       <Linkify>
-        <p className="overflow-wrap-anywhere mt-4 mb-4 max-w-full whitespace-pre-wrap break-words text-foreground">
+        <p className="mt-4 mb-4 max-w-full whitespace-pre-wrap break-words text-foreground">
           {post.content}
         </p>
       </Linkify>
@@ -184,29 +183,29 @@ const PostCard: React.FC<PostCardProps> = ({
 
       <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
         <AuraVoteButton
-          postId={post.id}
+          authorName={post.user.displayName}
           initialState={{
             aura: post.aura,
             userVote: post.vote[0]?.value || 0,
           }}
-          authorName={post.user.displayName}
+          postId={post.id}
         />
         <div className="flex items-center space-x-2">
           <CommentButton
-            post={post}
             onClick={() => setShowComments(!showComments)}
+            post={post}
           />
           <ShareButton
-            postId={post.id}
-            title={post.content}
-            thumbnail={post.attachments[0]?.url}
             description={post.content}
+            postId={post.id}
+            thumbnail={post.attachments[0]?.url}
+            title={post.content}
           />
           <Link href={`/posts/${post.id}`} suppressHydrationWarning>
             <Button
-              variant="ghost"
-              size="sm"
               className="hover: text-muted-foreground"
+              size="sm"
+              variant="ghost"
             >
               <ArrowUpRight className="h-5 w-5" />
             </Button>
@@ -219,27 +218,27 @@ const PostCard: React.FC<PostCardProps> = ({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 50 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
+      className={post.hnStoryShare ? "hn-story-share" : ""}
       id={`post-${post.id}`}
-      className={post.hnStoryShare ? 'hn-story-share' : ''}
+      initial={{ opacity: 0, y: 50 }}
+      transition={{ duration: 0.5 }}
     >
       <ViewTracker postId={post.id} />
       {isJoined ? (
         <div
-          className={`group/post ${post.hnStoryShare ? 'relative pb-1' : ''}`}
+          className={`group/post ${post.hnStoryShare ? "relative pb-1" : ""}`}
         >
           {post.hnStoryShare && (
             <div className="absolute top-0 left-0 h-full w-1 rounded-full bg-gradient-to-b from-orange-400 to-yellow-500" />
           )}
-          <div className={`p-4 ${post.hnStoryShare ? 'pl-5' : ''}`}>
+          <div className={`p-4 ${post.hnStoryShare ? "pl-5" : ""}`}>
             <PostContent />
           </div>
         </div>
       ) : (
         <Card
-          className={`group/post border-border border-t border-b bg-background ${post.hnStoryShare ? 'border-l-2 border-l-orange-500' : ''}`}
+          className={`group/post border-border border-t border-b bg-background ${post.hnStoryShare ? "border-l-2 border-l-orange-500" : ""}`}
         >
           <CardContent className="p-4">
             <PostContent />
@@ -250,18 +249,18 @@ const PostCard: React.FC<PostCardProps> = ({
   );
 };
 
-interface CommentButtonProps {
+type CommentButtonProps = {
   post: PostData;
   onClick: () => void;
-}
+};
 
 function CommentButton({ post, onClick }: CommentButtonProps) {
   return (
     <Button
-      onClick={onClick}
       className="flex items-center space-x-2 text-muted-foreground hover:text-foreground"
-      variant="ghost"
+      onClick={onClick}
       size="sm"
+      variant="ghost"
     >
       <MessageSquare className="size-5" />
       <span className="font-medium text-sm tabular-nums">

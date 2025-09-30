@@ -1,6 +1,6 @@
 'use client';
 
-import { GitHub } from '@mui/icons-material';
+import { FaGithub } from 'react-icons/fa';
 import { GitHubLogoIcon } from '@radix-ui/react-icons';
 import { Button } from '@zephyr/ui/shadui/button';
 import { motion } from 'framer-motion';
@@ -26,7 +26,7 @@ export default function ContributeCard({ isCollapsed }: ContributeCardProps) {
             target="_blank"
             rel="noopener noreferrer"
           >
-            <GitHub className="h-5 w-5 text-muted-foreground transition-colors hover:text-primary" />
+            <FaGithub className="h-5 w-5 text-muted-foreground transition-colors hover:text-primary" />
           </Link>
         </Button>
       </div>
