@@ -2,7 +2,7 @@
 overlays = ["./.nixpacks/overlay.nix"]
 
 [phases.setup]
-nixPkgs = ["...", "nodejs_22", "prisma", "bun", "turbo"]
+nixPkgs = ["nodejs_22", "prisma", "bun", "turbo", "openssl"]
 
 [phases.install]
 cmds = [
