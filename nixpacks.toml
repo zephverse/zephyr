@@ -2,7 +2,7 @@
 overlays = ["./.nixpacks/overlay.nix"]
 
 [phases.setup]
-nixPkgs = ["...", "nodejs_24", "prisma", "bun"]
+nixPkgs = ["...", "nodejs_22", "prisma", "bun", "turbo"]
 
 [phases.install]
 cmds = [
@@ -12,7 +12,7 @@ cmds = [
 [phases.build]
 cmds = [
   "cd packages/db && bunx prisma generate",
-  "cd apps/web && NEXT_TELEMETRY_DISABLED=1 TURBO_TELEMETRY_DISABLED=1 bun run build"
+  "NEXT_TELEMETRY_DISABLED=1 TURBO_TELEMETRY_DISABLED=1 bunx turbo build --filter=@zephyr/web... --force"
 ]
 
 [start]
