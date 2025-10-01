@@ -1,3 +1,4 @@
+// biome-ignore lint/performance/noBarrelFile: This is the main database package interface
 export * from "./cache/avatar-cache";
 export * from "./cache/followbutton-cache";
 export * from "./cache/search-cache";

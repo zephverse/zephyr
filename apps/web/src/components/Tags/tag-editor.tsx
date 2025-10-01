@@ -8,7 +8,7 @@ import { Command } from "cmdk";
 import { AnimatePresence, motion } from "framer-motion";
 import { Hash, Loader2, Plus, Search, X } from "lucide-react";
 import { useState } from "react";
-import { useTags } from "@/hooks/useTags";
+import { useTags } from "@/hooks/use-tags";
 import { cn } from "@/lib/utils";
 import { useUpdateTagsMutation } from "./mutations/tag-mention-mutation";
 

@@ -12,7 +12,8 @@
   "linter": {
     "rules": {
       "style": {
-        "noMagicNumbers": "off"
+        "noMagicNumbers": "off",
+        "useNamingConvention": "off"
       },
       "suspicious": {
         "noConsole": "off",

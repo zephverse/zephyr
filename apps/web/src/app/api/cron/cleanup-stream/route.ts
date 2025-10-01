@@ -3,6 +3,7 @@ import { prisma } from "@zephyr/db";
 import { NextResponse } from "next/server";
 import { StreamChat } from "stream-chat";
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Stream cleanup involves multiple batch operations and error handling
 async function cleanupStreamUsers() {
   const logs: string[] = [];
   const startTime = Date.now();
@@ -140,13 +141,13 @@ async function cleanupStreamUsers() {
       );
 
       // Process batch results
-      batchResults.forEach((result) => {
+      for (const result of batchResults) {
         if (result.status === "fulfilled") {
           results.deletedCount++;
         } else {
           results.errorCount++;
         }
-      });
+      }
 
       results.totalProcessed += batch.length;
       log(`📊 Batch ${batchNumber} Progress:

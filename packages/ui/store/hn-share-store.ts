@@ -11,7 +11,7 @@ type HnShareState = {
   clearState: () => void;
 };
 
-export const useHNShareStore = create<HnShareState>()(
+export const useHnShareStore = create<HnShareState>()(
   persist(
     (set) => ({
       story: null,

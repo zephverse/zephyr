@@ -1,7 +1,7 @@
 import { validateRequest } from "@zephyr/auth/auth";
 import { getStreamClient } from "@zephyr/auth/src";
 import { prisma } from "@zephyr/db";
-import Header from "@/components/Layouts/Header";
+import Header from "@/components/Layouts/header";
 
 export default async function Navbar() {
   const { user } = await validateRequest();

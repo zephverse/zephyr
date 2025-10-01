@@ -3,6 +3,7 @@ import { prisma } from "@zephyr/db";
 import { NextResponse } from "next/server";
 import { StreamChat } from "stream-chat";
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Stream sync involves multiple batch operations, user validation, and error handling
 async function syncStreamUsers() {
   const logs: string[] = [];
   const startTime = Date.now();
@@ -126,13 +127,13 @@ async function syncStreamUsers() {
         })
       );
 
-      batchResults.forEach((result) => {
+      for (const result of batchResults) {
         if (result.status === "fulfilled") {
           results.updatedCount++;
         } else {
           results.errorCount++;
         }
-      });
+      }
 
       results.totalProcessed += batch.length;
       log(`📊 Batch ${batchNumber} Progress:

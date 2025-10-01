@@ -1,8 +1,8 @@
 import { FileAudioIcon, FileCode, FileIcon, X } from "lucide-react";
 import Image from "next/image";
 import { memo, useEffect, useState } from "react";
-import { getLanguageFromFileName } from "@/lib/codefileExtensions";
-import { formatFileName } from "@/lib/formatFileName";
+import { getLanguageFromFileName } from "@/lib/codefile-extensions";
+import { formatFileName } from "@/lib/format-file-name";
 import { cn } from "@/lib/utils";
 
 type AttachmentPreviewProps = {
@@ -14,7 +14,7 @@ type AttachmentPreviewProps = {
   onRemoveClick: () => void;
 };
 
-export const AttachmentPreview = memo(function AttachmentPreview({
+export const AttachmentPreview = memo(function AttachmentPreviewComponent({
   attachment: { file, isUploading, previewUrl: existingPreviewUrl },
   onRemoveClick,
 }: AttachmentPreviewProps) {

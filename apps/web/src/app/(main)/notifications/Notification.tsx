@@ -16,22 +16,22 @@ export default function Notification({ notification }: NotificationProps) {
     NotificationType,
     { message: string; icon: JSX.Element; href: string }
   > = {
-    FOLLOW: {
+    follow: {
       message: `${notification.issuer.displayName} followed you`,
       icon: <User2 className="size-7 text-primary" />,
       href: `/users/${notification.issuer.username}`,
     },
-    COMMENT: {
+    comment: {
       message: `${notification.issuer.displayName} eddied on your post`,
       icon: <MessageCircle className="size-7 fill-primary text-primary" />,
       href: `/posts/${notification.postId}`,
     },
-    AMPLIFY: {
+    amplify: {
       message: `${notification.issuer.displayName} amplified your post`,
       icon: <Heart className="size-7 fill-red-500 text-red-500" />,
       href: `/posts/${notification.postId}`,
     },
-    MENTION: {
+    mention: {
       message: `${notification.issuer.displayName} mentioned you in a post`,
       icon: <AtSign className="size-7 text-blue-500" />,
       href: `/posts/${notification.postId}`,

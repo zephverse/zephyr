@@ -1,6 +1,78 @@
 import { prisma } from "@zephyr/db";
 import { NextResponse } from "next/server";
 
+async function getInactiveUserStats(
+  thirtyDaysAgo: Date,
+  log: (message: string) => void
+): Promise<{ totalUsers: number; inactiveCount: number }> {
+  const totalUsers = await prisma.user.count();
+  log(`📊 Current total users: ${totalUsers}`);
+
+  const inactiveCount = await prisma.user.count({
+    where: {
+      AND: [{ emailVerified: false }, { createdAt: { lt: thirtyDaysAgo } }],
+    },
+  });
+
+  log(
+    `🔍 Found ${inactiveCount} inactive users (${((inactiveCount / totalUsers) * 100).toFixed(2)}% of total)`
+  );
+
+  return { totalUsers, inactiveCount };
+}
+
+async function deleteInactiveUsersInBatches(
+  thirtyDaysAgo: Date,
+  inactiveCount: number,
+  log: (message: string) => void,
+  results: { errors: string[] }
+): Promise<number> {
+  const batchSize = 100;
+  let totalDeleted = 0;
+  const totalBatches = Math.ceil(inactiveCount / batchSize);
+
+  for (let batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
+    const offset = batchIndex * batchSize;
+    const currentBatchSize = Math.min(batchSize, inactiveCount - offset);
+
+    try {
+      const batch = await prisma.user.findMany({
+        where: {
+          AND: [{ emailVerified: false }, { createdAt: { lt: thirtyDaysAgo } }],
+        },
+        select: { id: true, username: true },
+        skip: offset,
+        take: currentBatchSize,
+      });
+
+      if (batch.length === 0) {
+        break;
+      }
+
+      const userIds = batch.map((user) => user.id);
+      const usernames = batch.map((user) => user.username);
+
+      const deleteResult = await prisma.user.deleteMany({
+        where: { id: { in: userIds } },
+      });
+
+      totalDeleted += deleteResult.count;
+
+      log(
+        `🗑️  Batch ${batchIndex + 1}/${totalBatches}: Deleted ${deleteResult.count} users (${usernames.slice(0, 3).join(", ")}${usernames.length > 3 ? "..." : ""})`
+      );
+    } catch (error) {
+      const errorMessage = `Error deleting batch ${batchIndex + 1}: ${
+        error instanceof Error ? error.message : "Unknown error"
+      }`;
+      log(`❌ ${errorMessage}`);
+      results.errors.push(errorMessage);
+    }
+  }
+
+  return totalDeleted;
+}
+
 async function cleanupInactiveUsers() {
   const logs: string[] = [];
   const startTime = Date.now();
@@ -16,17 +88,9 @@ async function cleanupInactiveUsers() {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const totalUsers = await prisma.user.count();
-    log(`📊 Current total users: ${totalUsers}`);
-
-    const inactiveCount = await prisma.user.count({
-      where: {
-        AND: [{ emailVerified: false }, { createdAt: { lt: thirtyDaysAgo } }],
-      },
-    });
-
-    log(
-      `🔍 Found ${inactiveCount} inactive users (${((inactiveCount / totalUsers) * 100).toFixed(2)}% of total)`
+    const { totalUsers, inactiveCount } = await getInactiveUserStats(
+      thirtyDaysAgo,
+      log
     );
 
     if (inactiveCount === 0) {
@@ -45,60 +109,15 @@ async function cleanupInactiveUsers() {
       };
     }
 
-    const batchSize = 100;
-    let totalDeleted = 0;
-    const totalBatches = Math.ceil(inactiveCount / batchSize);
+    const results = { errors: [] as string[] };
+    const totalDeleted = await deleteInactiveUsersInBatches(
+      thirtyDaysAgo,
+      inactiveCount,
+      log,
+      results
+    );
 
-    for (let offset = 0; offset < inactiveCount; offset += batchSize) {
-      const currentBatch = Math.floor(offset / batchSize) + 1;
-      log(`🔄 Processing batch ${currentBatch}/${totalBatches}`);
-
-      try {
-        const batch = await prisma.user.findMany({
-          where: {
-            AND: [
-              { emailVerified: false },
-              { createdAt: { lt: thirtyDaysAgo } },
-            ],
-          },
-          select: {
-            id: true,
-            username: true,
-            createdAt: true,
-          },
-          take: batchSize,
-          skip: offset,
-        });
-
-        if (batch.length > 0) {
-          batch.forEach((user) => {
-            log(
-              `📝 Queued for deletion: ${user.username} (Created: ${user.createdAt.toISOString()})`
-            );
-          });
-
-          const deleteResult = await prisma.user.deleteMany({
-            where: {
-              id: { in: batch.map((user) => user.id) },
-            },
-          });
-
-          totalDeleted += deleteResult.count;
-          log(`✅ Batch ${currentBatch}: Deleted ${deleteResult.count} users`);
-        }
-
-        if (currentBatch < totalBatches) {
-          await new Promise((resolve) => setTimeout(resolve, 300));
-        }
-      } catch (error) {
-        const errorMessage = `Error processing batch ${currentBatch}: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`;
-        log(`❌ ${errorMessage}`);
-      }
-    }
-
-    const remainingUsers = await prisma.user.count();
+    const remainingUsers = totalUsers - totalDeleted;
     const deletionPercentage = ((totalDeleted / totalUsers) * 100).toFixed(2);
 
     const summary = {
@@ -107,9 +126,8 @@ async function cleanupInactiveUsers() {
       duration: Date.now() - startTime,
       logs,
       stats: {
-        totalUsersBefore: totalUsers,
-        totalUsersAfter: remainingUsers,
-        deletedUsers: totalDeleted,
+        totalUsers,
+        inactiveUsers: inactiveCount,
         deletionPercentage,
       },
       timestamp: new Date().toISOString(),
@@ -149,78 +167,15 @@ async function cleanupInactiveUsers() {
   }
 }
 
-export async function GET(request: Request) {
-  console.log("📥 Received cleanup inactive users request");
-
+export async function GET() {
   try {
-    if (!process.env.CRON_SECRET_KEY) {
-      console.error("❌ CRON_SECRET_KEY environment variable not set");
-      return NextResponse.json(
-        {
-          error: "Server configuration error",
-          timestamp: new Date().toISOString(),
-        },
-        {
-          status: 500,
-          headers: {
-            "Content-Type": "application/json",
-            "Cache-Control": "no-store",
-          },
-        }
-      );
-    }
-
-    const authHeader = request.headers.get("authorization");
-    const expectedAuth = `Bearer ${process.env.CRON_SECRET_KEY}`;
-
-    if (!authHeader || authHeader !== expectedAuth) {
-      console.warn("⚠️ Unauthorized cleanup attempt");
-      return NextResponse.json(
-        {
-          error: "Unauthorized",
-          timestamp: new Date().toISOString(),
-        },
-        {
-          status: 401,
-          headers: {
-            "Content-Type": "application/json",
-            "Cache-Control": "no-store",
-          },
-        }
-      );
-    }
-
-    const results = await cleanupInactiveUsers();
-
-    return NextResponse.json(results, {
-      status: results.success ? 200 : 500,
-      headers: {
-        "Content-Type": "application/json",
-        "Cache-Control": "no-store",
-      },
-    });
+    const result = await cleanupInactiveUsers();
+    return NextResponse.json(result);
   } catch (error) {
-    console.error("❌ Cleanup route error:", {
-      error: error instanceof Error ? error.message : "Unknown error",
-      stack: error instanceof Error ? error.stack : undefined,
-    });
-
+    console.error("Route handler error:", error);
     return NextResponse.json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : "Unknown error",
-        timestamp: new Date().toISOString(),
-      },
-      {
-        status: 500,
-        headers: {
-          "Content-Type": "application/json",
-          "Cache-Control": "no-store",
-        },
-      }
+      { success: false, error: "Internal server error" },
+      { status: 500 }
     );
   }
 }
-
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";

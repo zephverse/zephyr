@@ -7,6 +7,7 @@ import { cookies } from "next/headers";
 import type { NextRequest } from "next/server";
 import { slugify } from "@/lib/utils";
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: OAuth callback handling requires multiple conditional branches for different auth states
 export async function GET(req: NextRequest) {
   try {
     const code = req.nextUrl.searchParams.get("code");
@@ -25,8 +26,8 @@ export async function GET(req: NextRequest) {
 
       const githubUserResponse = await fetch("https://api.github.com/user", {
         headers: {
-          Authorization: `Bearer ${accessToken}`,
-          Accept: "application/json",
+          authorization: `Bearer ${accessToken}`,
+          accept: "application/json",
         },
       });
 
@@ -40,8 +41,8 @@ export async function GET(req: NextRequest) {
 
       const emailsResponse = await fetch("https://api.github.com/user/emails", {
         headers: {
-          Authorization: `Bearer ${accessToken}`,
-          Accept: "application/json",
+          authorization: `Bearer ${accessToken}`,
+          accept: "application/json",
         },
       });
 
@@ -65,7 +66,7 @@ export async function GET(req: NextRequest) {
           return new Response(null, {
             status: 302,
             headers: {
-              Location: "/login",
+              location: "/login",
             },
           });
         }
@@ -80,7 +81,7 @@ export async function GET(req: NextRequest) {
           return new Response(null, {
             status: 302,
             headers: {
-              Location: "/settings?error=github_account_linked_other",
+              location: "/settings?error=github_account_linked_other",
             },
           });
         }
@@ -95,7 +96,7 @@ export async function GET(req: NextRequest) {
         return new Response(null, {
           status: 302,
           headers: {
-            Location: "/settings?success=github_linked",
+            location: "/settings?success=github_linked",
           },
         });
       }
@@ -110,7 +111,7 @@ export async function GET(req: NextRequest) {
         return new Response(null, {
           status: 302,
           headers: {
-            Location: `/login/error?error=email_exists&email=${encodeURIComponent(primaryEmail)}`,
+            location: `/login/error?error=email_exists&email=${encodeURIComponent(primaryEmail)}`,
           },
         });
       }
@@ -133,7 +134,7 @@ export async function GET(req: NextRequest) {
         return new Response(null, {
           status: 302,
           headers: {
-            Location: "/",
+            location: "/",
           },
         });
       }
@@ -155,11 +156,11 @@ export async function GET(req: NextRequest) {
         });
 
         try {
-          await createStreamUser(
-            newUser.id,
-            newUser.username,
-            newUser.displayName
-          );
+          await createStreamUser({
+            userId: newUser.id,
+            username: newUser.username,
+            displayName: newUser.displayName,
+          });
         } catch (streamError) {
           console.error("Failed to create Stream user:", streamError);
         }
@@ -176,7 +177,7 @@ export async function GET(req: NextRequest) {
         return new Response(null, {
           status: 302,
           headers: {
-            Location: "/",
+            location: "/",
           },
         });
       } catch (error) {

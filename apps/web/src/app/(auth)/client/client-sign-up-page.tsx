@@ -9,7 +9,7 @@ import { AlertTriangle } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import AnimatedAuthLink from "@/components/Auth/animated-auth-link";
-import SignUpForm from "@/components/Auth/SignUpForm";
+import SignUpForm from "@/components/Auth/sign-up-form";
 
 const fadeIn = {
   hidden: { opacity: 0 },

@@ -23,7 +23,8 @@ const isDevelopment = !(isProduction || isBuildPhase || isTestEnvironment);
 let hasLoggedStreamStatus = false;
 
 export function validateStreamEnv(): void {
-  const { isConfigured, missingVars, isDevelopment } = checkStreamEnvStatus();
+  const { isConfigured, missingVars, isDevEnvironment } =
+    checkStreamEnvStatus();
 
   if (skipValidation || isBuildPhase || isTestEnvironment) {
     return;
@@ -34,7 +35,7 @@ export function validateStreamEnv(): void {
       ", "
     )}`;
 
-    if (isDevelopment) {
+    if (isDevEnvironment) {
       console.warn("⚠️ [Stream Chat]:", message);
       console.info(
         "ℹ️ [Stream Chat]: Continuing in development mode with disabled Stream features"
@@ -44,10 +45,10 @@ export function validateStreamEnv(): void {
 }
 
 export function getStreamConfig(): StreamConfig {
-  const { isConfigured, isDevelopment } = checkStreamEnvStatus();
+  const { isConfigured, isDevEnvironment } = checkStreamEnvStatus();
 
   if (!(process.env.NEXT_PUBLIC_STREAM_KEY || process.env.STREAM_SECRET)) {
-    if (isDevelopment && !hasLoggedStreamStatus) {
+    if (isDevEnvironment && !hasLoggedStreamStatus) {
       console.warn("[Stream Chat] Environment variables are not defined");
       hasLoggedStreamStatus = true;
     }

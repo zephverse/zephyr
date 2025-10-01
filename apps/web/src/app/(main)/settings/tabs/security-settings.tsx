@@ -42,7 +42,7 @@ export default function SecuritySettings({ user }: SecuritySettingsProps) {
     },
   });
 
-  async function onSubmit(values: FormValues) {
+  function onSubmit(values: FormValues) {
     startTransition(async () => {
       const result = await requestPasswordReset(values);
 

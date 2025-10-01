@@ -7,11 +7,11 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
 const ERROR_MESSAGES = {
-  email_exists: "This email is already registered.",
-  invalid_credentials: "Invalid email or password.",
-  oauth_error: "Error connecting with social provider.",
-  server_error: "An unexpected error occurred.",
-  account_not_found: "Account not found.",
+  emailExists: "This email is already registered.",
+  invalidCredentials: "Invalid email or password.",
+  oauthError: "Error connecting with social provider.",
+  serverError: "An unexpected error occurred.",
+  accountNotFound: "Account not found.",
   unauthorized: "You must be logged in to access this page.",
 };
 

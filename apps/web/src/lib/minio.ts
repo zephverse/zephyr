@@ -11,8 +11,6 @@ import { validateFile } from "./utils/file-validation";
 import { getContentType, getFileConfigFromMime } from "./utils/mime-utils";
 import { uploadToasts } from "./utils/upload-messages";
 
-export { getContentDisposition } from "./utils/mime-utils";
-
 const isClient = typeof window !== "undefined";
 
 export const minioClient = new S3Client({

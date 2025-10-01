@@ -17,8 +17,8 @@ export default function StreamChatNotConfigured() {
   const { isProduction } = getEnvironmentMode();
 
   const missingEnvs = {
-    NEXT_PUBLIC_STREAM_KEY: !config.apiKey,
-    STREAM_SECRET: !config.secret,
+    nextPublicStreamKey: !config.apiKey,
+    streamSecret: !config.secret,
   };
 
   const auroras = useMemo(

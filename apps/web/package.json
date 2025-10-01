@@ -56,7 +56,7 @@
     "react-linkify-it": "^2.0.0",
     "react-syntax-highlighter": "^15.6.6",
     "sonner": "^2.0.7",
-    "stream-chat": "^9.20.1",
+    "stream-chat": "^9.20.3",
     "stream-chat-react": "^13.7.0",
     "tailwind-merge": "^3.3.1",
     "usehooks-ts": "^3.1.1",
@@ -67,7 +67,7 @@
     "@types/react-syntax-highlighter": "^15.5.13",
     "@zephyr/config": "workspace:*",
     "@zephyr/next": "workspace:*",
-    "tailwindcss": "^4.1.13",
+    "tailwindcss": "^4.1.14",
     "typescript": "^5.9.3"
   }
 }

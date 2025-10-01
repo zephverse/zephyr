@@ -1,3 +1,4 @@
+// biome-ignore lint/performance/noBarrelFile: This is the validation package interface
 export * from "./src/validation/constants";
 export * from "./src/validation/schemas";
 

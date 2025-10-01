@@ -59,13 +59,21 @@ export function getStreamClient(): StreamChat | null {
   }
 }
 
-export const createStreamUser = async (
-  userId: string,
-  username: string,
-  displayName: string,
-  avatarUrl?: string | null,
-  bio?: string | null
-): Promise<void> => {
+type CreateStreamUserOptions = {
+  userId: string;
+  username: string;
+  displayName: string;
+  avatarUrl?: string | null;
+  bio?: string | null;
+};
+
+export const createStreamUser = async ({
+  userId,
+  username,
+  displayName,
+  avatarUrl,
+  bio,
+}: CreateStreamUserOptions): Promise<void> => {
   if (!isStreamConfigured()) {
     isDevelopment &&
       console.log("[Stream Chat] Not configured - skipping user creation");

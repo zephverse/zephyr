@@ -1,4 +1,4 @@
-// Core exports
+// biome-ignore lint/performance/noBarrelFile: This is the internal package interface for auth/src
 export {
   createBlankSessionCookie,
   createSessionCookie,

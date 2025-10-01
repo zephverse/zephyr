@@ -5,8 +5,9 @@ import {
   ChevronRightIcon,
   DotFilledIcon,
 } from "@radix-ui/react-icons";
+// biome-ignore lint/performance/noNamespaceImport:ignore
 import * as MenubarPrimitive from "@radix-ui/react-menubar";
-import * as React from "react";
+import React from "react";
 import { cn } from "../lib/utils";
 
 function MenubarMenu({

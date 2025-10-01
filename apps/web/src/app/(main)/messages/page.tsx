@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Chat from "@/components/Messages/Chat";
+import Chat from "@/components/Messages/chat";
 
 export const metadata: Metadata = {
   title: "Whispers",

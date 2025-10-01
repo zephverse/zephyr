@@ -107,8 +107,19 @@ export default function SupportForm() {
     }
   };
 
-  const handleFileUpload = async (files: FileList) => {
+  const validateFiles = (files: FileList): boolean => {
     const maxFiles = 3;
+    if (attachments.length + files.length > maxFiles) {
+      toast({
+        title: "Too many files",
+        description: `Maximum ${maxFiles} files allowed`,
+      });
+      return false;
+    }
+    return true;
+  };
+
+  const validateFile = (file: File): boolean => {
     const allowedTypes = [
       "image/jpeg",
       "image/png",
@@ -118,48 +129,56 @@ export default function SupportForm() {
     ];
     const maxSize = 5 * 1024 * 1024; // 5MB
 
-    if (attachments.length + files.length > maxFiles) {
+    if (!(file.type && allowedTypes.includes(file.type))) {
       toast({
-        title: "Too many files",
-        description: `Maximum ${maxFiles} files allowed`,
+        title: "Invalid file type",
+        description: "Please upload images, PDFs, or text files only",
       });
+      return false;
+    }
+
+    if (file.size > maxSize) {
+      toast({
+        title: "File too large",
+        description: "Files must be less than 5MB",
+      });
+      return false;
+    }
+
+    return true;
+  };
+
+  const uploadFile = async (file: File) => {
+    const fileFormData = new FormData();
+    fileFormData.append("file", file);
+    fileFormData.append("fileName", file.name);
+    fileFormData.append("fileType", file.type);
+
+    const response = await fetch("/api/support/upload", {
+      method: "POST",
+      body: fileFormData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Upload failed");
+    }
+
+    return response.json();
+  };
+
+  const handleFileUpload = async (files: FileList) => {
+    if (!validateFiles(files)) {
       return;
     }
 
     for (const file of Array.from(files)) {
+      if (!validateFile(file)) {
+        continue;
+      }
+
       try {
-        if (!(file.type && allowedTypes.includes(file.type))) {
-          toast({
-            title: "Invalid file type",
-            description: "Please upload images, PDFs, or text files only",
-          });
-          continue;
-        }
-
-        if (file.size > maxSize) {
-          toast({
-            title: "File too large",
-            description: "Files must be less than 5MB",
-          });
-          continue;
-        }
-
-        const fileFormData = new FormData();
-        fileFormData.append("file", file);
-        fileFormData.append("fileName", file.name);
-        fileFormData.append("fileType", file.type);
-
-        const response = await fetch("/api/support/upload", {
-          method: "POST",
-          body: fileFormData,
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || "Upload failed");
-        }
-
-        const data = await response.json();
+        const data = await uploadFile(file);
 
         setAttachments((prev) => [
           ...prev,
@@ -198,11 +217,11 @@ export default function SupportForm() {
 
   useEffect(
     () => () => {
-      attachments.forEach((attachment) => {
+      for (const attachment of attachments) {
         if (attachment.previewUrl) {
           URL.revokeObjectURL(attachment.previewUrl);
         }
-      });
+      }
     },
     [attachments]
   );

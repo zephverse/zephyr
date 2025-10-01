@@ -25,16 +25,13 @@ export type HNApiResponse = {
 };
 
 export class HackerNewsError extends Error {
-  constructor(
-    message: string,
-    // biome-ignore lint/style/noParameterProperties: ignore
-    // biome-ignore lint/nursery/useConsistentMemberAccessibility: ignore
-    public statusCode = 500,
-    // biome-ignore lint/style/noParameterProperties: ignore
-    // biome-ignore lint/nursery/useConsistentMemberAccessibility: ignore
-    public context?: unknown
-  ) {
+  statusCode = 500;
+  context?: unknown;
+
+  constructor(message: string, statusCode = 500, context?: unknown) {
     super(message);
     this.name = "HackerNewsError";
+    this.statusCode = statusCode;
+    this.context = context;
   }
 }

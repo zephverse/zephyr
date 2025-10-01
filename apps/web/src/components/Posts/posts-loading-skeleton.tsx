@@ -54,6 +54,7 @@ export default function PostsLoadingSkeleton() {
           <Skeleton className="mb-4 h-4 w-full" />
           <div className="flex space-x-4 overflow-x-hidden">
             {[...new Array(6)].map((_, index) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: skeleton components use index keys as order never changes
               <StoryCardSkeleton key={`story-skeleton-${index}`} />
             ))}
           </div>
@@ -67,7 +68,7 @@ export default function PostsLoadingSkeleton() {
           <Skeleton className="mb-6 h-10 w-full max-w-md" />
           <div className="space-y-8">
             {[...new Array(3)].map((_, index) => (
-              <PostCardSkeleton key={`post-skeleton-${index}`} />
+              <PostCardSkeleton key={`loading-post-${index + 1}`} />
             ))}
           </div>
         </CardContent>

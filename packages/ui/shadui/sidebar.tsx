@@ -15,7 +15,7 @@ import {
   TooltipTrigger,
 } from "@zephyr/ui/shadui/tooltip";
 import { cva, type VariantProps } from "class-variance-authority";
-import * as React from "react";
+import React from "react";
 import { cn } from "../lib/utils";
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state";
@@ -74,8 +74,9 @@ const SidebarProvider = React.forwardRef<
     const [_open, _setOpen] = React.useState(defaultOpen);
     const open = openProp ?? _open;
     const setOpen = React.useCallback(
-      (value: boolean | ((value: boolean) => boolean)) => {
-        const openState = typeof value === "function" ? value(open) : value;
+      (newValue: boolean | ((value: boolean) => boolean)) => {
+        const openState =
+          typeof newValue === "function" ? newValue(open) : newValue;
         if (setOpenProp) {
           setOpenProp(openState);
         } else {
@@ -83,7 +84,15 @@ const SidebarProvider = React.forwardRef<
         }
 
         // This sets the cookie to keep the sidebar state.
-        document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
+        if (typeof window !== "undefined" && "cookieStore" in window) {
+          // Use Cookie Store API if available
+          window.cookieStore.set({
+            name: SIDEBAR_COOKIE_NAME,
+            value: openState.toString(),
+            path: "/",
+            maxAge: SIDEBAR_COOKIE_MAX_AGE,
+          });
+        }
       },
       [setOpenProp, open]
     );
@@ -91,7 +100,9 @@ const SidebarProvider = React.forwardRef<
     // Helper to toggle the sidebar.
     const toggleSidebar = React.useCallback(
       () =>
-        isMobile ? setOpenMobile((open) => !open) : setOpen((open) => !open),
+        isMobile
+          ? setOpenMobile((prevOpen) => !prevOpen)
+          : setOpen((prevOpen) => !prevOpen),
       [isMobile, setOpen]
     );
 

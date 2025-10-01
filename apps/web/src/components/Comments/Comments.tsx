@@ -23,9 +23,9 @@ export default function Comments({ post }: CommentsProps) {
           .json<CommentsPage>(),
       initialPageParam: null as string | null,
       getNextPageParam: (firstPage) => firstPage.previousCursor,
-      select: (data) => ({
-        pages: [...data.pages].reverse(),
-        pageParams: [...data.pageParams].reverse(),
+      select: (commentsData) => ({
+        pages: [...commentsData.pages].reverse(),
+        pageParams: [...commentsData.pageParams].reverse(),
       }),
     });
 

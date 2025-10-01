@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import { useEffect, useRef } from "react";
 import { cn } from "../../lib/utils";
 
 type GooeyTextProps = {
@@ -18,16 +18,16 @@ export function GooeyText({
   className,
   textClassName,
 }: GooeyTextProps) {
-  const text1Ref = React.useRef<HTMLSpanElement>(null);
-  const text2Ref = React.useRef<HTMLSpanElement>(null);
-  const textsRef = React.useRef<string[]>(texts);
+  const text1Ref = useRef<HTMLSpanElement>(null);
+  const text2Ref = useRef<HTMLSpanElement>(null);
+  const textsRef = useRef<string[]>(texts);
 
   // Keep a stable reference to the texts array to avoid restarting animation
-  React.useEffect(() => {
+  useEffect(() => {
     textsRef.current = texts;
   }, [texts]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const localTexts = textsRef.current;
     if (!localTexts || localTexts.length === 0) {
       return;

@@ -1,6 +1,8 @@
 import { Prisma } from "@prisma/client";
 import { validateRequest } from "@zephyr/auth/auth";
-import type { UserData } from "@zephyr/db";
+
+export type { UserData } from "@zephyr/db";
+
 import { getUserDataSelect, prisma, redis } from "@zephyr/db";
 
 const SUGGESTED_USERS_CACHE_KEY = (userId: string) =>

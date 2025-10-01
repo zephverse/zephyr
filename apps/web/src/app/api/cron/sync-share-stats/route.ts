@@ -31,6 +31,7 @@ const SUPPORTED_PLATFORMS: Platform[] = [
   "qr",
 ];
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Share stats sync requires multiple platform-specific operations and error handling
 async function syncShareStats() {
   const logs: string[] = [];
   const startTime = Date.now();

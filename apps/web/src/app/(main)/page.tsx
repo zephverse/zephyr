@@ -1,5 +1,5 @@
 import { validateRequest } from "@zephyr/auth/auth";
-import { getUserData } from "@/hooks/useUserData";
+import { getUserData } from "@/hooks/use-user-data";
 import ClientHome from "./client-home";
 
 export default async function Page() {

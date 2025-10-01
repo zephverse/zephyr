@@ -6,11 +6,13 @@ import { Skeleton } from "@zephyr/ui/shadui/skeleton";
 import { motion } from "framer-motion";
 import { AtSignIcon, MessageSquareIcon } from "lucide-react";
 import React, { useMemo } from "react";
-import PostCard from "../Home/feedview/postCard";
+import PostCard from "../Home/feedview/post-card";
 
 type MentionedPostsProps = {
   userId: string;
 };
+
+const MemoizedPostCard = React.memo(PostCard);
 
 const MentionedPosts: React.FC<MentionedPostsProps> = ({ userId }) => {
   const {
@@ -63,13 +65,10 @@ const MentionedPosts: React.FC<MentionedPostsProps> = ({ userId }) => {
 
   if (isLoading) {
     return (
-      <div
-        aria-busy="true"
-        aria-label="Loading mentioned posts"
-        className="space-y-6"
-      >
+      <div aria-busy="true" className="space-y-6">
         {Array.from({ length: 3 }).map((_, i) => (
-          <div className="space-y-3" key={i}>
+          // biome-ignore lint/suspicious/noArrayIndexKey: Skeleton loading items don't have unique IDs
+          <div className="space-y-3" key={`skeleton-${i}`}>
             <div className="flex items-center space-x-3">
               <Skeleton className="h-10 w-10 rounded-full" />
               <div className="space-y-1">
@@ -120,8 +119,6 @@ const MentionedPosts: React.FC<MentionedPostsProps> = ({ userId }) => {
       </motion.div>
     );
   }
-
-  const MemoizedPostCard = React.memo(PostCard);
 
   return (
     <div className="space-y-1.5 sm:space-y-4">

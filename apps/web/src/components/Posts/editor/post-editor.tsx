@@ -94,7 +94,7 @@ export default function PostEditor() {
     maxSize: 128 * 1024 * 1024,
   });
 
-  const { onClick, ...rootProps } = getRootProps();
+  const rootProps = getRootProps();
 
   const editor = useEditor({
     extensions: [

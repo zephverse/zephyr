@@ -9,6 +9,7 @@ import { slugify } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: OAuth callback logic requires multiple validation steps
 export async function GET(req: NextRequest) {
   try {
     const code = req.nextUrl.searchParams.get("code");
@@ -37,7 +38,7 @@ export async function GET(req: NextRequest) {
         "https://discord.com/api/v10/users/@me",
         {
           headers: {
-            Authorization: `Bearer ${accessToken}`,
+            authorization: `Bearer ${accessToken}`,
           },
         }
       );
@@ -58,7 +59,7 @@ export async function GET(req: NextRequest) {
           return new Response(null, {
             status: 302,
             headers: {
-              Location: "/login",
+              location: "/login",
             },
           });
         }
@@ -73,7 +74,7 @@ export async function GET(req: NextRequest) {
           return new Response(null, {
             status: 302,
             headers: {
-              Location: "/settings?error=discord_account_linked_other",
+              location: "/settings?error=discord_account_linked_other",
             },
           });
         }
@@ -88,7 +89,7 @@ export async function GET(req: NextRequest) {
         return new Response(null, {
           status: 302,
           headers: {
-            Location: "/settings?success=discord_linked",
+            location: "/settings?success=discord_linked",
           },
         });
       }
@@ -103,7 +104,7 @@ export async function GET(req: NextRequest) {
         return new Response(null, {
           status: 302,
           headers: {
-            Location: `/login/error?error=email_exists&email=${encodeURIComponent(discordUser.email)}`,
+            location: `/login/error?error=email_exists&email=${encodeURIComponent(discordUser.email)}`,
           },
         });
       }
@@ -126,7 +127,7 @@ export async function GET(req: NextRequest) {
         return new Response(null, {
           status: 302,
           headers: {
-            Location: "/",
+            location: "/",
           },
         });
       }
@@ -176,7 +177,7 @@ export async function GET(req: NextRequest) {
         return new Response(null, {
           status: 302,
           headers: {
-            Location: "/",
+            location: "/",
           },
         });
       } catch (error) {

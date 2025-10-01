@@ -110,7 +110,7 @@ export default function FollowersList({
                     animate={{ opacity: 1, y: 0 }}
                     className="flex animate-pulse items-center space-x-4"
                     initial={{ opacity: 0, y: 20 }}
-                    key={`skeleton-${i}`}
+                    key={`followers-skeleton-${i + 1}`}
                     transition={{ delay: i * 0.1 }}
                   >
                     <div className="h-10 w-10 rounded-full bg-muted" />

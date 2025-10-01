@@ -88,8 +88,8 @@ const MyPosts: React.FC<MyPostsProps> = ({ data }) => (
         <TabsContent value="blogs">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
             <div className="relative overflow-hidden rounded-lg shadow-md">
-              {data.blogs.map((post, index) => (
-                <motion.div key={index} whileHover={{ scale: 1.05 }}>
+              {data.blogs.map((post, _index) => (
+                <motion.div key={post.title} whileHover={{ scale: 1.05 }}>
                   <div className="relative h-128 w-full">
                     <DirectionAwareHover
                       className="h-full w-full object-cover"
@@ -118,10 +118,10 @@ const MyPosts: React.FC<MyPostsProps> = ({ data }) => (
         </TabsContent>
         <TabsContent value="research">
           <div className="space-y-4">
-            {data.researchPapers.map((paper, index) => (
+            {data.researchPapers.map((paper, _index) => (
               <div
                 className="flex items-center justify-between rounded-lg bg-muted p-4"
-                key={index}
+                key={paper.title}
               >
                 <div>
                   <h3 className="font-semibold text-foreground">

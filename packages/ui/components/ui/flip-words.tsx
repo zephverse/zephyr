@@ -70,7 +70,7 @@ export const FlipWords = ({
             animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
             className="inline-block whitespace-nowrap"
             initial={{ opacity: 0, y: 10, filter: "blur(8px)" }}
-            key={word + wordIndex}
+            key={`word-${word}-${wordIndex}-${currentWord}`}
             transition={{
               delay: wordIndex * 0.3,
               duration: 0.3,
@@ -81,7 +81,8 @@ export const FlipWords = ({
                 animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                 className="inline-block"
                 initial={{ opacity: 0, y: 10, filter: "blur(8px)" }}
-                key={word + letterIndex}
+                // biome-ignore lint/suspicious/noArrayIndexKey: Letters in a word maintain stable order for animation
+                key={`${wordIndex}-${letterIndex}`}
                 transition={{
                   delay: wordIndex * 0.3 + letterIndex * 0.05,
                   duration: 0.2,

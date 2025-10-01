@@ -3,9 +3,9 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import type { PostsPage } from "@zephyr/db";
 import { Loader2 } from "lucide-react";
-import FeedView from "@/components/Home/FeedView";
-import InfiniteScrollContainer from "@/components/Layouts/InfiniteScrollContainer";
-import PostsLoadingSkeleton from "@/components/Posts/PostsLoadingSkeleton";
+import FeedView from "@/components/Home/feed-view";
+import InfiniteScrollContainer from "@/components/Layouts/infinite-scroll-container";
+import PostsLoadingSkeleton from "@/components/Posts/posts-loading-skeleton";
 import kyInstance from "@/lib/ky";
 
 export default function FollowingFeed() {

@@ -5,6 +5,7 @@ import { minioClient } from "@/lib/minio";
 
 const MINIO_BUCKET = process.env.MINIO_BUCKET_NAME || "uploads";
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Media cleanup requires multiple storage operations and batch processing
 async function cleanupUnusedMedia() {
   const logs: string[] = [];
   const startTime = Date.now();
@@ -49,13 +50,13 @@ async function cleanupUnusedMedia() {
 
     if (validMedia.length > 0) {
       // Log details of files to be deleted
-      validMedia.forEach((file) => {
+      for (const file of validMedia) {
         log(`📝 Queued for deletion: ${file.key}
         Type: ${file.type}
         MIME: ${file.mimeType}
         Size: ${(file.size / 1024 / 1024).toFixed(2)}MB
         Age: ${Math.floor((Date.now() - file.createdAt.getTime()) / (1000 * 60 * 60))} hours`);
-      });
+      }
 
       const batchSize = 50;
       for (let i = 0; i < validMedia.length; i += batchSize) {

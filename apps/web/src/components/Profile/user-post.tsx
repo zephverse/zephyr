@@ -4,8 +4,8 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import type { PostsPage } from "@zephyr/db";
 import { Loader2 } from "lucide-react";
 import React, { useMemo } from "react";
-import Post from "@/components/Home/feedview/postCard";
-import InfiniteScrollContainer from "@/components/Layouts/InfiniteScrollContainer";
+import Post from "@/components/Home/feedview/post-card";
+import InfiniteScrollContainer from "@/components/Layouts/infinite-scroll-container";
 import PostsOnlyLoadingSkeleton from "@/components/Layouts/skeletons/PostOnlyLoadingSkeleton";
 import kyInstance from "@/lib/ky";
 
@@ -85,9 +85,6 @@ const UserPosts: React.FC<UserPostsProps> = ({ userId, filter = "all" }) => {
     );
   }
 
-  // Using a memoized post renderer to prevent unnecessary re-renders
-  const MemoizedPost = React.memo(Post);
-
   return (
     <div className="space-y-4">
       <InfiniteScrollContainer
@@ -95,7 +92,7 @@ const UserPosts: React.FC<UserPostsProps> = ({ userId, filter = "all" }) => {
         onBottomReached={() => hasNextPage && !isFetching && fetchNextPage()}
       >
         {filteredPosts.map((post) => (
-          <MemoizedPost key={post.id} post={post} />
+          <Post key={post.id} post={post} />
         ))}
         {isFetchingNextPage && (
           <div className="flex justify-center py-4">

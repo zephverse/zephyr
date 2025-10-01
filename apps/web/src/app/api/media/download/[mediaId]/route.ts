@@ -2,7 +2,8 @@ import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { validateRequest } from "@zephyr/auth/auth";
 import { prisma, redis } from "@zephyr/db";
 import { NextResponse } from "next/server";
-import { getContentDisposition, minioClient } from "@/lib/minio";
+import { minioClient } from "@/lib/minio";
+import { getContentDisposition } from "@/lib/utils/mime-utils";
 
 export const dynamic = "force-dynamic";
 
@@ -79,7 +80,7 @@ export async function GET(context: {
         throw new Error("No response body from MinIO");
       }
 
-      const chunks = [];
+      const chunks: Uint8Array[] = [];
       // biome-ignore lint/suspicious/noExplicitAny: Any is required here
       for await (const chunk of response.Body as any) {
         chunks.push(chunk);

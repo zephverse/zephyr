@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import type React from "react";
 import { useMemo, useState } from "react";
-import EditProfileButton from "@/components/Layouts/EditProfileButton";
+import EditProfileButton from "@/components/Layouts/edit-profile-button";
 import FollowButton from "@/components/Layouts/FollowButton";
 import UserAvatar from "@/components/Layouts/UserAvatar";
 import Linkify from "@/helpers/global/Linkify";

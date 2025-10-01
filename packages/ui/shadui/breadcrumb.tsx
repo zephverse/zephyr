@@ -1,6 +1,6 @@
 import { ChevronRightIcon, DotsHorizontalIcon } from "@radix-ui/react-icons";
 import { Slot } from "@radix-ui/react-slot";
-import * as React from "react";
+import React from "react";
 import { cn } from "../lib/utils";
 
 const Breadcrumb = React.forwardRef<
@@ -62,10 +62,8 @@ const BreadcrumbPage = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <span
     aria-current="page"
-    aria-disabled="true"
     className={cn("font-normal text-foreground", className)}
     ref={ref}
-    role="link"
     {...props}
   />
 ));

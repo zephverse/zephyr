@@ -61,12 +61,12 @@ async function cleanupUnverifiedUsers() {
       },
     });
 
-    usersToDelete.forEach((user) => {
+    for (const user of usersToDelete) {
       const age = Math.round(
         (Date.now() - user.createdAt.getTime()) / (1000 * 60)
       );
       log(`📝 Will delete: ${user.username} (Age: ${age} minutes)`);
-    });
+    }
 
     const [tokenDeletion, userDeletion] = await prisma.$transaction([
       prisma.emailVerificationToken.deleteMany({

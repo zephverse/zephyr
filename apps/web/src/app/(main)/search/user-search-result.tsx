@@ -7,7 +7,7 @@ import { Button } from "@zephyr/ui/shadui/button";
 import { motion } from "framer-motion";
 import { Users2, VerifiedIcon } from "lucide-react";
 import Link from "next/link";
-import EditProfileButton from "@/components/Layouts/EditProfileButton";
+import EditProfileButton from "@/components/Layouts/edit-profile-button";
 import FollowButton from "@/components/Layouts/FollowButton";
 import UserAvatar from "@/components/Layouts/UserAvatar";
 import Linkify from "@/helpers/global/Linkify";

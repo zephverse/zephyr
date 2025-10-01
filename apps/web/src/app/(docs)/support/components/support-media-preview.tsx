@@ -1,5 +1,5 @@
 import type { Media } from "@prisma/client";
-import { MediaPreviews } from "@/components/Home/feedview/MediaPreviews";
+import { MediaPreviews } from "@/components/Home/feedview/media-previews";
 import { AttachmentPreview } from "@/components/Posts/editor/AttachmentPreview";
 import type { Attachment } from "../types";
 

@@ -1,5 +1,4 @@
 const typographyConfig = (theme: (path: string) => string) => ({
-  // biome-ignore lint/style/useNamingConvention: TAILWIND PRESET
   DEFAULT: {
     css: {
       ":first-child": {

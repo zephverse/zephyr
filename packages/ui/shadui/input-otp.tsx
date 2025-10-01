@@ -1,8 +1,7 @@
 "use client";
 
-import { MinusIcon } from "@radix-ui/react-icons";
 import { OTPInput, OTPInputContext } from "input-otp";
-import * as React from "react";
+import React from "react";
 import { cn } from "../lib/utils";
 
 const InputOTP = React.forwardRef<
@@ -58,12 +57,17 @@ const InputOTPSlot = React.forwardRef<
 InputOTPSlot.displayName = "InputOTPSlot";
 
 const InputOTPSeparator = React.forwardRef<
-  React.ElementRef<"div">,
-  React.ComponentPropsWithoutRef<"div">
->(({ ...props }, ref) => (
-  <div ref={ref} role="separator" {...props}>
-    <MinusIcon />
-  </div>
+  React.ElementRef<"hr">,
+  React.ComponentPropsWithoutRef<"hr">
+>(({ className, ...props }, ref) => (
+  <hr
+    className={cn(
+      "flex h-4 w-[1px] items-center justify-center bg-border",
+      className
+    )}
+    ref={ref}
+    {...props}
+  />
 ));
 InputOTPSeparator.displayName = "InputOTPSeparator";
 

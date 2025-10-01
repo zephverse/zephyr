@@ -32,8 +32,8 @@ export const DirectionAwareHover = ({
       return;
     }
 
-    const direction = getDirection(event, ref.current);
-    switch (direction) {
+    const mouseDirection = getDirection(event, ref.current);
+    switch (mouseDirection) {
       case 0:
         setDirection("top");
         break;

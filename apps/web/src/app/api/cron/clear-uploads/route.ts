@@ -2,6 +2,7 @@ import { prisma } from "@zephyr/db";
 import { NextResponse } from "next/server";
 import { deleteAvatar } from "@/lib/minio";
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Media cleanup involves multiple batch operations, file processing, and error handling
 async function clearUploads() {
   const logs: string[] = [];
   const startTime = Date.now();
@@ -60,13 +61,13 @@ async function clearUploads() {
         );
 
         // Log details of files to be deleted
-        batch.forEach((file) => {
+        for (const file of batch) {
           log(`📝 Queued for deletion: ${file.key}
           Type: ${file.type}
           MIME: ${file.mimeType}
           Size: ${(file.size / 1024 / 1024).toFixed(2)}MB
           Age: ${Math.floor((Date.now() - file.createdAt.getTime()) / (1000 * 60 * 60))} hours`);
-        });
+        }
 
         const _deleteResults = await Promise.allSettled(
           batch.map(async (media) => {

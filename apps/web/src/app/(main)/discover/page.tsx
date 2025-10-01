@@ -1,11 +1,11 @@
 import { validateRequest } from "@zephyr/auth/auth";
 import type { Metadata } from "next";
-import DiscoverySidebar from "@/components/Discover/DiscoverSidebar";
-import SuggestedUsers from "@/components/Discover/SuggestedUsers";
-import TrendingUsers from "@/components/Discover/TrendingUsers";
-import Friends from "@/components/Home/sidebars/left/Friends";
-import NavigationCard from "@/components/Home/sidebars/left/NavigationCard";
-import { getUserData } from "@/hooks/useUserData";
+import DiscoverySidebar from "@/components/Discover/discover-sidebar";
+import SuggestedUsers from "@/components/Discover/suggested-users";
+import TrendingUsers from "@/components/Discover/trending-users";
+import Friends from "@/components/Home/sidebars/left/friends";
+import NavigationCard from "@/components/Home/sidebars/left/navigation-card";
+import { getUserData } from "@/hooks/use-user-data";
 
 export const metadata: Metadata = {
   title: "Discover",

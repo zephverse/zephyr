@@ -6,6 +6,7 @@ import {
 } from "@zephyr/db";
 import { NextResponse } from "next/server";
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: View count sync involves multiple Redis operations, batch processing, and data validation
 async function syncViewCounts() {
   const logs: string[] = [];
   const startTime = Date.now();
@@ -78,9 +79,9 @@ async function syncViewCounts() {
       const batch = postsWithViews.slice(i, i + batchSize);
       const pipeline = redis.pipeline();
 
-      batch.forEach((postId) => {
+      for (const postId of batch) {
         pipeline.get(`${POST_VIEWS_KEY_PREFIX}${postId}`);
-      });
+      }
 
       const batchResults = await pipeline.exec();
       if (!batchResults) {
@@ -150,9 +151,9 @@ async function syncViewCounts() {
 
     if (updates.length > 0) {
       const clearPipeline = redis.pipeline();
-      updates.forEach(({ postId }) => {
+      for (const { postId } of updates) {
         clearPipeline.del(`${POST_VIEWS_KEY_PREFIX}${postId}`);
-      });
+      }
       await clearPipeline.exec();
       log(`Cleared Redis views for ${updates.length} updated posts`);
     }
@@ -168,10 +169,10 @@ async function syncViewCounts() {
         const batch = nonExistentPosts.slice(i, i + batchSize);
         const pipeline = redis.pipeline();
 
-        batch.forEach((postId) => {
+        for (const postId of batch) {
           pipeline.del(`${POST_VIEWS_KEY_PREFIX}${postId}`);
           pipeline.srem(POST_VIEWS_SET, postId);
-        });
+        }
 
         await pipeline.exec();
         results.deletedKeys += batch.length * 2;

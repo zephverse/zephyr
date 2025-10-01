@@ -19,8 +19,11 @@ const Friends: React.FC<FriendsProps> = ({ friends }) => (
         Friends
       </h2>
       <div className="space-y-4">
-        {friends.map((friend, index) => (
-          <div className="flex items-center space-x-3" key={index}>
+        {friends.map((friend, _index) => (
+          <div
+            className="flex items-center space-x-3"
+            key={`${friend.name}-${friend.role}`}
+          >
             <Avatar>
               <AvatarImage
                 alt={friend.name}

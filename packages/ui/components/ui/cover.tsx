@@ -15,7 +15,7 @@ export const Cover = ({
 }) => {
   const [hovered, setHovered] = useState(false);
 
-  const ref = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLSpanElement>(null);
 
   const [containerWidth, setContainerWidth] = useState(0);
   const [beamPositions, setBeamPositions] = useState<number[]>([]);
@@ -35,7 +35,9 @@ export const Cover = ({
   }, []);
 
   return (
-    <div
+    // biome-ignore lint/a11y/noNoninteractiveElementInteractions: Presentational hover effects only
+    // biome-ignore lint/a11y/noStaticElementInteractions: Presentational hover effects only
+    <span
       className="group/cover relative inline-block rounded-xs bg-neutral-100 px-2 py-2 transition duration-200 hover:bg-neutral-900 dark:bg-neutral-900"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -87,12 +89,12 @@ export const Cover = ({
           </motion.div>
         )}
       </AnimatePresence>
-      {beamPositions.map((position, index) => (
+      {beamPositions.map((position, _index) => (
         <Beam
           delay={Math.random() * 2 + 1}
           duration={Math.random() * 2 + 1}
           hovered={hovered}
-          key={index}
+          key={`beam-${position}`}
           style={{
             top: `${position}px`,
           }}
@@ -142,7 +144,7 @@ export const Cover = ({
       <CircleIcon className="-bottom-[2px] -right-[2px] absolute" delay={0.4} />
       <CircleIcon className="-left-[2px] -top-[2px] absolute" delay={0.8} />
       <CircleIcon className="-bottom-[2px] -left-[2px] absolute" delay={1.6} />
-    </div>
+    </span>
   );
 };
 
@@ -172,6 +174,7 @@ export const Beam = ({
       xmlns="http://www.w3.org/2000/svg"
       {...svgProps}
     >
+      <title>Beam animation</title>
       <motion.path
         d={`M0 0.5H${width ?? "600"}`}
         stroke={`url(#svgGradient-${id})`}

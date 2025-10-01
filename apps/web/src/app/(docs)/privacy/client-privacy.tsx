@@ -4,7 +4,7 @@ import { Button } from "@zephyr/ui/shadui/button";
 import { ArrowLeft, LockKeyhole } from "lucide-react";
 import Link from "next/link";
 import React, { useEffect } from "react";
-import ScrollUpButton from "@/components/Layouts/ScrollUpButton";
+import ScrollUpButton from "@/components/Layouts/scroll-up-button";
 import { FossBanner } from "@/components/misc/foss-banner";
 
 export default function PrivacyPolicyPage() {

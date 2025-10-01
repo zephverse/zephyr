@@ -4,15 +4,15 @@ import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cache, Suspense } from "react";
-import PostCard from "@/components/Home/feedview/postCard";
-import NavigationCard from "@/components/Home/sidebars/left/NavigationCard";
-import ProfileCard from "@/components/Home/sidebars/right/ProfileCard";
+import PostCard from "@/components/Home/feedview/post-card";
+import NavigationCard from "@/components/Home/sidebars/left/navigation-card";
+import ProfileCard from "@/components/Home/sidebars/right/profile-card";
 import FollowButton from "@/components/Layouts/FollowButton";
 import StickyFooter from "@/components/Layouts/StinkyFooter";
 import UserAvatar from "@/components/Layouts/UserAvatar";
 import UserTooltip from "@/components/Layouts/UserTooltip";
 import Linkify from "@/helpers/global/Linkify";
-import { getUserData } from "@/hooks/useUserData";
+import { getUserData } from "@/hooks/use-user-data";
 
 type PageProps = {
   params: Promise<{ postId: string }>;

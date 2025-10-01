@@ -33,7 +33,7 @@ const Recommendations: React.FC<RecommendationsProps> = ({ people }) => (
             <motion.div
               animate={{ opacity: 1, y: 0 }}
               initial={{ opacity: 0, y: 20 }}
-              key={index}
+              key={`${rec.name}-${rec.role}`}
               transition={{ delay: index * 0.1 }}
             >
               <Avatar>

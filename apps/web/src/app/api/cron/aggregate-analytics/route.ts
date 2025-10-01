@@ -1,6 +1,7 @@
 import { prisma, redis } from "@zephyr/db";
 import { NextResponse } from "next/server";
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Analytics aggregation requires multiple data processing steps
 async function aggregateAnalytics() {
   const logs: string[] = [];
   const startTime = Date.now();

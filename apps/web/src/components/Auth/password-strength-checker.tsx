@@ -4,7 +4,7 @@ import type { SignUpValues } from "@zephyr/auth/src";
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, X } from "lucide-react";
 import type { UseFormSetValue } from "react-hook-form";
-import { PasswordRecommender } from "./PasswordRecommender";
+import { PasswordRecommender } from "./password-recommender";
 
 type Requirement = {
   text: string;

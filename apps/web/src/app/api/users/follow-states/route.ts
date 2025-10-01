@@ -30,12 +30,12 @@ export async function POST(req: Request) {
       { followers: number; isFollowedByUser: boolean }
     > = {};
 
-    followers.forEach((user) => {
+    for (const user of followers) {
       followStates[user.id] = {
         followers: user._count.followers,
         isFollowedByUser: follows.some((f) => f.followingId === user.id),
       };
-    });
+    }
 
     return Response.json(followStates);
   } catch (_error) {

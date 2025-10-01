@@ -1,10 +1,10 @@
 import { validateRequest } from "@zephyr/auth/auth";
 import type { Metadata } from "next";
-import NavigationCard from "@/components/Home/sidebars/left/NavigationCard";
-import ProfileCard from "@/components/Home/sidebars/right/ProfileCard";
-import TrendingTopics from "@/components/Home/sidebars/right/TrendingTopics";
+import NavigationCard from "@/components/Home/sidebars/left/navigation-card";
+import ProfileCard from "@/components/Home/sidebars/right/profile-card";
+import TrendingTopics from "@/components/Home/sidebars/right/trending-topics";
 import StickyFooter from "@/components/Layouts/StinkyFooter";
-import { getUserData } from "@/hooks/useUserData";
+import { getUserData } from "@/hooks/use-user-data";
 import PostEditorPage from "./post-editor-page";
 
 export const metadata: Metadata = {

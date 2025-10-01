@@ -117,6 +117,7 @@ class AnimationController {
     return 2 ** (-8 * x) * Math.sin((x * 8 - 0.75) * c4) + 1;
   }
 
+  // biome-ignore lint/nursery/useMaxParams: Utility function for value mapping, all parameters are required
   map(
     value: number,
     start1: number,
@@ -346,15 +347,9 @@ class Star {
       }
 
       const vx =
-        // biome-ignore lint/suspicious/noExplicitAny:
-        ((this.z - (controller as any).cameraZ) * screenX) /
-        // biome-ignore lint/suspicious/noExplicitAny:
-        (controller as any).viewZoom;
+        ((this.z - controller.cameraZ) * screenX) / controller.viewZoom;
       const vy =
-        // biome-ignore lint/suspicious/noExplicitAny:
-        ((this.z - (controller as any).cameraZ) * screenY) /
-        // biome-ignore lint/suspicious/noExplicitAny:
-        (controller as any).viewZoom;
+        ((this.z - controller.cameraZ) * screenY) / controller.viewZoom;
 
       const position = new Vector3D(vx, vy, this.z);
 

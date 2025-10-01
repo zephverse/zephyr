@@ -13,8 +13,8 @@ import {
 } from "@zephyr/ui/shadui/tabs";
 import { motion } from "framer-motion";
 import { Newspaper, Terminal } from "lucide-react";
-import Post from "@/components/Home/feedview/postCard";
-import InfiniteScrollContainer from "@/components/Layouts/InfiniteScrollContainer";
+import Post from "@/components/Home/feedview/post-card";
+import InfiniteScrollContainer from "@/components/Layouts/infinite-scroll-container";
 import LoadMoreSkeleton from "@/components/Layouts/skeletons/LoadMoreSkeleton";
 import PostsOnlyLoadingSkeleton from "@/components/Layouts/skeletons/PostOnlyLoadingSkeleton";
 import kyInstance from "@/lib/ky";

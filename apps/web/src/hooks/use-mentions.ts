@@ -24,15 +24,15 @@ export function useMentions(postId?: string) {
   });
 
   const updateMentions = useMutation({
-    mutationFn: async (mentions: UserData[]) => {
+    mutationFn: async (newMentions: UserData[]) => {
       if (!postId) {
-        return { mentions };
+        return { mentions: newMentions };
       }
 
       const res = await fetch(`/api/posts/${postId}/mentions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mentions: mentions.map((m) => m.id) }),
+        body: JSON.stringify({ mentions: newMentions.map((m) => m.id) }),
       });
 
       if (!res.ok) {

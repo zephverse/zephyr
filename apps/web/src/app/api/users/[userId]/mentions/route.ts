@@ -80,12 +80,14 @@ export async function GET(
 
     const posts = mentions.map((mention) => {
       const { post } = mention;
-      const createdAt =
-        typeof post.createdAt === "string"
-          ? post.createdAt
-          : post.createdAt instanceof Date
-            ? post.createdAt.toISOString()
-            : new Date().toISOString();
+      let createdAt: string;
+      if (typeof post.createdAt === "string") {
+        createdAt = post.createdAt;
+      } else if (post.createdAt instanceof Date) {
+        createdAt = post.createdAt.toISOString();
+      } else {
+        createdAt = new Date().toISOString();
+      }
 
       const enhancedUser = {
         ...post.user,

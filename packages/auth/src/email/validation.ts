@@ -1,5 +1,5 @@
 import deepEmailValidator from "deep-email-validator";
-import * as EmailValidator from "email-validator";
+import { validate as validateEmail } from "email-validator";
 import { DISPOSABLE_EMAIL_DOMAINS } from "../../validation";
 
 type EmailValidationResult = {
@@ -34,7 +34,7 @@ export async function isEmailValid(email: string) {
 
   console.log("Starting email validation for:", email);
 
-  if (!EmailValidator.validate(email)) {
+  if (!validateEmail(email)) {
     console.log("Basic email validation failed");
     return { isValid: false, error: EMAIL_ERRORS.INVALID_FORMAT };
   }

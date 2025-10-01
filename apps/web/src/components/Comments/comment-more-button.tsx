@@ -8,7 +8,7 @@ import {
 } from "@zephyr/ui/shadui/dropdown-menu";
 import { MoreHorizontal, Trash2 } from "lucide-react";
 import { useState } from "react";
-import DeleteCommentDialog from "./DeleteCommentDialog";
+import DeleteCommentDialog from "./delete-comment-dialog";
 
 type CommentMoreButtonProps = {
   comment: CommentData;

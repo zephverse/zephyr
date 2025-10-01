@@ -374,7 +374,7 @@ export const normalizeMimeType = (mimeType: string | undefined): string => {
 export const getFileConfigFromMime = (mimeType: string | undefined) => {
   const normalizedMime = normalizeMimeType(mimeType);
   const config = Object.values(FILE_CONFIGS).find(
-    (config) => config.mime === normalizedMime
+    (fileConfig) => fileConfig.mime === normalizedMime
   );
 
   if (config) {
@@ -383,7 +383,7 @@ export const getFileConfigFromMime = (mimeType: string | undefined) => {
 
   const category = getFileCategory(normalizedMime);
   return Object.values(FILE_CONFIGS).find(
-    (config) => config.category === category
+    (fileConfig) => fileConfig.category === category
   );
 };
 

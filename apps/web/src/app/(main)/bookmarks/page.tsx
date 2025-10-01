@@ -1,12 +1,12 @@
 import { validateRequest } from "@zephyr/auth/auth";
 import { prisma } from "@zephyr/db";
 import type { Metadata } from "next";
-import NavigationCard from "@/components/Home/sidebars/left/NavigationCard";
-import ProfileCard from "@/components/Home/sidebars/right/ProfileCard";
-import SuggestedConnections from "@/components/Home/sidebars/right/SuggestedConnections";
-import TrendingTopics from "@/components/Home/sidebars/right/TrendingTopics";
+import NavigationCard from "@/components/Home/sidebars/left/navigation-card";
+import ProfileCard from "@/components/Home/sidebars/right/profile-card";
+import SuggestedConnections from "@/components/Home/sidebars/right/suggested-connections";
+import TrendingTopics from "@/components/Home/sidebars/right/trending-topics";
 import StickyFooter from "@/components/Layouts/StinkyFooter";
-import { getUserData } from "@/hooks/useUserData";
+import { getUserData } from "@/hooks/use-user-data";
 import Bookmarks from "./bookmarks";
 
 export const metadata: Metadata = {

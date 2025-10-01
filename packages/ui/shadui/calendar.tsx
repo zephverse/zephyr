@@ -6,6 +6,24 @@ import type * as React from "react";
 import { DayPicker } from "react-day-picker";
 import { cn } from "../lib/utils";
 
+const IconLeft = ({
+  className,
+  ...props
+}: {
+  className?: string;
+} & React.SVGProps<SVGSVGElement>) => (
+  <ChevronLeftIcon className={cn("h-4 w-4", className)} {...props} />
+);
+
+const IconRight = ({
+  className,
+  ...props
+}: {
+  className?: string;
+} & React.SVGProps<SVGSVGElement>) => (
+  <ChevronRightIcon className={cn("h-4 w-4", className)} {...props} />
+);
+
 export type CalendarProps = React.ComponentProps<typeof DayPicker>;
 
 function Calendar({
@@ -58,12 +76,8 @@ function Calendar({
         ...classNames,
       }}
       components={{
-        IconLeft: ({ className, ...props }) => (
-          <ChevronLeftIcon className={cn("h-4 w-4", className)} {...props} />
-        ),
-        IconRight: ({ className, ...props }) => (
-          <ChevronRightIcon className={cn("h-4 w-4", className)} {...props} />
-        ),
+        IconLeft,
+        IconRight,
       }}
       showOutsideDays={showOutsideDays}
       {...props}

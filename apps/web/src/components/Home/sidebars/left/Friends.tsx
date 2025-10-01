@@ -9,11 +9,11 @@ import type React from "react";
 import { useState } from "react";
 import FriendsSkeleton from "@/components/Layouts/skeletons/FriendsSkeleton";
 import UnfollowUserDialog from "@/components/Layouts/UnfollowUserDialog";
-import { useFollowedUsers } from "@/hooks/userFollowerInfo";
-import { useUnfollowUserMutation } from "@/hooks/userMutations";
-import { FriendListItem } from "./FriendListItem";
-import { getRandomTitle } from "./randomTitles";
-import { ViewSwitcher } from "./ViewSwitcher";
+import { useFollowedUsers } from "@/hooks/user-follower-info";
+import { useUnfollowUserMutation } from "@/hooks/user-mutations";
+import { FriendListItem } from "./friend-list-item";
+import { getRandomTitle } from "./random-titles";
+import { ViewSwitcher } from "./view-switcher";
 
 type FriendsProps = {
   isCollapsed: boolean;

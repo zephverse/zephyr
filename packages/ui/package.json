@@ -57,19 +57,19 @@
     "react-day-picker": "9.6.7",
     "react-hook-form": "^7.63.0",
     "react-resizable-panels": "^3.0.6",
-    "recharts": "^3.2.1",
+    "recharts": "2.15.4",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.3.1",
     "vaul": "^1.1.2",
     "zustand": "^5.0.8"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4.1.13",
+    "@tailwindcss/postcss": "^4.1.14",
     "@tailwindcss/typography": "^0.5.19",
     "@tanstack/react-query-devtools": "^5.90.2",
     "@zephyr/config": "workspace:*",
     "@zephyr/tailwind": "workspace:*",
-    "tailwindcss": "^4.1.13",
+    "tailwindcss": "^4.1.14",
     "typescript": "^5.9.3"
   }
 }

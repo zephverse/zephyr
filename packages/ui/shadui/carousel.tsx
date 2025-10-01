@@ -42,8 +42,8 @@ function useCarousel() {
 }
 
 const Carousel = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement> & CarouselProps
+  HTMLElement,
+  React.HTMLAttributes<HTMLElement> & CarouselProps
 >(
   (
     {
@@ -67,13 +67,13 @@ const Carousel = React.forwardRef<
     const [canScrollPrev, setCanScrollPrev] = React.useState(false);
     const [canScrollNext, setCanScrollNext] = React.useState(false);
 
-    const onSelect = React.useCallback((api: CarouselApi) => {
-      if (!api) {
+    const onSelect = React.useCallback((carouselApi: CarouselApi) => {
+      if (!carouselApi) {
         return;
       }
 
-      setCanScrollPrev(api.canScrollPrev());
-      setCanScrollNext(api.canScrollNext());
+      setCanScrollPrev(carouselApi.canScrollPrev());
+      setCanScrollNext(carouselApi.canScrollNext());
     }, []);
 
     const scrollPrev = React.useCallback(() => {
@@ -133,16 +133,14 @@ const Carousel = React.forwardRef<
           canScrollNext,
         }}
       >
-        <div
-          aria-roledescription="carousel"
+        <section
           className={cn("relative", className)}
           onKeyDownCapture={handleKeyDown}
           ref={ref}
-          role="region"
           {...props}
         >
           {children}
-        </div>
+        </section>
       </CarouselContext.Provider>
     );
   }
@@ -179,14 +177,12 @@ const CarouselItem = React.forwardRef<
 
   return (
     <div
-      aria-roledescription="slide"
       className={cn(
         "min-w-0 shrink-0 grow-0 basis-full",
         orientation === "horizontal" ? "pl-4" : "pt-4",
         className
       )}
       ref={ref}
-      role="group"
       {...props}
     />
   );

@@ -72,21 +72,21 @@ async function calculateAuraReward(mediaIds: string[], hasHnStory: boolean) {
     CODE: 0,
   };
 
-  mediaItems.forEach((item) => {
+  for (const item of mediaItems) {
     const type = item.type as AttachmentType;
     if (type in typeCount) {
       typeCount[type]++;
     }
-  });
+  }
 
-  Object.entries(typeCount).forEach(([type, count]) => {
+  for (const [type, count] of Object.entries(typeCount)) {
     if (count > 0) {
       const config = AURA_REWARDS.ATTACHMENTS[type as AttachmentType];
       const baseReward = config.BASE;
       const bonusReward = Math.min(count * config.PER_ITEM, config.MAX_BONUS);
       totalAura += baseReward + bonusReward;
     }
-  });
+  }
 
   return Math.min(totalAura, AURA_REWARDS.MAX_TOTAL);
 }

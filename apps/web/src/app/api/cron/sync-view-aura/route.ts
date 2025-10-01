@@ -2,11 +2,11 @@ import { prisma } from "@zephyr/db";
 import { NextResponse } from "next/server";
 
 const VIEWS_AURA_CONFIG = {
-  FIFTY_VIEWS: {
+  fiftyViews: {
     threshold: 50,
     aura: 10,
   },
-  THOUSAND_VIEWS: {
+  thousandViews: {
     threshold: 1000,
     aura: 100,
   },
@@ -52,24 +52,24 @@ async function awardViewAura() {
         }
 
         const previousFifties = Math.floor(
-          lastAwardedCount / VIEWS_AURA_CONFIG.FIFTY_VIEWS.threshold
+          lastAwardedCount / VIEWS_AURA_CONFIG.fiftyViews.threshold
         );
         const currentFifties = Math.floor(
-          currentViews / VIEWS_AURA_CONFIG.FIFTY_VIEWS.threshold
+          currentViews / VIEWS_AURA_CONFIG.fiftyViews.threshold
         );
         const previousThousands = Math.floor(
-          lastAwardedCount / VIEWS_AURA_CONFIG.THOUSAND_VIEWS.threshold
+          lastAwardedCount / VIEWS_AURA_CONFIG.thousandViews.threshold
         );
         const currentThousands = Math.floor(
-          currentViews / VIEWS_AURA_CONFIG.THOUSAND_VIEWS.threshold
+          currentViews / VIEWS_AURA_CONFIG.thousandViews.threshold
         );
 
         const fiftyMilestonesReached = currentFifties - previousFifties;
         const thousandMilestonesReached = currentThousands - previousThousands;
 
         const auraToAward =
-          fiftyMilestonesReached * VIEWS_AURA_CONFIG.FIFTY_VIEWS.aura +
-          thousandMilestonesReached * VIEWS_AURA_CONFIG.THOUSAND_VIEWS.aura;
+          fiftyMilestonesReached * VIEWS_AURA_CONFIG.fiftyViews.aura +
+          thousandMilestonesReached * VIEWS_AURA_CONFIG.thousandViews.aura;
 
         if (auraToAward > 0) {
           await prisma.$transaction(async (tx) => {
