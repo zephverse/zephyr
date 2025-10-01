@@ -1,9 +1,9 @@
-import ky from 'ky';
+import ky from "ky";
 
 const kyInstance = ky.create({
   parseJson: (text) =>
     JSON.parse(text, (key, value) => {
-      if (key.endsWith('At')) {
+      if (key.endsWith("At")) {
         return new Date(value);
       }
       return value;

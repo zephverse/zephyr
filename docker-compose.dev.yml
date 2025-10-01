@@ -2,13 +2,6 @@ x-common-labels: &common-labels
   maintainer: "parazeeknova"
   environment: "development"
 
-x-common-deploy: &common-deploy
-  resources:
-    limits:
-      memory: 1G
-    reservations:
-      memory: 512M
-
 services:
   postgres-dev:
     container_name: zephyr-postgres-dev
@@ -85,7 +78,7 @@ services:
   prisma-migrate:
     profiles: ["init"]
     container_name: zephyr-prisma-migrate
-    image: node:18-alpine
+    image: node:24-alpine
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@postgres-dev:5432/zephyr?schema=public
       - POSTGRES_PRISMA_URL=postgresql://postgres:postgres@postgres-dev:5432/zephyr?schema=public
@@ -95,8 +88,7 @@ services:
     volumes:
       - ./packages/db:/app/packages/db
       - ./package.json:/app/package.json
-      - ./pnpm-lock.yaml:/app/pnpm-lock.yaml
-      - ./pnpm-workspace.yaml:/app/pnpm-workspace.yaml
+      - ./bun.lock:/app/bun.lock
     networks:
       - dev_network
     depends_on:
@@ -107,10 +99,10 @@ services:
       echo 'Installing required packages...' &&
       apk add --no-cache postgresql-client netcat-openbsd &&
       echo 'Setting up Prisma...' &&
-      npm install -g pnpm &&
+      npm install -g bun &&
       cd /app &&
       echo 'Installing dependencies...' &&
-      pnpm install --frozen-lockfile &&
+      bun install --frozen-lockfile &&
       cd packages/db &&
       echo 'Waiting for PostgreSQL...' &&
       until pg_isready -h postgres-dev -p 5432 -U postgres; do
@@ -119,10 +111,10 @@ services:
       done &&
       echo 'PostgreSQL is ready' &&
       echo 'Running Prisma migrations...' &&
-      pnpm prisma generate &&
+      bunx prisma generate &&
       echo 'Prisma Client generated' &&
       sleep 2 &&
-      PRISMA_CLIENT_ENGINE_TYPE=binary DEBUG='*' pnpm prisma db push --accept-data-loss --skip-generate &&
+      PRISMA_CLIENT_ENGINE_TYPE=binary DEBUG='*' bunx prisma db push --accept-data-loss --skip-generate &&
       echo 'Prisma migrations completed!' &&
       echo 'Database initialization complete!'"
 

@@ -1,19 +1,19 @@
-'use server';
+"use server";
 
-import { validateRequest } from '@zephyr/auth/auth';
+import { validateRequest } from "@zephyr/auth/auth";
 import {
+  getPostDataInclude,
   POST_VIEWS_KEY_PREFIX,
   POST_VIEWS_SET,
-  getPostDataInclude,
   prisma,
   redis,
-} from '@zephyr/db';
+} from "@zephyr/db";
 
 export async function deletePost(id: string) {
   const { user } = await validateRequest();
 
   if (!user) {
-    throw new Error('Unauthorized');
+    throw new Error("Unauthorized");
   }
 
   const post = await prisma.post.findUnique({
@@ -21,11 +21,11 @@ export async function deletePost(id: string) {
   });
 
   if (!post) {
-    throw new Error('Post not found');
+    throw new Error("Post not found");
   }
 
   if (post.userId !== user.id) {
-    throw new Error('Unauthorized');
+    throw new Error("Unauthorized");
   }
 
   const deletedPost = await prisma.post.delete({
@@ -39,7 +39,7 @@ export async function deletePost(id: string) {
       redis.del(`${POST_VIEWS_KEY_PREFIX}${id}`),
     ]);
   } catch (error) {
-    console.error('Error cleaning up Redis cache for deleted post:', error);
+    console.error("Error cleaning up Redis cache for deleted post:", error);
   }
 
   return deletedPost;

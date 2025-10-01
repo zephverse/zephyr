@@ -4,12 +4,12 @@ import {
   type QueryKey,
   useMutation,
   useQueryClient,
-} from '@tanstack/react-query';
-import type { PostsPage } from '@zephyr/db';
-import { useToast } from '@zephyr/ui/hooks/use-toast';
-import { submitPost, updatePostMentions } from './actions';
+} from "@tanstack/react-query";
+import type { PostsPage } from "@zephyr/db";
+import { useToast } from "@zephyr/ui/hooks/use-toast";
+import { submitPost, updatePostMentions } from "./actions";
 
-interface PostInput {
+type PostInput = {
   content: string;
   mediaIds: string[];
   tags: string[];
@@ -23,7 +23,7 @@ interface PostInput {
     score: number;
     descendants: number;
   };
-}
+};
 
 export function useSubmitPostMutation() {
   const { toast } = useToast();
@@ -43,7 +43,7 @@ export function useSubmitPostMutation() {
 
       const response = await submitPost(payload);
       if (!response) {
-        throw new Error('Failed to create post');
+        throw new Error("Failed to create post");
       }
       return response;
     },
@@ -53,7 +53,7 @@ export function useSubmitPostMutation() {
         Error,
         InfiniteData<PostsPage, string | null>,
         QueryKey
-      > = { queryKey: ['post-feed', 'for-you'] };
+      > = { queryKey: ["post-feed", "for-you"] };
 
       await queryClient.cancelQueries(queryFilter);
 
@@ -77,26 +77,26 @@ export function useSubmitPostMutation() {
         }
       );
 
-      queryClient.invalidateQueries({ queryKey: ['popularTags'] });
-      const isHNShare = !!newPost.hnStoryShare;
+      queryClient.invalidateQueries({ queryKey: ["popularTags"] });
+      const isHnShare = !!newPost.hnStoryShare;
       toast({
-        title: isHNShare
-          ? 'HN Story shared successfully!'
-          : 'Post created successfully!',
-        description: isHNShare
-          ? 'Hacker News story has been shared with your thoughts ✨'
-          : 'Your post is now live ✨',
+        title: isHnShare
+          ? "HN Story shared successfully!"
+          : "Post created successfully!",
+        description: isHnShare
+          ? "Hacker News story has been shared with your thoughts ✨"
+          : "Your post is now live ✨",
         duration: 5000,
       });
     },
     onError(error) {
-      console.error('Post creation error:', error);
+      console.error("Post creation error:", error);
       toast({
-        variant: 'destructive',
+        variant: "destructive",
         description:
           error instanceof Error
             ? error.message
-            : 'Failed to create post. Please try again.',
+            : "Failed to create post. Please try again.",
       });
     },
   });
@@ -112,29 +112,29 @@ export function useUpdateMentionsMutation(postId?: string) {
   return useMutation({
     mutationFn: async (mentions: string[]) => {
       if (!postId) {
-        throw new Error('Post ID is required to update mentions');
+        throw new Error("Post ID is required to update mentions");
       }
       const response = await updatePostMentions(postId, mentions);
       if (!response) {
-        throw new Error('Failed to update mentions');
+        throw new Error("Failed to update mentions");
       }
       return response;
     },
     onSuccess: (updatedPost) => {
       if (postId) {
-        queryClient.setQueryData(['post', postId], updatedPost);
+        queryClient.setQueryData(["post", postId], updatedPost);
       }
       toast({
-        title: 'Mentions updated',
-        description: 'The mentioned users have been notified',
+        title: "Mentions updated",
+        description: "The mentioned users have been notified",
         duration: 3000,
       });
     },
     onError: (error) => {
-      console.error('Failed to update mentions:', error);
+      console.error("Failed to update mentions:", error);
       toast({
-        variant: 'destructive',
-        description: 'Failed to update mentions. Please try again.',
+        variant: "destructive",
+        description: "Failed to update mentions. Please try again.",
       });
     },
   });

@@ -1,9 +1,9 @@
-import { getStreamConfig } from '@zephyr/config/src/env';
-import { prisma } from '@zephyr/db';
-import { NextResponse } from 'next/server';
-import { StreamChat } from 'stream-chat';
+import { getStreamConfig } from "@zephyr/config/src/env";
+import { prisma } from "@zephyr/db";
+import { NextResponse } from "next/server";
+import { StreamChat } from "stream-chat";
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex logic is required here
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Stream sync involves multiple batch operations, user validation, and error handling
 async function syncStreamUsers() {
   const logs: string[] = [];
   const startTime = Date.now();
@@ -22,19 +22,19 @@ async function syncStreamUsers() {
   };
 
   try {
-    log('🚀 Starting Stream users sync process');
+    log("🚀 Starting Stream users sync process");
 
     const { apiKey, secret } = getStreamConfig();
-    if (!apiKey || !secret) {
+    if (!(apiKey && secret)) {
       throw new Error(
-        '❌ Stream Chat configuration missing. Required: NEXT_PUBLIC_STREAM_CHAT_API_KEY and STREAM_CHAT_SECRET'
+        "❌ Stream Chat configuration missing. Required: NEXT_PUBLIC_STREAM_CHAT_API_KEY and STREAM_CHAT_SECRET"
       );
     }
 
     streamClient = StreamChat.getInstance(apiKey, secret);
-    log('✅ Stream client initialized successfully');
+    log("✅ Stream client initialized successfully");
 
-    log('📥 Fetching Stream users...');
+    log("📥 Fetching Stream users...");
     // biome-ignore lint/suspicious/noExplicitAny: Any type is used here due to Stream SDK limitations
     let allStreamUsers: any[] = [];
     let offset = 0;
@@ -47,7 +47,7 @@ async function syncStreamUsers() {
           { last_active: -1 },
           {
             limit: queryLimit,
-            offset: offset,
+            offset,
           }
         );
 
@@ -68,7 +68,7 @@ async function syncStreamUsers() {
 
         await new Promise((resolve) => setTimeout(resolve, 300));
       } catch (error) {
-        const errorMessage = `Error fetching users batch at offset ${offset}: ${error instanceof Error ? error.message : 'Unknown error'}`;
+        const errorMessage = `Error fetching users batch at offset ${offset}: ${error instanceof Error ? error.message : "Unknown error"}`;
         log(`❌ ${errorMessage}`);
         results.errors.push(errorMessage);
         break;
@@ -77,7 +77,7 @@ async function syncStreamUsers() {
 
     log(`📊 Found ${allStreamUsers.length} total Stream users`);
 
-    log('🔍 Fetching database users...');
+    log("🔍 Fetching database users...");
     const dbUsers = await prisma.user.findMany({
       select: {
         id: true,
@@ -119,7 +119,7 @@ async function syncStreamUsers() {
             log(`✅ Updated Stream user: ${user.id}`);
             return true;
           } catch (error) {
-            const errorMessage = `Failed to update Stream user ${user.id}: ${error instanceof Error ? error.message : 'Unknown error'}`;
+            const errorMessage = `Failed to update Stream user ${user.id}: ${error instanceof Error ? error.message : "Unknown error"}`;
             log(`❌ ${errorMessage}`);
             results.errors.push(errorMessage);
             throw error;
@@ -127,14 +127,13 @@ async function syncStreamUsers() {
         })
       );
 
-      // biome-ignore lint/complexity/noForEach: This is a simple loop
-      batchResults.forEach((result) => {
-        if (result.status === 'fulfilled') {
+      for (const result of batchResults) {
+        if (result.status === "fulfilled") {
           results.updatedCount++;
         } else {
           results.errorCount++;
         }
-      });
+      }
 
       results.totalProcessed += batch.length;
       log(`📊 Batch ${batchNumber} Progress:
@@ -143,7 +142,7 @@ async function syncStreamUsers() {
       - Failed: ${results.errorCount}`);
 
       if (i + updateBatchSize < usersToUpdate.length) {
-        log('⏳ Rate limit pause between update batches...');
+        log("⏳ Rate limit pause between update batches...");
         await new Promise((resolve) => setTimeout(resolve, 1000));
       }
     }
@@ -157,7 +156,7 @@ async function syncStreamUsers() {
     };
   } catch (error) {
     const errorMessage =
-      error instanceof Error ? error.message : 'Unknown error';
+      error instanceof Error ? error.message : "Unknown error";
     log(`❌ Fatal error during Stream sync: ${errorMessage}`);
 
     return {
@@ -172,54 +171,54 @@ async function syncStreamUsers() {
     if (streamClient) {
       try {
         await streamClient.disconnectUser();
-        log('👋 Stream client disconnected successfully');
+        log("👋 Stream client disconnected successfully");
       } catch (_error) {
-        log('❌ Error disconnecting Stream client');
+        log("❌ Error disconnecting Stream client");
       }
     }
 
     try {
       await prisma.$disconnect();
-      log('👋 Database connection closed');
+      log("👋 Database connection closed");
     } catch (_error) {
-      log('❌ Error closing database connection');
+      log("❌ Error closing database connection");
     }
   }
 }
 
 export async function GET(request: Request) {
-  console.log('📥 Received Stream sync request');
+  console.log("📥 Received Stream sync request");
 
   try {
     if (!process.env.CRON_SECRET_KEY) {
-      console.error('❌ CRON_SECRET_KEY environment variable not set');
+      console.error("❌ CRON_SECRET_KEY environment variable not set");
       return NextResponse.json(
         {
-          error: 'Server configuration error',
+          error: "Server configuration error",
           timestamp: new Date().toISOString(),
         },
         {
           status: 500,
           headers: {
-            'Content-Type': 'application/json',
-            'Cache-Control': 'no-store',
+            "Content-Type": "application/json",
+            "Cache-Control": "no-store",
           },
         }
       );
     }
 
-    const authHeader = request.headers.get('authorization');
+    const authHeader = request.headers.get("authorization");
     const expectedAuth = `Bearer ${process.env.CRON_SECRET_KEY}`;
 
     if (!authHeader || authHeader !== expectedAuth) {
-      console.warn('⚠️ Unauthorized Stream sync attempt');
+      console.warn("⚠️ Unauthorized Stream sync attempt");
       return NextResponse.json(
-        { error: 'Unauthorized', timestamp: new Date().toISOString() },
+        { error: "Unauthorized", timestamp: new Date().toISOString() },
         {
           status: 401,
           headers: {
-            'Content-Type': 'application/json',
-            'Cache-Control': 'no-store',
+            "Content-Type": "application/json",
+            "Cache-Control": "no-store",
           },
         }
       );
@@ -230,28 +229,28 @@ export async function GET(request: Request) {
     return NextResponse.json(results, {
       status: results.success ? 200 : 500,
       headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-store',
+        "Content-Type": "application/json",
+        "Cache-Control": "no-store",
       },
     });
   } catch (error) {
-    console.error('❌ Stream sync route error:', error);
+    console.error("❌ Stream sync route error:", error);
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : "Unknown error",
         timestamp: new Date().toISOString(),
       },
       {
         status: 500,
         headers: {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-store',
+          "Content-Type": "application/json",
+          "Cache-Control": "no-store",
         },
       }
     );
   }
 }
 
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";

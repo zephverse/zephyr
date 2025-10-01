@@ -1,9 +1,9 @@
 import {
   createBlankSessionCookie,
   createSessionCookie,
-} from '@zephyr/auth/auth';
-import { cookies } from 'next/headers';
-import { NextResponse } from 'next/server';
+} from "@zephyr/auth/auth";
+import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   const { sessionId } = await request.json();

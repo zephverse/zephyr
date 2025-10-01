@@ -1,18 +1,18 @@
-import { validateRequest } from '@zephyr/auth/auth';
-import { getUserDataSelect, prisma } from '@zephyr/db';
-import type { NextRequest } from 'next/server';
+import { validateRequest } from "@zephyr/auth/auth";
+import { getUserDataSelect, prisma } from "@zephyr/db";
+import type { NextRequest } from "next/server";
 
 export async function GET(req: NextRequest) {
   try {
     const { user } = await validateRequest();
     if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const searchParams = req.nextUrl.searchParams;
-    const q = searchParams.get('q') || '';
-    const cursor = searchParams.get('cursor');
-    const searchQuery = q.split(' ').join(' & ');
+    const q = searchParams.get("q") || "";
+    const cursor = searchParams.get("cursor");
+    const searchQuery = q.split(" ").join(" & ");
     const pageSize = 5;
 
     const users = await prisma.user.findMany({
@@ -27,10 +27,10 @@ export async function GET(req: NextRequest) {
       orderBy: [
         {
           followers: {
-            _count: 'desc',
+            _count: "desc",
           },
         },
-        { createdAt: 'desc' },
+        { createdAt: "desc" },
       ],
       take: pageSize + 1,
       cursor: cursor ? { id: cursor } : undefined,
@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
       nextCursor,
     });
   } catch (error) {
-    console.error('Error in user search API:', error);
-    return Response.json({ error: 'Internal server error' }, { status: 500 });
+    console.error("Error in user search API:", error);
+    return Response.json({ error: "Internal server error" }, { status: 500 });
   }
 }

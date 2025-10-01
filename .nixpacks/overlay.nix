@@ -1,8 +1,4 @@
 self: super: {
-  # Ensure only one pnpm derivation is present to avoid pnpm/pnpx collisions
-  pnpm-9_x = super.pnpm;
-}
-
-self: super: {
-  pnpm-9_x = super.pnpm;
+  # Ensure Bun is available for the build process
+  bun = super.bun;
 }

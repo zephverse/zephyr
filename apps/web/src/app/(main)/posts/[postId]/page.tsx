@@ -1,22 +1,22 @@
-import PostCard from '@/components/Home/feedview/postCard';
-import NavigationCard from '@/components/Home/sidebars/left/NavigationCard';
-import ProfileCard from '@/components/Home/sidebars/right/ProfileCard';
-import FollowButton from '@/components/Layouts/FollowButton';
-import StickyFooter from '@/components/Layouts/StinkyFooter';
-import UserAvatar from '@/components/Layouts/UserAvatar';
-import UserTooltip from '@/components/Layouts/UserTooltip';
-import Linkify from '@/helpers/global/Linkify';
-import { getUserData } from '@/hooks/useUserData';
-import { validateRequest } from '@zephyr/auth/auth';
-import { type UserData, getPostDataInclude, prisma } from '@zephyr/db';
-import { Loader2 } from 'lucide-react';
-import Link from 'next/link';
-import { notFound } from 'next/navigation';
-import { Suspense, cache } from 'react';
+import { validateRequest } from "@zephyr/auth/auth";
+import { getPostDataInclude, prisma, type UserData } from "@zephyr/db";
+import { Loader2 } from "lucide-react";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { cache, Suspense } from "react";
+import PostCard from "@/components/Home/feedview/post-card";
+import NavigationCard from "@/components/Home/sidebars/left/navigation-card";
+import ProfileCard from "@/components/Home/sidebars/right/profile-card";
+import FollowButton from "@/components/Layouts/follow-button";
+import StickyFooter from "@/components/Layouts/stinky-footer";
+import UserAvatar from "@/components/Layouts/user-avatar";
+import UserTooltip from "@/components/Layouts/user-tooltip";
+import Linkify from "@/helpers/global/linkify";
+import { getUserData } from "@/hooks/use-user-data";
 
-interface PageProps {
+type PageProps = {
   params: Promise<{ postId: string }>;
-}
+};
 
 const getPost = cache(async (postId: string, loggedInUser: string) => {
   const post = await prisma.post.findUnique({
@@ -64,43 +64,41 @@ export default async function Page(props: PageProps) {
   const post = await getPost(postId, user.id);
 
   return (
-    <>
-      <main className="flex w-full min-w-0 gap-5">
-        <aside className="sticky top-[5rem] ml-1 hidden h-[calc(100vh-5.25rem)] w-72 shrink-0 md:block">
-          <div className="flex h-full flex-col">
-            <NavigationCard
-              isCollapsed={false}
-              className="flex-none"
-              stickyTop="5rem"
-            />
-            {userData && (
-              <div className="mt-auto mb-4">
-                <ProfileCard userData={userData} />
-              </div>
-            )}
-          </div>
-        </aside>
-
-        <div className="mt-5 w-full min-w-0 space-y-5">
-          <PostCard post={post} />
+    <main className="flex w-full min-w-0 gap-5">
+      <aside className="sticky top-[5rem] ml-1 hidden h-[calc(100vh-5.25rem)] w-72 shrink-0 md:block">
+        <div className="flex h-full flex-col">
+          <NavigationCard
+            className="flex-none"
+            isCollapsed={false}
+            stickyTop="5rem"
+          />
+          {userData && (
+            <div className="mt-auto mb-4">
+              <ProfileCard userData={userData} />
+            </div>
+          )}
         </div>
+      </aside>
 
-        <div className="sticky top-[5.25rem] hidden h-fit w-80 flex-none lg:block">
-          <Suspense fallback={<Loader2 className="mx-auto animate-spin" />}>
-            <UserInfoSidebar user={post.user} />
-          </Suspense>
-          <div className="mt-4">
-            <StickyFooter />
-          </div>
+      <div className="mt-5 w-full min-w-0 space-y-5">
+        <PostCard post={post} />
+      </div>
+
+      <div className="sticky top-[5.25rem] hidden h-fit w-80 flex-none lg:block">
+        <Suspense fallback={<Loader2 className="mx-auto animate-spin" />}>
+          <UserInfoSidebar user={post.user} />
+        </Suspense>
+        <div className="mt-4">
+          <StickyFooter />
         </div>
-      </main>
-    </>
+      </div>
+    </main>
   );
 }
 
-interface UserInfoSidebarProps {
+type UserInfoSidebarProps = {
   user: UserData;
-}
+};
 
 async function UserInfoSidebar({ user }: UserInfoSidebarProps) {
   const { user: loggedInUser } = await validateRequest();
@@ -114,8 +112,8 @@ async function UserInfoSidebar({ user }: UserInfoSidebarProps) {
       <div className="font-bold text-xl">About this user</div>
       <UserTooltip user={user}>
         <Link
-          href={`/users/${user.username}`}
           className="flex items-center gap-3"
+          href={`/users/${user.username}`}
         >
           <UserAvatar avatarUrl={user.avatarUrl} className="flex-none" />
           <div>
@@ -135,14 +133,14 @@ async function UserInfoSidebar({ user }: UserInfoSidebarProps) {
       </Linkify>
       {user.id !== loggedInUser.id && (
         <FollowButton
-          userId={user.id}
           initialState={{
             followers: user._count.followers,
             isFollowedByUser: user.followers.some(
-              // @ts-ignore
+              // @ts-expect-error
               ({ followerId }) => followerId === loggedInUser.id
             ),
           }}
+          userId={user.id}
         />
       )}
     </div>

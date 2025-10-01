@@ -1,13 +1,30 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { DayPicker } from "react-day-picker"
+import { ChevronLeftIcon, ChevronRightIcon } from "@radix-ui/react-icons";
+import { buttonVariants } from "@zephyr/ui/shadui/button";
+import type * as React from "react";
+import { DayPicker } from "react-day-picker";
+import { cn } from "../lib/utils";
 
-import { cn } from "../lib/utils"
-import { buttonVariants } from "@zephyr/ui/shadui/button"
-import { ChevronLeftIcon, ChevronRightIcon } from "@radix-ui/react-icons"
+const IconLeft = ({
+  className,
+  ...props
+}: {
+  className?: string;
+} & React.SVGProps<SVGSVGElement>) => (
+  <ChevronLeftIcon className={cn("h-4 w-4", className)} {...props} />
+);
 
-export type CalendarProps = React.ComponentProps<typeof DayPicker>
+const IconRight = ({
+  className,
+  ...props
+}: {
+  className?: string;
+} & React.SVGProps<SVGSVGElement>) => (
+  <ChevronRightIcon className={cn("h-4 w-4", className)} {...props} />
+);
+
+export type CalendarProps = React.ComponentProps<typeof DayPicker>;
 
 function Calendar({
   className,
@@ -17,7 +34,6 @@ function Calendar({
 }: CalendarProps) {
   return (
     <DayPicker
-      showOutsideDays={showOutsideDays}
       className={cn("p-3", className)}
       classNames={{
         months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
@@ -60,17 +76,14 @@ function Calendar({
         ...classNames,
       }}
       components={{
-        IconLeft: ({ className, ...props }) => (
-          <ChevronLeftIcon className={cn("h-4 w-4", className)} {...props} />
-        ),
-        IconRight: ({ className, ...props }) => (
-          <ChevronRightIcon className={cn("h-4 w-4", className)} {...props} />
-        ),
+        IconLeft,
+        IconRight,
       }}
+      showOutsideDays={showOutsideDays}
       {...props}
     />
-  )
+  );
 }
-Calendar.displayName = "Calendar"
+Calendar.displayName = "Calendar";
 
-export { Calendar }
+export { Calendar };

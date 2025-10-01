@@ -1,13 +1,13 @@
-import DiscoverySidebar from '@/components/Discover/DiscoverSidebar';
-import TrendingUsers from '@/components/Discover/TrendingUsers';
-import Friends from '@/components/Home/sidebars/left/Friends';
-import { getUserData } from '@/hooks/useUserData';
-import { validateRequest } from '@zephyr/auth/auth';
-import type { Metadata } from 'next';
+import { validateRequest } from "@zephyr/auth/auth";
+import type { Metadata } from "next";
+import DiscoverySidebar from "@/components/Discover/discover-sidebar";
+import TrendingUsers from "@/components/Discover/trending-users";
+import Friends from "@/components/Home/sidebars/left/friends";
+import { getUserData } from "@/hooks/use-user-data";
 
 export const metadata: Metadata = {
-  title: 'Trending Users | Zephyr',
-  description: 'Discover trending users on Zephyr',
+  title: "Trending Users | Zephyr",
+  description: "Discover trending users on Zephyr",
 };
 
 export default async function TrendingPage() {

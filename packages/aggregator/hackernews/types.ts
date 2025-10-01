@@ -1,4 +1,4 @@
-export interface HNStory {
+export type HNStory = {
   id: number;
   title: string;
   url?: string;
@@ -7,34 +7,31 @@ export interface HNStory {
   time: number;
   descendants: number;
   type: string;
-}
+};
 
-export interface FetchStoriesOptions {
+export type FetchStoriesOptions = {
   page: number;
   limit: number;
   search?: string;
   sort?: string;
   type?: string;
   identifier?: string;
-}
+};
 
-export interface HNApiResponse {
+export type HNApiResponse = {
   stories: HNStory[];
   hasMore: boolean;
   total: number;
-}
+};
 
 export class HackerNewsError extends Error {
-  constructor(
-    message: string,
-    // biome-ignore lint/style/noParameterProperties: ignore
-    // biome-ignore lint/nursery/useConsistentMemberAccessibility: ignore
-    public statusCode = 500,
-    // biome-ignore lint/style/noParameterProperties: ignore
-    // biome-ignore lint/nursery/useConsistentMemberAccessibility: ignore
-    public context?: unknown
-  ) {
+  statusCode = 500;
+  context?: unknown;
+
+  constructor(message: string, statusCode = 500, context?: unknown) {
     super(message);
-    this.name = 'HackerNewsError';
+    this.name = "HackerNewsError";
+    this.statusCode = statusCode;
+    this.context = context;
   }
 }

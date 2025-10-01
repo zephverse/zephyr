@@ -1,18 +1,18 @@
-import ky from 'ky';
-import { hackerNewsCache } from './cache';
-import { checkRateLimit } from './rate-limiter';
+import ky from "ky";
+import { hackerNewsCache } from "./cache";
+import { checkRateLimit } from "./rate-limiter";
 import {
   type FetchStoriesOptions,
+  HackerNewsError,
   type HNApiResponse,
   type HNStory,
-  HackerNewsError,
-} from './types';
+} from "./types";
 
-const HN_API_BASE = 'https://hacker-news.firebaseio.com/v0';
+const HN_API_BASE = "https://hacker-news.firebaseio.com/v0";
 const DEFAULT_TIMEOUT = 5000;
 
 export class HackerNewsAPI {
-  private client: typeof ky;
+  private readonly client: typeof ky;
 
   constructor() {
     this.client = ky.create({
@@ -20,7 +20,7 @@ export class HackerNewsAPI {
       timeout: DEFAULT_TIMEOUT,
       retry: {
         limit: 3,
-        methods: ['GET'],
+        methods: ["GET"],
         statusCodes: [408, 429, 500, 502, 503, 504],
       },
     });
@@ -34,7 +34,7 @@ export class HackerNewsAPI {
   ): Promise<any> {
     const canProceed = await checkRateLimit(identifier);
     if (!canProceed) {
-      throw new HackerNewsError('Rate limit exceeded', 429);
+      throw new HackerNewsError("Rate limit exceeded", 429);
     }
     return fn();
   }
@@ -46,8 +46,8 @@ export class HackerNewsAPI {
         return cachedStories;
       }
 
-      const stories = await this.fetchWithRateLimit('topstories', () =>
-        this.client.get('topstories.json').json<number[]>()
+      const stories = await this.fetchWithRateLimit("topstories", () =>
+        this.client.get("topstories.json").json<number[]>()
       );
 
       await hackerNewsCache.setStories(stories);
@@ -57,7 +57,7 @@ export class HackerNewsAPI {
         throw error;
       }
       throw new HackerNewsError(
-        'Failed to fetch top stories',
+        "Failed to fetch top stories",
         // biome-ignore lint/suspicious/noExplicitAny: ignore
         (error as any)?.response?.status
       );
@@ -97,15 +97,15 @@ export class HackerNewsAPI {
     page,
     limit,
     search,
-    sort = 'score',
-    type = 'all',
-    identifier = 'anonymous',
+    sort = "score",
+    type = "all",
+    identifier = "anonymous",
   }: FetchStoriesOptions): Promise<HNApiResponse> {
     try {
       if (identifier) {
         const canProceed = await checkRateLimit(identifier);
         if (!canProceed) {
-          throw new HackerNewsError('Rate limit exceeded', 429);
+          throw new HackerNewsError("Rate limit exceeded", 429);
         }
       }
 
@@ -123,7 +123,7 @@ export class HackerNewsAPI {
 
       let stories = [...Object.values(cachedStories), ...newStories];
 
-      if (type !== 'all') {
+      if (type !== "all") {
         stories = stories.filter((story) => story.type === type);
       }
 
@@ -138,9 +138,9 @@ export class HackerNewsAPI {
 
       stories.sort((a, b) => {
         switch (sort) {
-          case 'time':
+          case "time":
             return b.time - a.time;
-          case 'comments':
+          case "comments":
             return b.descendants - a.descendants;
           default:
             return b.score - a.score;
@@ -157,7 +157,7 @@ export class HackerNewsAPI {
         throw error;
       }
       throw new HackerNewsError(
-        'Failed to fetch stories',
+        "Failed to fetch stories",
         // biome-ignore lint/suspicious/noExplicitAny: ignore
         (error as any)?.response?.status
       );
@@ -172,7 +172,7 @@ export class HackerNewsAPI {
       await Promise.all(firstPageIds.map((id) => this.fetchStory(id)));
     } catch (error) {
       throw new HackerNewsError(
-        'Failed to refresh cache',
+        "Failed to refresh cache",
         // biome-ignore lint/suspicious/noExplicitAny: ignore
         (error as any)?.response?.status
       );

@@ -1,12 +1,10 @@
-'use client';
-import type { Container, SingleOrMultiple } from '@tsparticles/engine';
-// @ts-expect-error
-import Particles, { initParticlesEngine } from '@tsparticles/react';
-import { loadSlim } from '@tsparticles/slim';
-import { cn } from '@zephyr/ui/lib/utils';
-import { motion, useAnimation } from 'framer-motion';
-import { useId } from 'react';
-import { useEffect, useState } from 'react';
+"use client";
+import type { Container, SingleOrMultiple } from "@tsparticles/engine";
+import Particles, { initParticlesEngine } from "@tsparticles/react";
+import { loadSlim } from "@tsparticles/slim";
+import { motion, useAnimation } from "framer-motion";
+import { useEffect, useId, useState } from "react";
+import { cn } from "../../lib/utils";
 
 type ParticlesProps = {
   id?: string;
@@ -40,7 +38,7 @@ export const SparklesCore = (props: ParticlesProps) => {
   }, []);
   const controls = useAnimation();
 
-  // biome-ignore lint/suspicious/useAwait:
+  // biome-ignore lint/suspicious/useAwait: start animation when particles are loaded
   const particlesLoaded = async (container?: Container) => {
     if (container) {
       controls.start({
@@ -54,16 +52,15 @@ export const SparklesCore = (props: ParticlesProps) => {
 
   const generatedId = useId();
   return (
-    <motion.div animate={controls} className={cn('opacity-0', className)}>
+    <motion.div animate={controls} className={cn("opacity-0", className)}>
       {init && (
         <Particles
+          className={cn("h-full w-full")}
           id={id || generatedId}
-          className={cn('h-full w-full')}
-          particlesLoaded={particlesLoaded}
           options={{
             background: {
               color: {
-                value: background || '#0d47a1',
+                value: background || "#0d47a1",
               },
             },
             fullScreen: {
@@ -76,13 +73,13 @@ export const SparklesCore = (props: ParticlesProps) => {
               events: {
                 onClick: {
                   enable: true,
-                  mode: 'push',
+                  mode: "push",
                 },
                 onHover: {
                   enable: false,
-                  mode: 'repulse',
+                  mode: "repulse",
                 },
-                // biome-ignore lint/suspicious/noExplicitAny:
+                // biome-ignore lint/suspicious/noExplicitAny: types are wrong
                 resize: true as any,
               },
               modes: {
@@ -118,14 +115,14 @@ export const SparklesCore = (props: ParticlesProps) => {
                 },
                 enable: false,
                 maxSpeed: 50,
-                mode: 'bounce',
+                mode: "bounce",
                 overlap: {
                   enable: true,
                   retries: 0,
                 },
               },
               color: {
-                value: particleColor || '#ffffff',
+                value: particleColor || "#ffffff",
                 animation: {
                   h: {
                     count: 0,
@@ -179,12 +176,12 @@ export const SparklesCore = (props: ParticlesProps) => {
                 center: {
                   x: 50,
                   y: 50,
-                  mode: 'percent',
+                  mode: "percent",
                   radius: 0,
                 },
                 decay: 0,
                 distance: {},
-                direction: 'none',
+                direction: "none",
                 drift: 0,
                 enable: true,
                 gravity: {
@@ -202,7 +199,7 @@ export const SparklesCore = (props: ParticlesProps) => {
                   options: {},
                 },
                 outModes: {
-                  default: 'out',
+                  default: "out",
                 },
                 random: false,
                 size: false,
@@ -230,7 +227,7 @@ export const SparklesCore = (props: ParticlesProps) => {
                   height: 400,
                 },
                 limit: {
-                  mode: 'delete',
+                  mode: "delete",
                   value: 0,
                 },
                 value: particleDensity || 120,
@@ -247,16 +244,16 @@ export const SparklesCore = (props: ParticlesProps) => {
                   decay: 0,
                   delay: 0,
                   sync: false,
-                  mode: 'auto',
-                  startValue: 'random',
-                  destroy: 'none',
+                  mode: "auto",
+                  startValue: "random",
+                  destroy: "none",
                 },
               },
               reduceDuplicates: false,
               shadow: {
                 blur: 0,
                 color: {
-                  value: '#000',
+                  value: "#000",
                 },
                 enable: false,
                 offset: {
@@ -268,7 +265,7 @@ export const SparklesCore = (props: ParticlesProps) => {
                 close: true,
                 fill: true,
                 options: {},
-                type: 'circle',
+                type: "circle",
               },
               size: {
                 value: {
@@ -282,9 +279,9 @@ export const SparklesCore = (props: ParticlesProps) => {
                   decay: 0,
                   delay: 0,
                   sync: false,
-                  mode: 'auto',
-                  startValue: 'random',
-                  destroy: 'none',
+                  mode: "auto",
+                  startValue: "random",
+                  destroy: "none",
                 },
               },
               stroke: {
@@ -298,7 +295,7 @@ export const SparklesCore = (props: ParticlesProps) => {
               },
               destroy: {
                 bounds: {},
-                mode: 'none',
+                mode: "none",
                 split: {
                   count: 1,
                   factor: {
@@ -323,7 +320,7 @@ export const SparklesCore = (props: ParticlesProps) => {
                   enable: false,
                   value: 0,
                 },
-                mode: 'vertical',
+                mode: "vertical",
                 speed: 25,
               },
               tilt: {
@@ -334,7 +331,7 @@ export const SparklesCore = (props: ParticlesProps) => {
                   decay: 0,
                   sync: false,
                 },
-                direction: 'clockwise',
+                direction: "clockwise",
                 enable: false,
               },
               twinkle: {
@@ -376,7 +373,7 @@ export const SparklesCore = (props: ParticlesProps) => {
                   decay: 0,
                   sync: false,
                 },
-                direction: 'clockwise',
+                direction: "clockwise",
                 path: false,
               },
               orbit: {
@@ -398,7 +395,7 @@ export const SparklesCore = (props: ParticlesProps) => {
               links: {
                 blink: false,
                 color: {
-                  value: '#fff',
+                  value: "#fff",
                 },
                 consent: false,
                 distance: 100,
@@ -408,7 +405,7 @@ export const SparklesCore = (props: ParticlesProps) => {
                 shadow: {
                   blur: 5,
                   color: {
-                    value: '#000',
+                    value: "#000",
                   },
                   enable: false,
                 },
@@ -430,6 +427,7 @@ export const SparklesCore = (props: ParticlesProps) => {
             },
             detectRetina: true,
           }}
+          particlesLoaded={particlesLoaded}
         />
       )}
     </motion.div>

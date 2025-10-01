@@ -1,13 +1,7 @@
-import { config, withAnalyzer, withStreamConfig } from '@zephyr/next';
-import { withLogtail } from '@zephyr/observability/next-config';
-import type { NextConfig } from 'next';
-import { env } from './env';
+import { config, withStreamConfig } from "@zephyr/next";
+import type { NextConfig } from "next";
 
-let nextConfig: NextConfig = withLogtail({ ...config });
-
-if (env.ANALYZE === 'true') {
-  nextConfig = withAnalyzer(nextConfig);
-}
+let nextConfig: NextConfig = { ...config };
 
 nextConfig = withStreamConfig(nextConfig);
 

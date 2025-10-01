@@ -1,15 +1,15 @@
-import { validateRequest } from '@zephyr/auth/auth';
-import { type PostsPage, getPostDataInclude, prisma } from '@zephyr/db';
-import type { NextRequest } from 'next/server';
+import { validateRequest } from "@zephyr/auth/auth";
+import { getPostDataInclude, type PostsPage, prisma } from "@zephyr/db";
+import type { NextRequest } from "next/server";
 
 export async function GET(req: NextRequest) {
   try {
-    const cursor = req.nextUrl.searchParams.get('cursor') || undefined;
+    const cursor = req.nextUrl.searchParams.get("cursor") || undefined;
     const pageSize = 10;
     const { user } = await validateRequest();
 
     if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const standardInclude = getPostDataInclude(user.id);
@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
         },
       },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: "desc",
       },
       take: pageSize + 1,
       cursor: cursor ? { id: cursor } : undefined,
@@ -47,6 +47,6 @@ export async function GET(req: NextRequest) {
     return Response.json(data);
   } catch (error) {
     console.error(error);
-    return Response.json({ error: 'Internal server error' }, { status: 500 });
+    return Response.json({ error: "Internal server error" }, { status: 500 });
   }
 }

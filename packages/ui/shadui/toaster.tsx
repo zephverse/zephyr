@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { useToast } from "@zephyr/ui/hooks/use-toast"
+import { useToast } from "../hooks/use-toast";
 import {
   Toast,
   ToastClose,
@@ -8,18 +8,18 @@ import {
   ToastProvider,
   ToastTitle,
   ToastViewport,
-} from "@zephyr/ui/shadui/toast"
+} from "./toast";
 
-interface ToasterProps {
+type ToasterProps = {
   position?: "top-right" | "top-left" | "bottom-right" | "bottom-left";
   containerClassName?: string;
-}
+};
 
-export function Toaster({ 
+export function Toaster({
   position = "bottom-right",
-  containerClassName
+  containerClassName,
 }: ToasterProps = {}) {
-  const { toasts } = useToast()
+  const { toasts } = useToast();
 
   const getViewportClassName = () => {
     switch (position) {
@@ -29,7 +29,6 @@ export function Toaster({
         return "top-0 left-0";
       case "bottom-left":
         return "bottom-0 left-0";
-      case "bottom-right":
       default:
         return "bottom-0 right-0";
     }
@@ -37,21 +36,19 @@ export function Toaster({
 
   return (
     <ToastProvider>
-      {toasts.map(function ({ id, title, description, action, ...props }) {
-        return (
-          <Toast key={id} {...props} className="min-w-[200px] max-w-md w-auto">
-            <div className="relative pr-6">
-              {title && <ToastTitle>{title}</ToastTitle>}
-              {description && (
-                <ToastDescription>{description}</ToastDescription>
-              )}
-              {action}
-              <ToastClose className="absolute top-0 right-0" />
-            </div>
-          </Toast>
-        )
-      })}
-      <ToastViewport className={`${getViewportClassName()} ${containerClassName || ""}`} />
+      {toasts.map(({ id, title, description, action, ...props }) => (
+        <Toast key={id} {...props} className="w-auto min-w-[200px] max-w-md">
+          <div className="relative pr-6">
+            {title && <ToastTitle>{title}</ToastTitle>}
+            {description && <ToastDescription>{description}</ToastDescription>}
+            {action}
+            <ToastClose className="absolute top-0 right-0" />
+          </div>
+        </Toast>
+      ))}
+      <ToastViewport
+        className={`${getViewportClassName()} ${containerClassName || ""}`}
+      />
     </ToastProvider>
-  )
+  );
 }

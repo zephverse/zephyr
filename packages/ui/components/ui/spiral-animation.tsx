@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { gsap } from 'gsap';
-import { useEffect, useRef, useState } from 'react';
+import { gsap } from "gsap";
+import { useEffect, useRef, useState } from "react";
 
 class Vector2D {
   x: number;
@@ -32,13 +32,11 @@ class Vector3D {
 }
 
 class AnimationController {
-  private timeline: gsap.core.Timeline;
-  private time = 0;
-  private canvas: HTMLCanvasElement;
-  private ctx: CanvasRenderingContext2D;
-  private dpr: number;
-  private size: number;
-  private stars: Star[] = [];
+  private readonly timeline: gsap.core.Timeline;
+  private readonly time = 0;
+  private readonly ctx: CanvasRenderingContext2D;
+  private readonly size: number;
+  private readonly stars: Star[] = [];
 
   private readonly changeEventTime = 0; // immediate scatter
   private readonly cameraZ = -400;
@@ -46,7 +44,6 @@ class AnimationController {
   private readonly startDotYOffset = 28;
   private readonly viewZoom = 100;
   private readonly numberOfStars = 3000;
-  private readonly trailLength = 0; // remove spiraling trail completely
 
   constructor(
     canvas: HTMLCanvasElement,
@@ -69,8 +66,8 @@ class AnimationController {
     const customRandom = () => {
       let seed = 1234;
       return () => {
-        seed = (seed * 9301 + 49297) % 233280;
-        return seed / 233280;
+        seed = (seed * 9301 + 49_297) % 233_280;
+        return seed / 233_280;
       };
     };
 
@@ -90,13 +87,13 @@ class AnimationController {
     this.timeline.to(this, {
       time: 1,
       duration: 8,
-      ease: 'none',
+      ease: "none",
       onUpdate: () => this.render(),
     });
     this.timeline.to(this, {
       time: 0,
       duration: 8,
-      ease: 'none',
+      ease: "none",
       onUpdate: () => this.render(),
     });
     this.timeline.repeat(-1);
@@ -120,6 +117,7 @@ class AnimationController {
     return 2 ** (-8 * x) * Math.sin((x * 8 - 0.75) * c4) + 1;
   }
 
+  // biome-ignore lint/nursery/useMaxParams: Utility function for value mapping, all parameters are required
   map(
     value: number,
     start1: number,
@@ -202,21 +200,13 @@ class AnimationController {
     }
   }
 
-  private drawStartDot() {
-    if (this.time > this.changeEventTime) {
-      const dy = (this.cameraZ * this.startDotYOffset) / this.viewZoom;
-      const position = new Vector3D(0, dy, this.cameraTravelDistance);
-      this.showProjectedDot(position, 2.5);
-    }
-  }
-
   render() {
     const ctx = this.ctx;
     if (!ctx) {
       return;
     }
 
-    ctx.fillStyle = 'black';
+    ctx.fillStyle = "black";
     ctx.fillRect(0, 0, this.size, this.size);
 
     ctx.save();
@@ -228,7 +218,7 @@ class AnimationController {
     // Disable initial spin/rotation
     // ctx.rotate(-Math.PI * this.ease(t2, 2.7));
 
-    ctx.fillStyle = 'white';
+    ctx.fillStyle = "white";
     for (const star of this.stars) {
       star.render(t1, this);
     }
@@ -236,32 +226,6 @@ class AnimationController {
     // Do not draw the initial start dot
 
     ctx.restore();
-  }
-
-  private drawTrail(t1: number) {
-    for (let i = 0; i < this.trailLength; i++) {
-      const f = this.map(i, 0, this.trailLength, 1.1, 0.1);
-      const sw = (1.3 * (1 - t1) + 3.0 * Math.sin(Math.PI * t1)) * f;
-
-      this.ctx.fillStyle = 'white';
-      this.ctx.lineWidth = sw;
-
-      const pathTime = t1 - 0.00015 * i;
-      const position = this.spiralPath(pathTime);
-
-      const basePos = position;
-      const offset = new Vector2D(position.x + 5, position.y + 5);
-      const rotated = this.rotate(
-        basePos,
-        offset,
-        Math.sin(this.time * Math.PI * 2) * 0.5 + 0.5,
-        i % 2 === 0
-      );
-
-      this.ctx.beginPath();
-      this.ctx.arc(rotated.x, rotated.y, sw / 2, 0, Math.PI * 2);
-      this.ctx.fill();
-    }
   }
 
   pause() {
@@ -278,16 +242,16 @@ class AnimationController {
 }
 
 class Star {
-  private dx: number;
-  private dy: number;
-  private spiralLocation: number;
-  private strokeWeightFactor: number;
-  private z: number;
-  private angle: number;
-  private distance: number;
-  private rotationDirection: number;
-  private expansionRate: number;
-  private finalScale: number;
+  private readonly dx: number;
+  private readonly dy: number;
+  private readonly spiralLocation: number;
+  private readonly strokeWeightFactor: number;
+  private readonly z: number;
+  private readonly angle: number;
+  private readonly distance: number;
+  private readonly rotationDirection: number;
+  private readonly expansionRate: number;
+  private readonly finalScale: number;
 
   constructor(cameraZ: number, cameraTravelDistance: number) {
     this.angle = Math.random() * Math.PI * 2;
@@ -383,15 +347,9 @@ class Star {
       }
 
       const vx =
-        // biome-ignore lint/suspicious/noExplicitAny:
-        ((this.z - (controller as any).cameraZ) * screenX) /
-        // biome-ignore lint/suspicious/noExplicitAny:
-        (controller as any).viewZoom;
+        ((this.z - controller.cameraZ) * screenX) / controller.viewZoom;
       const vy =
-        // biome-ignore lint/suspicious/noExplicitAny:
-        ((this.z - (controller as any).cameraZ) * screenY) /
-        // biome-ignore lint/suspicious/noExplicitAny:
-        (controller as any).viewZoom;
+        ((this.z - controller.cameraZ) * screenY) / controller.viewZoom;
 
       const position = new Vector3D(vx, vy, this.z);
 
@@ -427,8 +385,8 @@ export function SpiralAnimation() {
     };
 
     handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   useEffect(() => {
@@ -436,11 +394,11 @@ export function SpiralAnimation() {
     if (!canvas) {
       return;
     }
-    if (!dimensions.width || !dimensions.height) {
+    if (!(dimensions.width && dimensions.height)) {
       return;
     }
 
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     if (!ctx) {
       return;
     }
@@ -464,7 +422,7 @@ export function SpiralAnimation() {
 
   return (
     <div className="relative h-full w-full">
-      <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
+      <canvas className="absolute inset-0 h-full w-full" ref={canvasRef} />
     </div>
   );
 }

@@ -1,7 +1,7 @@
 {
   "name": "zephyr",
   "displayName": "Zephyr",
-  "version": "2.0.34-dev",
+  "version": "2.0.35-dev",
   "description": "A seamless, next-gen social experience built for speed, privacy, and effortless connection.",
   "author": "parazeeknova",
   "license": "AGPL-3.0",
@@ -17,19 +17,22 @@
     "zephyr"
   ],
   "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
-    "lint": "ultracite lint",
-    "format": "ultracite format",
     "check": "biome check --write .",
     "dev": "turbo dev",
-    "build": "pnpm run lint && turbo build",
-    "postinstall": "cd packages/db && pnpm dlx prisma generate",
-    "dep:check": "pnpm dlx sherif@latest",
-    "dep:fix": "pnpm dlx sherif@latest --fix",
-    "env:check": "node scripts/checkENV.js",
-    "env:local": "node -e \"const fs=require('fs');const path=require('path');fs.copyFileSync('.env.example','.env');fs.copyFileSync(path.join('apps','web','.env.example'),path.join('apps','web','.env'));fs.copyFileSync(path.join('packages','db','.env.example'),path.join('packages','db','.env'));console.log('✅ Environment files copied successfully');\"",
+    "build": "bun run check && turbo build",
+    "postinstall": "cd packages/db && bunx prisma generate",
+    "dep:check": "bunx sherif@latest",
+    "dep:fix": "bunx sherif@latest --fix",
+    "env:check": "bun scripts/check-env.js",
+    "env:local": "bun -e \"const fs=require('fs');const path=require('path');fs.copyFileSync('.env.example','.env');fs.copyFileSync(path.join('apps','web','.env.example'),path.join('apps','web','.env'));fs.copyFileSync(path.join('packages','db','.env.example'),path.join('packages','db','.env'));console.log('✅ Environment files copied successfully');\"",
     "prepare": "husky",
-    "db:up": "cd packages/db && pnpm prisma generate && pnpm prisma db push",
+    "clean": "bun -e \"const fs = require('fs'); const path = require('path'); function rm(dir) { if (fs.existsSync(dir)) { console.log('Deleting ' + dir); fs.rmSync(dir, { recursive: true, force: true }); } } function findAndDelete(folder) { const walk = (dir) => { const files = fs.readdirSync(dir); files.forEach(file => { const fullPath = path.join(dir, file); if (fs.statSync(fullPath).isDirectory()) { if (file === folder) { rm(fullPath); } else { walk(fullPath); } } }); }; walk(process.cwd()); } ['node_modules', '.next', '.turbo'].forEach(findAndDelete); console.log('✅ Cleanup completed');\"",
+    "db:up": "cd packages/db && bunx prisma generate && bunx prisma db push",
     "docker:logs": "docker compose -f docker-compose.dev.yml logs -f",
     "docker:dev": "docker compose -f docker-compose.dev.yml --profile init up -d --build",
     "docker:dev-noinit": "docker compose -f docker-compose.dev.yml up --build",
@@ -37,31 +40,25 @@
     "docker:clean:dev": "docker compose -f docker-compose.dev.yml down -v && docker volume rm zephyr_postgres_data_dev zephyr_redis_data_dev zephyr_minio_data_dev && rm -f .dev-init"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.2.4",
-    "@types/node": "^22.18.7",
-    "@types/react": "19.0.10",
-    "@types/react-dom": "19.0.3",
+    "@biomejs/biome": "2.2.4",
+    "@types/node": "^24.6.1",
+    "@types/react": "^19.1.16",
+    "@types/react-dom": "^19.1.9",
     "dotenv": "^17.2.3",
     "husky": "^9.1.7",
-    "import-in-the-middle": "^1.14.4",
     "react-markdown": "9.0.3",
-    "require-in-the-middle": "^8.0.0",
     "turbo": "^2.5.8",
-    "typescript": "^5.9.2",
-    "ultracite": "^5.4.6"
+    "typescript": "^5.9.3",
+    "ultracite": "5.4.5"
   },
-  "packageManager": "pnpm@10.17.1",
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "@biomejs/biome",
-      "@prisma/client",
-      "@prisma/engines",
-      "@tailwindcss/oxide",
-      "@tsparticles/engine",
-      "core-js-pure",
-      "esbuild",
-      "prisma",
-      "sharp"
-    ]
-  }
+  "trustedDependencies": [
+    "@prisma/client",
+    "@prisma/engines",
+    "@tailwindcss/oxide",
+    "@tsparticles/engine",
+    "esbuild",
+    "prisma",
+    "sharp"
+  ],
+  "packageManager": "bun@1.2.23"
 }

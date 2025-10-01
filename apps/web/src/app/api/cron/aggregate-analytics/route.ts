@@ -1,8 +1,7 @@
-import { prisma } from '@zephyr/db';
-import { redis } from '@zephyr/db';
-import { NextResponse } from 'next/server';
+import { prisma, redis } from "@zephyr/db";
+import { NextResponse } from "next/server";
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex logic is required here
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Analytics aggregation requires multiple data processing steps
 async function aggregateAnalytics() {
   const logs: string[] = [];
   const startTime = Date.now();
@@ -21,19 +20,19 @@ async function aggregateAnalytics() {
   };
 
   try {
-    log('🚀 Starting analytics aggregation');
+    log("🚀 Starting analytics aggregation");
 
     try {
       await redis.ping();
-      log('✅ Redis connection successful');
+      log("✅ Redis connection successful");
     } catch (_error) {
-      log('❌ Redis connection failed');
-      throw new Error('Redis connection failed');
+      log("❌ Redis connection failed");
+      throw new Error("Redis connection failed");
     }
 
     // 1. Aggregate post views
-    log('\n📊 Starting post views aggregation');
-    const postViews = await redis.smembers('posts:with:views');
+    log("\n📊 Starting post views aggregation");
+    const postViews = await redis.smembers("posts:with:views");
     log(`Found ${postViews.length} posts with views to process`);
 
     const viewsData: { postId: string; views: number }[] = [];
@@ -56,7 +55,7 @@ async function aggregateAnalytics() {
         }
       } catch (error) {
         const errorMessage = `Error processing views for post ${postId}: ${
-          error instanceof Error ? error.message : 'Unknown error'
+          error instanceof Error ? error.message : "Unknown error"
         }`;
         log(`❌ ${errorMessage}`);
         results.errors.push(errorMessage);
@@ -90,7 +89,7 @@ async function aggregateAnalytics() {
         }
       } catch (error) {
         const errorMessage = `Error updating post batch ${batchNumber}/${totalBatches}: ${
-          error instanceof Error ? error.message : 'Unknown error'
+          error instanceof Error ? error.message : "Unknown error"
         }`;
         log(`❌ ${errorMessage}`);
         results.errors.push(errorMessage);
@@ -98,7 +97,7 @@ async function aggregateAnalytics() {
     }
 
     // 2. Aggregate user metrics
-    log('\n👥 Starting user metrics aggregation');
+    log("\n👥 Starting user metrics aggregation");
     const userMetrics = await prisma.user.findMany({
       select: {
         id: true,
@@ -132,7 +131,7 @@ async function aggregateAnalytics() {
           comments: user._count.comments,
           lastUpdated: new Date().toISOString(),
         });
-        pipeline.expire(`user:metrics:${user.id}`, 86400); // 24 hours
+        pipeline.expire(`user:metrics:${user.id}`, 86_400); // 24 hours
       }
 
       try {
@@ -147,7 +146,7 @@ async function aggregateAnalytics() {
         }
       } catch (error) {
         const errorMessage = `Error updating user metrics batch ${batchNumber}/${totalBatches}: ${
-          error instanceof Error ? error.message : 'Unknown error'
+          error instanceof Error ? error.message : "Unknown error"
         }`;
         log(`❌ ${errorMessage}`);
         results.errors.push(errorMessage);
@@ -173,11 +172,11 @@ async function aggregateAnalytics() {
     return summary;
   } catch (error) {
     const errorMessage =
-      error instanceof Error ? error.message : 'Unknown error';
+      error instanceof Error ? error.message : "Unknown error";
     log(`\n❌ Analytics aggregation failed: ${errorMessage}`);
     console.error(
-      'Aggregation error stack:',
-      error instanceof Error ? error.stack : 'No stack trace'
+      "Aggregation error stack:",
+      error instanceof Error ? error.stack : "No stack trace"
     );
 
     return {
@@ -191,49 +190,49 @@ async function aggregateAnalytics() {
   } finally {
     try {
       await prisma.$disconnect();
-      log('👋 Database connection closed');
+      log("👋 Database connection closed");
     } catch (_error) {
-      log('❌ Error closing database connection');
+      log("❌ Error closing database connection");
     }
   }
 }
 
 export async function GET(request: Request) {
-  console.log('📥 Received analytics aggregation request');
+  console.log("📥 Received analytics aggregation request");
 
   try {
     if (!process.env.CRON_SECRET_KEY) {
-      console.error('❌ CRON_SECRET_KEY environment variable not set');
+      console.error("❌ CRON_SECRET_KEY environment variable not set");
       return NextResponse.json(
         {
-          error: 'Server configuration error',
+          error: "Server configuration error",
           timestamp: new Date().toISOString(),
         },
         {
           status: 500,
           headers: {
-            'Content-Type': 'application/json',
-            'Cache-Control': 'no-store',
+            "Content-Type": "application/json",
+            "Cache-Control": "no-store",
           },
         }
       );
     }
 
-    const authHeader = request.headers.get('authorization');
+    const authHeader = request.headers.get("authorization");
     const expectedAuth = `Bearer ${process.env.CRON_SECRET_KEY}`;
 
     if (!authHeader || authHeader !== expectedAuth) {
-      console.warn('⚠️ Unauthorized analytics aggregation attempt');
+      console.warn("⚠️ Unauthorized analytics aggregation attempt");
       return NextResponse.json(
         {
-          error: 'Unauthorized',
+          error: "Unauthorized",
           timestamp: new Date().toISOString(),
         },
         {
           status: 401,
           headers: {
-            'Content-Type': 'application/json',
-            'Cache-Control': 'no-store',
+            "Content-Type": "application/json",
+            "Cache-Control": "no-store",
           },
         }
       );
@@ -244,32 +243,32 @@ export async function GET(request: Request) {
     return NextResponse.json(results, {
       status: results.success ? 200 : 500,
       headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-store',
+        "Content-Type": "application/json",
+        "Cache-Control": "no-store",
       },
     });
   } catch (error) {
-    console.error('❌ Analytics route error:', {
-      error: error instanceof Error ? error.message : 'Unknown error',
+    console.error("❌ Analytics route error:", {
+      error: error instanceof Error ? error.message : "Unknown error",
       stack: error instanceof Error ? error.stack : undefined,
     });
 
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : "Unknown error",
         timestamp: new Date().toISOString(),
       },
       {
         status: 500,
         headers: {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-store',
+          "Content-Type": "application/json",
+          "Cache-Control": "no-store",
         },
       }
     );
   }
 }
 
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";

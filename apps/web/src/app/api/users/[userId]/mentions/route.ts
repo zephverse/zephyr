@@ -1,5 +1,5 @@
-import { validateRequest } from '@zephyr/auth/auth';
-import { prisma } from '@zephyr/db';
+import { validateRequest } from "@zephyr/auth/auth";
+import { prisma } from "@zephyr/db";
 
 export async function GET(
   _request: Request,
@@ -8,7 +8,7 @@ export async function GET(
   try {
     const { user } = await validateRequest();
     if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const mentions = await prisma.mention.findMany({
@@ -74,19 +74,20 @@ export async function GET(
         },
       },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: "desc",
       },
     });
 
     const posts = mentions.map((mention) => {
       const { post } = mention;
-      const createdAt =
-        typeof post.createdAt === 'string'
-          ? post.createdAt
-          : // biome-ignore lint/nursery/noNestedTernary: This is a nested ternary that is not nested too deeply
-            post.createdAt instanceof Date
-            ? post.createdAt.toISOString()
-            : new Date().toISOString();
+      let createdAt: string;
+      if (typeof post.createdAt === "string") {
+        createdAt = post.createdAt;
+      } else if (post.createdAt instanceof Date) {
+        createdAt = post.createdAt.toISOString();
+      } else {
+        createdAt = new Date().toISOString();
+      }
 
       const enhancedUser = {
         ...post.user,
@@ -109,10 +110,10 @@ export async function GET(
 
     return Response.json(posts);
   } catch (error) {
-    console.error('Error fetching mentioned posts:', error);
+    console.error("Error fetching mentioned posts:", error);
     if (error instanceof Error) {
-      console.error('Error details:', error.message, error.stack);
+      console.error("Error details:", error.message, error.stack);
     }
-    return Response.json({ error: 'Internal server error' }, { status: 500 });
+    return Response.json({ error: "Internal server error" }, { status: 500 });
   }
 }

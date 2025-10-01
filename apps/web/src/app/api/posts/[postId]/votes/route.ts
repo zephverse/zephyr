@@ -1,10 +1,10 @@
-import { validateRequest } from '@zephyr/auth/auth';
-import { type PostData, getPostDataInclude, prisma } from '@zephyr/db';
+import { validateRequest } from "@zephyr/auth/auth";
+import { getPostDataInclude, type PostData, prisma } from "@zephyr/db";
 
-interface VoteInfo {
+type VoteInfo = {
   aura: number;
   userVote: number;
-}
+};
 
 export async function GET(
   _req: Request,
@@ -16,7 +16,7 @@ export async function GET(
   try {
     const { user: loggedInUser } = await validateRequest();
     if (!loggedInUser) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const post = await prisma.post.findUnique({
@@ -25,7 +25,7 @@ export async function GET(
     });
 
     if (!post) {
-      return Response.json({ error: 'Post not found' }, { status: 404 });
+      return Response.json({ error: "Post not found" }, { status: 404 });
     }
 
     const voteInfo: VoteInfo = {
@@ -41,7 +41,7 @@ export async function GET(
     return Response.json(postData);
   } catch (error) {
     console.error(error);
-    return Response.json({ error: 'Internal server error' }, { status: 500 });
+    return Response.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
@@ -55,13 +55,13 @@ export async function POST(
   try {
     const { user: loggedInUser } = await validateRequest();
     if (!loggedInUser) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { vote } = await req.json();
 
     if (vote !== 1 && vote !== -1) {
-      return Response.json({ error: 'Invalid vote value' }, { status: 400 });
+      return Response.json({ error: "Invalid vote value" }, { status: 400 });
     }
 
     const updatedPost = await prisma.$transaction(async (tx) => {
@@ -80,7 +80,7 @@ export async function POST(
       });
 
       if (!post) {
-        throw new Error('Post not found');
+        throw new Error("Post not found");
       }
 
       const existingVote = await tx.vote.findUnique({
@@ -148,7 +148,7 @@ export async function POST(
         });
       }
 
-      const updatedPost = await tx.post.update({
+      const txUpdatedPost = await tx.post.update({
         where: { id: postId },
         data: { aura: { increment: voteChange } },
         include: {
@@ -157,13 +157,13 @@ export async function POST(
         },
       });
 
-      if (shouldNotify && updatedPost.userId !== loggedInUser.id) {
+      if (shouldNotify && txUpdatedPost.userId !== loggedInUser.id) {
         await tx.notification.create({
           data: {
-            recipientId: updatedPost.userId,
+            recipientId: txUpdatedPost.userId,
             issuerId: loggedInUser.id,
             postId,
-            type: 'AMPLIFY',
+            type: "AMPLIFY",
           },
         });
       }
@@ -172,13 +172,13 @@ export async function POST(
         data: {
           userId: post.userId,
           amount: auraChange,
-          type: 'POST_VOTE',
+          type: "POST_VOTE",
           postId: post.id,
           issuerId: loggedInUser.id,
         },
       });
 
-      return updatedPost;
+      return txUpdatedPost;
     });
 
     const voteInfo: VoteInfo = {
@@ -196,7 +196,7 @@ export async function POST(
     return Response.json(postData);
   } catch (error) {
     console.error(error);
-    return Response.json({ error: 'Internal server error' }, { status: 500 });
+    return Response.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
@@ -210,7 +210,7 @@ export async function DELETE(
   try {
     const { user: loggedInUser } = await validateRequest();
     if (!loggedInUser) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const existingVote = await prisma.vote.findUnique({
@@ -229,7 +229,7 @@ export async function DELETE(
       });
 
       if (!post) {
-        return Response.json({ error: 'Post not found' }, { status: 404 });
+        return Response.json({ error: "Post not found" }, { status: 404 });
       }
 
       return Response.json({
@@ -240,7 +240,7 @@ export async function DELETE(
     }
 
     const updatedPost = await prisma.$transaction(async (tx) => {
-      const existingVote = await tx.vote.findUnique({
+      const txExistingVote = await tx.vote.findUnique({
         where: {
           userId_postId: {
             userId: loggedInUser.id,
@@ -250,7 +250,7 @@ export async function DELETE(
         select: { value: true },
       });
 
-      if (!existingVote) {
+      if (!txExistingVote) {
         return null;
       }
 
@@ -260,7 +260,7 @@ export async function DELETE(
       });
 
       if (!post) {
-        throw new Error('Post not found');
+        throw new Error("Post not found");
       }
 
       await tx.vote.delete({
@@ -274,15 +274,15 @@ export async function DELETE(
 
       await tx.user.update({
         where: { id: post.userId },
-        data: { aura: { decrement: existingVote.value } },
+        data: { aura: { decrement: txExistingVote.value } },
       });
 
-      if (existingVote.value === 1) {
+      if (txExistingVote.value === 1) {
         await tx.notification.deleteMany({
           where: {
             issuerId: loggedInUser.id,
             postId,
-            type: 'AMPLIFY',
+            type: "AMPLIFY",
           },
         });
       }
@@ -290,8 +290,8 @@ export async function DELETE(
       await tx.auraLog.create({
         data: {
           userId: post.userId,
-          amount: -existingVote.value,
-          type: 'POST_VOTE_REMOVED',
+          amount: -txExistingVote.value,
+          type: "POST_VOTE_REMOVED",
           postId,
           issuerId: loggedInUser.id,
         },
@@ -299,13 +299,13 @@ export async function DELETE(
 
       return tx.post.update({
         where: { id: postId },
-        data: { aura: { decrement: existingVote.value } },
+        data: { aura: { decrement: txExistingVote.value } },
         include: getPostDataInclude(loggedInUser.id),
       });
     });
 
     if (!updatedPost) {
-      return Response.json({ error: 'Vote not found' }, { status: 404 });
+      return Response.json({ error: "Vote not found" }, { status: 404 });
     }
 
     const voteInfo: VoteInfo = {
@@ -321,6 +321,6 @@ export async function DELETE(
     return Response.json(postData);
   } catch (error) {
     console.error(error);
-    return Response.json({ error: 'Internal server error' }, { status: 500 });
+    return Response.json({ error: "Internal server error" }, { status: 500 });
   }
 }

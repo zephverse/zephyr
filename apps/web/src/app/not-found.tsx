@@ -1,30 +1,34 @@
-'use client';
+"use client";
 
-import { Button } from '@zephyr/ui/shadui/button';
-import { motion } from 'framer-motion';
-import Link from 'next/link';
-import { useMemo } from 'react';
+import { Button } from "@zephyr/ui/shadui/button";
+import { motion } from "framer-motion";
+import Link from "next/link";
+import { useMemo } from "react";
 
 export default function NotFound() {
-  const nebulaElements = useMemo(() => {
-    return new Array(5).fill(0).map((_, i) => ({
-      width: 200 + ((i * 127) % 400),
-      height: 200 + ((i * 127) % 400),
-      top: `${(i * 20) % 100}%`,
-      left: `${(i * 25) % 100}%`,
-      delay: i * 0.5,
-      color: i % 3,
-    }));
-  }, []);
+  const nebulaElements = useMemo(
+    () =>
+      new Array(5).fill(0).map((_, i) => ({
+        width: 200 + ((i * 127) % 400),
+        height: 200 + ((i * 127) % 400),
+        top: `${(i * 20) % 100}%`,
+        left: `${(i * 25) % 100}%`,
+        delay: i * 0.5,
+        color: i % 3,
+      })),
+    []
+  );
 
-  const starElements = useMemo(() => {
-    return new Array(20).fill(0).map((_, i) => ({
-      top: `${(i * 5) % 100}%`,
-      left: `${(i * 7) % 100}%`,
-      duration: 5 + (i % 5) * 2,
-      delay: (i % 5) * 1,
-    }));
-  }, []);
+  const starElements = useMemo(
+    () =>
+      new Array(20).fill(0).map((_, i) => ({
+        top: `${(i * 5) % 100}%`,
+        left: `${(i * 7) % 100}%`,
+        duration: 5 + (i % 5) * 2,
+        delay: (i % 5) * 1,
+      })),
+    []
+  );
 
   return (
     <div
@@ -40,20 +44,20 @@ export default function NotFound() {
         </div>
 
         <div className="absolute inset-0 overflow-hidden">
-          {nebulaElements.map((nebula, i) => (
+          {nebulaElements.map((nebula, _i) => (
             <div
-              key={i}
               className="absolute animate-pulse rounded-full blur-3xl"
+              key={`nebula-${nebula.left}-${nebula.top}-${nebula.width}`}
               style={{
                 width: `${nebula.width}px`,
                 height: `${nebula.height}px`,
                 background: `radial-gradient(circle at center, 
-                  ${['rgba(147,51,234,0.15)', 'rgba(79,70,229,0.15)', 'rgba(236,72,153,0.15)'][nebula.color]},
+                  ${["rgba(147,51,234,0.15)", "rgba(79,70,229,0.15)", "rgba(236,72,153,0.15)"][nebula.color]},
                   transparent)`,
                 top: nebula.top,
                 left: nebula.left,
                 animationDelay: `${nebula.delay}s`,
-                animationDuration: '5s',
+                animationDuration: "5s",
               }}
             />
           ))}
@@ -62,20 +66,20 @@ export default function NotFound() {
 
       <div className="relative z-10 mx-auto max-w-3xl px-4 text-center">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
           className="space-y-10"
+          initial={{ opacity: 0, y: 20 }}
+          transition={{ duration: 0.5 }}
         >
           <motion.div
-            initial={{ scale: 0.8 }}
             animate={{ scale: 1 }}
+            className="relative"
+            initial={{ scale: 0.8 }}
             transition={{
-              type: 'spring',
+              type: "spring",
               stiffness: 200,
               damping: 15,
             }}
-            className="relative"
           >
             <div className="relative">
               <h1 className="select-none font-bold text-[12rem] text-primary/5 leading-none tracking-tight">
@@ -88,10 +92,10 @@ export default function NotFound() {
           </motion.div>
 
           <motion.div
-            initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
             className="space-y-4"
+            initial={{ opacity: 0 }}
+            transition={{ delay: 0.2 }}
           >
             <h2 className="font-bold text-3xl text-foreground">
               Lost in Space
@@ -102,15 +106,15 @@ export default function NotFound() {
           </motion.div>
 
           <motion.div
-            initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.4 }}
             className="relative"
+            initial={{ opacity: 0 }}
+            transition={{ delay: 0.4 }}
           >
             <Link href="/">
               <Button
-                size="lg"
                 className="group relative px-8 py-6 text-lg transition-all hover:scale-105"
+                size="lg"
               >
                 <span className="relative z-10">Return Home</span>
                 <div className="absolute inset-0 h-full w-full bg-gradient-to-r from-primary/50 to-primary opacity-50 blur-lg transition-all group-hover:opacity-75" />
@@ -123,8 +127,8 @@ export default function NotFound() {
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         {starElements.map((star, i) => (
           <div
-            key={i}
             className="absolute h-0.5 w-0.5 rounded-full bg-white"
+            key={`star-${star.left}-${star.top}-${star.delay}`}
             style={{
               top: star.top,
               left: star.left,

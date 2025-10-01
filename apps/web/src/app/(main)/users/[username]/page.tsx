@@ -1,19 +1,19 @@
-import { validateRequest } from '@zephyr/auth/auth';
-import { getUserDataSelect, prisma } from '@zephyr/db';
-import { notFound } from 'next/navigation';
-import { cache } from 'react';
-import ClientProfile from './ClientProfile';
+import { validateRequest } from "@zephyr/auth/auth";
+import { getUserDataSelect, prisma } from "@zephyr/db";
+import { notFound } from "next/navigation";
+import { cache } from "react";
+import ClientProfile from "./client-profile";
 
-interface PageProps {
+type PageProps = {
   params: Promise<{ username: string }>;
-}
+};
 
 const getUser = cache(async (username: string, loggedInUserId: string) => {
   const user = await prisma.user.findFirst({
     where: {
       username: {
         equals: username,
-        mode: 'insensitive',
+        mode: "insensitive",
       },
     },
     select: getUserDataSelect(loggedInUserId),
@@ -43,9 +43,9 @@ export default async function Page(props: PageProps) {
 
   return (
     <ClientProfile
-      username={username}
-      userData={userData}
       loggedInUserId={loggedInUser.id}
+      userData={userData}
+      username={username}
     />
   );
 }

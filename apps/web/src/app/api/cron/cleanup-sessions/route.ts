@@ -1,5 +1,5 @@
-import { prisma } from '@zephyr/db';
-import { NextResponse } from 'next/server';
+import { prisma } from "@zephyr/db";
+import { NextResponse } from "next/server";
 
 async function cleanupExpiredSessions() {
   const logs: string[] = [];
@@ -11,7 +11,7 @@ async function cleanupExpiredSessions() {
   };
 
   try {
-    log('🚀 Starting expired sessions cleanup');
+    log("🚀 Starting expired sessions cleanup");
     const expiredCount = await prisma.session.count({
       where: {
         expiresAt: {
@@ -23,7 +23,7 @@ async function cleanupExpiredSessions() {
     log(`🔍 Found ${expiredCount} expired sessions`);
 
     if (expiredCount === 0) {
-      log('✨ No expired sessions to clean up');
+      log("✨ No expired sessions to clean up");
       return {
         success: true,
         deletedCount: 0,
@@ -68,11 +68,11 @@ async function cleanupExpiredSessions() {
     return summary;
   } catch (error) {
     const errorMessage =
-      error instanceof Error ? error.message : 'Unknown error';
+      error instanceof Error ? error.message : "Unknown error";
     log(`❌ Failed to cleanup expired sessions: ${errorMessage}`);
     console.error(
-      'Sessions cleanup error stack:',
-      error instanceof Error ? error.stack : 'No stack trace'
+      "Sessions cleanup error stack:",
+      error instanceof Error ? error.stack : "No stack trace"
     );
 
     return {
@@ -85,49 +85,49 @@ async function cleanupExpiredSessions() {
   } finally {
     try {
       await prisma.$disconnect();
-      log('👋 Database connection closed');
+      log("👋 Database connection closed");
     } catch (_error) {
-      log('❌ Error closing database connection');
+      log("❌ Error closing database connection");
     }
   }
 }
 
 export async function GET(request: Request) {
-  console.log('📥 Received cleanup expired sessions request');
+  console.log("📥 Received cleanup expired sessions request");
 
   try {
     if (!process.env.CRON_SECRET_KEY) {
-      console.error('❌ CRON_SECRET_KEY environment variable not set');
+      console.error("❌ CRON_SECRET_KEY environment variable not set");
       return NextResponse.json(
         {
-          error: 'Server configuration error',
+          error: "Server configuration error",
           timestamp: new Date().toISOString(),
         },
         {
           status: 500,
           headers: {
-            'Content-Type': 'application/json',
-            'Cache-Control': 'no-store',
+            "Content-Type": "application/json",
+            "Cache-Control": "no-store",
           },
         }
       );
     }
 
-    const authHeader = request.headers.get('authorization');
+    const authHeader = request.headers.get("authorization");
     const expectedAuth = `Bearer ${process.env.CRON_SECRET_KEY}`;
 
     if (!authHeader || authHeader !== expectedAuth) {
-      console.warn('⚠️ Unauthorized cleanup attempt');
+      console.warn("⚠️ Unauthorized cleanup attempt");
       return NextResponse.json(
         {
-          error: 'Unauthorized',
+          error: "Unauthorized",
           timestamp: new Date().toISOString(),
         },
         {
           status: 401,
           headers: {
-            'Content-Type': 'application/json',
-            'Cache-Control': 'no-store',
+            "Content-Type": "application/json",
+            "Cache-Control": "no-store",
           },
         }
       );
@@ -138,32 +138,32 @@ export async function GET(request: Request) {
     return NextResponse.json(results, {
       status: results.success ? 200 : 500,
       headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-store',
+        "Content-Type": "application/json",
+        "Cache-Control": "no-store",
       },
     });
   } catch (error) {
-    console.error('❌ Sessions cleanup route error:', {
-      error: error instanceof Error ? error.message : 'Unknown error',
+    console.error("❌ Sessions cleanup route error:", {
+      error: error instanceof Error ? error.message : "Unknown error",
       stack: error instanceof Error ? error.stack : undefined,
     });
 
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : "Unknown error",
         timestamp: new Date().toISOString(),
       },
       {
         status: 500,
         headers: {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-store',
+          "Content-Type": "application/json",
+          "Cache-Control": "no-store",
         },
       }
     );
   }
 }
 
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";

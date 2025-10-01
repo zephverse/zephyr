@@ -1,5 +1,5 @@
-import { validateRequest } from '@zephyr/auth/src';
-import { prisma } from '@zephyr/db';
+import { validateRequest } from "@zephyr/auth/src";
+import { prisma } from "@zephyr/db";
 
 export async function GET(
   _req: Request,
@@ -8,7 +8,7 @@ export async function GET(
   try {
     const { user: loggedInUser } = await validateRequest();
     if (!loggedInUser) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const following = await prisma.user.findMany({
@@ -51,7 +51,7 @@ export async function GET(
 
     return Response.json(followingWithStatus);
   } catch (error) {
-    console.error('Error fetching following list:', error);
-    return Response.json({ error: 'Internal server error' }, { status: 500 });
+    console.error("Error fetching following list:", error);
+    return Response.json({ error: "Internal server error" }, { status: 500 });
   }
 }

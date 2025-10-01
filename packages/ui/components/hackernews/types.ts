@@ -1,4 +1,4 @@
-export interface HNStoryType {
+export type HNStoryType = {
   id: number;
   title: string;
   url?: string;
@@ -6,10 +6,10 @@ export interface HNStoryType {
   time: number;
   score: number;
   descendants: number;
-}
+};
 
-export interface HNApiResponse {
+export type HNApiResponse = {
   stories: HNStoryType[];
   hasMore: boolean;
   total: number;
-}
+};

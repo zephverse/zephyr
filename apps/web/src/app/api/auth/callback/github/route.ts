@@ -1,21 +1,21 @@
-import { slugify } from '@/lib/utils';
-import { github, lucia, validateRequest } from '@zephyr/auth/auth';
-import { createStreamUser } from '@zephyr/auth/src';
-import { prisma } from '@zephyr/db';
-import { OAuth2RequestError } from 'arctic';
-import { generateIdFromEntropySize } from 'lucia';
-import { cookies } from 'next/headers';
-import type { NextRequest } from 'next/server';
+import { github, lucia, validateRequest } from "@zephyr/auth/auth";
+import { createStreamUser } from "@zephyr/auth/src";
+import { prisma } from "@zephyr/db";
+import { OAuth2RequestError } from "arctic";
+import { generateIdFromEntropySize } from "lucia";
+import { cookies } from "next/headers";
+import type { NextRequest } from "next/server";
+import { slugify } from "@/lib/utils";
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex logic is required here
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: OAuth callback handling requires multiple conditional branches for different auth states
 export async function GET(req: NextRequest) {
   try {
-    const code = req.nextUrl.searchParams.get('code');
-    const state = req.nextUrl.searchParams.get('state');
-    const storedState = (await cookies()).get('state')?.value;
-    const isLinking = (await cookies()).get('linking')?.value === 'true';
+    const code = req.nextUrl.searchParams.get("code");
+    const state = req.nextUrl.searchParams.get("state");
+    const storedState = (await cookies()).get("state")?.value;
+    const isLinking = (await cookies()).get("linking")?.value === "true";
 
-    if (!code || !state || !storedState || state !== storedState) {
+    if (!(code && state && storedState) || state !== storedState) {
       return new Response(null, { status: 400 });
     }
 
@@ -24,10 +24,10 @@ export async function GET(req: NextRequest) {
       // @ts-expect-error
       const accessToken = tokens.data.access_token;
 
-      const githubUserResponse = await fetch('https://api.github.com/user', {
+      const githubUserResponse = await fetch("https://api.github.com/user", {
         headers: {
-          Authorization: `Bearer ${accessToken}`,
-          Accept: 'application/json',
+          authorization: `Bearer ${accessToken}`,
+          accept: "application/json",
         },
       });
 
@@ -39,10 +39,10 @@ export async function GET(req: NextRequest) {
 
       const githubUser = await githubUserResponse.json();
 
-      const emailsResponse = await fetch('https://api.github.com/user/emails', {
+      const emailsResponse = await fetch("https://api.github.com/user/emails", {
         headers: {
-          Authorization: `Bearer ${accessToken}`,
-          Accept: 'application/json',
+          authorization: `Bearer ${accessToken}`,
+          accept: "application/json",
         },
       });
 
@@ -57,7 +57,7 @@ export async function GET(req: NextRequest) {
       const primaryEmail = emails.find((email: any) => email.primary)?.email;
 
       if (!primaryEmail) {
-        throw new Error('No primary email found');
+        throw new Error("No primary email found");
       }
 
       if (isLinking) {
@@ -66,7 +66,7 @@ export async function GET(req: NextRequest) {
           return new Response(null, {
             status: 302,
             headers: {
-              Location: '/login',
+              location: "/login",
             },
           });
         }
@@ -81,7 +81,7 @@ export async function GET(req: NextRequest) {
           return new Response(null, {
             status: 302,
             headers: {
-              Location: '/settings?error=github_account_linked_other',
+              location: "/settings?error=github_account_linked_other",
             },
           });
         }
@@ -91,12 +91,12 @@ export async function GET(req: NextRequest) {
           data: { githubId: githubUser.id.toString() },
         });
 
-        (await cookies()).set('linking', '', { maxAge: 0 });
+        (await cookies()).set("linking", "", { maxAge: 0 });
 
         return new Response(null, {
           status: 302,
           headers: {
-            Location: '/settings?success=github_linked',
+            location: "/settings?success=github_linked",
           },
         });
       }
@@ -111,7 +111,7 @@ export async function GET(req: NextRequest) {
         return new Response(null, {
           status: 302,
           headers: {
-            Location: `/login/error?error=email_exists&email=${encodeURIComponent(primaryEmail)}`,
+            location: `/login/error?error=email_exists&email=${encodeURIComponent(primaryEmail)}`,
           },
         });
       }
@@ -134,7 +134,7 @@ export async function GET(req: NextRequest) {
         return new Response(null, {
           status: 302,
           headers: {
-            Location: '/',
+            location: "/",
           },
         });
       }
@@ -156,13 +156,13 @@ export async function GET(req: NextRequest) {
         });
 
         try {
-          await createStreamUser(
-            newUser.id,
-            newUser.username,
-            newUser.displayName
-          );
+          await createStreamUser({
+            userId: newUser.id,
+            username: newUser.username,
+            displayName: newUser.displayName,
+          });
         } catch (streamError) {
-          console.error('Failed to create Stream user:', streamError);
+          console.error("Failed to create Stream user:", streamError);
         }
 
         // @ts-expect-error
@@ -177,26 +177,26 @@ export async function GET(req: NextRequest) {
         return new Response(null, {
           status: 302,
           headers: {
-            Location: '/',
+            location: "/",
           },
         });
       } catch (error) {
-        console.error('Transaction error:', error);
+        console.error("Transaction error:", error);
         throw error;
       }
     } catch (error) {
-      console.error('GitHub API error:', error);
+      console.error("GitHub API error:", error);
       throw error;
     }
   } catch (error) {
-    console.error('Final error catch:', error);
+    console.error("Final error catch:", error);
     if (error instanceof OAuth2RequestError) {
       return new Response(null, { status: 400 });
     }
     return new Response(JSON.stringify({ error: String(error) }), {
       status: 500,
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
     });
   }

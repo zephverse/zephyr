@@ -4,11 +4,11 @@ import {
   type QueryKey,
   useMutation,
   useQueryClient,
-} from '@tanstack/react-query';
-import type { PostsPage } from '@zephyr/db';
-import { useToast } from '@zephyr/ui/hooks/use-toast';
-import { usePathname, useRouter } from 'next/navigation';
-import { deletePost } from './actions';
+} from "@tanstack/react-query";
+import type { PostsPage } from "@zephyr/db";
+import { useToast } from "@zephyr/ui/hooks/use-toast";
+import { usePathname, useRouter } from "next/navigation";
+import { deletePost } from "./actions";
 
 export function useDeletePostMutation() {
   const { toast } = useToast();
@@ -26,7 +26,7 @@ export function useDeletePostMutation() {
         Error,
         InfiniteData<PostsPage, string | null>,
         QueryKey
-      > = { queryKey: ['post-feed'] };
+      > = { queryKey: ["post-feed"] };
 
       await queryClient.cancelQueries(queryFilter);
 
@@ -48,7 +48,7 @@ export function useDeletePostMutation() {
       );
 
       toast({
-        description: 'Post deleted successfully',
+        description: "Post deleted successfully",
       });
 
       if (pathname === `/posts/${deletedPost.id}`) {
@@ -58,8 +58,8 @@ export function useDeletePostMutation() {
     onError(error) {
       console.error(error);
       toast({
-        variant: 'destructive',
-        description: 'Failed to delete post. Please try again.',
+        variant: "destructive",
+        description: "Failed to delete post. Please try again.",
       });
     },
   });

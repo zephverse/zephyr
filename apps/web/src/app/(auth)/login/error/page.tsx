@@ -1,50 +1,50 @@
-'use client';
+"use client";
 
-import { Button } from '@zephyr/ui/shadui/button';
-import { AnimatePresence, motion } from 'framer-motion';
-import { AlertCircle } from 'lucide-react';
-import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { Button } from "@zephyr/ui/shadui/button";
+import { AnimatePresence, motion } from "framer-motion";
+import { AlertCircle } from "lucide-react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
 const ERROR_MESSAGES = {
-  email_exists: 'This email is already registered.',
-  invalid_credentials: 'Invalid email or password.',
-  oauth_error: 'Error connecting with social provider.',
-  server_error: 'An unexpected error occurred.',
-  account_not_found: 'Account not found.',
-  unauthorized: 'You must be logged in to access this page.',
+  emailExists: "This email is already registered.",
+  invalidCredentials: "Invalid email or password.",
+  oauthError: "Error connecting with social provider.",
+  serverError: "An unexpected error occurred.",
+  accountNotFound: "Account not found.",
+  unauthorized: "You must be logged in to access this page.",
 };
 
 const AnimatedZephyrText = () => {
-  const letters = 'ZEPHYR.'.split('');
+  const letters = "ZEPHYR.".split("");
 
   return (
     <motion.div
+      animate={{ opacity: 1 }}
       className="pointer-events-none select-none font-bold text-4xl sm:text-6xl"
       initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
       transition={{ duration: 0.8, delay: 0.7 }}
     >
       <div className="relative flex">
         {letters.map((letter, i) => (
           <motion.span
-            key={i}
-            className="text-primary/50"
-            initial={{ opacity: 0, y: 20 }}
             animate={{
               opacity: [0, 1, 1, 0.3, 1],
               y: [20, 0, 0, 0, 0],
             }}
+            className="text-primary/50"
+            initial={{ opacity: 0, y: 20 }}
+            key={letter}
+            style={{
+              textShadow: "0 2px 10px rgba(0, 0, 0, 0.1)",
+              display: "inline-block",
+            }}
             transition={{
               duration: 4,
               repeat: Number.POSITIVE_INFINITY,
-              ease: 'easeInOut',
+              ease: "easeInOut",
               delay: i * 0.1,
               times: [0, 0.2, 0.5, 0.8, 1],
-            }}
-            style={{
-              textShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
-              display: 'inline-block',
             }}
           >
             {letter}
@@ -52,19 +52,19 @@ const AnimatedZephyrText = () => {
         ))}
       </div>
       <motion.div
-        className="absolute bottom-0 left-0 h-0.5 bg-primary/30"
-        initial={{ scaleX: 0 }}
         animate={{
           scaleX: [0, 1, 1, 1, 0],
           opacity: [0, 1, 1, 0.3, 0],
         }}
+        className="absolute bottom-0 left-0 h-0.5 bg-primary/30"
+        initial={{ scaleX: 0 }}
+        style={{ transformOrigin: "left" }}
         transition={{
           duration: 4,
           repeat: Number.POSITIVE_INFINITY,
-          ease: 'easeInOut',
+          ease: "easeInOut",
           times: [0, 0.2, 0.5, 0.8, 1],
         }}
-        style={{ transformOrigin: 'left' }}
       />
     </motion.div>
   );
@@ -72,20 +72,20 @@ const AnimatedZephyrText = () => {
 
 export default function LoginErrorPage() {
   const searchParams = useSearchParams();
-  const error = searchParams.get('error');
-  const email = searchParams.get('email');
+  const error = searchParams.get("error");
+  const email = searchParams.get("email");
 
   const errorMessage = error
     ? ERROR_MESSAGES[error as keyof typeof ERROR_MESSAGES]
-    : 'An error occurred';
+    : "An error occurred";
 
   return (
     <AnimatePresence>
       <motion.div
-        className="relative min-h-screen w-full overflow-hidden bg-gradient-to-br from-background via-background/95 to-background"
-        initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
+        className="relative min-h-screen w-full overflow-hidden bg-gradient-to-br from-background via-background/95 to-background"
         exit={{ opacity: 0 }}
+        initial={{ opacity: 0 }}
       >
         <div className="absolute inset-0 overflow-hidden">
           <div className="-left-4 absolute top-0 h-[500px] w-[500px] rounded-full bg-blue-500/10 blur-[100px]" />
@@ -95,21 +95,21 @@ export default function LoginErrorPage() {
 
         <div className="relative flex min-h-screen items-center justify-center p-4">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
             className="w-full max-w-md rounded-lg border border-border/50 bg-background/60 p-8 shadow-lg backdrop-blur-xl"
+            initial={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.5 }}
           >
             <motion.div
-              initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               className="flex flex-col items-center space-y-6"
+              initial={{ opacity: 0 }}
             >
               <motion.div
-                initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                transition={{ type: 'spring', duration: 0.5 }}
                 className="rounded-full bg-destructive/10 p-4"
+                initial={{ scale: 0 }}
+                transition={{ type: "spring", duration: 0.5 }}
               >
                 <AlertCircle className="h-12 w-12 text-destructive" />
               </motion.div>
@@ -130,21 +130,21 @@ export default function LoginErrorPage() {
                 <Button asChild className="w-full">
                   <Link href="/login">Login with Email</Link>
                 </Button>
-                <Button asChild variant="outline" className="w-full">
+                <Button asChild className="w-full" variant="outline">
                   <Link href="/signup">Create New Account</Link>
                 </Button>
               </div>
 
               <motion.p
-                initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ delay: 0.5 }}
                 className="text-center text-muted-foreground text-sm"
+                initial={{ opacity: 0 }}
+                transition={{ delay: 0.5 }}
               >
-                Need help?{' '}
+                Need help?{" "}
                 <Link
-                  href="mailto:dev.hashcodes@gmail.com"
                   className="text-primary transition-colors hover:underline"
+                  href="mailto:dev.hashcodes@gmail.com"
                 >
                   Contact Support
                 </Link>
@@ -153,10 +153,10 @@ export default function LoginErrorPage() {
           </motion.div>
 
           <motion.div
-            initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
             className="-translate-x-1/2 absolute bottom-8 left-1/2"
+            initial={{ opacity: 0 }}
+            transition={{ delay: 0.5 }}
           >
             <AnimatedZephyrText />
           </motion.div>

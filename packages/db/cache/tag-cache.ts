@@ -1,15 +1,15 @@
-import prisma from '../src/prisma';
-import { redis } from '../src/redis';
+import prisma from "../src/prisma";
+import { redis } from "../src/redis";
 
-const TAG_COUNTS_KEY = 'tags:counts';
-const TAG_LIST_KEY = 'tags:list';
-const TAG_SUGGESTIONS_KEY = 'tags:suggestions';
+const TAG_COUNTS_KEY = "tags:counts";
+const TAG_LIST_KEY = "tags:list";
+const TAG_SUGGESTIONS_KEY = "tags:suggestions";
 const TAG_TTL = 3600; // 1 hour
 
-export interface TagCount {
+export type TagCount = {
   name: string;
   count: number;
-}
+};
 
 export const tagCache = {
   async syncTagCounts(): Promise<void> {
@@ -41,7 +41,7 @@ export const tagCache = {
       await redis.expire(TAG_LIST_KEY, TAG_TTL);
       await redis.expire(TAG_SUGGESTIONS_KEY, TAG_TTL);
     } catch (error) {
-      console.error('Error syncing tag counts:', error);
+      console.error("Error syncing tag counts:", error);
     }
   },
 
@@ -61,7 +61,7 @@ export const tagCache = {
       const results = await pipeline.exec();
       return (results?.[0]?.[1] as number) || 0;
     } catch (error) {
-      console.error('Error incrementing tag count:', error);
+      console.error("Error incrementing tag count:", error);
       return 0;
     }
   },
@@ -87,7 +87,7 @@ export const tagCache = {
 
       return Math.max(0, count);
     } catch (error) {
-      console.error('Error decrementing tag count:', error);
+      console.error("Error decrementing tag count:", error);
       return 0;
     }
   },
@@ -110,7 +110,7 @@ export const tagCache = {
         .sort((a, b) => b.count - a.count)
         .slice(0, limit);
     } catch (error) {
-      console.error('Error getting popular tags:', error);
+      console.error("Error getting popular tags:", error);
       return [];
     }
   },
@@ -128,7 +128,7 @@ export const tagCache = {
             where: {
               name: {
                 contains: query.toLowerCase(),
-                mode: 'insensitive',
+                mode: "insensitive",
               },
               posts: {
                 some: {},
@@ -137,7 +137,7 @@ export const tagCache = {
             take: limit,
             orderBy: {
               posts: {
-                _count: 'desc',
+                _count: "desc",
               },
             },
           });
@@ -155,7 +155,7 @@ export const tagCache = {
         .filter((tag) => tag.toLowerCase().includes(query.toLowerCase()))
         .slice(0, limit);
     } catch (error) {
-      console.error('Error searching tags:', error);
+      console.error("Error searching tags:", error);
       return [];
     }
   },
@@ -164,7 +164,7 @@ export const tagCache = {
     try {
       await this.syncTagCounts();
     } catch (error) {
-      console.error('Error refreshing tag cache:', error);
+      console.error("Error refreshing tag cache:", error);
     }
   },
 };

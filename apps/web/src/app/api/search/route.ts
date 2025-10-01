@@ -1,30 +1,30 @@
-import { validateRequest } from '@zephyr/auth/auth';
-import { getPostDataInclude, prisma, searchSuggestionsCache } from '@zephyr/db';
-import type { NextRequest } from 'next/server';
+import { validateRequest } from "@zephyr/auth/auth";
+import { getPostDataInclude, prisma, searchSuggestionsCache } from "@zephyr/db";
+import type { NextRequest } from "next/server";
 
 export async function GET(req: NextRequest) {
   try {
     const { user } = await validateRequest();
     if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const searchParams = req.nextUrl.searchParams;
-    const q = searchParams.get('q') || '';
-    const type = searchParams.get('type');
-    const cursor = searchParams.get('cursor');
+    const q = searchParams.get("q") || "";
+    const type = searchParams.get("type");
+    const cursor = searchParams.get("cursor");
 
-    if (type === 'suggestions') {
+    if (type === "suggestions") {
       const suggestions = await searchSuggestionsCache.getSuggestions(q);
       return Response.json(suggestions);
     }
 
-    if (type === 'history') {
+    if (type === "history") {
       const history = await searchSuggestionsCache.getHistory(user.id);
       return Response.json(history);
     }
 
-    const searchQuery = q.split(' ').join(' & ');
+    const searchQuery = q.split(" ").join(" & ");
     const pageSize = 10;
 
     if (q) {
@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
         ],
       },
       include: getPostDataInclude(user.id),
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
       take: pageSize + 1,
       cursor: cursor ? { id: cursor } : undefined,
     });
@@ -56,8 +56,8 @@ export async function GET(req: NextRequest) {
       nextCursor,
     });
   } catch (error) {
-    console.error('Error in search API:', error);
-    return Response.json({ error: 'Internal server error' }, { status: 500 });
+    console.error("Error in search API:", error);
+    return Response.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
@@ -65,12 +65,12 @@ export async function POST(req: NextRequest) {
   try {
     const { user } = await validateRequest();
     if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { query } = await req.json();
     if (!query) {
-      return Response.json({ error: 'Query is required' }, { status: 400 });
+      return Response.json({ error: "Query is required" }, { status: 400 });
     }
 
     await Promise.all([
@@ -80,8 +80,8 @@ export async function POST(req: NextRequest) {
 
     return Response.json({ success: true });
   } catch (error) {
-    console.error('Error in search API:', error);
-    return Response.json({ error: 'Internal server error' }, { status: 500 });
+    console.error("Error in search API:", error);
+    return Response.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
@@ -89,15 +89,15 @@ export async function DELETE(req: NextRequest) {
   try {
     const { user } = await validateRequest();
     if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const searchParams = req.nextUrl.searchParams;
-    const type = searchParams.get('type');
-    const query = searchParams.get('query');
+    const type = searchParams.get("type");
+    const query = searchParams.get("query");
 
-    if (type !== 'history') {
-      return Response.json({ error: 'Invalid operation' }, { status: 400 });
+    if (type !== "history") {
+      return Response.json({ error: "Invalid operation" }, { status: 400 });
     }
 
     if (query) {
@@ -108,7 +108,7 @@ export async function DELETE(req: NextRequest) {
 
     return Response.json({ success: true });
   } catch (error) {
-    console.error('Error in search API:', error);
-    return Response.json({ error: 'Internal server error' }, { status: 500 });
+    console.error("Error in search API:", error);
+    return Response.json({ error: "Internal server error" }, { status: 500 });
   }
 }

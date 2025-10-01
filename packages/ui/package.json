@@ -1,7 +1,7 @@
 {
   "name": "@zephyr/ui",
   "description": "Zephyr's UI components and styles",
-  "version": "2.0.34-dev",
+  "version": "2.0.35-dev",
   "license": "AGPL-3.0",
   "private": true,
   "scripts": {
@@ -9,7 +9,6 @@
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {
-    "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-alert-dialog": "^1.1.15",
     "@radix-ui/react-aspect-ratio": "^1.1.7",
@@ -38,7 +37,6 @@
     "@radix-ui/react-toggle": "^1.1.10",
     "@radix-ui/react-toggle-group": "^1.1.11",
     "@radix-ui/react-tooltip": "^1.2.8",
-    "@tailwindcss/typography": "^0.5.19",
     "@tanstack/react-query": "^5.90.2",
     "@tsparticles/engine": "^3.9.1",
     "@tsparticles/react": "^3.0.0",
@@ -53,32 +51,25 @@
     "gsap": "^3.13.0",
     "input-otp": "^1.4.2",
     "lucide-react": "^0.544.0",
-    "next": "15.4.7",
+    "next": "15.5.4",
     "next-themes": "^0.4.6",
     "react": "19.0.0",
     "react-day-picker": "9.6.7",
     "react-hook-form": "^7.63.0",
     "react-resizable-panels": "^3.0.6",
-    "recharts": "^3.2.1",
+    "recharts": "2.15.4",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.3.1",
-    "tailwindcss-animate": "^1.0.7",
-    "usehooks-ts": "^3.1.1",
     "vaul": "^1.1.2",
-    "zod": "^4.1.11",
     "zustand": "^5.0.8"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4.1.13",
+    "@tailwindcss/postcss": "^4.1.14",
     "@tailwindcss/typography": "^0.5.19",
     "@tanstack/react-query-devtools": "^5.90.2",
-    "@types/node": "^22.18.7",
-    "@types/react": "19.0.10",
-    "@types/react-dom": "19.0.3",
     "@zephyr/config": "workspace:*",
-    "@zephyr/observability": "workspace:*",
     "@zephyr/tailwind": "workspace:*",
-    "tailwindcss": "^4.1.13",
-    "typescript": "^5.9.2"
+    "tailwindcss": "^4.1.14",
+    "typescript": "^5.9.3"
   }
 }

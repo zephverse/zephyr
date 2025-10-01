@@ -1,13 +1,13 @@
-import { redis } from '../src/redis';
+import { redis } from "../src/redis";
 
-const AVATAR_CACHE_PREFIX = 'avatar:';
+const AVATAR_CACHE_PREFIX = "avatar:";
 const AVATAR_CACHE_TTL = 3600;
 
-export interface CachedAvatarData {
+export type CachedAvatarData = {
   url: string;
   key: string;
   updatedAt: string;
-}
+};
 
 export const avatarCache = {
   async get(userId: string): Promise<CachedAvatarData | null> {
@@ -17,8 +17,8 @@ export const avatarCache = {
     }
 
     const data = JSON.parse(cached);
-    if (process.env.NODE_ENV === 'production' && data.url) {
-      data.url = data.url.replace('http://', 'https://');
+    if (process.env.NODE_ENV === "production" && data.url) {
+      data.url = data.url.replace("http://", "https://");
     }
     return data;
   },
@@ -27,15 +27,15 @@ export const avatarCache = {
     const cacheData = {
       ...data,
       url:
-        process.env.NODE_ENV === 'production'
-          ? data.url.replace('http://', 'https://')
+        process.env.NODE_ENV === "production"
+          ? data.url.replace("http://", "https://")
           : data.url,
     };
 
     await redis.set(
       `${AVATAR_CACHE_PREFIX}${userId}`,
       JSON.stringify(cacheData),
-      'EX',
+      "EX",
       AVATAR_CACHE_TTL
     );
   },

@@ -1,10 +1,10 @@
-'use client';
-import { cn } from '@zephyr/ui/lib/utils';
-import { AnimatePresence, motion } from 'framer-motion';
-import type React from 'react';
-import { useEffect, useId, useState } from 'react';
-import { useRef } from 'react';
-import { SparklesCore } from './sparkles';
+"use client";
+
+import { AnimatePresence, motion } from "framer-motion";
+import type React from "react";
+import { useEffect, useId, useRef, useState } from "react";
+import { cn } from "../../lib/utils";
+import { SparklesCore } from "./sparkles";
 
 export const Cover = ({
   children,
@@ -15,12 +15,11 @@ export const Cover = ({
 }) => {
   const [hovered, setHovered] = useState(false);
 
-  const ref = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLSpanElement>(null);
 
   const [containerWidth, setContainerWidth] = useState(0);
   const [beamPositions, setBeamPositions] = useState<number[]>([]);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies:
   useEffect(() => {
     if (ref.current) {
       setContainerWidth(ref.current?.clientWidth ?? 0);
@@ -33,98 +32,103 @@ export const Cover = ({
       );
       setBeamPositions(positions);
     }
-  }, [ref.current]);
+  }, []);
 
   return (
-    // biome-ignore lint/nursery/noStaticElementInteractions:
-    <div
+    // biome-ignore lint/a11y/noNoninteractiveElementInteractions: Presentational hover effects only
+    // biome-ignore lint/a11y/noStaticElementInteractions: Presentational hover effects only
+    <span
+      className="group/cover relative inline-block rounded-xs bg-neutral-100 px-2 py-2 transition duration-200 hover:bg-neutral-900 dark:bg-neutral-900"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       ref={ref}
-      className="group/cover relative inline-block rounded-xs bg-neutral-100 px-2 py-2 transition duration-200 hover:bg-neutral-900 dark:bg-neutral-900"
     >
       <AnimatePresence>
         {hovered && (
           <motion.div
-            initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
+            className="absolute inset-0 h-full w-full overflow-hidden"
             exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }}
             transition={{
               opacity: {
                 duration: 0.2,
               },
             }}
-            className="absolute inset-0 h-full w-full overflow-hidden"
           >
             <motion.div
               animate={{
-                translateX: ['-50%', '0%'],
+                translateX: ["-50%", "0%"],
               }}
+              className="flex h-full w-[200%]"
               transition={{
                 translateX: {
                   duration: 10,
-                  ease: 'linear',
+                  ease: "linear",
                   repeat: Number.POSITIVE_INFINITY,
                 },
               }}
-              className="flex h-full w-[200%]"
             >
               <SparklesCore
                 background="transparent"
-                minSize={0.4}
-                maxSize={1}
-                particleDensity={500}
                 className="h-full w-full"
+                maxSize={1}
+                minSize={0.4}
                 particleColor="hsl(var(--primary))"
+                particleDensity={500}
               />
               <SparklesCore
                 background="transparent"
-                minSize={0.4}
-                maxSize={1}
-                particleDensity={500}
                 className="h-full w-full"
+                maxSize={1}
+                minSize={0.4}
                 particleColor="hsl(var(--primary))"
+                particleDensity={500}
               />
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
-      {beamPositions.map((position, index) => (
+      {beamPositions.map((position, _index) => (
         <Beam
-          key={index}
-          hovered={hovered}
-          duration={Math.random() * 2 + 1}
           delay={Math.random() * 2 + 1}
-          width={containerWidth}
+          duration={Math.random() * 2 + 1}
+          hovered={hovered}
+          key={`beam-${position}`}
           style={{
             top: `${position}px`,
           }}
+          width={containerWidth}
         />
       ))}
       <motion.span
-        key={String(hovered)}
         animate={{
           scale: hovered ? 0.8 : 1,
           x: hovered ? [0, -30, 30, -30, 30, 0] : 0,
           y: hovered ? [0, 30, -30, 30, -30, 0] : 0,
         }}
+        className={cn(
+          "relative z-20 inline-block text-foreground transition duration-200 group-hover/cover:text-primary",
+          className
+        )}
         exit={{
-          filter: 'none',
+          filter: "none",
           scale: 1,
           x: 0,
           y: 0,
         }}
+        key={String(hovered)}
         transition={{
           duration: 0.2,
           x: {
             duration: 0.2,
             repeat: Number.POSITIVE_INFINITY,
-            repeatType: 'loop',
+            repeatType: "loop",
           },
           y: {
             duration: 0.2,
             repeat: Number.POSITIVE_INFINITY,
-            repeatType: 'loop',
+            repeatType: "loop",
           },
           scale: {
             duration: 0.2,
@@ -133,10 +137,6 @@ export const Cover = ({
             duration: 0.2,
           },
         }}
-        className={cn(
-          'relative z-20 inline-block text-foreground transition duration-200 group-hover/cover:text-primary',
-          className
-        )}
       >
         {children}
       </motion.span>
@@ -144,7 +144,7 @@ export const Cover = ({
       <CircleIcon className="-bottom-[2px] -right-[2px] absolute" delay={0.4} />
       <CircleIcon className="-left-[2px] -top-[2px] absolute" delay={0.8} />
       <CircleIcon className="-bottom-[2px] -left-[2px] absolute" delay={1.6} />
-    </div>
+    </span>
   );
 };
 
@@ -165,41 +165,41 @@ export const Beam = ({
   const id = useId();
 
   return (
-    // biome-ignore lint/a11y/noSvgWithoutTitle:
     <motion.svg
-      width={width ?? '600'}
-      height="1"
-      viewBox={`0 0 ${width ?? '600'} 1`}
+      className={cn("absolute inset-x-0 w-full", className)}
       fill="none"
+      height="1"
+      viewBox={`0 0 ${width ?? "600"} 1`}
+      width={width ?? "600"}
       xmlns="http://www.w3.org/2000/svg"
-      className={cn('absolute inset-x-0 w-full', className)}
       {...svgProps}
     >
+      <title>Beam animation</title>
       <motion.path
-        d={`M0 0.5H${width ?? '600'}`}
+        d={`M0 0.5H${width ?? "600"}`}
         stroke={`url(#svgGradient-${id})`}
       />
 
       <defs>
         <motion.linearGradient
-          id={`svgGradient-${id}`}
-          key={String(hovered)}
-          gradientUnits="userSpaceOnUse"
-          initial={{
-            x1: '0%',
-            x2: hovered ? '-10%' : '-5%',
-            y1: 0,
-            y2: 0,
-          }}
           animate={{
-            x1: '110%',
-            x2: hovered ? '100%' : '105%',
+            x1: "110%",
+            x2: hovered ? "100%" : "105%",
             y1: 0,
             y2: 0,
           }}
+          gradientUnits="userSpaceOnUse"
+          id={`svgGradient-${id}`}
+          initial={{
+            x1: "0%",
+            x2: hovered ? "-10%" : "-5%",
+            y1: 0,
+            y2: 0,
+          }}
+          key={String(hovered)}
           transition={{
             duration: hovered ? 0.5 : (duration ?? 2),
-            ease: 'linear',
+            ease: "linear",
             repeat: Number.POSITIVE_INFINITY,
             delay: hovered ? Math.random() * (1 - 0.2) + 0.2 : 0,
             repeatDelay: hovered ? Math.random() * (2 - 1) + 1 : (delay ?? 1),
@@ -219,13 +219,11 @@ export const CircleIcon = ({
 }: {
   className?: string;
   delay?: number;
-}) => {
-  return (
-    <div
-      className={cn(
-        'group pointer-events-none h-2 w-2 animate-pulse rounded-full bg-neutral-600 opacity-20 group-hover/cover:hidden group-hover/cover:bg-white group-hover/cover:opacity-100 dark:bg-white',
-        className
-      )}
-    />
-  );
-};
+}) => (
+  <div
+    className={cn(
+      "group pointer-events-none h-2 w-2 animate-pulse rounded-full bg-neutral-600 opacity-20 group-hover/cover:hidden group-hover/cover:bg-white group-hover/cover:opacity-100 dark:bg-white",
+      className
+    )}
+  />
+);

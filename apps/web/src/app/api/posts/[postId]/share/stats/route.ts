@@ -1,5 +1,5 @@
-import { shareStatsCache } from '@zephyr/db';
-import { NextResponse } from 'next/server';
+import { shareStatsCache } from "@zephyr/db";
+import { NextResponse } from "next/server";
 
 type Params = { params: { postId: string } };
 
@@ -7,22 +7,22 @@ export async function GET(params: Params) {
   const { postId } = await params.params;
 
   if (!postId) {
-    return NextResponse.json({ error: 'Post ID is required' }, { status: 400 });
+    return NextResponse.json({ error: "Post ID is required" }, { status: 400 });
   }
 
   try {
     const platforms = [
-      'twitter',
-      'facebook',
-      'linkedin',
-      'instagram',
-      'pinterest',
-      'reddit',
-      'whatsapp',
-      'discord',
-      'email',
-      'copy',
-      'qr',
+      "twitter",
+      "facebook",
+      "linkedin",
+      "instagram",
+      "pinterest",
+      "reddit",
+      "whatsapp",
+      "discord",
+      "email",
+      "copy",
+      "qr",
     ];
 
     const stats = await Promise.all(
@@ -37,12 +37,12 @@ export async function GET(params: Params) {
 
     return NextResponse.json(stats);
   } catch (error) {
-    console.error('Error fetching share stats:', error);
+    console.error("Error fetching share stats:", error);
     return NextResponse.json(
-      { error: 'Failed to fetch share statistics' },
+      { error: "Failed to fetch share statistics" },
       { status: 500 }
     );
   }
 }
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";

@@ -1,16 +1,16 @@
-import Friends from '@/components/Home/sidebars/left/Friends';
-import NavigationCard from '@/components/Home/sidebars/left/NavigationCard';
-import ProfileCard from '@/components/Home/sidebars/right/ProfileCard';
-import TrendingTopics from '@/components/Home/sidebars/right/TrendingTopics';
-import StickyFooter from '@/components/Layouts/StinkyFooter';
-import { getUserData } from '@/hooks/useUserData';
-import { validateRequest } from '@zephyr/auth/auth';
-import type { Metadata } from 'next';
-import SearchResults from './SearchResult';
+import { validateRequest } from "@zephyr/auth/auth";
+import type { Metadata } from "next";
+import Friends from "@/components/Home/sidebars/left/friends";
+import NavigationCard from "@/components/Home/sidebars/left/navigation-card";
+import ProfileCard from "@/components/Home/sidebars/right/profile-card";
+import TrendingTopics from "@/components/Home/sidebars/right/trending-topics";
+import StickyFooter from "@/components/Layouts/stinky-footer";
+import { getUserData } from "@/hooks/use-user-data";
+import SearchResults from "./search-result";
 
-interface PageProps {
+type PageProps = {
   searchParams: Promise<{ q: string }>;
-}
+};
 
 export async function generateMetadata(props: PageProps): Promise<Metadata> {
   const searchParams = await props.searchParams;
@@ -31,8 +31,8 @@ export default async function Page(props: PageProps) {
       <aside className="sticky top-[5rem] ml-1 hidden h-[calc(100vh-5.25rem)] w-72 shrink-0 md:block">
         <div className="flex h-full flex-col">
           <NavigationCard
-            isCollapsed={false}
             className="flex-none"
+            isCollapsed={false}
             stickyTop="5rem"
           />
           <div className="mt-2 flex-none">

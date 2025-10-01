@@ -1,0 +1,25 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "files": {
+    "includes": [
+      "**/*",
+      "!packages/ui/styles/",
+      "!scripts/check-env.js",
+      "!apps/web/src/components/Messages/Theme.css",
+      "!packages/ui/styles/globals.css"
+    ]
+  },
+  "linter": {
+    "rules": {
+      "style": {
+        "noMagicNumbers": "off",
+        "useNamingConvention": "off"
+      },
+      "suspicious": {
+        "noConsole": "off",
+        "noUnknownAtRules": "off"
+      }
+    }
+  },
+  "extends": ["ultracite"]
+}

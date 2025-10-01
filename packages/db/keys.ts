@@ -1,29 +1,29 @@
-import { createEnv } from '@t3-oss/env-nextjs';
-import { z } from 'zod';
+import { createEnv } from "@t3-oss/env-nextjs";
+import { z } from "zod";
 
 export const keys = createEnv({
   server: {
     DATABASE_URL: z.string().url().min(1),
     POSTGRES_PRISMA_URL: z.string().url().min(1),
     POSTGRES_URL_NON_POOLING: z.string().url().min(1),
-    POSTGRES_USER: z.string().min(1).default('postgres'),
-    POSTGRES_PASSWORD: z.string().min(1).default('postgres'),
-    POSTGRES_DB: z.string().min(1).default('zephyr'),
+    POSTGRES_USER: z.string().min(1).default("postgres"),
+    POSTGRES_PASSWORD: z.string().min(1).default("postgres"),
+    POSTGRES_DB: z.string().min(1).default("zephyr"),
     POSTGRES_PORT: z
       .string()
       .transform((val) => Number.parseInt(val, 10))
-      .default('5433'),
-    POSTGRES_HOST: z.string().min(1).default('localhost'),
-    REDIS_PASSWORD: z.string().min(1).default('zephyrredis'),
+      .default("5433"),
+    POSTGRES_HOST: z.string().min(1).default("localhost"),
+    REDIS_PASSWORD: z.string().min(1).default("zephyrredis"),
     REDIS_PORT: z
       .string()
       .transform((val) => Number.parseInt(val, 10))
-      .default('6379'),
-    REDIS_HOST: z.string().min(1).default('localhost'),
+      .default("6379"),
+    REDIS_HOST: z.string().min(1).default("localhost"),
     REDIS_URL: z
       .string()
       .url()
-      .default('redis://:zephyrredis@localhost:6379/0')
+      .default("redis://:zephyrredis@localhost:6379/0")
       .transform((val) => {
         const password = process.env.REDIS_PASSWORD;
         const host = process.env.REDIS_HOST;
@@ -34,8 +34,8 @@ export const keys = createEnv({
         return val;
       }),
     NODE_ENV: z
-      .enum(['development', 'production', 'test'])
-      .default('development'),
+      .enum(["development", "production", "test"])
+      .default("development"),
   },
 
   client: {
@@ -58,5 +58,5 @@ export const keys = createEnv({
     NODE_ENV: process.env.NODE_ENV,
   },
 
-  skipValidation: process.env.NODE_ENV === 'production',
+  skipValidation: process.env.NODE_ENV === "production",
 });

@@ -1,7 +1,7 @@
-'use server';
+"use server";
 
-import { lucia, validateRequest } from '@zephyr/auth/auth';
-import { cookies } from 'next/headers';
+import { lucia, validateRequest } from "@zephyr/auth/auth";
+import { cookies } from "next/headers";
 
 export async function logout() {
   try {
@@ -15,12 +15,12 @@ export async function logout() {
 
     cookieStore.set(sessionCookie.name, sessionCookie.value, {
       ...sessionCookie.attributes,
-      path: '/',
+      path: "/",
     });
 
-    return { redirect: '/login' };
+    return { redirect: "/login" };
   } catch (error) {
-    console.error('Session invalidation error:', error);
-    return { error: 'Logout failed' };
+    console.error("Session invalidation error:", error);
+    return { error: "Logout failed" };
   }
 }

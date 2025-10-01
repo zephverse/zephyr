@@ -1,7 +1,7 @@
 {
   "name": "@zephyr/aggregator",
   "description": "Aggregator service for Zephyr",
-  "version": "2.0.34-dev",
+  "version": "2.0.35-dev",
   "private": true,
   "scripts": {
     "clean": "git clean -xdf .cache .turbo dist node_modules",
@@ -9,15 +9,12 @@
   },
   "dependencies": {
     "@zephyr/db": "workspace:*",
-    "date-fns": "^4.1.0",
     "ky": "^1.11.0",
-    "next": "15.4.7",
+    "next": "15.5.4",
     "react": "19.0.0"
   },
   "devDependencies": {
-    "@types/node": "^22.18.7",
-    "@types/react": "19.0.10",
     "@zephyr/config": "workspace:*",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.3"
   }
 }

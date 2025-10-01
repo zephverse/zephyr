@@ -1,13 +1,13 @@
-'use server';
+"use server";
 
-import { verify } from '@node-rs/argon2';
-import { env } from '@root/env';
-import { lucia } from '@zephyr/auth/auth';
-import { sendVerificationEmail } from '@zephyr/auth/src/email/service';
-import { type LoginValues, loginSchema } from '@zephyr/auth/validation';
-import { prisma } from '@zephyr/db';
-import jwt from 'jsonwebtoken';
-import { cookies } from 'next/headers';
+import { verify } from "@node-rs/argon2";
+import { env } from "@root/env";
+import { lucia } from "@zephyr/auth/auth";
+import { sendVerificationEmail } from "@zephyr/auth/src/email/service";
+import { type LoginValues, loginSchema } from "@zephyr/auth/validation";
+import { prisma } from "@zephyr/db";
+import jwt from "jsonwebtoken";
+import { cookies } from "next/headers";
 
 export async function createVerificationTokenForUser(
   userId: string,
@@ -22,9 +22,9 @@ export async function createVerificationTokenForUser(
       { userId, email },
       env.JWT_SECRET ??
         (() => {
-          throw new Error('JWT_SECRET is not defined');
+          throw new Error("JWT_SECRET is not defined");
         })(),
-      { expiresIn: '1h' }
+      { expiresIn: "1h" }
     );
 
     await prisma.emailVerificationToken.update({
@@ -32,7 +32,7 @@ export async function createVerificationTokenForUser(
       data: {
         token: newToken,
         createdAt: new Date(),
-        expiresAt: new Date(Date.now() + 3600000),
+        expiresAt: new Date(Date.now() + 3_600_000),
       },
     });
 
@@ -43,16 +43,16 @@ export async function createVerificationTokenForUser(
     { userId, email },
     env.JWT_SECRET ??
       (() => {
-        throw new Error('JWT_SECRET is not defined');
+        throw new Error("JWT_SECRET is not defined");
       })(),
-    { expiresIn: '1h' }
+    { expiresIn: "1h" }
   );
 
   await prisma.emailVerificationToken.create({
     data: {
       token,
       userId,
-      expiresAt: new Date(Date.now() + 3600000),
+      expiresAt: new Date(Date.now() + 3_600_000),
     },
   });
 
@@ -74,24 +74,24 @@ export async function loginAction(credentials: LoginValues): Promise<{
       where: {
         username: {
           equals: username,
-          mode: 'insensitive',
+          mode: "insensitive",
         },
       },
     });
 
-    if (!existingUser || !existingUser.passwordHash) {
-      return { error: 'Incorrect username or password', success: false };
+    if (!existingUser?.passwordHash) {
+      return { error: "Incorrect username or password", success: false };
     }
 
     const validPassword = await verify(existingUser.passwordHash, password);
 
     if (!validPassword) {
-      return { error: 'Incorrect username or password', success: false };
+      return { error: "Incorrect username or password", success: false };
     }
 
-    if (!existingUser.emailVerified && !existingUser.googleId) {
+    if (!(existingUser.emailVerified || existingUser.googleId)) {
       if (!existingUser.email) {
-        return { error: 'Account has no associated email', success: false };
+        return { error: "Account has no associated email", success: false };
       }
 
       try {
@@ -109,7 +109,7 @@ export async function loginAction(credentials: LoginValues): Promise<{
           },
         };
       } catch (_error) {
-        return { error: 'Failed to create verification token', success: false };
+        return { error: "Failed to create verification token", success: false };
       }
     }
 
@@ -127,6 +127,6 @@ export async function loginAction(credentials: LoginValues): Promise<{
     return { success: true };
   } catch (error) {
     console.error(error);
-    return { error: 'Something went wrong. Please try again.', success: false };
+    return { error: "Something went wrong. Please try again.", success: false };
   }
 }

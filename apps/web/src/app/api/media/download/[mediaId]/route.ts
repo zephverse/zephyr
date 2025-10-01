@@ -1,10 +1,11 @@
-import { getContentDisposition, minioClient } from '@/lib/minio';
-import { GetObjectCommand } from '@aws-sdk/client-s3';
-import { validateRequest } from '@zephyr/auth/auth';
-import { prisma, redis } from '@zephyr/db';
-import { NextResponse } from 'next/server';
+import { GetObjectCommand } from "@aws-sdk/client-s3";
+import { validateRequest } from "@zephyr/auth/auth";
+import { prisma, redis } from "@zephyr/db";
+import { NextResponse } from "next/server";
+import { minioClient } from "@/lib/minio";
+import { getContentDisposition } from "@/lib/utils/mime-utils";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 const DOWNLOAD_COOLDOWN = 120;
 
@@ -16,7 +17,7 @@ export async function GET(context: {
   try {
     const { user } = await validateRequest();
     if (!user) {
-      return new NextResponse('Unauthorized', { status: 401 });
+      return new NextResponse("Unauthorized", { status: 401 });
     }
 
     const downloadKey = `download:${user.id}:${mediaId}`;
@@ -29,14 +30,14 @@ export async function GET(context: {
       if (timeLeft > 0) {
         return new NextResponse(
           JSON.stringify({
-            error: 'Rate limit exceeded',
+            error: "Rate limit exceeded",
             message: `Please wait ${timeLeft} seconds before downloading this file again`,
             timeLeft,
           }),
           {
             status: 429,
             headers: {
-              'Content-Type': 'application/json',
+              "Content-Type": "application/json",
             },
           }
         );
@@ -58,15 +59,15 @@ export async function GET(context: {
     });
 
     if (!media) {
-      return new NextResponse('Media not found', { status: 404 });
+      return new NextResponse("Media not found", { status: 404 });
     }
 
     await redis.set(downloadKey, Date.now().toString());
     await redis.expire(downloadKey, DOWNLOAD_COOLDOWN);
-    const filename = media.key.split('/').pop() || 'download';
+    const filename = media.key.split("/").pop() || "download";
 
     const command = new GetObjectCommand({
-      Bucket: process.env.MINIO_BUCKET_NAME || 'uploads',
+      Bucket: process.env.MINIO_BUCKET_NAME || "uploads",
       Key: media.key,
       ResponseContentType: media.mimeType,
       ResponseContentDisposition: getContentDisposition(filename, false),
@@ -76,11 +77,10 @@ export async function GET(context: {
       const response = await minioClient.send(command);
 
       if (!response.Body) {
-        throw new Error('No response body from MinIO');
+        throw new Error("No response body from MinIO");
       }
 
-      // biome-ignore lint/suspicious/noEvolvingTypes:
-      const chunks = [];
+      const chunks: Uint8Array[] = [];
       // biome-ignore lint/suspicious/noExplicitAny: Any is required here
       for await (const chunk of response.Body as any) {
         chunks.push(chunk);
@@ -89,20 +89,20 @@ export async function GET(context: {
 
       return new Response(blob, {
         headers: {
-          'Content-Type': media.mimeType || 'application/octet-stream',
-          'Content-Disposition': getContentDisposition(filename, false),
-          'Content-Length': response.ContentLength?.toString() || '',
-          'Cache-Control': 'no-store, must-revalidate',
-          Pragma: 'no-cache',
-          Expires: '0',
+          "Content-Type": media.mimeType || "application/octet-stream",
+          "Content-Disposition": getContentDisposition(filename, false),
+          "Content-Length": response.ContentLength?.toString() || "",
+          "Cache-Control": "no-store, must-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
         },
       });
     } catch (error) {
-      console.error('MinIO download error:', error);
-      return new NextResponse('File download failed', { status: 500 });
+      console.error("MinIO download error:", error);
+      return new NextResponse("File download failed", { status: 500 });
     }
   } catch (error) {
-    console.error('Download failed:', error);
-    return new NextResponse('Internal Server Error', { status: 500 });
+    console.error("Download failed:", error);
+    return new NextResponse("Internal Server Error", { status: 500 });
   }
 }

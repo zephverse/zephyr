@@ -1,21 +1,22 @@
-import { avatarCache, prisma } from '@zephyr/db';
-import { followerInfoCache } from '@zephyr/db';
-import { shareStatsCache } from '@zephyr/db';
-import { tagCache } from '@zephyr/db';
-import { redis } from '@zephyr/db';
 import {
+  avatarCache,
+  followerInfoCache,
   POST_VIEWS_KEY_PREFIX,
   POST_VIEWS_SET,
+  prisma,
+  redis,
+  shareStatsCache,
+  tagCache,
   trendingTopicsCache,
-} from '@zephyr/db';
-import { NextResponse } from 'next/server';
+} from "@zephyr/db";
+import { NextResponse } from "next/server";
 
 const BATCH_SIZE = 100;
 
 async function validateRedisConnection(log: (message: string) => void) {
   try {
     await redis.ping();
-    log('✅ Redis connection successful');
+    log("✅ Redis connection successful");
     return true;
   } catch (error) {
     log(`❌ Redis connection failed: ${error}`);
@@ -25,13 +26,13 @@ async function validateRedisConnection(log: (message: string) => void) {
 
 // biome-ignore lint/suspicious/noExplicitAny: Any type is used here due to Redis SDK limitations
 async function syncViewCounts(log: (message: string) => void, results: any) {
-  log('\n📊 Syncing view counts...');
+  log("\n📊 Syncing view counts...");
   try {
     const postsWithViews = await redis.smembers(POST_VIEWS_SET);
     log(`Found ${postsWithViews.length} posts with views in Redis`);
 
     if (postsWithViews.length === 0) {
-      log('No posts found with views to sync');
+      log("No posts found with views to sync");
       return;
     }
 
@@ -42,7 +43,7 @@ async function syncViewCounts(log: (message: string) => void, results: any) {
 
     const pipelineResults = await pipeline.exec();
     if (!pipelineResults) {
-      throw new Error('Pipeline execution returned null');
+      throw new Error("Pipeline execution returned null");
     }
 
     const updates = postsWithViews
@@ -87,13 +88,13 @@ async function syncViewCounts(log: (message: string) => void, results: any) {
 
 // biome-ignore lint/suspicious/noExplicitAny: Any type is used here due to Redis SDK limitations
 async function syncShareStats(log: (message: string) => void, results: any) {
-  log('\n🔄 Syncing share stats...');
+  log("\n🔄 Syncing share stats...");
   try {
     const posts = await prisma.post.findMany({
       select: { id: true },
     });
 
-    const platforms = ['twitter', 'facebook', 'linkedin'];
+    const platforms = ["twitter", "facebook", "linkedin"];
     let syncedCount = 0;
 
     for (const post of posts) {
@@ -133,11 +134,11 @@ async function syncShareStats(log: (message: string) => void, results: any) {
 
 // biome-ignore lint/suspicious/noExplicitAny: Any type is used here due to Redis SDK limitations
 async function syncTagCounts(log: (message: string) => void, results: any) {
-  log('\n🏷️ Syncing tag counts...');
+  log("\n🏷️ Syncing tag counts...");
   try {
     await tagCache.syncTagCounts();
     results.tagCountsSync = 1;
-    log('✅ Successfully synced tag counts');
+    log("✅ Successfully synced tag counts");
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     log(`❌ Error syncing tag counts: ${errorMessage}`);
@@ -147,7 +148,7 @@ async function syncTagCounts(log: (message: string) => void, results: any) {
 
 // biome-ignore lint/suspicious/noExplicitAny: Any type is used here due to Redis SDK limitations
 async function syncAvatars(log: (message: string) => void, results: any) {
-  log('\n👤 Syncing avatar cache...');
+  log("\n👤 Syncing avatar cache...");
   try {
     const users = await prisma.user.findMany({
       select: { id: true, avatarUrl: true, avatarKey: true },
@@ -158,7 +159,7 @@ async function syncAvatars(log: (message: string) => void, results: any) {
       if (user.avatarUrl) {
         await avatarCache.set(user.id, {
           url: user.avatarUrl,
-          key: user.avatarKey || '',
+          key: user.avatarKey || "",
           updatedAt: new Date().toISOString(),
         });
         syncedCount++;
@@ -175,7 +176,7 @@ async function syncAvatars(log: (message: string) => void, results: any) {
 
 // biome-ignore lint/suspicious/noExplicitAny: Any type is used here due to Redis SDK limitations
 async function syncFollowerInfo(log: (message: string) => void, results: any) {
-  log('\n👥 Syncing follower info...');
+  log("\n👥 Syncing follower info...");
   try {
     const users = await prisma.user.findMany({
       select: {
@@ -221,11 +222,11 @@ async function syncTrendingTopics(
   // biome-ignore lint/suspicious/noExplicitAny: Any type is used here due to Redis SDK limitations
   results: any
 ) {
-  log('\n📈 Syncing trending topics...');
+  log("\n📈 Syncing trending topics...");
   try {
     await trendingTopicsCache.warmCache();
     results.trendingTopicsSync = 1;
-    log('✅ Successfully warmed trending topics cache');
+    log("✅ Successfully warmed trending topics cache");
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     log(`❌ Error syncing trending topics: ${errorMessage}`);
@@ -255,14 +256,14 @@ async function syncAllCaches() {
   if (!(await validateRedisConnection(log))) {
     return {
       success: false,
-      error: 'Redis connection failed',
+      error: "Redis connection failed",
       logs,
       timestamp: new Date().toISOString(),
     };
   }
 
   try {
-    log('🚀 Starting cache synchronization...');
+    log("🚀 Starting cache synchronization...");
 
     // Run syncs sequentially to avoid overwhelming the database
     await syncViewCounts(log, results);
@@ -294,7 +295,7 @@ async function syncAllCaches() {
     return summary;
   } catch (error) {
     const errorMessage =
-      error instanceof Error ? error.message : 'Unknown error';
+      error instanceof Error ? error.message : "Unknown error";
     log(`❌ Fatal error during cache sync: ${errorMessage}`);
     return {
       success: false,
@@ -313,16 +314,16 @@ export async function POST(request: Request) {
   try {
     if (!process.env.CRON_SECRET_KEY) {
       return NextResponse.json(
-        { error: 'Server configuration error' },
+        { error: "Server configuration error" },
         { status: 500 }
       );
     }
 
-    const authHeader = request.headers.get('authorization');
+    const authHeader = request.headers.get("authorization");
     const expectedAuth = `Bearer ${process.env.CRON_SECRET_KEY}`;
 
     if (!authHeader || authHeader !== expectedAuth) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const results = await syncAllCaches();
@@ -330,15 +331,15 @@ export async function POST(request: Request) {
     return NextResponse.json(results, {
       status: results.success ? 200 : 500,
       headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-store',
+        "Content-Type": "application/json",
+        "Cache-Control": "no-store",
       },
     });
   } catch (error) {
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : "Unknown error",
         timestamp: new Date().toISOString(),
       },
       { status: 500 }
@@ -346,5 +347,5 @@ export async function POST(request: Request) {
   }
 }
 
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";

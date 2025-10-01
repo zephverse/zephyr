@@ -1,37 +1,37 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from "@prisma/client";
 import {
   getEnvironmentMode,
   getStreamConfig,
   isStreamConfigured,
-} from '@zephyr/config/src/env';
-import { StreamChat } from 'stream-chat';
-import { keys } from '../keys';
+} from "@zephyr/config/src/env";
+import { StreamChat } from "stream-chat";
+import { keys } from "../keys";
 
 const { isDevelopment } = getEnvironmentMode();
 
 function initializeStreamClient(): StreamChat | null {
   if (!isStreamConfigured()) {
     isDevelopment &&
-      console.log('Stream Chat is not configured - skipping initialization');
+      console.log("Stream Chat is not configured - skipping initialization");
     return null;
   }
 
   const { apiKey, secret } = getStreamConfig();
 
-  if (!apiKey || !secret) {
+  if (!(apiKey && secret)) {
     isDevelopment &&
       console.log(
-        'Stream Chat credentials are missing - skipping initialization'
+        "Stream Chat credentials are missing - skipping initialization"
       );
     return null;
   }
 
   try {
     const client = StreamChat.getInstance(apiKey, secret);
-    isDevelopment && console.log('Stream Chat client initialized successfully');
+    isDevelopment && console.log("Stream Chat client initialized successfully");
     return client;
   } catch (error) {
-    console.error('[Stream Chat] Initialization failed:', error);
+    console.error("[Stream Chat] Initialization failed:", error);
     return null;
   }
 }
@@ -41,7 +41,7 @@ const streamClient = initializeStreamClient();
 async function handleStreamUserDeletion(userId: string): Promise<void> {
   if (!streamClient) {
     isDevelopment &&
-      console.log('Stream Chat client not available - skipping user deletion');
+      console.log("Stream Chat client not available - skipping user deletion");
     return;
   }
 
@@ -53,15 +53,15 @@ async function handleStreamUserDeletion(userId: string): Promise<void> {
     isDevelopment &&
       console.log(`Stream Chat user deleted successfully: ${userId}`);
   } catch (error) {
-    console.error('[Stream Chat] Failed to delete user:', {
+    console.error("[Stream Chat] Failed to delete user:", {
       userId,
       error: error instanceof Error ? error.message : error,
     });
   }
 }
 
-const prismaClientSingleton = () => {
-  return new PrismaClient().$extends({
+const prismaClientSingleton = () =>
+  new PrismaClient().$extends({
     query: {
       user: {
         async delete({ args, query }) {
@@ -76,7 +76,6 @@ const prismaClientSingleton = () => {
       },
     },
   });
-};
 
 declare global {
   var prismaGlobal: undefined | ReturnType<typeof prismaClientSingleton>;
@@ -84,7 +83,7 @@ declare global {
 
 const prisma = globalThis.prismaGlobal ?? prismaClientSingleton();
 
-if (keys.NODE_ENV !== 'production') {
+if (keys.NODE_ENV !== "production") {
   globalThis.prismaGlobal = prisma;
 }
 
