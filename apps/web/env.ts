@@ -3,8 +3,8 @@ import { keys as core } from "@zephyr/next/keys";
 import { keys as base } from "./keys";
 
 export const env = createEnv({
-  extends: [core, base],
-  server: {},
-  client: {},
-  runtimeEnv: {},
+	extends: [core, base],
+	server: {},
+	client: {},
+	runtimeEnv: {},
 });

@@ -1,9 +1,9 @@
 import { emailConfig, getEmailStyles } from "../config";
 
 export const getVerificationEmailTemplate = (verificationUrl: string) => {
-  const styles = getEmailStyles();
+	const styles = getEmailStyles();
 
-  return `
+	return `
 <!DOCTYPE html>
 <html>
 <head>
@@ -60,8 +60,8 @@ export const getVerificationEmailTemplate = (verificationUrl: string) => {
         </h3>
         <div style="display: grid; gap: 16px;">
           ${emailConfig.assets.features
-            .map(
-              (feature) => `
+						.map(
+							(feature) => `
             <div style="${styles.card}">
               <div style="display: flex; align-items: center; gap: 16px;">
                 <span style="font-size: 32px; padding-right: 8px;">${feature.emoji}</span>
@@ -75,9 +75,9 @@ export const getVerificationEmailTemplate = (verificationUrl: string) => {
                 </div>
               </div>
             </div>
-          `
-            )
-            .join("")}
+          `,
+						)
+						.join("")}
         </div>
       </div>
 

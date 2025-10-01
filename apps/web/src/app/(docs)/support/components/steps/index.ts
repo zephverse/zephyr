@@ -1,3 +1,3 @@
-export * from "./StepOne";
-export * from "./StepThree";
-export * from "./StepTwo";
+export { StepOne } from "./step-one";
+export { StepThree } from "./step-three";
+export { StepTwo } from "./step-two";

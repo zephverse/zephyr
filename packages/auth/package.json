@@ -1,30 +1,30 @@
 {
-  "name": "@zephyr/auth",
-  "description": "Zephyr's authentication & email service package",
-  "version": "2.0.34-dev",
-  "license": "AGPL-3.0",
-  "private": true,
-  "scripts": {
-    "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "typecheck": "tsc --noEmit --emitDeclarationOnly false"
-  },
-  "dependencies": {
-    "@lucia-auth/adapter-prisma": "^4.0.1",
-    "@zephyr/db": "workspace:*",
-    "arctic": "^3.7.0",
-    "deep-email-validator": "^0.1.21",
-    "email-validator": "^2.0.4",
-    "jsonwebtoken": "^9.0.2",
-    "lucia": "^3.2.2",
-    "next": "15.5.4",
-    "react": "19.0.0",
-    "stream-chat": "^9.20.1",
-    "unsend": "^1.5.1",
-    "zod": "^4.1.11"
-  },
-  "devDependencies": {
-    "@types/jsonwebtoken": "^9.0.10",
-    "@zephyr/config": "workspace:*",
-    "typescript": "^5.9.2"
-  }
+	"name": "@zephyr/auth",
+	"description": "Zephyr's authentication & email service package",
+	"version": "2.0.34-dev",
+	"license": "AGPL-3.0",
+	"private": true,
+	"scripts": {
+		"clean": "git clean -xdf .cache .turbo dist node_modules",
+		"typecheck": "tsc --noEmit --emitDeclarationOnly false"
+	},
+	"dependencies": {
+		"@lucia-auth/adapter-prisma": "^4.0.1",
+		"@zephyr/db": "workspace:*",
+		"arctic": "^3.7.0",
+		"deep-email-validator": "^0.1.21",
+		"email-validator": "^2.0.4",
+		"jsonwebtoken": "^9.0.2",
+		"lucia": "^3.2.2",
+		"next": "15.5.4",
+		"react": "19.0.0",
+		"stream-chat": "^9.20.1",
+		"unsend": "^1.5.1",
+		"zod": "^4.1.11"
+	},
+	"devDependencies": {
+		"@types/jsonwebtoken": "^9.0.10",
+		"@zephyr/config": "workspace:*",
+		"typescript": "^5.9.2"
+	}
 }

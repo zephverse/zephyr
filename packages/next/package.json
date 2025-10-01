@@ -1,18 +1,18 @@
 {
-  "name": "@zephyr/next",
-  "description": "Zephyr Next.js package contains shared configs for Next.js",
-  "version": "2.0.34-dev",
-  "private": true,
-  "scripts": {
-    "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "typecheck": "tsc --noEmit --emitDeclarationOnly false"
-  },
-  "dependencies": {
-    "@t3-oss/env-nextjs": "^0.13.8",
-    "next": "15.5.4",
-    "zod": "^4.1.11"
-  },
-  "devDependencies": {
-    "@zephyr/config": "workspace:*"
-  }
+	"name": "@zephyr/next",
+	"description": "Zephyr Next.js package contains shared configs for Next.js",
+	"version": "2.0.34-dev",
+	"private": true,
+	"scripts": {
+		"clean": "git clean -xdf .cache .turbo dist node_modules",
+		"typecheck": "tsc --noEmit --emitDeclarationOnly false"
+	},
+	"dependencies": {
+		"@t3-oss/env-nextjs": "^0.13.8",
+		"next": "15.5.4",
+		"zod": "^4.1.11"
+	},
+	"devDependencies": {
+		"@zephyr/config": "workspace:*"
+	}
 }

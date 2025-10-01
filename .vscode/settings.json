@@ -1,168 +1,165 @@
 {
-  // =============================================================================
-  //                         ZEPHYR DEVELOPMENT IDE
-  //                          VSCode Configuration
-  // =============================================================================
-  //
-  // Development Environment Configuration
-  // Last Updated: 2024
-  // Maintainer: Parazeeknova
-  //
-  // =============================================================================
+	// =============================================================================
+	//                         ZEPHYR DEVELOPMENT IDE
+	//                          VSCode Configuration
+	// =============================================================================
+	//
+	// Development Environment Configuration
+	// Last Updated: 2024
+	// Maintainer: Parazeeknova
+	//
+	// =============================================================================
 
-  // -----------------------------------------------------------------------------
-  //                         TYPESCRIPT CONFIGURATION
-  // -----------------------------------------------------------------------------
-  "typescript.tsdk": "node_modules/typescript/lib",
-  "typescript.enablePromptUseWorkspaceTsdk": true,
-  "typescript.updateImportsOnFileMove.enabled": "always",
+	// -----------------------------------------------------------------------------
+	//                         TYPESCRIPT CONFIGURATION
+	// -----------------------------------------------------------------------------
+	"typescript.tsdk": "node_modules/typescript/lib",
+	"typescript.enablePromptUseWorkspaceTsdk": true,
+	"typescript.updateImportsOnFileMove.enabled": "always",
 
-  // -----------------------------------------------------------------------------
-  //                         EDITOR CONFIGURATION
-  // -----------------------------------------------------------------------------
-  // Formatting Settings
-  "editor.defaultFormatter": "biomejs.biome",
-  "editor.formatOnSave": true,
-  "editor.formatOnPaste": true,
+	// -----------------------------------------------------------------------------
+	//                         EDITOR CONFIGURATION
+	// -----------------------------------------------------------------------------
+	// Formatting Settings
+	"editor.defaultFormatter": "biomejs.biome",
+	"editor.formatOnSave": true,
+	"editor.formatOnPaste": true,
 
-  // Visual Guides
-  "editor.bracketPairColorization.enabled": true,
-  "editor.guides.bracketPairs": true,
-  "editor.rulers": [80],
-  "editor.wordWrap": "off",
+	// Visual Guides
+	"editor.bracketPairColorization.enabled": true,
+	"editor.guides.bracketPairs": true,
+	"editor.rulers": [80],
+	"editor.wordWrap": "off",
 
-  // Indentation Settings
-  "editor.tabSize": 2,
-  "editor.insertSpaces": true,
-  "editor.detectIndentation": false,
+	// Indentation Settings
+	"editor.tabSize": 2,
+	"editor.insertSpaces": true,
+	"editor.detectIndentation": false,
 
-  // Auto-fix Actions
-  "editor.codeActionsOnSave": {
-    "quickfix.biome": "explicit",
-    "source.organizeImports.biome": "explicit",
-    "source.fixAll.biome": "explicit"
-  },
+	// Auto-fix Actions
+	"editor.codeActionsOnSave": {
+		"source.organizeImports.biome": "explicit",
+		"source.fixAll.biome": "explicit"
+	},
 
-  // -----------------------------------------------------------------------------
-  //                      LANGUAGE-SPECIFIC SETTINGS
-  // -----------------------------------------------------------------------------
-  // TypeScript/JavaScript Settings
-  "[typescript]": {
-    "editor.defaultFormatter": "biomejs.biome"
-  },
-  "[javascript]": {
-    "editor.defaultFormatter": "biomejs.biome",
-    "editor.codeActionsOnSave": {
-      "quickfix.biome": "explicit",
-      "source.organizeImports.biome": "explicit",
-      "source.fixAll.biome": "explicit"
-    }
-  },
-  "[javascriptreact]": {
-    "editor.defaultFormatter": "biomejs.biome",
-    "editor.codeActionsOnSave": {
-      "quickfix.biome": "explicit",
-      "source.organizeImports.biome": "explicit",
-      "source.fixAll.biome": "explicit"
-    }
-  },
-  "[typescriptreact]": {
-    "editor.defaultFormatter": "biomejs.biome"
-  },
+	// -----------------------------------------------------------------------------
+	//                      LANGUAGE-SPECIFIC SETTINGS
+	// -----------------------------------------------------------------------------
+	// TypeScript/JavaScript Settings
+	"[typescript]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	},
+	"[javascript]": {
+		"editor.defaultFormatter": "biomejs.biome",
+		"editor.codeActionsOnSave": {
+			"source.organizeImports.biome": "explicit",
+			"source.fixAll.biome": "explicit"
+		}
+	},
+	"[javascriptreact]": {
+		"editor.defaultFormatter": "biomejs.biome",
+		"editor.codeActionsOnSave": {
+			"source.organizeImports.biome": "explicit",
+			"source.fixAll.biome": "explicit"
+		}
+	},
+	"[typescriptreact]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	},
 
-  // Markup & Style Settings
-  "[json]": {
-    "editor.defaultFormatter": "biomejs.biome"
-  },
-  "[jsonc]": {
-    "editor.defaultFormatter": "biomejs.biome"
-  },
-  "[tailwindcss]": {
-    "editor.defaultFormatter": "bradlc.vscode-tailwindcss"
-  },
+	// Markup & Style Settings
+	"[json]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	},
+	"[jsonc]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	},
+	"[tailwindcss]": {
+		"editor.defaultFormatter": "bradlc.vscode-tailwindcss"
+	},
 
-  // Docker Settings
-  "[dockercompose]": {
-    "editor.defaultFormatter": "ms-azuretools.vscode-docker"
-  },
-  "[dockerfile]": {
-    "editor.defaultFormatter": "ms-azuretools.vscode-docker"
-  },
+	// Docker Settings
+	"[dockercompose]": {
+		"editor.defaultFormatter": "ms-azuretools.vscode-docker"
+	},
+	"[dockerfile]": {
+		"editor.defaultFormatter": "ms-azuretools.vscode-docker"
+	},
 
-  // Database Settings
-  "[prisma]": {
-    "editor.defaultFormatter": "Prisma.prisma"
-  },
+	// Database Settings
+	"[prisma]": {
+		"editor.defaultFormatter": "Prisma.prisma"
+	},
 
-  // Documentation Settings
-  "[markdown]": {
-    "editor.defaultFormatter": "yzhang.markdown-all-in-one"
-  },
+	// Documentation Settings
+	"[markdown]": {
+		"editor.defaultFormatter": "yzhang.markdown-all-in-one"
+	},
 
-  // -----------------------------------------------------------------------------
-  //                      FILE EXPLORER & SEARCH
-  // -----------------------------------------------------------------------------
-  // File Exclusions
-  "files.exclude": {
-    "**/.git": true,
-    "**/.DS_Store": true,
-    "**/node_modules": true,
-    "**/.next": true,
-    "**/dist": true,
-    "**/build": true
-  },
+	// -----------------------------------------------------------------------------
+	//                      FILE EXPLORER & SEARCH
+	// -----------------------------------------------------------------------------
+	// File Exclusions
+	"files.exclude": {
+		"**/.git": true,
+		"**/.DS_Store": true,
+		"**/node_modules": true,
+		"**/.next": true,
+		"**/dist": true,
+		"**/build": true
+	},
 
-  // Search Exclusions
-  "search.exclude": {
-    "**/node_modules": true,
-    "**/.next": true,
-    "**/dist": true,
-    "**/build": true,
-    "**/.git": true
-  },
+	// Search Exclusions
+	"search.exclude": {
+		"**/node_modules": true,
+		"**/.next": true,
+		"**/dist": true,
+		"**/build": true,
+		"**/.git": true
+	},
 
-  // File Watcher Exclusions
-  "files.watcherExclude": {
-    "**/.git/objects/**": true,
-    "**/.git/subtree-cache/**": true,
-    "**/node_modules/**": true,
-    "**/.next/**": true
-  },
+	// File Watcher Exclusions
+	"files.watcherExclude": {
+		"**/.git/objects/**": true,
+		"**/.git/subtree-cache/**": true,
+		"**/node_modules/**": true,
+		"**/.next/**": true
+	},
 
-  // -----------------------------------------------------------------------------
-  //                         GIT CONFIGURATION
-  // -----------------------------------------------------------------------------
-  // Version Control Settings
-  "git.autofetch": true,
-  "git.confirmSync": false,
-  "git.enableSmartCommit": true,
-  "git.pruneOnFetch": true,
-  "git.fetchOnPull": true,
+	// -----------------------------------------------------------------------------
+	//                         GIT CONFIGURATION
+	// -----------------------------------------------------------------------------
+	// Version Control Settings
+	"git.autofetch": true,
+	"git.confirmSync": false,
+	"git.enableSmartCommit": true,
+	"git.pruneOnFetch": true,
+	"git.fetchOnPull": true,
 
-  // -----------------------------------------------------------------------------
-  //                         EMMET & TOOLS
-  // -----------------------------------------------------------------------------
-  // Emmet Settings
-  "emmet.showExpandedAbbreviation": "never",
-  "emmet.excludeLanguages": ["markdown", "typescript", "javascript"],
+	// -----------------------------------------------------------------------------
+	//                         EMMET & TOOLS
+	// -----------------------------------------------------------------------------
+	// Emmet Settings
+	"emmet.showExpandedAbbreviation": "never",
+	"emmet.excludeLanguages": ["markdown", "typescript", "javascript"],
 
-  // -----------------------------------------------------------------------------
-  //                         TERMINAL SETTINGS
-  // -----------------------------------------------------------------------------
-  // Shell Configuration
-  "terminal.integrated.defaultProfile.linux": "bash",
-  "terminal.integrated.defaultProfile.windows": "PowerShell",
-  "terminal.integrated.defaultProfile.osx": "zsh",
+	// -----------------------------------------------------------------------------
+	//                         TERMINAL SETTINGS
+	// -----------------------------------------------------------------------------
+	// Shell Configuration
+	"terminal.integrated.defaultProfile.linux": "bash",
+	"terminal.integrated.defaultProfile.windows": "PowerShell",
+	"terminal.integrated.defaultProfile.osx": "zsh",
 
-  // -----------------------------------------------------------------------------
-  //                         WORKBENCH SETTINGS
-  // -----------------------------------------------------------------------------
-  // Editor Behavior
-  "workbench.editor.enablePreview": false,
-  "workbench.startupEditor": "none",
+	// -----------------------------------------------------------------------------
+	//                         WORKBENCH SETTINGS
+	// -----------------------------------------------------------------------------
+	// Editor Behavior
+	"workbench.editor.enablePreview": false,
+	"workbench.startupEditor": "none",
 
-  // Theme Customization
-  "workbench.colorCustomizations": {
-    "editorRuler.foreground": "#3f3f3f"
-  }
+	// Theme Customization
+	"workbench.colorCustomizations": {
+		"editorRuler.foreground": "#3f3f3f"
+	}
 }

@@ -1,2 +1,2 @@
-pnpm run lint
-pnpm run dep:check
+bun run check
+bun run dep:check

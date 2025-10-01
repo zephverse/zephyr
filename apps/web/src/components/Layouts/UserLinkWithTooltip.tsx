@@ -9,45 +9,45 @@ import kyInstance from "@/lib/ky";
 import UserTooltip from "./UserTooltip";
 
 interface UserLinkWithTooltipProps extends PropsWithChildren {
-  username: string;
+	username: string;
 }
 
 export default function UserLinkWithTooltip({
-  children,
-  username,
+	children,
+	username,
 }: UserLinkWithTooltipProps) {
-  const { data } = useQuery({
-    queryKey: ["user-data", username],
-    queryFn: () =>
-      kyInstance.get(`/api/users/username/${username}`).json<UserData>(),
-    retry(failureCount, error) {
-      if (error instanceof HTTPError && error.response.status === 404) {
-        return false;
-      }
-      return failureCount < 3;
-    },
-    staleTime: Number.POSITIVE_INFINITY,
-  });
+	const { data } = useQuery({
+		queryKey: ["user-data", username],
+		queryFn: () =>
+			kyInstance.get(`/api/users/username/${username}`).json<UserData>(),
+		retry(failureCount, error) {
+			if (error instanceof HTTPError && error.response.status === 404) {
+				return false;
+			}
+			return failureCount < 3;
+		},
+		staleTime: Number.POSITIVE_INFINITY,
+	});
 
-  if (!data) {
-    return (
-      <Link
-        className="text-primary hover:underline"
-        href={`/users/${username}`}
-      >
-        {children}
-      </Link>
-    );
-  }
+	if (!data) {
+		return (
+			<Link
+				className="text-primary hover:underline"
+				href={`/users/${username}`}
+			>
+				{children}
+			</Link>
+		);
+	}
 
-  return (
-    <UserTooltip user={data}>
-      <Link
-        className="text-primary hover:underline"
-        href={`/users/${username}`}
-      >
-        {children}
-      </Link>
-    </UserTooltip>
-  );
+	return (
+		<UserTooltip user={data}>
+			<Link
+				className="text-primary hover:underline"
+				href={`/users/${username}`}
+			>
+				{children}
+			</Link>
+		</UserTooltip>
+	);
 }

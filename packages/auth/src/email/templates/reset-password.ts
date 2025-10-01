@@ -1,9 +1,9 @@
 import { emailConfig, getEmailStyles } from "../config";
 
 export const getPasswordResetEmailTemplate = (resetUrl: string) => {
-  const styles = getEmailStyles();
+	const styles = getEmailStyles();
 
-  return `
+	return `
 <!DOCTYPE html>
 <html>
 <head>

@@ -6,10 +6,10 @@ import type { PostsPage } from "@zephyr/db";
 import { HNStory } from "@zephyr/ui/components/hackernews";
 import { Card } from "@zephyr/ui/shadui/card";
 import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
+	Tabs,
+	TabsContent,
+	TabsList,
+	TabsTrigger,
 } from "@zephyr/ui/shadui/tabs";
 import { motion } from "framer-motion";
 import { Newspaper, Terminal } from "lucide-react";
@@ -19,187 +19,187 @@ import LoadMoreSkeleton from "@/components/Layouts/skeletons/LoadMoreSkeleton";
 import PostsOnlyLoadingSkeleton from "@/components/Layouts/skeletons/PostOnlyLoadingSkeleton";
 import kyInstance from "@/lib/ky";
 
-interface HNBookmarksResponse {
-  stories: HNStoryType[];
-  nextCursor: string | null;
-}
+type HNBookmarksResponse = {
+	stories: HNStoryType[];
+	nextCursor: string | null;
+};
 
 const tabVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0 },
+	hidden: { opacity: 0, y: 20 },
+	visible: { opacity: 1, y: 0 },
 };
 
 interface BookmarkedPostsPage extends PostsPage {
-  posts: Array<
-    PostsPage["posts"][0] & {
-      hnStoryShare?: {
-        storyId: number;
-        title: string;
-        url?: string | null;
-        by: string;
-        time: number;
-        score: number;
-        descendants: number;
-      } | null;
-    }
-  >;
+	posts: Array<
+		PostsPage["posts"][0] & {
+			hnStoryShare?: {
+				storyId: number;
+				title: string;
+				url?: string | null;
+				by: string;
+				time: number;
+				score: number;
+				descendants: number;
+			} | null;
+		}
+	>;
 }
 
 export default function Bookmarks() {
-  const {
-    data: postsData,
-    fetchNextPage: fetchNextPosts,
-    hasNextPage: hasNextPosts,
-    isFetching: isFetchingPosts,
-    isFetchingNextPage: isFetchingNextPosts,
-    status: postsStatus,
-  } = useInfiniteQuery({
-    queryKey: ["post-feed", "bookmarks"],
-    queryFn: async ({ pageParam }) => {
-      const response = await kyInstance
-        .get(
-          "/api/posts/bookmarked",
-          pageParam ? { searchParams: { cursor: pageParam } } : {}
-        )
-        .json<BookmarkedPostsPage>();
+	const {
+		data: postsData,
+		fetchNextPage: fetchNextPosts,
+		hasNextPage: hasNextPosts,
+		isFetching: isFetchingPosts,
+		isFetchingNextPage: isFetchingNextPosts,
+		status: postsStatus,
+	} = useInfiniteQuery({
+		queryKey: ["post-feed", "bookmarks"],
+		queryFn: async ({ pageParam }) => {
+			const response = await kyInstance
+				.get(
+					"/api/posts/bookmarked",
+					pageParam ? { searchParams: { cursor: pageParam } } : {},
+				)
+				.json<BookmarkedPostsPage>();
 
-      return response;
-    },
-    initialPageParam: null as string | null,
-    getNextPageParam: (lastPage) => lastPage.nextCursor,
-  });
+			return response;
+		},
+		initialPageParam: null as string | null,
+		getNextPageParam: (lastPage) => lastPage.nextCursor,
+	});
 
-  const {
-    data: hnData,
-    fetchNextPage: fetchNextHN,
-    hasNextPage: hasNextHN,
-    isFetching: isFetchingHN,
-    isFetchingNextPage: isFetchingNextHN,
-    status: hnStatus,
-  } = useInfiniteQuery({
-    queryKey: ["hn-bookmarks"],
-    queryFn: async ({ pageParam }) => {
-      const response = await fetch(
-        `/api/hackernews/bookmarked${pageParam ? `?cursor=${pageParam}` : ""}`
-      );
-      if (!response.ok) {
-        throw new Error("Failed to fetch HN bookmarks");
-      }
-      return response.json() as Promise<HNBookmarksResponse>;
-    },
-    initialPageParam: null as string | null,
-    getNextPageParam: (lastPage) => lastPage.nextCursor,
-    staleTime: 30_000,
-    refetchOnWindowFocus: false,
-  });
+	const {
+		data: hnData,
+		fetchNextPage: fetchNextHN,
+		hasNextPage: hasNextHN,
+		isFetching: isFetchingHN,
+		isFetchingNextPage: isFetchingNextHN,
+		status: hnStatus,
+	} = useInfiniteQuery({
+		queryKey: ["hn-bookmarks"],
+		queryFn: async ({ pageParam }) => {
+			const response = await fetch(
+				`/api/hackernews/bookmarked${pageParam ? `?cursor=${pageParam}` : ""}`,
+			);
+			if (!response.ok) {
+				throw new Error("Failed to fetch HN bookmarks");
+			}
+			return response.json() as Promise<HNBookmarksResponse>;
+		},
+		initialPageParam: null as string | null,
+		getNextPageParam: (lastPage) => lastPage.nextCursor,
+		staleTime: 30_000,
+		refetchOnWindowFocus: false,
+	});
 
-  const posts = postsData?.pages.flatMap((page) => page.posts) || [];
-  const hnStories = hnData?.pages.flatMap((page) => page.stories) || [];
+	const posts = postsData?.pages.flatMap((page) => page.posts) || [];
+	const hnStories = hnData?.pages.flatMap((page) => page.stories) || [];
 
-  if (postsStatus === "pending" || hnStatus === "pending") {
-    return <PostsOnlyLoadingSkeleton />;
-  }
+	if (postsStatus === "pending" || hnStatus === "pending") {
+		return <PostsOnlyLoadingSkeleton />;
+	}
 
-  if (postsStatus === "error" && hnStatus === "error") {
-    return (
-      <p className="text-center text-destructive">
-        An error occurred while loading bookmarks.
-      </p>
-    );
-  }
+	if (postsStatus === "error" && hnStatus === "error") {
+		return (
+			<p className="text-center text-destructive">
+				An error occurred while loading bookmarks.
+			</p>
+		);
+	}
 
-  const showEmptyState =
-    postsStatus === "success" &&
-    hnStatus === "success" &&
-    !posts.length &&
-    !hnStories.length &&
-    !hasNextPosts &&
-    !hasNextHN;
+	const showEmptyState =
+		postsStatus === "success" &&
+		hnStatus === "success" &&
+		!posts.length &&
+		!hnStories.length &&
+		!hasNextPosts &&
+		!hasNextHN;
 
-  if (showEmptyState) {
-    return (
-      <Card className="p-6 text-center text-muted-foreground">
-        <p>You don't have any bookmarks yet.</p>
-        <p className="mt-2 text-sm">
-          Bookmark posts and HackerNews stories to read them later.
-        </p>
-      </Card>
-    );
-  }
+	if (showEmptyState) {
+		return (
+			<Card className="p-6 text-center text-muted-foreground">
+				<p>You don't have any bookmarks yet.</p>
+				<p className="mt-2 text-sm">
+					Bookmark posts and HackerNews stories to read them later.
+				</p>
+			</Card>
+		);
+	}
 
-  return (
-    <Tabs className="w-full" defaultValue="posts">
-      <div className="relative mb-8 flex justify-center">
-        <motion.div
-          animate="visible"
-          className="relative w-full px-4 sm:w-auto sm:px-0"
-          initial="hidden"
-          transition={{ duration: 0.5 }}
-          variants={tabVariants}
-        >
-          <div className="-inset-3 absolute hidden rounded-lg bg-gradient-to-r from-orange-500/20 via-yellow-500/20 to-orange-500/20 blur-xl sm:block" />
-          <TabsList className="relative grid w-full grid-cols-2 rounded-full bg-background/95 p-1 text-muted-foreground shadow-xl backdrop-blur-xs sm:w-[400px]">
-            <TabsTrigger
-              className="relative rounded-full data-[state=active]:bg-orange-500/10 data-[state=active]:text-orange-500"
-              value="posts"
-            >
-              <Newspaper className="mr-2 h-4 w-4" />
-              <span className="hidden sm:inline">Posts</span>
-              <span className="sm:hidden">Posts</span>
-              {posts.length > 0 && (
-                <span className="ml-2 rounded-full bg-orange-500/10 px-2 py-0.5 text-orange-500 text-xs">
-                  {posts.length}
-                </span>
-              )}
-            </TabsTrigger>
-            <TabsTrigger
-              className="relative rounded-full data-[state=active]:bg-orange-500/10 data-[state=active]:text-orange-500"
-              value="hackernews"
-            >
-              <Terminal className="mr-2 h-4 w-4" />
-              <span className="hidden sm:inline">HackerNews</span>
-              <span className="sm:hidden">HN</span>
-              {hnStories.length > 0 && (
-                <span className="ml-2 rounded-full bg-orange-500/10 px-2 py-0.5 text-orange-500 text-xs">
-                  {hnStories.length}
-                </span>
-              )}
-            </TabsTrigger>
-          </TabsList>
-        </motion.div>
-      </div>
+	return (
+		<Tabs className="w-full" defaultValue="posts">
+			<div className="relative mb-8 flex justify-center">
+				<motion.div
+					animate="visible"
+					className="relative w-full px-4 sm:w-auto sm:px-0"
+					initial="hidden"
+					transition={{ duration: 0.5 }}
+					variants={tabVariants}
+				>
+					<div className="-inset-3 absolute hidden rounded-lg bg-gradient-to-r from-orange-500/20 via-yellow-500/20 to-orange-500/20 blur-xl sm:block" />
+					<TabsList className="relative grid w-full grid-cols-2 rounded-full bg-background/95 p-1 text-muted-foreground shadow-xl backdrop-blur-xs sm:w-[400px]">
+						<TabsTrigger
+							className="relative rounded-full data-[state=active]:bg-orange-500/10 data-[state=active]:text-orange-500"
+							value="posts"
+						>
+							<Newspaper className="mr-2 h-4 w-4" />
+							<span className="hidden sm:inline">Posts</span>
+							<span className="sm:hidden">Posts</span>
+							{posts.length > 0 && (
+								<span className="ml-2 rounded-full bg-orange-500/10 px-2 py-0.5 text-orange-500 text-xs">
+									{posts.length}
+								</span>
+							)}
+						</TabsTrigger>
+						<TabsTrigger
+							className="relative rounded-full data-[state=active]:bg-orange-500/10 data-[state=active]:text-orange-500"
+							value="hackernews"
+						>
+							<Terminal className="mr-2 h-4 w-4" />
+							<span className="hidden sm:inline">HackerNews</span>
+							<span className="sm:hidden">HN</span>
+							{hnStories.length > 0 && (
+								<span className="ml-2 rounded-full bg-orange-500/10 px-2 py-0.5 text-orange-500 text-xs">
+									{hnStories.length}
+								</span>
+							)}
+						</TabsTrigger>
+					</TabsList>
+				</motion.div>
+			</div>
 
-      <motion.div
-        animate={{ opacity: 1 }}
-        initial={{ opacity: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <TabsContent value="posts">
-          <InfiniteScrollContainer
-            className="space-y-5"
-            onBottomReached={() =>
-              hasNextPosts && !isFetchingPosts && fetchNextPosts()
-            }
-          >
-            {posts.map((post) => (
-              <Post key={post.id} post={post} />
-            ))}
-            {isFetchingNextPosts && <LoadMoreSkeleton />}
-          </InfiniteScrollContainer>
-        </TabsContent>
+			<motion.div
+				animate={{ opacity: 1 }}
+				initial={{ opacity: 0 }}
+				transition={{ duration: 0.5 }}
+			>
+				<TabsContent value="posts">
+					<InfiniteScrollContainer
+						className="space-y-5"
+						onBottomReached={() =>
+							hasNextPosts && !isFetchingPosts && fetchNextPosts()
+						}
+					>
+						{posts.map((post) => (
+							<Post key={post.id} post={post} />
+						))}
+						{isFetchingNextPosts && <LoadMoreSkeleton />}
+					</InfiniteScrollContainer>
+				</TabsContent>
 
-        <TabsContent value="hackernews">
-          <InfiniteScrollContainer
-            className="space-y-4"
-            onBottomReached={() => hasNextHN && !isFetchingHN && fetchNextHN()}
-          >
-            {hnStories.map((story) => (
-              <HNStory key={story.id} story={story} />
-            ))}
-            {isFetchingNextHN && <LoadMoreSkeleton />}
-          </InfiniteScrollContainer>
-        </TabsContent>
-      </motion.div>
-    </Tabs>
-  );
+				<TabsContent value="hackernews">
+					<InfiniteScrollContainer
+						className="space-y-4"
+						onBottomReached={() => hasNextHN && !isFetchingHN && fetchNextHN()}
+					>
+						{hnStories.map((story) => (
+							<HNStory key={story.id} story={story} />
+						))}
+						{isFetchingNextHN && <LoadMoreSkeleton />}
+					</InfiniteScrollContainer>
+				</TabsContent>
+			</motion.div>
+		</Tabs>
+	);
 }

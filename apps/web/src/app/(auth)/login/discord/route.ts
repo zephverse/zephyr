@@ -3,21 +3,21 @@ import { generateState } from "arctic";
 import { cookies } from "next/headers";
 
 export async function GET() {
-  const state = generateState();
+	const state = generateState();
 
-  (await cookies()).set("state", state, {
-    path: "/",
-    secure: process.env.NODE_ENV === "production",
-    httpOnly: true,
-    maxAge: 60 * 10,
-    sameSite: "lax",
-  });
+	(await cookies()).set("state", state, {
+		path: "/",
+		secure: process.env.NODE_ENV === "production",
+		httpOnly: true,
+		maxAge: 60 * 10,
+		sameSite: "lax",
+	});
 
-  // @ts-expect-error - will be fixed in a future PR
-  const url = await discord.createAuthorizationURL(state, [
-    "identify",
-    "email",
-  ]);
+	// @ts-expect-error - will be fixed in a future PR
+	const url = await discord.createAuthorizationURL(state, [
+		"identify",
+		"email",
+	]);
 
-  return Response.redirect(url.toString());
+	return Response.redirect(url.toString());
 }

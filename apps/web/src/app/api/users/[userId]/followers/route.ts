@@ -6,230 +6,230 @@ import { suggestedUsersCache } from "../../suggested/route";
 const FOLLOW_AURA_REWARD = 5;
 
 export async function POST(
-  _req: Request,
-  props: { params: Promise<{ userId: string }> }
+	_req: Request,
+	props: { params: Promise<{ userId: string }> },
 ) {
-  const params = await props.params;
-  const { userId } = params;
+	const params = await props.params;
+	const { userId } = params;
 
-  debugLog.api("Processing follow request:", userId);
+	debugLog.api("Processing follow request:", userId);
 
-  try {
-    const { user: loggedInUser } = await validateRequest();
+	try {
+		const { user: loggedInUser } = await validateRequest();
 
-    if (!loggedInUser) {
-      debugLog.api("Unauthorized follow attempt");
-      return Response.json({ error: "Unauthorized" }, { status: 401 });
-    }
+		if (!loggedInUser) {
+			debugLog.api("Unauthorized follow attempt");
+			return Response.json({ error: "Unauthorized" }, { status: 401 });
+		}
 
-    const result = await prisma.$transaction(async (tx) => {
-      const follow = await tx.follow.upsert({
-        where: {
-          followerId_followingId: {
-            followerId: loggedInUser.id,
-            followingId: userId,
-          },
-        },
-        create: {
-          followerId: loggedInUser.id,
-          followingId: userId,
-        },
-        update: {},
-      });
+		const result = await prisma.$transaction(async (tx) => {
+			const follow = await tx.follow.upsert({
+				where: {
+					followerId_followingId: {
+						followerId: loggedInUser.id,
+						followingId: userId,
+					},
+				},
+				create: {
+					followerId: loggedInUser.id,
+					followingId: userId,
+				},
+				update: {},
+			});
 
-      const notification = await tx.notification.create({
-        data: {
-          issuerId: loggedInUser.id,
-          recipientId: userId,
-          type: "FOLLOW",
-        },
-      });
+			const notification = await tx.notification.create({
+				data: {
+					issuerId: loggedInUser.id,
+					recipientId: userId,
+					type: "FOLLOW",
+				},
+			});
 
-      await tx.user.update({
-        where: { id: userId },
-        data: { aura: { increment: FOLLOW_AURA_REWARD } },
-      });
+			await tx.user.update({
+				where: { id: userId },
+				data: { aura: { increment: FOLLOW_AURA_REWARD } },
+			});
 
-      await tx.auraLog.create({
-        data: {
-          userId,
-          issuerId: loggedInUser.id,
-          amount: FOLLOW_AURA_REWARD,
-          type: "FOLLOW_GAINED",
-        },
-      });
+			await tx.auraLog.create({
+				data: {
+					userId,
+					issuerId: loggedInUser.id,
+					amount: FOLLOW_AURA_REWARD,
+					type: "FOLLOW_GAINED",
+				},
+			});
 
-      const userData = await tx.user.findUnique({
-        where: { id: userId },
-        select: {
-          id: true,
-          displayName: true,
-          username: true,
-          _count: { select: { followers: true } },
-        },
-      });
+			const userData = await tx.user.findUnique({
+				where: { id: userId },
+				select: {
+					id: true,
+					displayName: true,
+					username: true,
+					_count: { select: { followers: true } },
+				},
+			});
 
-      return { follow, notification, userData };
-    });
+			return { follow, notification, userData };
+		});
 
-    debugLog.api("Follow transaction completed:", result);
+		debugLog.api("Follow transaction completed:", result);
 
-    if (!result.userData) {
-      return Response.json({ error: "User data not found" }, { status: 404 });
-    }
+		if (!result.userData) {
+			return Response.json({ error: "User data not found" }, { status: 404 });
+		}
 
-    const followerInfo: FollowerInfo & {
-      displayName: string;
-      username: string;
-    } = {
-      followers: result.userData._count.followers,
-      isFollowedByUser: true,
-      displayName: result.userData.displayName,
-      username: result.userData.username,
-    };
+		const followerInfo: FollowerInfo & {
+			displayName: string;
+			username: string;
+		} = {
+			followers: result.userData._count.followers,
+			isFollowedByUser: true,
+			displayName: result.userData.displayName,
+			username: result.userData.username,
+		};
 
-    await followerInfoCache.invalidate(params.userId);
+		await followerInfoCache.invalidate(params.userId);
 
-    return Response.json(followerInfo);
-  } catch (error) {
-    debugLog.api("Follow request failed:", error);
-    return Response.json({ error: "Internal server error" }, { status: 500 });
-  }
+		return Response.json(followerInfo);
+	} catch (error) {
+		debugLog.api("Follow request failed:", error);
+		return Response.json({ error: "Internal server error" }, { status: 500 });
+	}
 }
 
 export async function GET(
-  _req: Request,
-  props: { params: Promise<{ userId: string }> }
+	_req: Request,
+	props: { params: Promise<{ userId: string }> },
 ) {
-  const params = await props.params;
-  const { userId } = params;
+	const params = await props.params;
+	const { userId } = params;
 
-  try {
-    const { user: loggedInUser } = await validateRequest();
-    if (!loggedInUser) {
-      return Response.json({ error: "Unauthorized" }, { status: 401 });
-    }
+	try {
+		const { user: loggedInUser } = await validateRequest();
+		if (!loggedInUser) {
+			return Response.json({ error: "Unauthorized" }, { status: 401 });
+		}
 
-    const cachedData = await followerInfoCache.get(userId);
-    if (cachedData) {
-      return Response.json(cachedData);
-    }
+		const cachedData = await followerInfoCache.get(userId);
+		if (cachedData) {
+			return Response.json(cachedData);
+		}
 
-    const [user, isFollowing] = await Promise.all([
-      prisma.user.findUnique({
-        where: { id: userId },
-        select: {
-          _count: {
-            select: { followers: true },
-          },
-        },
-      }),
-      prisma.follow.findUnique({
-        where: {
-          followerId_followingId: {
-            followerId: loggedInUser.id,
-            followingId: userId,
-          },
-        },
-      }),
-    ]);
+		const [user, isFollowing] = await Promise.all([
+			prisma.user.findUnique({
+				where: { id: userId },
+				select: {
+					_count: {
+						select: { followers: true },
+					},
+				},
+			}),
+			prisma.follow.findUnique({
+				where: {
+					followerId_followingId: {
+						followerId: loggedInUser.id,
+						followingId: userId,
+					},
+				},
+			}),
+		]);
 
-    if (!user) {
-      return Response.json({ error: "User not found" }, { status: 404 });
-    }
+		if (!user) {
+			return Response.json({ error: "User not found" }, { status: 404 });
+		}
 
-    const data: FollowerInfo = {
-      followers: user._count.followers,
-      isFollowedByUser: !!isFollowing,
-    };
+		const data: FollowerInfo = {
+			followers: user._count.followers,
+			isFollowedByUser: !!isFollowing,
+		};
 
-    await followerInfoCache.set(userId, data);
+		await followerInfoCache.set(userId, data);
 
-    return Response.json(data);
-  } catch (error) {
-    console.error("GET follower info error:", error);
-    return Response.json({ error: "Internal server error" }, { status: 500 });
-  }
+		return Response.json(data);
+	} catch (error) {
+		console.error("GET follower info error:", error);
+		return Response.json({ error: "Internal server error" }, { status: 500 });
+	}
 }
 
 export async function DELETE(
-  _req: Request,
-  props: { params: Promise<{ userId: string }> }
+	_req: Request,
+	props: { params: Promise<{ userId: string }> },
 ) {
-  const params = await props.params;
-  const { userId } = params;
+	const params = await props.params;
+	const { userId } = params;
 
-  try {
-    const { user: loggedInUser } = await validateRequest();
+	try {
+		const { user: loggedInUser } = await validateRequest();
 
-    if (!loggedInUser) {
-      return Response.json({ error: "Unauthorized" }, { status: 401 });
-    }
+		if (!loggedInUser) {
+			return Response.json({ error: "Unauthorized" }, { status: 401 });
+		}
 
-    const result = await prisma.$transaction(async (tx) => {
-      await tx.follow.deleteMany({
-        where: {
-          followerId: loggedInUser.id,
-          followingId: userId,
-        },
-      });
+		const result = await prisma.$transaction(async (tx) => {
+			await tx.follow.deleteMany({
+				where: {
+					followerId: loggedInUser.id,
+					followingId: userId,
+				},
+			});
 
-      await tx.notification.deleteMany({
-        where: {
-          issuerId: loggedInUser.id,
-          recipientId: userId,
-          type: "FOLLOW",
-        },
-      });
+			await tx.notification.deleteMany({
+				where: {
+					issuerId: loggedInUser.id,
+					recipientId: userId,
+					type: "FOLLOW",
+				},
+			});
 
-      await tx.user.update({
-        where: { id: userId },
-        data: { aura: { decrement: FOLLOW_AURA_REWARD } },
-      });
+			await tx.user.update({
+				where: { id: userId },
+				data: { aura: { decrement: FOLLOW_AURA_REWARD } },
+			});
 
-      await tx.auraLog.create({
-        data: {
-          userId,
-          issuerId: loggedInUser.id,
-          amount: -FOLLOW_AURA_REWARD,
-          type: "FOLLOW_GAINED",
-        },
-      });
+			await tx.auraLog.create({
+				data: {
+					userId,
+					issuerId: loggedInUser.id,
+					amount: -FOLLOW_AURA_REWARD,
+					type: "FOLLOW_GAINED",
+				},
+			});
 
-      const userData = await tx.user.findUnique({
-        where: { id: userId },
-        select: {
-          displayName: true,
-          username: true,
-          _count: { select: { followers: true } },
-        },
-      });
+			const userData = await tx.user.findUnique({
+				where: { id: userId },
+				select: {
+					displayName: true,
+					username: true,
+					_count: { select: { followers: true } },
+				},
+			});
 
-      return userData;
-    });
+			return userData;
+		});
 
-    if (!result) {
-      return Response.json({ error: "User not found" }, { status: 404 });
-    }
+		if (!result) {
+			return Response.json({ error: "User not found" }, { status: 404 });
+		}
 
-    const followerInfo: FollowerInfo & {
-      displayName: string;
-      username: string;
-    } = {
-      followers: result._count.followers,
-      isFollowedByUser: false,
-      displayName: result.displayName,
-      username: result.username,
-    };
+		const followerInfo: FollowerInfo & {
+			displayName: string;
+			username: string;
+		} = {
+			followers: result._count.followers,
+			isFollowedByUser: false,
+			displayName: result.displayName,
+			username: result.username,
+		};
 
-    await Promise.all([
-      followerInfoCache.invalidate(userId),
-      suggestedUsersCache.invalidateForUser(userId),
-    ]);
+		await Promise.all([
+			followerInfoCache.invalidate(userId),
+			suggestedUsersCache.invalidateForUser(userId),
+		]);
 
-    return Response.json(followerInfo);
-  } catch (error) {
-    console.error("Unfollow error:", error);
-    return Response.json({ error: "Internal server error" }, { status: 500 });
-  }
+		return Response.json(followerInfo);
+	} catch (error) {
+		console.error("Unfollow error:", error);
+		return Response.json({ error: "Internal server error" }, { status: 500 });
+	}
 }
