@@ -14,8 +14,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import type React from "react";
-import UserAvatar from "@/components/Layouts/UserAvatar";
-import { getSecureImageUrl } from "@/lib/utils/imageUrl";
+import UserAvatar from "@/components/Layouts/user-avatar";
+import { getSecureImageUrl } from "@/lib/utils/image-url";
 
 type MobileUserMenuProps = {
   isOpen: boolean;

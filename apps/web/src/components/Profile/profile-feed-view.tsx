@@ -16,9 +16,9 @@ import { AtSignIcon, FileTextIcon } from "lucide-react";
 import type React from "react";
 import { useCallback, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
-import { ErrorFallback } from "../misc/ErrorBoundary";
+import { ErrorFallback } from "../misc/error-boundary";
 import MentionedPosts from "./mentioned-posts";
-import UserDetails from "./sidebars/right/UserDetails";
+import UserDetails from "./sidebars/right/user-details";
 import UserPosts from "./user-post";
 
 type ProfileFeedViewProps = {

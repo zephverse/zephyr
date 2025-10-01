@@ -7,8 +7,8 @@ import { Skeleton } from "@zephyr/ui/shadui/skeleton";
 import { motion } from "framer-motion";
 import { BadgeCheckIcon, Flame } from "lucide-react";
 import Link from "next/link";
-import FollowButton from "@/components/Layouts/FollowButton";
-import UserAvatar from "@/components/Layouts/UserAvatar";
+import FollowButton from "@/components/Layouts/follow-button";
+import UserAvatar from "@/components/Layouts/user-avatar";
 import { formatNumber } from "@/lib/utils";
 
 interface UserData extends BaseUserData {

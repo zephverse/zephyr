@@ -2,8 +2,8 @@
 
 import type { UserData } from "@zephyr/db";
 import type React from "react";
-import ContributeCard from "@/components/misc/ContributionCard";
-import UserDetails from "@/components/Profile/sidebars/right/UserDetails";
+import ContributeCard from "@/components/misc/contribution-card";
+import UserDetails from "@/components/Profile/sidebars/right/user-details";
 
 type ProfileRightSideBarProps = {
   username: string;

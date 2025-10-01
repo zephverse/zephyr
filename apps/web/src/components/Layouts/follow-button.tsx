@@ -4,10 +4,10 @@ import { debugLog } from "@zephyr/config/debug";
 import { Button } from "@zephyr/ui/shadui/button";
 import dynamic from "next/dynamic";
 import type React from "react";
-import { ErrorBoundary } from "@/components/misc/ErrorBoundary";
+import { ErrorBoundary } from "@/components/misc/error-boundary";
 
 const ClientFollowButton = dynamic(
-  () => import("./client/ClientFollowButton"),
+  () => import("./client/client-follow-button"),
   {
     ssr: false,
     loading: () => (
@@ -63,5 +63,5 @@ FollowButton.displayName = "FollowButton";
 export default FollowButton;
 
 export function preloadFollowButton() {
-  import("./client/ClientFollowButton");
+  import("./client/client-follow-button");
 }

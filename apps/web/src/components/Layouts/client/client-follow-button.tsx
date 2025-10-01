@@ -14,7 +14,7 @@ import {
   useUnfollowUserMutation,
 } from "@/hooks/user-mutations";
 import { cn } from "@/lib/utils";
-import { followStateAtom } from "./followState";
+import { followStateAtom } from "./follow-state";
 
 type ClientFollowButtonProps = {
   userId: string;

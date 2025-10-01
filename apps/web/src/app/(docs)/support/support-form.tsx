@@ -10,7 +10,9 @@ import { FossBanner } from "@/components/misc/foss-banner";
 import { AnimatedZephyrText } from "./components/animated-zephyr-text";
 import { GithubIssueButton } from "./components/github-issue-button";
 import { StepIndicator } from "./components/step-indicator";
-import { StepOne, StepThree, StepTwo } from "./components/steps";
+import { StepOne } from "./components/steps/step-one";
+import { StepThree } from "./components/steps/step-three";
+import { StepTwo } from "./components/steps/step-two";
 import type { Attachment } from "./types";
 
 export default function SupportForm() {
@@ -267,7 +269,6 @@ export default function SupportForm() {
                 <StepThree
                   attachments={attachments}
                   fileInputRef={fileInputRef}
-                  // @ts-expect-error
                   formData={formData}
                   handleFileUpload={handleFileUpload}
                   loading={loading}

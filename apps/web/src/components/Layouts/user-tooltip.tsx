@@ -9,11 +9,11 @@ import {
 } from "@zephyr/ui/shadui/tooltip";
 import Link from "next/link";
 import { type PropsWithChildren, useEffect, useState } from "react";
-import { useSession } from "@/app/(main)/SessionProvider";
+import { useSession } from "@/app/(main)/session-provider";
 import Linkify from "@/helpers/global/Linkify";
-import FollowButton from "./FollowButton";
-import FollowerCount from "./FollowerCount";
-import UserAvatar from "./UserAvatar";
+import FollowButton from "./follow-button";
+import FollowerCount from "./follower-count";
+import UserAvatar from "./user-avatar";
 
 interface UserTooltipProps extends PropsWithChildren {
   user: UserData;

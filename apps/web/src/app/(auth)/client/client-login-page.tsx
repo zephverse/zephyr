@@ -8,11 +8,11 @@ import Image from "next/image";
 import Link from "next/link";
 import AnimatedAuthLink from "@/components/Auth/animated-auth-link";
 import AuthButtonWrapper from "@/components/Auth/auth-button-wrapper";
-import LoginForm from "@/components/Auth/LoginForm";
-import DiscordSignInButton from "./DiscordSignInButton";
-import GithubSignInButton from "./GithubSignInButton";
-import GoogleSignInButton from "./GoogleSignInButton";
-import TwitterSignInButton from "./TwitterSignInButton";
+import LoginForm from "@/components/Auth/login-form";
+import DiscordSignInButton from "./discord-sign-in-button";
+import GithubSignInButton from "./github-sign-in-button";
+import GoogleSignInButton from "./google-sign-in-button";
+import TwitterSignInButton from "./twitter-sign-in-button";
 
 const fadeIn = {
   hidden: { opacity: 0 },

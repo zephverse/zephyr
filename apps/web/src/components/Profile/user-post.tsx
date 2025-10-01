@@ -6,7 +6,7 @@ import { Loader2 } from "lucide-react";
 import React, { useMemo } from "react";
 import Post from "@/components/Home/feedview/post-card";
 import InfiniteScrollContainer from "@/components/Layouts/infinite-scroll-container";
-import PostsOnlyLoadingSkeleton from "@/components/Layouts/skeletons/PostOnlyLoadingSkeleton";
+import PostsOnlyLoadingSkeleton from "@/components/Layouts/skeletons/post-only-loading-skeleton";
 import kyInstance from "@/lib/ky";
 
 type UserPostsProps = {

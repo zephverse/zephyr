@@ -8,7 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@zephyr/ui/shadui/dialog";
-import LoadingButton from "@/components/Auth/LoadingButton";
+import LoadingButton from "@/components/Auth/loading-button";
 import { useDeleteCommentMutation } from "./mutations";
 
 type DeleteCommentDialogProps = {

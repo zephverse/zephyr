@@ -9,7 +9,7 @@ import { useMediaQuery } from "usehooks-ts";
 import { getLanguageFromFileName } from "@/lib/codefile-extensions";
 import { formatFileName } from "@/lib/format-file-name";
 import { cn } from "@/lib/utils";
-import { FileTypeWatermark } from "./FileTypeWatermark";
+import { FileTypeWatermark } from "./file-type-watermark";
 import MediaViewer from "./media-viewer";
 
 type MediaPreviewsProps = {

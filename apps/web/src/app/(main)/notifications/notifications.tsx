@@ -8,8 +8,8 @@ import {
 import type { NotificationsPage } from "@zephyr/db";
 import { useEffect } from "react";
 import InfiniteScrollContainer from "@/components/Layouts/infinite-scroll-container";
-import LoadMoreSkeleton from "@/components/Layouts/skeletons/LoadMoreSkeleton";
-import PostsOnlyLoadingSkeleton from "@/components/Layouts/skeletons/PostOnlyLoadingSkeleton";
+import LoadMoreSkeleton from "@/components/Layouts/skeletons/load-more-skeleton";
+import PostsOnlyLoadingSkeleton from "@/components/Layouts/skeletons/post-only-loading-skeleton";
 import kyInstance from "@/lib/ky";
 import Notification from "./notification";
 

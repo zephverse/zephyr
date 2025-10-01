@@ -2,7 +2,7 @@
 
 import { ChevronDown } from "lucide-react";
 import type React from "react";
-import { useSession } from "@/app/(main)/SessionProvider";
+import { useSession } from "@/app/(main)/session-provider";
 import UserButton from "@/components/Layouts/user-button";
 import { cn } from "@/lib/utils";
 

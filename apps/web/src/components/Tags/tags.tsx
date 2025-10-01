@@ -14,7 +14,7 @@ import { Hash, Plus } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { cn, formatNumber } from "@/lib/utils";
 import { useUpdateTagsMutation } from "./mutations/tag-mention-mutation";
-import { TagEditor } from "./TagEditor";
+import { TagEditor } from "./tag-editor";
 
 type TagsProps = {
   tags: TagWithCount[];

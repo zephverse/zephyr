@@ -9,7 +9,7 @@ import { AtSign, RefreshCw } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useState, useTransition } from "react";
-import { useMentionedUsers } from "@/hooks/useMentionedUsers";
+import { useMentionedUsers } from "@/hooks/use-mentioned-users";
 import { cn, formatNumber } from "@/lib/utils";
 
 interface MentionedUser extends UserData {

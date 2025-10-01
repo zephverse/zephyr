@@ -16,9 +16,9 @@ import { Separator } from "@zephyr/ui/shadui/separator";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { LoadingButton } from "@/components/Auth/LoadingButton";
-import LinkAccountAlert from "@/components/Settings/LinkAccountAlert";
-import LinkedAccounts from "@/components/Settings/LinkedAccounts";
+import { LoadingButton } from "@/components/Auth/loading-button";
+import LinkAccountAlert from "@/components/Settings/link-account-alert";
+import LinkedAccounts from "@/components/Settings/linked-accounts";
 import { useUpdateEmail, useUpdateUsername } from "../mutations";
 
 const usernameSchema = z.object({

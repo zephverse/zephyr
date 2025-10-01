@@ -8,12 +8,12 @@ import { motion } from "framer-motion";
 import { Users2, VerifiedIcon } from "lucide-react";
 import Link from "next/link";
 import EditProfileButton from "@/components/Layouts/edit-profile-button";
-import FollowButton from "@/components/Layouts/FollowButton";
-import UserAvatar from "@/components/Layouts/UserAvatar";
+import FollowButton from "@/components/Layouts/follow-button";
+import UserAvatar from "@/components/Layouts/user-avatar";
 import Linkify from "@/helpers/global/Linkify";
 import kyInstance from "@/lib/ky";
 import { cn } from "@/lib/utils";
-import { useSession } from "../SessionProvider";
+import { useSession } from "../session-provider";
 
 type UsersResponse = {
   users: UserData[];

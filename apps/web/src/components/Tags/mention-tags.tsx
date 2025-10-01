@@ -12,10 +12,10 @@ import { AnimatePresence, motion } from "framer-motion";
 import { AtSign, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import UserAvatar from "@/components/Layouts/UserAvatar";
+import UserAvatar from "@/components/Layouts/user-avatar";
 import { cn } from "@/lib/utils";
 import { useUpdateMentionsMutation } from "@/posts/editor/mutations";
-import { MentionTagEditor } from "./MentionTagEditor";
+import { MentionTagEditor } from "./mention-tag-editor";
 
 const containerVariants = {
   initial: { opacity: 0 },

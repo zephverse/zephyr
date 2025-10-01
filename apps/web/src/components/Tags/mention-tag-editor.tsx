@@ -7,9 +7,9 @@ import { Command } from "cmdk";
 import { AnimatePresence, motion } from "framer-motion";
 import { Loader2, Search, X } from "lucide-react";
 import { useState } from "react";
-import { useSession } from "@/app/(main)/SessionProvider";
+import { useSession } from "@/app/(main)/session-provider";
 import { useUpdateMentionsMutation } from "@/posts/editor/mutations";
-import UserAvatar from "../Layouts/UserAvatar";
+import UserAvatar from "../Layouts/user-avatar";
 
 const tagVariants = {
   initial: { opacity: 0, scale: 0.9, y: -10 },

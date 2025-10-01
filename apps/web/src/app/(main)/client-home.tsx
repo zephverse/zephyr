@@ -16,9 +16,9 @@ import FollowingFeed from "@/components/Home/feedview/following";
 import ForYouFeed from "@/components/Home/for-you-feed";
 import LeftSideBar from "@/components/Home/sidebars/left-side-bar";
 import RightSideBar from "@/components/Home/sidebars/right-side-bar";
-import StickyFooter from "@/components/Layouts/StinkyFooter";
 import ScrollUpButton from "@/components/Layouts/scroll-up-button";
-import PostEditor from "@/components/Posts/editor/PostEditor";
+import StickyFooter from "@/components/Layouts/stinky-footer";
+import PostEditor from "@/components/Posts/editor/post-editor";
 
 type ClientHomeProps = {
   userData: UserData;

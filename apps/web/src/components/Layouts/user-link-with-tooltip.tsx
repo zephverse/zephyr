@@ -6,7 +6,7 @@ import { HTTPError } from "ky";
 import Link from "next/link";
 import type { PropsWithChildren } from "react";
 import kyInstance from "@/lib/ky";
-import UserTooltip from "./UserTooltip";
+import UserTooltip from "./user-tooltip";
 
 interface UserLinkWithTooltipProps extends PropsWithChildren {
   username: string;

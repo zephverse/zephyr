@@ -6,7 +6,7 @@ import { Flame, Users } from "lucide-react";
 import Link from "next/link";
 import type React from "react";
 import { useState } from "react";
-import UserAvatar from "@/components/Layouts/UserAvatar";
+import UserAvatar from "@/components/Layouts/user-avatar";
 import Linkify from "@/helpers/global/Linkify";
 import { formatNumber } from "@/lib/utils";
 

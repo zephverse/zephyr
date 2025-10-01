@@ -2,7 +2,7 @@
 
 import type { UserData } from "@zephyr/db";
 import type React from "react";
-import { useSession } from "@/app/(main)/SessionProvider";
+import { useSession } from "@/app/(main)/session-provider";
 import ProfileCard from "./right/profile-card";
 import SuggestedConnections from "./right/suggested-connections";
 import { TrendingTabs } from "./right/trending-tabs";

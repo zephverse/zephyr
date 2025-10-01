@@ -14,10 +14,10 @@ import {
   type DefaultStreamChatGenerics,
   useChatContext,
 } from "stream-chat-react";
-import { useSession } from "@/app/(main)/SessionProvider";
-import LoadingButton from "@/components/Auth/LoadingButton";
-import UserAvatar from "@/components/Layouts/UserAvatar";
-import useDebounce from "@/hooks/useDebounce";
+import { useSession } from "@/app/(main)/session-provider";
+import LoadingButton from "@/components/Auth/loading-button";
+import UserAvatar from "@/components/Layouts/user-avatar";
+import useDebounce from "@/hooks/use-debounce";
 
 type NewChatDialogProps = {
   onOpenChange: (open: boolean) => void;

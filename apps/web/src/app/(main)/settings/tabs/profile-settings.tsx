@@ -20,7 +20,7 @@ import { Textarea } from "@zephyr/ui/shadui/textarea";
 import { motion } from "framer-motion";
 import { UserCircle } from "lucide-react";
 import { useForm } from "react-hook-form";
-import { LoadingButton } from "@/components/Auth/LoadingButton";
+import { LoadingButton } from "@/components/Auth/loading-button";
 import { useUpdateProfileMutation } from "../../users/[username]/avatar-mutations";
 
 type ProfileSettingsProps = {

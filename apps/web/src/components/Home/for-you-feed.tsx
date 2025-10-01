@@ -4,8 +4,8 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import type { PostsPage } from "@zephyr/db";
 import { useMemo } from "react";
 import InfiniteScrollContainer from "@/components/Layouts/infinite-scroll-container";
-import FeedViewSkeleton from "@/components/Layouts/skeletons/FeedViewSkeleton";
-import LoadMoreSkeleton from "@/components/Layouts/skeletons/LoadMoreSkeleton";
+import FeedViewSkeleton from "@/components/Layouts/skeletons/feed-view-skeleton";
+import LoadMoreSkeleton from "@/components/Layouts/skeletons/load-more-skeleton";
 import kyInstance from "@/lib/ky";
 import FeedView from "./feed-view";
 

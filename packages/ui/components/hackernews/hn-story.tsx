@@ -25,7 +25,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "../../shadui/tooltip";
-import { useHNShareStore } from "../../store/hnShareStore";
+import { useHnShareStore } from "../../store/hn-share-store";
 
 const storyVariants = {
   initial: { opacity: 0, y: 20 },
@@ -56,7 +56,7 @@ type HnStoryProps = {
 export function HNStory({ story }: HnStoryProps) {
   const domain = story.url ? new URL(story.url).hostname : null;
   const timeAgo = formatDistanceToNow(story.time * 1000, { addSuffix: true });
-  const hnShareStore = useHNShareStore();
+  const hnShareStore = useHnShareStore();
   const router = useRouter();
 
   const handleShareToZephyr = (e: React.MouseEvent) => {

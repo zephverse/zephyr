@@ -15,10 +15,10 @@ import { BadgeCheckIcon, MessageSquare, Sparkles, Users } from "lucide-react";
 import Link from "next/link";
 import type React from "react";
 import { useCallback, useState } from "react";
-import FollowButton from "@/components/Layouts/FollowButton";
-import UserAvatar from "@/components/Layouts/UserAvatar";
+import FollowButton from "@/components/Layouts/follow-button";
+import UserAvatar from "@/components/Layouts/user-avatar";
 import Linkify from "@/helpers/global/Linkify";
-import { useFollowStates } from "@/hooks/useFollowStates";
+import { useFollowStates } from "@/hooks/use-follow-states";
 import { formatNumber } from "@/lib/utils";
 
 type SuggestedUsersProps = {

@@ -17,10 +17,10 @@ import type React from "react";
 import { useEffect, useState } from "react";
 import FollowButton, {
   preloadFollowButton,
-} from "@/components/Layouts/FollowButton";
-import SuggestedConnectionsSkeleton from "@/components/Layouts/skeletons/SCSkeleton";
-import UserAvatar from "@/components/Layouts/UserAvatar";
-import UserTooltip from "@/components/Layouts/UserTooltip";
+} from "@/components/Layouts/follow-button";
+import SuggestedConnectionsSkeleton from "@/components/Layouts/skeletons/sc-skeleton";
+import UserAvatar from "@/components/Layouts/user-avatar";
+import UserTooltip from "@/components/Layouts/user-tooltip";
 import { getSuggestedConnections } from "./user-actions";
 
 type SerializableUserData = {

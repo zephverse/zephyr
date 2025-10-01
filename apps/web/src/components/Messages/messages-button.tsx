@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { MessageCountInfo } from "@zephyr/db";
 import { MessageCircle } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { HeaderIconButton } from "@/components/Styles/HeaderButtons";
+import { HeaderIconButton } from "@/components/Styles/header-buttons";
 import kyInstance from "@/lib/ky";
 
 type MessagesButtonProps = {

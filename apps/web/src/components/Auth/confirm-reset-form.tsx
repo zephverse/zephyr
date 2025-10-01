@@ -21,9 +21,9 @@ import { useEffect, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { resetPassword } from "@/app/(auth)/reset-password/server-actions";
-import { LoadingButton } from "./LoadingButton";
-import { PasswordInput } from "./PasswordInput";
-import { PasswordStrengthChecker } from "./PasswordStrengthChecker";
+import { LoadingButton } from "./loading-button";
+import { PasswordInput } from "./password-input";
+import { PasswordStrengthChecker } from "./password-strength-checker";
 
 const schema = z
   .object({

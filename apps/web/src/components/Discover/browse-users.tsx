@@ -17,9 +17,9 @@ import { BadgeCheckIcon, Search, Users } from "lucide-react";
 import Link from "next/link";
 import type React from "react";
 import { useState } from "react";
-import FollowButton from "@/components/Layouts/FollowButton";
-import UserAvatar from "@/components/Layouts/UserAvatar";
-import useDebounce from "@/hooks/useDebounce";
+import FollowButton from "@/components/Layouts/follow-button";
+import UserAvatar from "@/components/Layouts/user-avatar";
+import useDebounce from "@/hooks/use-debounce";
 import { formatNumber } from "@/lib/utils";
 
 interface UserData extends BaseUserData {

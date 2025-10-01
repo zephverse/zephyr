@@ -33,12 +33,12 @@ import {
   useUpdateAvatarMutation,
   useUpdateProfileMutation,
 } from "@/app/(main)/users/[username]/avatar-mutations";
-import LoadingButton from "@/components/Auth/LoadingButton";
-import { AnimatedWordCounter } from "@/components/misc/AnimatedWordCounter";
+import LoadingButton from "@/components/Auth/loading-button";
+import { AnimatedWordCounter } from "@/components/misc/animated-word-counter";
 import { cn } from "@/lib/utils";
-import { getSecureImageUrl } from "@/lib/utils/imageUrl";
+import { getSecureImageUrl } from "@/lib/utils/image-url";
 import CropImageDialog from "./crop-image-dialog";
-import GifCenteringDialog from "./GifCenteringDialog";
+import GifCenteringDialog from "./gif-centering-dialog";
 
 type EditProfileDialogProps = {
   user: UserData;

@@ -10,9 +10,9 @@ import {
   type DefaultStreamChatGenerics,
   useChatContext,
 } from "stream-chat-react";
-import { useSession } from "@/app/(main)/SessionProvider";
+import { useSession } from "@/app/(main)/session-provider";
 import { cn } from "@/lib/utils";
-import NewChatDialog from "./NewChatDialog";
+import NewChatDialog from "./new-chat-dialog";
 
 type ChatSidebarProps = {
   open: boolean;

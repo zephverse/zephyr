@@ -1,7 +1,7 @@
 import { isStreamConfigured } from "@zephyr/config/src/env";
 import { useEffect, useState } from "react";
 import { StreamChat } from "stream-chat";
-import { useSession } from "@/app/(main)/SessionProvider";
+import { useSession } from "@/app/(main)/session-provider";
 import kyInstance from "@/lib/ky";
 
 export default function useInitializeChatClient() {

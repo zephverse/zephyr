@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import PostEditor from "@/components/Posts/editor/PostEditor";
+import PostEditor from "@/components/Posts/editor/post-editor";
 
 export default function PostEditorPage() {
   return (

@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { useRef, useState } from "react";
 import { useUpdateAvatarMutation } from "@/app/(main)/users/[username]/avatar-mutations";
-import LoadingButton from "@/components/Auth/LoadingButton";
+import LoadingButton from "@/components/Auth/loading-button";
 
 type GifCenteringDialogProps = {
   gifFile: File;

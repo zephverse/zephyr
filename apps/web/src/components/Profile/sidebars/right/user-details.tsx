@@ -24,11 +24,11 @@ import {
 import type React from "react";
 import { useMemo, useState } from "react";
 import EditProfileButton from "@/components/Layouts/edit-profile-button";
-import FollowButton from "@/components/Layouts/FollowButton";
-import UserAvatar from "@/components/Layouts/UserAvatar";
+import FollowButton from "@/components/Layouts/follow-button";
+import UserAvatar from "@/components/Layouts/user-avatar";
 import Linkify from "@/helpers/global/Linkify";
 import { formatNumber } from "@/lib/utils";
-import { getSecureImageUrl } from "@/lib/utils/imageUrl";
+import { getSecureImageUrl } from "@/lib/utils/image-url";
 import FollowersList from "../../followers-list";
 import FollowingList from "../../following-list";
 

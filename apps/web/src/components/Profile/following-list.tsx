@@ -12,8 +12,8 @@ import { ScrollArea } from "@zephyr/ui/shadui/scroll-area";
 import { AnimatePresence, motion } from "framer-motion";
 import { Compass, SearchIcon, Users2 } from "lucide-react";
 import { useState } from "react";
-import FollowButton from "@/components/Layouts/FollowButton";
-import UserAvatar from "@/components/Layouts/UserAvatar";
+import FollowButton from "@/components/Layouts/follow-button";
+import UserAvatar from "@/components/Layouts/user-avatar";
 
 type FollowingListProps = {
   userId: string;

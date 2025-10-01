@@ -1,6 +1,6 @@
 import NavigationCard from "@/components/Home/sidebars/left/navigation-card";
 import SuggestedConnections from "@/components/Home/sidebars/right/suggested-connections";
-import StickyFooter from "@/components/Layouts/StinkyFooter";
+import StickyFooter from "@/components/Layouts/stinky-footer";
 
 const ChatSkeleton = () => (
   <main className="flex h-[calc(100vh-4rem)] w-full min-w-0 gap-5 overflow-hidden shadow-xs">

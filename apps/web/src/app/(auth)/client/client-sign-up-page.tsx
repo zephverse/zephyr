@@ -1,8 +1,6 @@
 "use client";
 
-// @ts-expect-error - no types for images
 import signupImage from "@assets/auth/signup-image.jpg";
-// @ts-expect-error - no types for images
 import loginImage from "@assets/previews/login.png";
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertTriangle } from "lucide-react";

@@ -1,4 +1,4 @@
-import CommentSkeleton from "./CommentSkeleton";
+import CommentSkeleton from "./comment-skeleton";
 
 const CommentsSkeleton = () => (
   <div className="mt-4 space-y-3">

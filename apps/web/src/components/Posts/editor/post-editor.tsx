@@ -7,22 +7,22 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Loader2, Wind } from "lucide-react";
 import { type ClipboardEvent, useCallback, useEffect, useState } from "react";
 import { useDropzone } from "react-dropzone";
-import { useSession } from "@/app/(main)/SessionProvider";
-import LoadingButton from "@/components/Auth/LoadingButton";
-import UserAvatar from "@/components/Layouts/UserAvatar";
+import { useSession } from "@/app/(main)/session-provider";
+import LoadingButton from "@/components/Auth/loading-button";
+import UserAvatar from "@/components/Layouts/user-avatar";
 import { cn } from "@/lib/utils";
 import { useSubmitPostMutation } from "@/posts/editor/mutations";
-import { AttachmentPreview } from "./AttachmentPreview";
-import { FileInput } from "./FileInput";
+import { AttachmentPreview } from "./attachment-preview";
+import { FileInput } from "./file-input";
 import "./styles.css";
 import { useQuery } from "@tanstack/react-query";
 import type { TagWithCount, UserData } from "@zephyr/db";
-import { useHNShareStore } from "@zephyr/ui/store/hn-share-store";
-import { MentionTags } from "@/components/Tags/MentionTags";
-import { Tags } from "@/components/Tags/Tags";
+import { useHnShareStore } from "@zephyr/ui/store/hn-share-store";
+import { MentionTags } from "@/components/Tags/mention-tags";
+import { Tags } from "@/components/Tags/tags";
 import kyInstance from "@/lib/ky";
-import { HNStoryPreview } from "./HNStoryPreview";
-import useMediaUpload, { type Attachment } from "./useMediaUpload";
+import { HNStoryPreview } from "./hn-story-preview";
+import useMediaUpload, { type Attachment } from "./use-media-upload";
 
 const containerVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -56,7 +56,7 @@ const textVariants = {
 export default function PostEditor() {
   const { user } = useSession();
   const mutation = useSubmitPostMutation();
-  const hnShareStore = useHNShareStore();
+  const hnShareStore = useHnShareStore();
   const sharedHnStory = hnShareStore.story;
   const isHnSharing = hnShareStore.isSharing;
 

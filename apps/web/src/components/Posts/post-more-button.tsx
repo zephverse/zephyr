@@ -10,9 +10,9 @@ import {
 } from "@zephyr/ui/shadui/dropdown-menu";
 import { AtSign, MoreHorizontal, Tags, Trash2 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
-import { MentionTags } from "@/components/Tags/MentionTags";
-import { Tags as TagsComponent } from "@/components/Tags/Tags";
-import DeletePostDialog from "./DeletePostDialog";
+import { MentionTags } from "@/components/Tags/mention-tags";
+import { Tags as TagsComponent } from "@/components/Tags/tags";
+import DeletePostDialog from "./delete-post-dialog";
 
 type PostMoreButtonProps = {
   post: PostData;

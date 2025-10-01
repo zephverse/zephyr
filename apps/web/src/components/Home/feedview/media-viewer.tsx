@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogTitle } from "@zephyr/ui/shadui/dialog";
 import { ChevronLeft, ChevronRight, Download, FileIcon, X } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { MediaViewerSkeleton } from "@/components/Layouts/skeletons/MediaViewerSkeleton";
+import { MediaViewerSkeleton } from "@/components/Layouts/skeletons/media-viewer-skeleton";
 import { getLanguageFromFileName } from "@/lib/codefile-extensions";
 import { formatFileName } from "@/lib/format-file-name";
 import { cn } from "@/lib/utils";

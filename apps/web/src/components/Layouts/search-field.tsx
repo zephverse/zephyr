@@ -8,10 +8,10 @@ import { HashIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
-import useDebounce from "@/hooks/useDebounce";
+import useDebounce from "@/hooks/use-debounce";
 import kyInstance from "@/lib/ky";
 import { searchMutations } from "../Search/mutations";
-import { SearchCommandList } from "../Search/SearchCommandList";
+import { SearchCommandList } from "../Search/search-command-list";
 
 export default function SearchField({
   onAfterSearch,

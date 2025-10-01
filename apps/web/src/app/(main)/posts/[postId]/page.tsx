@@ -7,10 +7,10 @@ import { cache, Suspense } from "react";
 import PostCard from "@/components/Home/feedview/post-card";
 import NavigationCard from "@/components/Home/sidebars/left/navigation-card";
 import ProfileCard from "@/components/Home/sidebars/right/profile-card";
-import FollowButton from "@/components/Layouts/FollowButton";
-import StickyFooter from "@/components/Layouts/StinkyFooter";
-import UserAvatar from "@/components/Layouts/UserAvatar";
-import UserTooltip from "@/components/Layouts/UserTooltip";
+import FollowButton from "@/components/Layouts/follow-button";
+import StickyFooter from "@/components/Layouts/stinky-footer";
+import UserAvatar from "@/components/Layouts/user-avatar";
+import UserTooltip from "@/components/Layouts/user-tooltip";
 import Linkify from "@/helpers/global/Linkify";
 import { getUserData } from "@/hooks/use-user-data";
 

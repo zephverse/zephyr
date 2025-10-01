@@ -8,9 +8,9 @@ import {
   TabsTrigger,
 } from "@zephyr/ui/shadui/tabs";
 import { motion } from "framer-motion";
-import { AnimatedZephyrText } from "@/app/(auth)/client/ClientLoginPage";
+import { AnimatedZephyrText } from "@/app/(auth)/client/client-login-page";
 import { FossBanner } from "@/components/misc/foss-banner";
-import { LegalLinksCard } from "@/components/misc/LegalLinksCard";
+import { LegalLinksCard } from "@/components/misc/legal-links-card";
 import AccountSettings from "./tabs/account-settings";
 import ProfileSettings from "./tabs/profile-settings";
 import SecuritySettings from "./tabs/security-settings";

@@ -1,6 +1,6 @@
 import type { Media } from "@prisma/client";
 import { MediaPreviews } from "@/components/Home/feedview/media-previews";
-import { AttachmentPreview } from "@/components/Posts/editor/AttachmentPreview";
+import { AttachmentPreview } from "@/components/Posts/editor/attachment-preview";
 import type { Attachment } from "../types";
 
 type SupportMediaPreviewProps = {

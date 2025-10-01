@@ -38,12 +38,12 @@ import type React from "react";
 import { useEffect, useState } from "react";
 import { useMediaQuery } from "usehooks-ts";
 import { logout } from "@/app/(auth)/actions";
-import { useSession } from "@/app/(main)/SessionProvider";
-import UserAvatar from "@/components/Layouts/UserAvatar";
+import { useSession } from "@/app/(main)/session-provider";
+import UserAvatar from "@/components/Layouts/user-avatar";
 import { cn } from "@/lib/utils";
-import { getSecureImageUrl } from "@/lib/utils/imageUrl";
-import { getRandomJoke } from "./constants/LogoutMessages";
-import { MobileUserMenu } from "./mobile/MobileUserMenu";
+import { getSecureImageUrl } from "@/lib/utils/image-url";
+import { getRandomJoke } from "./constants/logout-messages";
+import { MobileUserMenu } from "./mobile/mobile-user-menu";
 
 type UserButtonProps = {
   className?: string;

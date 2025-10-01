@@ -7,15 +7,15 @@ import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { Channel, Chat as StreamChat } from "stream-chat-react";
-import { useSession } from "@/app/(main)/SessionProvider";
+import { useSession } from "@/app/(main)/session-provider";
 import NavigationCard from "@/components/Home/sidebars/left/navigation-card";
 import SuggestedConnections from "@/components/Home/sidebars/right/suggested-connections";
-import StickyFooter from "@/components/Layouts/StinkyFooter";
-import ChatSkeleton from "@/components/Layouts/skeletons/ChatSkeleton";
-import useInitializeChatClient from "@/hooks/useInitializeChatClient";
-import ChatChannel from "./ChatChannel";
-import ChatSidebar from "./ChatSidebar";
-import { ChatThemeProvider } from "./ChatThemeProvider";
+import ChatSkeleton from "@/components/Layouts/skeletons/chat-skeleton";
+import StickyFooter from "@/components/Layouts/stinky-footer";
+import useInitializeChatClient from "@/hooks/use-initialize-chat-client";
+import ChatChannel from "./chat-channel";
+import ChatSidebar from "./chat-sidebar";
+import { ChatThemeProvider } from "./chat-theme-provider";
 
 const WelcomeScreen = ({ onNewChat }: { onNewChat: () => void }) => (
   <motion.div

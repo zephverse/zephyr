@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from "@zephyr/ui/shadui/dialog";
 import { useState } from "react";
-import LoadingButton from "@/components/Auth/LoadingButton";
+import LoadingButton from "@/components/Auth/loading-button";
 import { useUnfollowUserMutation } from "@/hooks/user-mutations";
 
 type UnfollowUserDialogProps = {

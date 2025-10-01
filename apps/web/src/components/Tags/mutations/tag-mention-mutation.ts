@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { PostData, TagWithCount, UserData } from "@zephyr/db";
-import { useSession } from "@/app/(main)/SessionProvider";
+import { useSession } from "@/app/(main)/session-provider";
 import { updatePostInCaches } from "./cache-utils";
 
 type TagsMutationContext = {

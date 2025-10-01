@@ -2,7 +2,7 @@
 
 import { Bookmark } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { HeaderIconButton } from "@/components/Styles/HeaderButtons";
+import { HeaderIconButton } from "@/components/Styles/header-buttons";
 
 type HeaderBookmarksButtonProps = {
   count: number;

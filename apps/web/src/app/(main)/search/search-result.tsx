@@ -8,8 +8,8 @@ import { motion } from "framer-motion";
 import { FileText, Search } from "lucide-react";
 import Post from "@/components/Home/feedview/post-card";
 import InfiniteScrollContainer from "@/components/Layouts/infinite-scroll-container";
-import LoadMoreSkeleton from "@/components/Layouts/skeletons/LoadMoreSkeleton";
-import PostsLoadingSkeleton from "@/components/Layouts/skeletons/PostOnlyLoadingSkeleton";
+import LoadMoreSkeleton from "@/components/Layouts/skeletons/load-more-skeleton";
+import PostsLoadingSkeleton from "@/components/Layouts/skeletons/post-only-loading-skeleton";
 import kyInstance from "@/lib/ky";
 import UserSearchResults from "./user-search-result";
 

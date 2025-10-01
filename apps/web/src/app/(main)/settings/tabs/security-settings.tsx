@@ -18,7 +18,7 @@ import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { requestPasswordReset } from "@/app/(auth)/reset-password/server-actions";
-import { LoadingButton } from "@/components/Auth/LoadingButton";
+import { LoadingButton } from "@/components/Auth/loading-button";
 
 const emailSchema = z.object({
   email: z.string().email("Please enter a valid email address"),

@@ -3,7 +3,7 @@
 import type { UserData } from "@zephyr/db";
 import { Button } from "@zephyr/ui/shadui/button";
 import { useState } from "react";
-import EditProfileDialog from "@/components/Layouts/EditProfileDialog";
+import EditProfileDialog from "@/components/Layouts/edit-profile-dialog";
 import { cn } from "@/lib/utils";
 
 type EditProfileButtonProps = {

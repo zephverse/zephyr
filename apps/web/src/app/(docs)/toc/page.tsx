@@ -1,4 +1,4 @@
-import TermsPage from "./ClientToc";
+import TermsPage from "./client-toc";
 
 export const metadata = {
   title: "Terms and Conditions",

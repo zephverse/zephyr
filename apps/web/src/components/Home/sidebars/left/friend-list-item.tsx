@@ -14,8 +14,8 @@ import Image from "next/image";
 import Link from "next/link";
 import type React from "react";
 import { useState } from "react";
-import UserAvatar from "@/components/Layouts/UserAvatar";
-import { getAvatarUrl } from "@/lib/utils/getAvatarUrl";
+import UserAvatar from "@/components/Layouts/user-avatar";
+import { getAvatarUrl } from "@/lib/utils/get-avatar-url";
 
 type FriendListItemProps = {
   user: UserData;

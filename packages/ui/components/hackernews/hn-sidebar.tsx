@@ -23,7 +23,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "../../shadui/tooltip";
-import { HNSearchInput } from "./HNSearchInput";
+import { HNSearchInput } from "./hn-search-input";
 
 export const SORT_OPTIONS = {
   SCORE: "score",

@@ -8,7 +8,8 @@ import {
   sendVerificationEmail,
 } from "@zephyr/auth/src/email/service";
 import { EMAIL_ERRORS, isEmailValid } from "@zephyr/auth/src/email/validation";
-
+// biome-ignore lint/style/noExportedImports: it's a shared utility
+import { resendVerificationEmail } from "@zephyr/auth/src/verification/resend";
 import { type SignUpValues, signUpSchema } from "@zephyr/auth/validation";
 import { getEnvironmentMode, isStreamConfigured } from "@zephyr/config/src/env";
 import { prisma } from "@zephyr/db";
@@ -74,7 +75,6 @@ async function createDevUser(
       }
     }
 
-    // @ts-expect-error
     const session = await lucia.createSession(userId, {});
     const cookieStore = await cookies();
     const sessionCookie = lucia.createSessionCookie(session.id);
@@ -336,5 +336,4 @@ export async function signUp(
   }
 }
 
-// biome-ignore lint/performance/noBarrelFile: Single function export needed for signup actions
-export { resendVerificationEmail } from "@zephyr/auth/src/verification/resend";
+export { resendVerificationEmail };

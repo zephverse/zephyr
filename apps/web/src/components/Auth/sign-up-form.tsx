@@ -28,9 +28,9 @@ import {
 } from "react-hook-form";
 import { useCountdown } from "usehooks-ts";
 import { resendVerificationEmail, signUp } from "@/app/(auth)/signup/actions";
-import { LoadingButton } from "@/components/Auth/LoadingButton";
-import { PasswordInput } from "@/components/Auth/PasswordInput";
-import { PasswordStrengthChecker } from "./PasswordStrengthChecker";
+import { LoadingButton } from "@/components/Auth/loading-button";
+import { PasswordInput } from "@/components/Auth/password-input";
+import { PasswordStrengthChecker } from "./password-strength-checker";
 
 const texts = [
   "Elevate your ideas, accelerate your impact.",

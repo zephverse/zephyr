@@ -10,7 +10,7 @@ import {
   onenumberRegex,
   specialCharRegex,
   uppercaseRegex,
-} from "./PasswordStrengthChecker";
+} from "./password-strength-checker";
 
 type Requirement = {
   text: string;
