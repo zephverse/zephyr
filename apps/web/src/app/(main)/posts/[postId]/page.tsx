@@ -11,7 +11,7 @@ import FollowButton from "@/components/Layouts/follow-button";
 import StickyFooter from "@/components/Layouts/stinky-footer";
 import UserAvatar from "@/components/Layouts/user-avatar";
 import UserTooltip from "@/components/Layouts/user-tooltip";
-import Linkify from "@/helpers/global/Linkify";
+import Linkify from "@/helpers/global/linkify";
 import { getUserData } from "@/hooks/use-user-data";
 
 type PageProps = {

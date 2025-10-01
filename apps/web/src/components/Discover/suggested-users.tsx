@@ -17,7 +17,7 @@ import type React from "react";
 import { useCallback, useState } from "react";
 import FollowButton from "@/components/Layouts/follow-button";
 import UserAvatar from "@/components/Layouts/user-avatar";
-import Linkify from "@/helpers/global/Linkify";
+import Linkify from "@/helpers/global/linkify";
 import { useFollowStates } from "@/hooks/use-follow-states";
 import { formatNumber } from "@/lib/utils";
 

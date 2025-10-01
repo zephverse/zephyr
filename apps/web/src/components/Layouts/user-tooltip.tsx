@@ -10,7 +10,7 @@ import {
 import Link from "next/link";
 import { type PropsWithChildren, useEffect, useState } from "react";
 import { useSession } from "@/app/(main)/session-provider";
-import Linkify from "@/helpers/global/Linkify";
+import Linkify from "@/helpers/global/linkify";
 import FollowButton from "./follow-button";
 import FollowerCount from "./follower-count";
 import UserAvatar from "./user-avatar";

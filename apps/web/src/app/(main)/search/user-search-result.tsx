@@ -10,7 +10,7 @@ import Link from "next/link";
 import EditProfileButton from "@/components/Layouts/edit-profile-button";
 import FollowButton from "@/components/Layouts/follow-button";
 import UserAvatar from "@/components/Layouts/user-avatar";
-import Linkify from "@/helpers/global/Linkify";
+import Linkify from "@/helpers/global/linkify";
 import kyInstance from "@/lib/ky";
 import { cn } from "@/lib/utils";
 import { useSession } from "../session-provider";
