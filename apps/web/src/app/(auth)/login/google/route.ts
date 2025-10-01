@@ -3,30 +3,30 @@ import { generateCodeVerifier, generateState } from "arctic";
 import { cookies } from "next/headers";
 
 export async function GET() {
-	const state = generateState();
-	const codeVerifier = generateCodeVerifier();
+  const state = generateState();
+  const codeVerifier = generateCodeVerifier();
 
-	(await cookies()).set("state", state, {
-		path: "/",
-		secure: process.env.NODE_ENV === "production",
-		httpOnly: true,
-		maxAge: 60 * 10,
-		sameSite: "lax",
-	});
+  (await cookies()).set("state", state, {
+    path: "/",
+    secure: process.env.NODE_ENV === "production",
+    httpOnly: true,
+    maxAge: 60 * 10,
+    sameSite: "lax",
+  });
 
-	(await cookies()).set("code_verifier", codeVerifier, {
-		path: "/",
-		secure: process.env.NODE_ENV === "production",
-		httpOnly: true,
-		maxAge: 60 * 10,
-		sameSite: "lax",
-	});
+  (await cookies()).set("code_verifier", codeVerifier, {
+    path: "/",
+    secure: process.env.NODE_ENV === "production",
+    httpOnly: true,
+    maxAge: 60 * 10,
+    sameSite: "lax",
+  });
 
-	const url = await google.createAuthorizationURL(state, codeVerifier, [
-		"email",
-		"profile",
-		"openid",
-	]);
+  const url = await google.createAuthorizationURL(state, codeVerifier, [
+    "email",
+    "profile",
+    "openid",
+  ]);
 
-	return Response.redirect(url.toString());
+  return Response.redirect(url.toString());
 }

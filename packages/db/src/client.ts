@@ -1,271 +1,271 @@
 import type { Prisma } from "@prisma/client";
 
 export function getUserDataSelect(loggedInUserId: string) {
-	return {
-		id: true,
-		aura: true,
-		username: true,
-		email: true,
-		displayName: true,
-		avatarUrl: true,
-		avatarKey: true,
-		bio: true,
-		createdAt: true,
-		googleId: true,
-		githubId: true,
-		discordId: true,
-		twitterId: true,
-		passwordHash: true,
-		emailVerified: true,
-		followers: {
-			where: {
-				followerId: loggedInUserId,
-			},
-			select: {
-				followerId: true,
-			},
-		},
-		_count: {
-			select: {
-				posts: true,
-				followers: true,
-				following: true,
-			},
-		},
-	} satisfies Prisma.UserSelect;
+  return {
+    id: true,
+    aura: true,
+    username: true,
+    email: true,
+    displayName: true,
+    avatarUrl: true,
+    avatarKey: true,
+    bio: true,
+    createdAt: true,
+    googleId: true,
+    githubId: true,
+    discordId: true,
+    twitterId: true,
+    passwordHash: true,
+    emailVerified: true,
+    followers: {
+      where: {
+        followerId: loggedInUserId,
+      },
+      select: {
+        followerId: true,
+      },
+    },
+    _count: {
+      select: {
+        posts: true,
+        followers: true,
+        following: true,
+      },
+    },
+  } satisfies Prisma.UserSelect;
 }
 
 export function getPostDataInclude(loggedInUserId: string) {
-	return {
-		user: {
-			select: getUserDataSelect(loggedInUserId),
-		},
-		attachments: true,
-		tags: true,
-		mentions: {
-			include: {
-				user: {
-					select: {
-						id: true,
-						username: true,
-						displayName: true,
-						avatarUrl: true,
-					},
-				},
-			},
-		},
-		bookmarks: {
-			where: {
-				userId: loggedInUserId,
-			},
-			select: {
-				userId: true,
-			},
-		},
-		vote: {
-			where: {
-				userId: loggedInUserId,
-			},
-			select: {
-				userId: true,
-				value: true,
-			},
-		},
-		_count: {
-			select: {
-				vote: true,
-				comments: true,
-				mentions: true,
-			},
-		},
-	} satisfies Prisma.PostInclude;
+  return {
+    user: {
+      select: getUserDataSelect(loggedInUserId),
+    },
+    attachments: true,
+    tags: true,
+    mentions: {
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            displayName: true,
+            avatarUrl: true,
+          },
+        },
+      },
+    },
+    bookmarks: {
+      where: {
+        userId: loggedInUserId,
+      },
+      select: {
+        userId: true,
+      },
+    },
+    vote: {
+      where: {
+        userId: loggedInUserId,
+      },
+      select: {
+        userId: true,
+        value: true,
+      },
+    },
+    _count: {
+      select: {
+        vote: true,
+        comments: true,
+        mentions: true,
+      },
+    },
+  } satisfies Prisma.PostInclude;
 }
 
 export type UserData = Prisma.UserGetPayload<{
-	select: ReturnType<typeof getUserDataSelect>;
+  select: ReturnType<typeof getUserDataSelect>;
 }>;
 
 export type PostsPage = {
-	posts: PostData[];
-	nextCursor: string | null;
+  posts: PostData[];
+  nextCursor: string | null;
 };
 
 export function getCommentDataInclude(loggedInUserId: string) {
-	return {
-		user: {
-			select: getUserDataSelect(loggedInUserId),
-		},
-	} satisfies Prisma.CommentInclude;
+  return {
+    user: {
+      select: getUserDataSelect(loggedInUserId),
+    },
+  } satisfies Prisma.CommentInclude;
 }
 
 export type CommentData = Prisma.CommentGetPayload<{
-	include: ReturnType<typeof getCommentDataInclude>;
+  include: ReturnType<typeof getCommentDataInclude>;
 }>;
 
 export type CommentsPage = {
-	comments: CommentData[];
-	previousCursor: string | null;
+  comments: CommentData[];
+  previousCursor: string | null;
 };
 
 export const notificationsInclude = {
-	issuer: {
-		select: {
-			id: true,
-			username: true,
-			displayName: true,
-			avatarUrl: true,
-		},
-	},
-	post: {
-		select: {
-			id: true,
-			content: true,
-		},
-	},
+  issuer: {
+    select: {
+      id: true,
+      username: true,
+      displayName: true,
+      avatarUrl: true,
+    },
+  },
+  post: {
+    select: {
+      id: true,
+      content: true,
+    },
+  },
 } satisfies Prisma.NotificationInclude;
 
 export type NotificationData = Prisma.NotificationGetPayload<{
-	include: typeof notificationsInclude;
+  include: typeof notificationsInclude;
 }>;
 
 export type NotificationsPage = {
-	notifications: NotificationData[];
-	nextCursor: string | null;
+  notifications: NotificationData[];
+  nextCursor: string | null;
 };
 
 export type FollowerInfo = {
-	followers: number;
-	isFollowedByUser: boolean;
+  followers: number;
+  isFollowedByUser: boolean;
 };
 
 export type PostData = Prisma.PostGetPayload<{
-	include: {
-		user: {
-			select: ReturnType<typeof getUserDataSelect>;
-		};
-		attachments: true;
-		tags: true;
-		mentions: {
-			include: {
-				user: {
-					select: {
-						id: true;
-						username: true;
-						displayName: true;
-						avatarUrl: true;
-					};
-				};
-			};
-		};
-		bookmarks: {
-			where: {
-				userId: string;
-			};
-			select: {
-				userId: true;
-			};
-		};
-		vote: {
-			where: {
-				userId: string;
-			};
-			select: {
-				userId: true;
-				value: true;
-			};
-		};
-		_count: {
-			select: {
-				vote: true;
-				comments: true;
-				mentions: true;
-			};
-		};
-	};
+  include: {
+    user: {
+      select: ReturnType<typeof getUserDataSelect>;
+    };
+    attachments: true;
+    tags: true;
+    mentions: {
+      include: {
+        user: {
+          select: {
+            id: true;
+            username: true;
+            displayName: true;
+            avatarUrl: true;
+          };
+        };
+      };
+    };
+    bookmarks: {
+      where: {
+        userId: string;
+      };
+      select: {
+        userId: true;
+      };
+    };
+    vote: {
+      where: {
+        userId: string;
+      };
+      select: {
+        userId: true;
+        value: true;
+      };
+    };
+    _count: {
+      select: {
+        vote: true;
+        comments: true;
+        mentions: true;
+      };
+    };
+  };
 }> & {
-	aura: number;
+  aura: number;
 };
 
 export type TagWithCount = {
-	id: string;
-	name: string;
-	createdAt: Date;
-	updatedAt: Date;
-	_count?: {
-		posts: number;
-	};
+  id: string;
+  name: string;
+  createdAt: Date;
+  updatedAt: Date;
+  _count?: {
+    posts: number;
+  };
 };
 
 export type VoteInfo = {
-	aura: number;
-	userVote: number;
+  aura: number;
+  userVote: number;
 };
 
 export type BookmarkInfo = {
-	isBookmarkedByUser: boolean;
+  isBookmarkedByUser: boolean;
 };
 
 export type NotificationCountInfo = {
-	unreadCount: number;
+  unreadCount: number;
 };
 
 export type MessageCountInfo = {
-	unreadCount: number;
-	error?: string;
+  unreadCount: number;
+  error?: string;
 };
 
 export type ShareStats = {
-	platform: string;
-	shares: number;
-	clicks: number;
+  platform: string;
+  shares: number;
+  clicks: number;
 };
 
 export type ShareResponse = {
-	shares: number;
+  shares: number;
 };
 
 export type ClickResponse = {
-	clicks: number;
+  clicks: number;
 };
 
 export type FormStatus = {
-	isLoading: boolean;
-	isResending: boolean;
-	error?: string;
+  isLoading: boolean;
+  isResending: boolean;
+  error?: string;
 };
 
 export type SignUpFormProps = {
-	onSuccess?: () => void;
-	onError?: (error: Error) => void;
+  onSuccess?: () => void;
+  onError?: (error: Error) => void;
 };
 
 export type MentionData = {
-	id: string;
-	postId: string;
-	userId: string;
-	createdAt: Date;
-	user: {
-		id: string;
-		username: string;
-		displayName: string;
-		avatarUrl: string | null;
-	};
+  id: string;
+  postId: string;
+  userId: string;
+  createdAt: Date;
+  user: {
+    id: string;
+    username: string;
+    displayName: string;
+    avatarUrl: string | null;
+  };
 };
 
 export const mentionsInclude = {
-	user: {
-		select: {
-			id: true,
-			username: true,
-			displayName: true,
-			avatarUrl: true,
-		},
-	},
+  user: {
+    select: {
+      id: true,
+      username: true,
+      displayName: true,
+      avatarUrl: true,
+    },
+  },
 } satisfies Prisma.MentionInclude;
 
 export type UnfollowUserDialogProps = {
-	user: UserData;
-	open: boolean;
-	onClose: () => void;
-	handleUnfollow: (userId: string) => void;
+  user: UserData;
+  open: boolean;
+  onClose: () => void;
+  handleUnfollow: (userId: string) => void;
 };

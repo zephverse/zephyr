@@ -1,9 +1,9 @@
 // Core exports
 export {
-	createBlankSessionCookie,
-	createSessionCookie,
-	lucia,
-	validateRequest,
+  createBlankSessionCookie,
+  createSessionCookie,
+  lucia,
+  validateRequest,
 } from "./core/lucia";
 // Email service exports (from previous restructuring)
 export { sendPasswordResetEmail, sendVerificationEmail } from "./email/service";
@@ -14,11 +14,11 @@ export * from "./stream/services";
 // Validation exports
 export { DISPOSABLE_EMAIL_DOMAINS } from "./validation/constants";
 export {
-	createPostSchema,
-	type LoginValues,
-	loginSchema,
-	type SignUpValues,
-	signUpSchema,
-	type UpdateUserProfileValues,
-	updateUserProfileSchema,
+  createPostSchema,
+  type LoginValues,
+  loginSchema,
+  type SignUpValues,
+  signUpSchema,
+  type UpdateUserProfileValues,
+  updateUserProfileSchema,
 } from "./validation/schemas";

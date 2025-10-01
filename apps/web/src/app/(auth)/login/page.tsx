@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import ClientLoginPage from "@/app/(auth)/client/ClientLoginPage";
 
 export const metadata: Metadata = {
-	title: "Login",
+  title: "Login",
 };
 
 export default function LoginPage() {
-	return <ClientLoginPage />;
+  return <ClientLoginPage />;
 }

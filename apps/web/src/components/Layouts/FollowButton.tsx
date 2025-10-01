@@ -7,55 +7,55 @@ import type React from "react";
 import { ErrorBoundary } from "@/components/misc/ErrorBoundary";
 
 const ClientFollowButton = dynamic(
-	() => import("./client/ClientFollowButton"),
-	{
-		ssr: false,
-		loading: () => (
-			<Button className="h-8 w-20 animate-pulse rounded-md bg-secondary/50" />
-		),
-	},
+  () => import("./client/ClientFollowButton"),
+  {
+    ssr: false,
+    loading: () => (
+      <Button className="h-8 w-20 animate-pulse rounded-md bg-secondary/50" />
+    ),
+  }
 );
 
 type FollowButtonProps = {
-	userId: string;
-	initialState: {
-		followers: number;
-		isFollowedByUser: boolean;
-	};
-	className?: string;
-	onFollowed?: () => void;
+  userId: string;
+  initialState: {
+    followers: number;
+    isFollowedByUser: boolean;
+  };
+  className?: string;
+  onFollowed?: () => void;
 };
 
 const WrappedClientFollowButton: React.FC<FollowButtonProps> = (props) => (
-	<ErrorBoundary
-		onReset={() => {
-			debugLog.component("Follow button error boundary reset:", props.userId);
-		}}
-	>
-		<ClientFollowButton {...props} />
-	</ErrorBoundary>
+  <ErrorBoundary
+    onReset={() => {
+      debugLog.component("Follow button error boundary reset:", props.userId);
+    }}
+  >
+    <ClientFollowButton {...props} />
+  </ErrorBoundary>
 );
 
 const FollowButton: React.FC<FollowButtonProps> = ({
-	userId,
-	initialState,
-	className,
-	onFollowed,
+  userId,
+  initialState,
+  className,
+  onFollowed,
 }) => {
-	debugLog.component("Rendering FollowButton:", {
-		userId,
-		initialState,
-		className,
-	});
+  debugLog.component("Rendering FollowButton:", {
+    userId,
+    initialState,
+    className,
+  });
 
-	return (
-		<WrappedClientFollowButton
-			className={className}
-			initialState={initialState}
-			onFollowed={onFollowed}
-			userId={userId}
-		/>
-	);
+  return (
+    <WrappedClientFollowButton
+      className={className}
+      initialState={initialState}
+      onFollowed={onFollowed}
+      userId={userId}
+    />
+  );
 };
 
 FollowButton.displayName = "FollowButton";
@@ -63,5 +63,5 @@ FollowButton.displayName = "FollowButton";
 export default FollowButton;
 
 export function preloadFollowButton() {
-	import("./client/ClientFollowButton");
+  import("./client/ClientFollowButton");
 }

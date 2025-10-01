@@ -1,21 +1,21 @@
 {
-	"extends": "@zephyr/config/nextjs.config.json",
-	"compilerOptions": {
-		"baseUrl": ".",
-		"paths": {
-			"@/*": ["./src/*"],
-			"@root/*": ["./*"],
-			"@assets/*": ["./assets/*"]
-		}
-	},
-	"include": [
-		"next-env.d.ts",
-		"next.config.ts",
-		"**/*.ts",
-		"**/*.tsx",
-		"./assets/**/*",
-		".next/types/**/*.ts",
-		"../../packages/ui/components/ui/gooey-text-morphing.tsx",
-		"../../packages/ui/components/ui/spiral-animation.tsx"
-	]
+  "extends": "@zephyr/config/nextjs.config.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@root/*": ["./*"],
+      "@assets/*": ["./assets/*"]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "next.config.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    "./assets/**/*",
+    ".next/types/**/*.ts",
+    "../../packages/ui/components/ui/gooey-text-morphing.tsx",
+    "../../packages/ui/components/ui/spiral-animation.tsx"
+  ]
 }

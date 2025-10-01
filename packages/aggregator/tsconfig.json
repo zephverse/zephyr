@@ -1,13 +1,13 @@
 {
-	"extends": "@zephyr/config/react.tsconfig.json",
-	"compilerOptions": {
-		"baseUrl": ".",
-		"plugins": [
-			{
-				"name": "next"
-			}
-		]
-	},
-	"include": ["**/*.ts", "**/*.tsx"],
-	"exclude": ["node_modules"]
+  "extends": "@zephyr/config/react.tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
+  },
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules"]
 }

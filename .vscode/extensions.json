@@ -1,10 +1,10 @@
 {
-	"recommendations": [
-		"formulahendry.auto-close-tag",
-		"mikestead.dotenv",
-		"biomejs.biome",
-		"wix.vscode-import-cost",
-		"Prisma.prisma",
-		"bradlc.vscode-tailwindcss"
-	]
+  "recommendations": [
+    "formulahendry.auto-close-tag",
+    "mikestead.dotenv",
+    "biomejs.biome",
+    "wix.vscode-import-cost",
+    "Prisma.prisma",
+    "bradlc.vscode-tailwindcss"
+  ]
 }

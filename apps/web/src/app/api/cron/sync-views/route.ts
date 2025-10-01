@@ -1,204 +1,201 @@
 import {
-	POST_VIEWS_KEY_PREFIX,
-	POST_VIEWS_SET,
-	prisma,
-	redis,
+  POST_VIEWS_KEY_PREFIX,
+  POST_VIEWS_SET,
+  prisma,
+  redis,
 } from "@zephyr/db";
 import { NextResponse } from "next/server";
 
 async function syncViewCounts() {
-	const logs: string[] = [];
-	const startTime = Date.now();
+  const logs: string[] = [];
+  const startTime = Date.now();
 
-	const log = (message: string) => {
-		console.log(message);
-		logs.push(message);
-	};
+  const log = (message: string) => {
+    console.log(message);
+    logs.push(message);
+  };
 
-	const results = {
-		syncedPosts: 0,
-		skippedPosts: 0,
-		deletedKeys: 0,
-		errors: [] as string[],
-	};
+  const results = {
+    syncedPosts: 0,
+    skippedPosts: 0,
+    deletedKeys: 0,
+    errors: [] as string[],
+  };
 
-	try {
-		log("🚀 Starting view count sync");
+  try {
+    log("🚀 Starting view count sync");
 
-		// 1. Test Redis connection
-		try {
-			await redis.ping();
-			log("✅ Redis connection successful");
-		} catch (error) {
-			log("❌ Redis connection failed");
-			console.error("Redis connection error:", error);
-			return {
-				success: false,
-				duration: Date.now() - startTime,
-				logs,
-				error: "Redis connection failed",
-			};
-		}
+    // 1. Test Redis connection
+    try {
+      await redis.ping();
+      log("✅ Redis connection successful");
+    } catch (error) {
+      log("❌ Redis connection failed");
+      console.error("Redis connection error:", error);
+      return {
+        success: false,
+        duration: Date.now() - startTime,
+        logs,
+        error: "Redis connection failed",
+      };
+    }
 
-		// 2. Get posts with views and create view count map
-		const postsWithViews = await redis.smembers(POST_VIEWS_SET);
-		if (postsWithViews.length === 0) {
-			log("✨ No posts found with views to sync");
-			return {
-				success: true,
-				duration: Date.now() - startTime,
-				logs,
-				...results,
-			};
-		}
+    // 2. Get posts with views and create view count map
+    const postsWithViews = await redis.smembers(POST_VIEWS_SET);
+    if (postsWithViews.length === 0) {
+      log("✨ No posts found with views to sync");
+      return {
+        success: true,
+        duration: Date.now() - startTime,
+        logs,
+        ...results,
+      };
+    }
 
-		log(`📊 Found ${postsWithViews.length} posts with views in Redis`);
+    log(`📊 Found ${postsWithViews.length} posts with views in Redis`);
 
-		// 3. Get existing posts and their current view counts
-		const existingPosts = await prisma.post.findMany({
-			where: {
-				id: { in: postsWithViews },
-			},
-			select: {
-				id: true,
-				viewCount: true,
-			},
-		});
+    // 3. Get existing posts and their current view counts
+    const existingPosts = await prisma.post.findMany({
+      where: {
+        id: { in: postsWithViews },
+      },
+      select: {
+        id: true,
+        viewCount: true,
+      },
+    });
 
-		const existingPostMap = new Map(
-			existingPosts.map((p) => [p.id, p.viewCount]),
-		);
-		log(`📊 Found ${existingPostMap.size} existing posts in database`);
+    const existingPostMap = new Map(
+      existingPosts.map((p) => [p.id, p.viewCount])
+    );
+    log(`📊 Found ${existingPostMap.size} existing posts in database`);
 
-		// 4. Get Redis view counts in batches
-		const batchSize = 100;
-		const updates: { postId: string; views: number }[] = [];
+    // 4. Get Redis view counts in batches
+    const batchSize = 100;
+    const updates: { postId: string; views: number }[] = [];
 
-		for (let i = 0; i < postsWithViews.length; i += batchSize) {
-			const batch = postsWithViews.slice(i, i + batchSize);
-			const pipeline = redis.pipeline();
+    for (let i = 0; i < postsWithViews.length; i += batchSize) {
+      const batch = postsWithViews.slice(i, i + batchSize);
+      const pipeline = redis.pipeline();
 
-			// biome-ignore lint/complexity/noForEach: This is a batch operation
-			batch.forEach((postId) => {
-				pipeline.get(`${POST_VIEWS_KEY_PREFIX}${postId}`);
-			});
+      batch.forEach((postId) => {
+        pipeline.get(`${POST_VIEWS_KEY_PREFIX}${postId}`);
+      });
 
-			const batchResults = await pipeline.exec();
-			if (!batchResults) {
-				continue;
-			}
+      const batchResults = await pipeline.exec();
+      if (!batchResults) {
+        continue;
+      }
 
-			batch.forEach((postId, index) => {
-				const [error, value] = batchResults[index] || [];
-				if (error) {
-					results.errors.push(
-						`Error getting views for post ${postId}: ${error}`,
-					);
-					return;
-				}
+      batch.forEach((postId, index) => {
+        const [error, value] = batchResults[index] || [];
+        if (error) {
+          results.errors.push(
+            `Error getting views for post ${postId}: ${error}`
+          );
+          return;
+        }
 
-				const redisViews = Number(value) || 0;
-				const dbViews = existingPostMap.get(postId) || 0;
-				const totalViews = dbViews + redisViews;
+        const redisViews = Number(value) || 0;
+        const dbViews = existingPostMap.get(postId) || 0;
+        const totalViews = dbViews + redisViews;
 
-				// Only update if we have new views to add
-				if (redisViews > 0) {
-					updates.push({ postId, views: totalViews });
-					log(
-						`Post ${postId}: Adding Redis views ${redisViews} to DB views ${dbViews} = ${totalViews}`,
-					);
-				} else {
-					results.skippedPosts++;
-					log(`Post ${postId}: Skipped (No new Redis views)`);
-				}
-			});
-		}
+        // Only update if we have new views to add
+        if (redisViews > 0) {
+          updates.push({ postId, views: totalViews });
+          log(
+            `Post ${postId}: Adding Redis views ${redisViews} to DB views ${dbViews} = ${totalViews}`
+          );
+        } else {
+          results.skippedPosts++;
+          log(`Post ${postId}: Skipped (No new Redis views)`);
+        }
+      });
+    }
 
-		log(`🔄 Found ${updates.length} posts needing updates`);
+    log(`🔄 Found ${updates.length} posts needing updates`);
 
-		// 5. Update posts in batches
-		for (let i = 0; i < updates.length; i += batchSize) {
-			const batch = updates.slice(i, i + batchSize);
-			const batchNumber = Math.floor(i / batchSize) + 1;
-			const totalBatches = Math.ceil(updates.length / batchSize);
+    // 5. Update posts in batches
+    for (let i = 0; i < updates.length; i += batchSize) {
+      const batch = updates.slice(i, i + batchSize);
+      const batchNumber = Math.floor(i / batchSize) + 1;
+      const totalBatches = Math.ceil(updates.length / batchSize);
 
-			try {
-				await prisma.$transaction(
-					batch.map(({ postId, views }) =>
-						prisma.post.update({
-							where: { id: postId },
-							data: { viewCount: views },
-						}),
-					),
-				);
+      try {
+        await prisma.$transaction(
+          batch.map(({ postId, views }) =>
+            prisma.post.update({
+              where: { id: postId },
+              data: { viewCount: views },
+            })
+          )
+        );
 
-				results.syncedPosts += batch.length;
-				log(
-					`✅ Batch ${batchNumber}/${totalBatches}: Updated ${batch.length} posts`,
-				);
+        results.syncedPosts += batch.length;
+        log(
+          `✅ Batch ${batchNumber}/${totalBatches}: Updated ${batch.length} posts`
+        );
 
-				if (i + batchSize < updates.length) {
-					await new Promise((resolve) => setTimeout(resolve, 100));
-				}
-			} catch (error) {
-				const errorMessage = `Error updating batch ${batchNumber}: ${
-					error instanceof Error ? error.message : String(error)
-				}`;
-				log(`❌ ${errorMessage}`);
-				results.errors.push(errorMessage);
-			}
-		}
+        if (i + batchSize < updates.length) {
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+      } catch (error) {
+        const errorMessage = `Error updating batch ${batchNumber}: ${
+          error instanceof Error ? error.message : String(error)
+        }`;
+        log(`❌ ${errorMessage}`);
+        results.errors.push(errorMessage);
+      }
+    }
 
-		if (updates.length > 0) {
-			const clearPipeline = redis.pipeline();
-			// biome-ignore lint/complexity/noForEach: This is a batch operation
-			updates.forEach(({ postId }) => {
-				clearPipeline.del(`${POST_VIEWS_KEY_PREFIX}${postId}`);
-			});
-			await clearPipeline.exec();
-			log(`Cleared Redis views for ${updates.length} updated posts`);
-		}
+    if (updates.length > 0) {
+      const clearPipeline = redis.pipeline();
+      updates.forEach(({ postId }) => {
+        clearPipeline.del(`${POST_VIEWS_KEY_PREFIX}${postId}`);
+      });
+      await clearPipeline.exec();
+      log(`Cleared Redis views for ${updates.length} updated posts`);
+    }
 
-		// 6. Clean up non-existent posts
-		const nonExistentPosts = postsWithViews.filter(
-			(id) => !existingPostMap.has(id),
-		);
-		if (nonExistentPosts.length > 0) {
-			log(`🧹 Found ${nonExistentPosts.length} non-existent posts to clean up`);
+    // 6. Clean up non-existent posts
+    const nonExistentPosts = postsWithViews.filter(
+      (id) => !existingPostMap.has(id)
+    );
+    if (nonExistentPosts.length > 0) {
+      log(`🧹 Found ${nonExistentPosts.length} non-existent posts to clean up`);
 
-			for (let i = 0; i < nonExistentPosts.length; i += batchSize) {
-				const batch = nonExistentPosts.slice(i, i + batchSize);
-				const pipeline = redis.pipeline();
+      for (let i = 0; i < nonExistentPosts.length; i += batchSize) {
+        const batch = nonExistentPosts.slice(i, i + batchSize);
+        const pipeline = redis.pipeline();
 
-				// biome-ignore lint/complexity/noForEach: This is a batch operation
-				batch.forEach((postId) => {
-					pipeline.del(`${POST_VIEWS_KEY_PREFIX}${postId}`);
-					pipeline.srem(POST_VIEWS_SET, postId);
-				});
+        batch.forEach((postId) => {
+          pipeline.del(`${POST_VIEWS_KEY_PREFIX}${postId}`);
+          pipeline.srem(POST_VIEWS_SET, postId);
+        });
 
-				await pipeline.exec();
-				results.deletedKeys += batch.length * 2;
-			}
+        await pipeline.exec();
+        results.deletedKeys += batch.length * 2;
+      }
 
-			log(`✅ Cleaned up ${nonExistentPosts.length} non-existent posts`);
-		}
+      log(`✅ Cleaned up ${nonExistentPosts.length} non-existent posts`);
+    }
 
-		const summary = {
-			success: true,
-			duration: Date.now() - startTime,
-			...results,
-			logs,
-			stats: {
-				totalPosts: postsWithViews.length,
-				existingPosts: existingPostMap.size,
-				updatedPosts: results.syncedPosts,
-				skippedPosts: results.skippedPosts,
-				cleanedUpPosts: nonExistentPosts.length,
-			},
-			timestamp: new Date().toISOString(),
-		};
+    const summary = {
+      success: true,
+      duration: Date.now() - startTime,
+      ...results,
+      logs,
+      stats: {
+        totalPosts: postsWithViews.length,
+        existingPosts: existingPostMap.size,
+        updatedPosts: results.syncedPosts,
+        skippedPosts: results.skippedPosts,
+        cleanedUpPosts: nonExistentPosts.length,
+      },
+      timestamp: new Date().toISOString(),
+    };
 
-		log(`\n✨ Sync completed successfully:
+    log(`\n✨ Sync completed successfully:
     Duration: ${summary.duration}ms
     Total Posts: ${summary.stats.totalPosts}
     Updated: ${summary.stats.updatedPosts}
@@ -206,105 +203,105 @@ async function syncViewCounts() {
     Cleaned: ${summary.stats.cleanedUpPosts}
     Errors: ${results.errors.length}`);
 
-		return summary;
-	} catch (error) {
-		const errorMessage =
-			error instanceof Error ? error.message : "Unknown error";
-		log(`❌ Fatal error in view count sync: ${errorMessage}`);
-		console.error(
-			"Sync error stack:",
-			error instanceof Error ? error.stack : "No stack trace",
-		);
+    return summary;
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+    log(`❌ Fatal error in view count sync: ${errorMessage}`);
+    console.error(
+      "Sync error stack:",
+      error instanceof Error ? error.stack : "No stack trace"
+    );
 
-		return {
-			success: false,
-			duration: Date.now() - startTime,
-			...results,
-			error: errorMessage,
-			logs,
-			timestamp: new Date().toISOString(),
-		};
-	} finally {
-		try {
-			await prisma.$disconnect();
-			log("👋 Database connection closed");
-		} catch (_error) {
-			log("❌ Error closing database connection");
-		}
-	}
+    return {
+      success: false,
+      duration: Date.now() - startTime,
+      ...results,
+      error: errorMessage,
+      logs,
+      timestamp: new Date().toISOString(),
+    };
+  } finally {
+    try {
+      await prisma.$disconnect();
+      log("👋 Database connection closed");
+    } catch (_error) {
+      log("❌ Error closing database connection");
+    }
+  }
 }
 
 export async function POST(request: Request) {
-	console.log("📥 Received view count sync request");
+  console.log("📥 Received view count sync request");
 
-	try {
-		if (!process.env.CRON_SECRET_KEY) {
-			console.error("❌ CRON_SECRET_KEY environment variable not set");
-			return NextResponse.json(
-				{
-					error: "Server configuration error",
-					timestamp: new Date().toISOString(),
-				},
-				{
-					status: 500,
-					headers: {
-						"Content-Type": "application/json",
-						"Cache-Control": "no-store",
-					},
-				},
-			);
-		}
+  try {
+    if (!process.env.CRON_SECRET_KEY) {
+      console.error("❌ CRON_SECRET_KEY environment variable not set");
+      return NextResponse.json(
+        {
+          error: "Server configuration error",
+          timestamp: new Date().toISOString(),
+        },
+        {
+          status: 500,
+          headers: {
+            "Content-Type": "application/json",
+            "Cache-Control": "no-store",
+          },
+        }
+      );
+    }
 
-		const authHeader = request.headers.get("authorization");
-		const expectedAuth = `Bearer ${process.env.CRON_SECRET_KEY}`;
+    const authHeader = request.headers.get("authorization");
+    const expectedAuth = `Bearer ${process.env.CRON_SECRET_KEY}`;
 
-		if (!authHeader || authHeader !== expectedAuth) {
-			console.warn("⚠️ Unauthorized sync attempt");
-			return NextResponse.json(
-				{
-					error: "Unauthorized",
-					timestamp: new Date().toISOString(),
-				},
-				{
-					status: 401,
-					headers: {
-						"Content-Type": "application/json",
-						"Cache-Control": "no-store",
-					},
-				},
-			);
-		}
+    if (!authHeader || authHeader !== expectedAuth) {
+      console.warn("⚠️ Unauthorized sync attempt");
+      return NextResponse.json(
+        {
+          error: "Unauthorized",
+          timestamp: new Date().toISOString(),
+        },
+        {
+          status: 401,
+          headers: {
+            "Content-Type": "application/json",
+            "Cache-Control": "no-store",
+          },
+        }
+      );
+    }
 
-		const results = await syncViewCounts();
+    const results = await syncViewCounts();
 
-		return NextResponse.json(results, {
-			status: results.success ? 200 : 500,
-			headers: {
-				"Content-Type": "application/json",
-				"Cache-Control": "no-store",
-			},
-		});
-	} catch (error) {
-		console.error("❌ Sync route error:", {
-			error: error instanceof Error ? error.message : "Unknown error",
-			stack: error instanceof Error ? error.stack : undefined,
-		});
+    return NextResponse.json(results, {
+      status: results.success ? 200 : 500,
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "no-store",
+      },
+    });
+  } catch (error) {
+    console.error("❌ Sync route error:", {
+      error: error instanceof Error ? error.message : "Unknown error",
+      stack: error instanceof Error ? error.stack : undefined,
+    });
 
-		return NextResponse.json(
-			{
-				success: false,
-				error: error instanceof Error ? error.message : "Unknown error",
-				timestamp: new Date().toISOString(),
-			},
-			{
-				status: 500,
-				headers: {
-					"Content-Type": "application/json",
-					"Cache-Control": "no-store",
-				},
-			},
-		);
-	}
+    return NextResponse.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+        timestamp: new Date().toISOString(),
+      },
+      {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "no-store",
+        },
+      }
+    );
+  }
 }
 
 export const runtime = "nodejs";

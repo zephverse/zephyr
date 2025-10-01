@@ -1,8 +1,9 @@
+/** biome-ignore-all lint/suspicious/noUnknownAtRules: ignore this */
+@import "./fonts.css";
+@import "./base.css";
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 @plugin "tailwindcss-animate";
-@import "./fonts.css";
-@import "./base.css";
 
 @theme {
 	--font-sofiaProSoft:
@@ -71,16 +72,16 @@
 
 /* Custom font utilities to match previous Tailwind config */
 @utility font-sofiaProSoft {
-	font-family: var(--font-sofiaProSoft) !important;
+	font-family: var(--font-sofiaProSoft);
 }
 
 @utility font-sofiaProSoftMed {
-	font-family: var(--font-sofiaProSoft) !important;
+	font-family: var(--font-sofiaProSoft);
 	font-weight: 500;
 }
 
 @utility font-sofiaProSoftBold {
-	font-family: var(--font-sofiaProSoft) !important;
+	font-family: var(--font-sofiaProSoft);
 	font-weight: 700;
 }
 

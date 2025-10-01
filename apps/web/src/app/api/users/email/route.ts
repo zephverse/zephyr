@@ -4,46 +4,46 @@ import { z } from "zod";
 import { createVerificationTokenForUser } from "@/app/(auth)/login/server-actions";
 
 const emailSchema = z.object({
-	email: z.string().email("Please enter a valid email address"),
+  email: z.string().email("Please enter a valid email address"),
 });
 
 export async function PATCH(request: Request) {
-	try {
-		const { user } = await validateRequest();
-		if (!user) {
-			return Response.json({ error: "Unauthorized" }, { status: 401 });
-		}
+  try {
+    const { user } = await validateRequest();
+    if (!user) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-		const body = await request.json();
-		const { email } = emailSchema.parse(body);
-		const existingUser = await prisma.user.findFirst({
-			where: {
-				email: { equals: email, mode: "insensitive" },
-				id: { not: user.id },
-			},
-		});
+    const body = await request.json();
+    const { email } = emailSchema.parse(body);
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        email: { equals: email, mode: "insensitive" },
+        id: { not: user.id },
+      },
+    });
 
-		if (existingUser) {
-			return Response.json(
-				{ error: "Email is already taken" },
-				{ status: 400 },
-			);
-		}
+    if (existingUser) {
+      return Response.json(
+        { error: "Email is already taken" },
+        { status: 400 }
+      );
+    }
 
-		await prisma.user.update({
-			where: { id: user.id },
-			data: {
-				email,
-				emailVerified: false,
-			},
-		});
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        email,
+        emailVerified: false,
+      },
+    });
 
-		const token = await createVerificationTokenForUser(user.id, email);
-		await sendVerificationEmail(email, token);
+    const token = await createVerificationTokenForUser(user.id, email);
+    await sendVerificationEmail(email, token);
 
-		return Response.json({ success: true });
-	} catch (error) {
-		console.error("Failed to update email:", error);
-		return Response.json({ error: "Failed to update email" }, { status: 500 });
-	}
+    return Response.json({ success: true });
+  } catch (error) {
+    console.error("Failed to update email:", error);
+    return Response.json({ error: "Failed to update email" }, { status: 500 });
+  }
 }

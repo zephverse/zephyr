@@ -4,20 +4,20 @@ import { redirect } from "next/navigation";
 import ClientSettings from "./client-settings";
 
 export default async function SettingsPage() {
-	const { user: authUser } = await validateRequest();
+  const { user: authUser } = await validateRequest();
 
-	if (!authUser) {
-		redirect("/login");
-	}
+  if (!authUser) {
+    redirect("/login");
+  }
 
-	const user = await prisma.user.findUnique({
-		where: { id: authUser.id },
-		select: getUserDataSelect(authUser.id),
-	});
+  const user = await prisma.user.findUnique({
+    where: { id: authUser.id },
+    select: getUserDataSelect(authUser.id),
+  });
 
-	if (!user) {
-		redirect("/login");
-	}
+  if (!user) {
+    redirect("/login");
+  }
 
-	return <ClientSettings user={user} />;
+  return <ClientSettings user={user} />;
 }

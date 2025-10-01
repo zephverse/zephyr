@@ -4,52 +4,52 @@ import type React from "react";
 import { createContext, useContext, useEffect, useState } from "react";
 
 type VerificationContextType = {
-	isVerifying: boolean;
-	setIsVerifying: (state: boolean) => void;
-	verificationChannel: BroadcastChannel | null;
+  isVerifying: boolean;
+  setIsVerifying: (state: boolean) => void;
+  verificationChannel: BroadcastChannel | null;
 };
 
 const VerificationContext = createContext<VerificationContextType | undefined>(
-	undefined,
+  undefined
 );
 
 export function VerificationProvider({
-	children,
+  children,
 }: {
-	children: React.ReactNode;
+  children: React.ReactNode;
 }) {
-	const [isVerifying, setIsVerifying] = useState(false);
-	const [verificationChannel, setVerificationChannel] =
-		useState<BroadcastChannel | null>(null);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [verificationChannel, setVerificationChannel] =
+    useState<BroadcastChannel | null>(null);
 
-	useEffect(() => {
-		const channel = new BroadcastChannel("email-verification");
-		setVerificationChannel(channel);
+  useEffect(() => {
+    const channel = new BroadcastChannel("email-verification");
+    setVerificationChannel(channel);
 
-		return () => {
-			channel.close();
-		};
-	}, []);
+    return () => {
+      channel.close();
+    };
+  }, []);
 
-	return (
-		<VerificationContext.Provider
-			value={{
-				isVerifying,
-				setIsVerifying,
-				verificationChannel,
-			}}
-		>
-			{children}
-		</VerificationContext.Provider>
-	);
+  return (
+    <VerificationContext.Provider
+      value={{
+        isVerifying,
+        setIsVerifying,
+        verificationChannel,
+      }}
+    >
+      {children}
+    </VerificationContext.Provider>
+  );
 }
 
 export const useVerification = () => {
-	const context = useContext(VerificationContext);
-	if (!context) {
-		throw new Error(
-			"useVerification must be used within a VerificationProvider",
-		);
-	}
-	return context;
+  const context = useContext(VerificationContext);
+  if (!context) {
+    throw new Error(
+      "useVerification must be used within a VerificationProvider"
+    );
+  }
+  return context;
 };

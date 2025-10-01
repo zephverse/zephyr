@@ -5,25 +5,25 @@ import type React from "react";
 import { createContext, useContext } from "react";
 
 type SessionContext = {
-	user: User;
-	session: Session;
+  user: User;
+  session: Session;
 };
 
 const SessionContext = createContext<SessionContext | null>(null);
 
 export default function SessionProvider({
-	children,
-	value,
+  children,
+  value,
 }: React.PropsWithChildren<{ value: SessionContext }>) {
-	return (
-		<SessionContext.Provider value={value}>{children}</SessionContext.Provider>
-	);
+  return (
+    <SessionContext.Provider value={value}>{children}</SessionContext.Provider>
+  );
 }
 
 export function useSession() {
-	const context = useContext(SessionContext);
-	if (!context) {
-		throw new Error("useSession must be used within a SessionProvider");
-	}
-	return context;
+  const context = useContext(SessionContext);
+  if (!context) {
+    throw new Error("useSession must be used within a SessionProvider");
+  }
+  return context;
 }
