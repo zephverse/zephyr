@@ -75,7 +75,6 @@ const OPTIONAL_ENVS = {
     "GOOGLE_CLIENT_SECRET",
   ],
   mail: ["SUPPORT_EMAIL", "UNSEND_API_KEY"],
-  chat: ["NEXT_PUBLIC_STREAM_KEY", "STREAM_SECRET"],
   misc: ["CRON_SECRET"],
 };
 
@@ -245,8 +244,6 @@ function getWarningMessage(variable) {
   const warnings = {
     UNSEND_API_KEY: "Email functionality will not work",
     SUPPORT_EMAIL: "Support email features will be disabled",
-    NEXT_PUBLIC_STREAM_KEY: "Chat features will not work",
-    STREAM_SECRET: "Chat features will not work",
     TWITTER_CLIENT_ID: "Twitter login will not work",
     GITHUB_CLIENT_ID: "GitHub login will not work",
     GOOGLE_CLIENT_ID: "Google login will not work",

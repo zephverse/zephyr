@@ -1,5 +1,4 @@
 import { lucia, twitter, validateRequest } from "@zephyr/auth/auth";
-import { createStreamUser } from "@zephyr/auth/src";
 import { prisma } from "@zephyr/db";
 import { OAuth2RequestError } from "arctic";
 import { generateIdFromEntropySize } from "lucia";
@@ -35,8 +34,7 @@ async function getTwitterUser(code: string, storedCodeVerifier: string) {
     code,
     storedCodeVerifier
   );
-  // @ts-expect-error
-  const accessToken = tokens.data.access_token;
+  const accessToken = tokens.accessToken;
 
   if (!accessToken) {
     throw new Error("No access token received from Twitter");
@@ -118,7 +116,6 @@ export async function GET(req: NextRequest) {
     });
 
     if (existingTwitterUser) {
-      // @ts-expect-error
       const session = await lucia.createSession(existingTwitterUser.id, {});
       const sessionCookie = lucia.createSessionCookie(session.id);
       (await cookies()).set(
@@ -138,7 +135,7 @@ export async function GET(req: NextRequest) {
     const username = `${slugify(twitterUser.username)}-${userId.slice(0, 4)}`;
 
     try {
-      const newUser = await prisma.user.create({
+      const _newUser = await prisma.user.create({
         data: {
           id: userId,
           username,
@@ -150,17 +147,6 @@ export async function GET(req: NextRequest) {
         },
       });
 
-      try {
-        await createStreamUser({
-          userId: newUser.id,
-          username: newUser.username,
-          displayName: newUser.displayName,
-        });
-      } catch (streamError) {
-        console.error("Failed to create Stream user:", streamError);
-      }
-
-      // @ts-expect-error
       const session = await lucia.createSession(userId, {});
       const sessionCookie = lucia.createSessionCookie(session.id);
       (await cookies()).set(

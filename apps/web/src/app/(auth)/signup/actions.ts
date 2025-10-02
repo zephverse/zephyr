@@ -1,7 +1,7 @@
 "use server";
 
 import { hash } from "@node-rs/argon2";
-import { createStreamUser, lucia } from "@zephyr/auth/src";
+import { lucia } from "@zephyr/auth/src";
 import {
   isDevelopmentMode,
   isEmailServiceConfigured,
@@ -11,7 +11,7 @@ import { EMAIL_ERRORS, isEmailValid } from "@zephyr/auth/src/email/validation";
 // biome-ignore lint/style/noExportedImports: it's a shared utility
 import { resendVerificationEmail } from "@zephyr/auth/src/verification/resend";
 import { type SignUpValues, signUpSchema } from "@zephyr/auth/validation";
-import { getEnvironmentMode, isStreamConfigured } from "@zephyr/config/src/env";
+import { getEnvironmentMode } from "@zephyr/config/src/env";
 import { prisma } from "@zephyr/db";
 import jwt from "jsonwebtoken";
 import { generateIdFromEntropySize } from "lucia";
@@ -48,9 +48,9 @@ async function createDevUser(
   username: string,
   email: string,
   passwordHash: string
-): Promise<{ streamChatEnabled: boolean }> {
+): Promise<void> {
   try {
-    const newUser = await prisma.user.create({
+    const _newUser = await prisma.user.create({
       data: {
         id: userId,
         username,
@@ -61,20 +61,6 @@ async function createDevUser(
       },
     });
 
-    let streamChatEnabled = false;
-    if (isStreamConfigured()) {
-      try {
-        await createStreamUser({
-          userId: newUser.id,
-          username: newUser.username,
-          displayName: newUser.displayName,
-        });
-        streamChatEnabled = true;
-      } catch (streamError) {
-        console.error("[Stream Chat] User creation failed:", streamError);
-      }
-    }
-
     const session = await lucia.createSession(userId, {});
     const cookieStore = await cookies();
     const sessionCookie = lucia.createSessionCookie(session.id);
@@ -83,8 +69,6 @@ async function createDevUser(
       sessionCookie.value,
       sessionCookie.attributes
     );
-
-    return { streamChatEnabled };
   } catch (error) {
     console.error("Development user creation error:", error);
     try {
@@ -103,12 +87,8 @@ async function createProdUser(options: {
   passwordHash: string;
   verificationToken: string;
 }): Promise<void> {
-  if (!isStreamConfigured() && isProduction) {
-    throw new Error("Stream Chat is required in production but not configured");
-  }
-
   await prisma.$transaction(async (tx) => {
-    const newUser = await tx.user.create({
+    const _newUser = await tx.user.create({
       data: {
         id: options.userId,
         username: options.username,
@@ -126,19 +106,6 @@ async function createProdUser(options: {
         expiresAt: new Date(Date.now() + 3_600_000),
       },
     });
-
-    if (isStreamConfigured()) {
-      try {
-        await createStreamUser({
-          userId: newUser.id,
-          username: newUser.username,
-          displayName: newUser.displayName,
-        });
-      } catch (streamError) {
-        console.error("[Stream Chat] User creation failed:", streamError);
-        throw streamError;
-      }
-    }
   });
 }
 
@@ -208,20 +175,11 @@ async function handleDevelopmentSignup(
   passwordHash: string
 ): Promise<SignUpResponse> {
   try {
-    const { streamChatEnabled } = await createDevUser(
-      userId,
-      username,
-      email,
-      passwordHash
-    );
+    await createDevUser(userId, username, email, passwordHash);
     return {
       success: true,
       skipVerification: true,
-      message: `Development mode: Email verification skipped. ${
-        streamChatEnabled
-          ? "Stream Chat enabled successfully."
-          : "Stream Chat is not configured - messaging features will be disabled."
-      }`,
+      message: "Development mode: Email verification skipped.",
     };
   } catch (error) {
     console.error("Development signup error:", error);
@@ -273,9 +231,6 @@ async function handleProductionSignup(
     return {
       success: true,
       skipVerification: false,
-      message: isStreamConfigured()
-        ? undefined
-        : "Stream Chat is not configured - messaging features will be disabled.",
     };
   } catch (error) {
     console.error("Production signup error:", error);

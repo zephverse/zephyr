@@ -1,4 +1,3 @@
-import { getStreamClient } from "@zephyr/auth/src";
 import { avatarCache, prisma } from "@zephyr/db";
 import { NextResponse } from "next/server";
 import { deleteAvatar, uploadAvatar } from "@/lib/minio"; // Add deleteAvatar import
@@ -54,21 +53,6 @@ export async function POST(request: Request) {
       updatedAt: new Date().toISOString(),
     });
 
-    try {
-      const streamClient = getStreamClient();
-      if (streamClient) {
-        await streamClient.partialUpdateUser({
-          id: userId,
-          set: {
-            image: avatarUrl,
-          },
-        });
-        console.log("Stream user avatar updated successfully");
-      }
-    } catch (streamError) {
-      console.error("Failed to update Stream user avatar:", streamError);
-    }
-
     console.log("Avatar update completed successfully:", {
       userId,
       newAvatarKey: result.key,
@@ -108,20 +92,6 @@ export async function DELETE(request: Request) {
     });
 
     await avatarCache.del(userId);
-
-    try {
-      const streamClient = getStreamClient();
-      if (streamClient) {
-        await streamClient.partialUpdateUser({
-          id: userId,
-          set: {
-            image: null,
-          },
-        });
-      }
-    } catch (streamError) {
-      console.error("Failed to update Stream user avatar:", streamError);
-    }
 
     return NextResponse.json({ success: true, user: updatedUser });
   } catch (error) {

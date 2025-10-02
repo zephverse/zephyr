@@ -15,7 +15,6 @@ import {
   Compass,
   Globe2Icon,
   Home,
-  MessageSquare,
   MoreHorizontal,
   Newspaper,
   Settings,
@@ -30,7 +29,6 @@ import { getRandomFact } from "@/components/Constants/loading-facts";
 import MobileSearchButton from "@/components/Layouts/mobile/mobile-search-button";
 import SearchToggle from "@/components/Layouts/search-toggle";
 import { cn } from "@/lib/utils";
-import MessagesButton from "../Messages/messages-button";
 import { HeaderIconButton } from "../Styles/header-buttons";
 import HeaderBookmarksButton from "./header-bookmarks-button";
 import NotificationsButton from "./notifications-button";
@@ -49,7 +47,6 @@ const MobileMoreMenu = ({
   open,
   setOpen,
   hideTrigger = false,
-  unreadMessageCount = 0,
 }: MobileMoreMenuProps) => {
   const [fact, setFact] = useState<string | null>(null);
 
@@ -133,23 +130,7 @@ const MobileMoreMenu = ({
                 >
                   <MoreHorizontal className="h-4 w-4" />
                 </button>
-                <div className="grid grid-cols-3 gap-3">
-                  <Link
-                    className="relative flex flex-col items-center justify-center rounded-xl border border-border/50 p-3 hover:bg-primary/10"
-                    href="/messages"
-                    onClick={() => setOpen(false)}
-                  >
-                    <MessageSquare className="h-5 w-5" />
-                    <span className="mt-1 text-xs">Messages</span>
-                    {unreadMessageCount > 0 && (
-                      <Badge
-                        className="-top-1.5 -right-1.5 absolute flex h-4 min-w-4 items-center justify-center p-0 text-[10px]"
-                        variant="secondary"
-                      >
-                        {unreadMessageCount}
-                      </Badge>
-                    )}
-                  </Link>
+                <div className="grid grid-cols-2 gap-3">
                   <Link
                     className="flex flex-col items-center justify-center rounded-xl border border-border/50 p-3 hover:bg-primary/10"
                     href="/discover"
@@ -240,13 +221,11 @@ const MobileNavLink = ({
 type HeaderProps = {
   bookmarkCount: number;
   unreadNotificationCount: number;
-  unreadMessageCount: number;
 };
 
 const Header: React.FC<HeaderProps> = ({
   bookmarkCount,
   unreadNotificationCount,
-  unreadMessageCount,
 }) => {
   const pathname = usePathname();
   const router = useRouter();
@@ -370,11 +349,6 @@ const Header: React.FC<HeaderProps> = ({
             <HeaderBookmarksButton count={bookmarkCount} />
           </div>
           <div className="hidden md:inline-flex">
-            <MessagesButton
-              initialState={{ unreadCount: unreadMessageCount }}
-            />
-          </div>
-          <div className="hidden md:inline-flex">
             <NotificationsButton
               initialState={{ unreadCount: unreadNotificationCount }}
             />
@@ -429,7 +403,6 @@ const Header: React.FC<HeaderProps> = ({
               <MobileMoreMenu
                 open={isMobileMoreOpen}
                 setOpen={setIsMobileMoreOpen}
-                unreadMessageCount={unreadMessageCount}
               />
             </div>
           </motion.div>
@@ -440,7 +413,6 @@ const Header: React.FC<HeaderProps> = ({
         hideTrigger
         open={isMobileMoreOpen}
         setOpen={setIsMobileMoreOpen}
-        unreadMessageCount={unreadMessageCount}
       />
     </>
   );

@@ -10,7 +10,6 @@ export { sendPasswordResetEmail, sendVerificationEmail } from "./email/service";
 
 // OAuth providers
 export { discord, github, google, twitter } from "./providers/oauth";
-export * from "./stream/services";
 // Validation exports
 export { DISPOSABLE_EMAIL_DOMAINS } from "./validation/constants";
 export {
