@@ -45,3 +45,36 @@ export async function signUp(credentials: {
     };
   }
 }
+
+export async function resendVerificationEmail(email: string): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  try {
+    // Better Auth handles email verification resending automatically
+    // We can use the sendVerificationEmail method to resend
+    await authClient.sendVerificationEmail({
+      email,
+      fetchOptions: {
+        onSuccess: () => {
+          // Verification email sent successfully
+        },
+        onError: (error) => {
+          console.error("Resend verification email error:", error);
+          throw new Error("Failed to resend verification email");
+        },
+      },
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Resend verification email error:", error);
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to resend verification email",
+    };
+  }
+}

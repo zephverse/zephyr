@@ -12,6 +12,8 @@
     "clean": "git clean -xdf .cache .turbo .next node_modules"
   },
   "dependencies": {
+    "@react-email/components": "^0.5.5",
+    "@t3-oss/env-nextjs": "^0.13.8",
     "@trpc/client": "^11.6.0",
     "@trpc/next": "^11.6.0",
     "@trpc/server": "^11.6.0",
@@ -21,9 +23,11 @@
     "@zephyr/next": "workspace:*",
     "better-auth": "^1.3.24",
     "next": "15.5.4",
-    "pg": "^8.14.0",
+    "pg": "^8.16.3",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-email": "^4.2.12",
+    "resend": "^6.1.2",
     "zod": "^4.1.11"
   },
   "devDependencies": {

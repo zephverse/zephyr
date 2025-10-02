@@ -7,11 +7,6 @@ export const auth = betterAuth({
     provider: "postgresql",
   }),
 
-  emailAndPassword: {
-    enabled: true,
-    requireEmailVerification: true,
-  },
-
   socialProviders: {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID as string,
@@ -45,16 +40,11 @@ export const auth = betterAuth({
 
   advanced: {
     cookiePrefix: "zephyr",
-    generateId: () => {
-      // Use custom ID generation if needed
-      return crypto.randomUUID();
-    },
+    generateId: () => crypto.randomUUID(),
   },
 
   trustedOrigins: [
     process.env.NEXT_PUBLIC_URL as string,
     "http://localhost:3000",
-    "http://localhost:3001",
-    "http://localhost:3002",
   ],
 });

@@ -1,16 +1,14 @@
-const WEBSITE_URL = process.env.NEXT_PUBLIC_SITE_URL;
-const ASSETS_URL =
-  "https://github.com/parazeeknova/zephyr/blob/main/apps/web/src/app/assets";
+import { env } from "../../env";
 
 export const emailConfig = {
   company: {
     name: "Zephyr",
-    website: WEBSITE_URL,
-    supportEmail: process.env.SUPPORT_EMAIL,
+    website: env.NEXT_PUBLIC_SITE_URL,
+    supportEmail: env.SUPPORT_EMAIL,
   },
 
   assets: {
-    backgroundImage: `${ASSETS_URL}/signup-image.jpg?raw=true`,
+    backgroundImage: `${env.NEXT_PUBLIC_SITE_URL}/assets/auth/signup-image.jpg`,
     colors: {
       primary: "#f97316",
       primaryHover: "#fb923c",
@@ -59,15 +57,15 @@ export const emailConfig = {
 
   legal: {
     privacy: {
-      url: `${WEBSITE_URL}/privacy`,
+      url: `${env.NEXT_PUBLIC_SITE_URL}/privacy`,
       text: "Privacy Policy",
     },
     terms: {
-      url: `${WEBSITE_URL}/toc`,
+      url: `${env.NEXT_PUBLIC_SITE_URL}/toc`,
       text: "Terms of Service",
     },
     unsubscribe: {
-      url: `${WEBSITE_URL}/soon`,
+      url: `${env.NEXT_PUBLIC_SITE_URL}/soon`,
       text: "Unsubscribe",
     },
   },
@@ -100,37 +98,3 @@ export const emailConfig = {
     },
   },
 };
-
-export const getEmailStyles = () => ({
-  container: `
-    width: 100%;
-    max-width: 700px;
-    margin: 0 auto;
-    padding: 40px 20px;
-  `,
-  button: `
-    display: inline-block;
-    background: linear-gradient(135deg, ${emailConfig.assets.colors.primary} 0%, ${emailConfig.assets.colors.primaryHover} 100%);
-    color: white;
-    text-decoration: none;
-    padding: 16px 40px;
-    border-radius: 12px;
-    font-weight: 600;
-    font-size: 16px;
-    transition: transform 0.2s, box-shadow 0.2s;
-    box-shadow: 0 4px 6px -1px rgba(249, 115, 22, 0.25);
-  `,
-  heading: `
-    margin: 0 0 12px;
-    color: ${emailConfig.assets.colors.textDark};
-    font-size: 24px;
-    font-weight: 600;
-  `,
-  card: `
-    padding: 24px;
-    border-radius: 16px;
-    background: ${emailConfig.assets.colors.cardBg};
-    border: 1px solid ${emailConfig.assets.colors.border};
-    margin-bottom: 16px;
-  `,
-});

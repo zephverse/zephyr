@@ -1,10 +1,7 @@
 "use server";
 
-import { hash } from "@node-rs/argon2";
-import { sendPasswordResetEmail } from "@zephyr/auth/src";
-import { prisma } from "@zephyr/db";
-import jwt from "jsonwebtoken";
 import { z } from "zod";
+import { authClient } from "@/lib/auth";
 
 const requestResetSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -27,33 +24,18 @@ export async function requestPasswordReset(
   try {
     const { email } = requestResetSchema.parse(data);
 
-    const user = await prisma.user.findFirst({
-      where: {
-        email: { equals: email, mode: "insensitive" },
+    await authClient.forgetPassword({
+      email,
+      fetchOptions: {
+        onSuccess: () => {
+          // Password reset email sent successfully
+        },
+        onError: (error) => {
+          console.error("Password reset request error:", error);
+          throw new Error("Failed to process password reset request");
+        },
       },
     });
-
-    if (!user) {
-      return { success: true };
-    }
-    await prisma.passwordResetToken.deleteMany({
-      where: { userId: user.id },
-    });
-
-    // biome-ignore lint/style/noNonNullAssertion: This is safe because we check for the presence of the secret in the .env file
-    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET!, {
-      expiresIn: "1h",
-    });
-
-    await prisma.passwordResetToken.create({
-      data: {
-        token,
-        userId: user.id,
-        expiresAt: new Date(Date.now() + 3_600_000), // 1 hour
-      },
-    });
-
-    await sendPasswordResetEmail(email, token);
 
     return { success: true };
   } catch (error) {
@@ -65,26 +47,20 @@ export async function requestPasswordReset(
 export async function resetPassword(data: z.infer<typeof resetPasswordSchema>) {
   try {
     const { token, password } = resetPasswordSchema.parse(data);
-    const resetToken = await prisma.passwordResetToken.findUnique({
-      where: { token },
-      include: { user: true },
+
+    await authClient.resetPassword({
+      token,
+      password,
+      fetchOptions: {
+        onSuccess: () => {
+          // Password reset successfully
+        },
+        onError: (error) => {
+          console.error("Password reset error:", error);
+          throw new Error("Failed to reset password");
+        },
+      },
     });
-
-    if (!resetToken || resetToken.expiresAt < new Date()) {
-      return { error: "Invalid or expired reset token" };
-    }
-
-    const passwordHash = await hash(password);
-
-    await prisma.$transaction([
-      prisma.user.update({
-        where: { id: resetToken.userId },
-        data: { passwordHash },
-      }),
-      prisma.passwordResetToken.delete({
-        where: { id: resetToken.id },
-      }),
-    ]);
 
     return { success: true };
   } catch (error) {

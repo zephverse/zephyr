@@ -1,7 +1,6 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { isDevelopmentMode } from "@zephyr/auth/src/email/service";
 import { type SignUpValues, signUpSchema } from "@zephyr/auth/validation";
 import { FlipWords } from "@zephyr/ui/components/ui/flip-words";
 import { useToast } from "@zephyr/ui/hooks/use-toast";
@@ -162,15 +161,16 @@ export default function SignUpForm() {
           if (result.skipVerification) {
             toast({
               title: "Account Created",
-              description: isDevelopmentMode()
-                ? "Development mode: Email verification skipped"
-                : "Account created successfully",
+              description:
+                process.env.NODE_ENV === "development"
+                  ? "Development mode: Email verification skipped"
+                  : "Account created successfully",
               duration: 3000,
             });
 
             form.reset();
 
-            if (isDevelopmentMode()) {
+            if (process.env.NODE_ENV === "development") {
               await new Promise((resolve) => setTimeout(resolve, 1000));
             }
 
@@ -184,7 +184,10 @@ export default function SignUpForm() {
               description: "Please check your email to verify your account.",
             });
 
-            if (isDevelopmentMode() && result.verificationUrl) {
+            if (
+              process.env.NODE_ENV === "development" &&
+              result.verificationUrl
+            ) {
               console.info(
                 "Development Mode - Verification URL:",
                 result.verificationUrl
@@ -206,9 +209,10 @@ export default function SignUpForm() {
         toast({
           variant: "destructive",
           title: "Error",
-          description: isDevelopmentMode()
-            ? errorMessage
-            : "An unexpected error occurred",
+          description:
+            process.env.NODE_ENV === "development"
+              ? errorMessage
+              : "An unexpected error occurred",
         });
       } finally {
         setIsLoading(false);

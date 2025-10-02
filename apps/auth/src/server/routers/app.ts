@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { procedure, protectedProcedure, router } from "../trpc";
+import { emailRouter } from "./email";
 
 export const appRouter = router({
   hello: procedure.query(() => ({
@@ -28,6 +29,8 @@ export const appRouter = router({
       userId: ctx.user.id,
       input,
     })),
+
+  email: emailRouter,
 });
 
 export type AppRouter = typeof appRouter;
