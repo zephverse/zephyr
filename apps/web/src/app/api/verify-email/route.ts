@@ -1,5 +1,4 @@
 import { lucia } from "@zephyr/auth/auth";
-import { getStreamClient } from "@zephyr/auth/src";
 import { prisma } from "@zephyr/db";
 import jwt from "jsonwebtoken";
 import { cookies } from "next/headers";
@@ -117,20 +116,6 @@ export async function GET(req: NextRequest) {
           where: { id: verificationToken.id },
         });
       });
-
-      try {
-        const streamClient = getStreamClient();
-        if (streamClient) {
-          await streamClient.upsertUser({
-            id: user.id,
-            name: user.displayName,
-            username: user.username,
-          });
-          console.log(`Stream user created for: ${user.id}`);
-        }
-      } catch (streamError) {
-        console.error("Stream user creation failed:", streamError);
-      }
 
       // @ts-expect-error
       const session = await lucia.createSession(decoded.userId, {});

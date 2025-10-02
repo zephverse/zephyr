@@ -47,7 +47,6 @@ export const keys = createEnv({
     CRON_SECRET: z.string().optional(),
     GOOGLE_CLIENT_ID: z.string().optional(),
     GOOGLE_CLIENT_SECRET: z.string().optional(),
-    STREAM_SECRET: z.string().optional(),
     GITHUB_CLIENT_ID: z.string().optional(),
     GITHUB_CLIENT_SECRET: z.string().optional(),
     DISCORD_CLIENT_ID: z.string().optional(),
@@ -64,8 +63,6 @@ export const keys = createEnv({
     NEXT_PUBLIC_URL: z.url().default("http://localhost:3000"),
     NEXT_PUBLIC_SITE_URL: z.url().default("http://localhost:3000"),
     NEXT_PUBLIC_MINIO_ENDPOINT: z.url(),
-    NEXT_PUBLIC_STREAM_KEY: z.string().optional(),
-    NEXT_PUBLIC_STREAM_CONFIGURED: z.enum(["true", "false"]).default("false"),
   },
 
   runtimeEnv: {
@@ -100,14 +97,8 @@ export const keys = createEnv({
     NEXT_PUBLIC_URL: process.env.NEXT_PUBLIC_URL,
     NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
     NEXT_PUBLIC_MINIO_ENDPOINT: process.env.NEXT_PUBLIC_MINIO_ENDPOINT,
-    NEXT_PUBLIC_STREAM_KEY: process.env.NEXT_PUBLIC_STREAM_KEY,
-    NEXT_PUBLIC_STREAM_CONFIGURED:
-      process.env.NEXT_PUBLIC_STREAM_KEY && process.env.STREAM_SECRET
-        ? "true"
-        : "false",
     GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
-    STREAM_SECRET: process.env.STREAM_SECRET,
     GITHUB_CLIENT_ID: process.env.GITHUB_CLIENT_ID,
     GITHUB_CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET,
     DISCORD_CLIENT_ID: process.env.DISCORD_CLIENT_ID,

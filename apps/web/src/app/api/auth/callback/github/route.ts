@@ -1,5 +1,4 @@
 import { github, lucia, validateRequest } from "@zephyr/auth/auth";
-import { createStreamUser } from "@zephyr/auth/src";
 import { prisma } from "@zephyr/db";
 import { OAuth2RequestError } from "arctic";
 import { generateIdFromEntropySize } from "lucia";
@@ -21,8 +20,7 @@ export async function GET(req: NextRequest) {
 
     try {
       const tokens = await github.validateAuthorizationCode(code);
-      // @ts-expect-error
-      const accessToken = tokens.data.access_token;
+      const accessToken = tokens.accessToken;
 
       const githubUserResponse = await fetch("https://api.github.com/user", {
         headers: {
@@ -123,7 +121,6 @@ export async function GET(req: NextRequest) {
       });
 
       if (existingGithubUser) {
-        // @ts-expect-error
         const session = await lucia.createSession(existingGithubUser.id, {});
         const sessionCookie = lucia.createSessionCookie(session.id);
         (await cookies()).set(
@@ -143,7 +140,7 @@ export async function GET(req: NextRequest) {
       const username = `${slugify(githubUser.login)}-${userId.slice(0, 4)}`;
 
       try {
-        const newUser = await prisma.user.create({
+        const _newUser = await prisma.user.create({
           data: {
             id: userId,
             username,
@@ -155,17 +152,6 @@ export async function GET(req: NextRequest) {
           },
         });
 
-        try {
-          await createStreamUser({
-            userId: newUser.id,
-            username: newUser.username,
-            displayName: newUser.displayName,
-          });
-        } catch (streamError) {
-          console.error("Failed to create Stream user:", streamError);
-        }
-
-        // @ts-expect-error
         const session = await lucia.createSession(userId, {});
         const sessionCookie = lucia.createSessionCookie(session.id);
         (await cookies()).set(

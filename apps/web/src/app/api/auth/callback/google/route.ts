@@ -1,5 +1,4 @@
 import { google, lucia, validateRequest } from "@zephyr/auth/auth";
-import { createStreamUser } from "@zephyr/auth/src";
 import { prisma } from "@zephyr/db";
 import { OAuth2RequestError } from "arctic";
 import { generateIdFromEntropySize } from "lucia";
@@ -42,8 +41,7 @@ async function getGoogleUser(code: string, storedCodeVerifier: string) {
     throw error;
   }
 
-  // @ts-expect-error
-  const accessToken = tokenResponse?.data?.access_token;
+  const accessToken = tokenResponse?.accessToken;
   if (!accessToken || typeof accessToken !== "string") {
     throw new Error("Invalid access token structure");
   }
@@ -136,7 +134,6 @@ export async function GET(req: NextRequest) {
     });
 
     if (existingGoogleUser) {
-      // @ts-expect-error
       const session = await lucia.createSession(existingGoogleUser.id, {});
       const sessionCookie = lucia.createSessionCookie(session.id);
       (await cookies()).set(
@@ -156,7 +153,7 @@ export async function GET(req: NextRequest) {
     const username = `${slugify(googleUser.name)}-${userId.slice(0, 4)}`;
 
     try {
-      const newUser = await prisma.user.create({
+      const _newUser = await prisma.user.create({
         data: {
           id: userId,
           username,
@@ -168,17 +165,6 @@ export async function GET(req: NextRequest) {
         },
       });
 
-      try {
-        await createStreamUser({
-          userId: newUser.id,
-          username: newUser.username,
-          displayName: newUser.displayName,
-        });
-      } catch (streamError) {
-        console.error("Failed to create Stream user:", streamError);
-      }
-
-      // @ts-expect-error
       const session = await lucia.createSession(userId, {});
       const sessionCookie = lucia.createSessionCookie(session.id);
       (await cookies()).set(

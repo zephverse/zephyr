@@ -1,5 +1,4 @@
 import { discord, lucia, validateRequest } from "@zephyr/auth/auth";
-import { getStreamClient } from "@zephyr/auth/src";
 import { prisma } from "@zephyr/db";
 import { OAuth2RequestError } from "arctic";
 import { generateIdFromEntropySize } from "lucia";
@@ -22,10 +21,8 @@ export async function GET(req: NextRequest) {
     }
 
     try {
-      // @ts-expect-error - Skip for now will fix in the next commit
       const tokens = await discord.validateAuthorizationCode(code);
-      // @ts-expect-error
-      const accessToken = tokens.data?.access_token;
+      const accessToken = tokens.accessToken;
 
       if (!accessToken) {
         console.error("No access token found in response:", tokens);
@@ -116,7 +113,6 @@ export async function GET(req: NextRequest) {
       });
 
       if (existingDiscordUser) {
-        // @ts-expect-error
         const session = await lucia.createSession(existingDiscordUser.id, {});
         const sessionCookie = lucia.createSessionCookie(session.id);
         (await cookies()).set(
@@ -137,7 +133,7 @@ export async function GET(req: NextRequest) {
 
       try {
         await prisma.$transaction(async (tx) => {
-          const newUser = await tx.user.create({
+          const _newUser = await tx.user.create({
             data: {
               id: userId,
               username,
@@ -150,22 +146,8 @@ export async function GET(req: NextRequest) {
               emailVerified: true,
             },
           });
-
-          const streamClient = getStreamClient();
-          if (streamClient) {
-            try {
-              await streamClient.upsertUser({
-                id: newUser.id,
-                username: newUser.username,
-                name: newUser.displayName,
-              });
-            } catch (error) {
-              console.warn("Failed to create Stream user:", error);
-            }
-          }
         });
 
-        // @ts-expect-error
         const session = await lucia.createSession(userId, {});
         const sessionCookie = lucia.createSessionCookie(session.id);
         (await cookies()).set(

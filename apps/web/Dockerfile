@@ -4,12 +4,8 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV TURBO_TELEMETRY_DISABLED=1
 
 ARG UNSEND_API_KEY
-ARG NEXT_PUBLIC_STREAM_KEY
-ARG STREAM_SECRET
 
 ENV UNSEND_API_KEY=$UNSEND_API_KEY
-ENV NEXT_PUBLIC_STREAM_KEY=$NEXT_PUBLIC_STREAM_KEY
-ENV STREAM_SECRET=$STREAM_SECRET
 
 FROM base AS builder
 RUN apk add --no-cache git
@@ -39,12 +35,6 @@ RUN cd packages/db && bunx prisma generate
 
 COPY --from=builder /app/out/full/ .
 
-RUN if [ -n "$NEXT_PUBLIC_STREAM_KEY" ]; then \
-  echo "Building with Stream key configured"; \
-  else \
-  echo "Building without Stream key"; \
-  fi
-
 RUN NEXT_TELEMETRY_DISABLED=1 TURBO_TELEMETRY_DISABLED=1 bunx turbo build --filter=@zephyr/web... --force
 
 FROM base AS runner
@@ -66,8 +56,6 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV TURBO_TELEMETRY_DISABLED=1
 ENV UNSEND_API_KEY=$UNSEND_API_KEY
-ENV NEXT_PUBLIC_STREAM_KEY=$NEXT_PUBLIC_STREAM_KEY
-ENV STREAM_SECRET=$STREAM_SECRET
 
 USER nextjs
 
