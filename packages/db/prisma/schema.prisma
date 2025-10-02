@@ -13,22 +13,29 @@ datasource db {
 
 // User model
 model User {
-  id                      String                   @id
-  aura                    Int                      @default(0)
-  username                String                   @unique
-  displayName             String
-  mentions                Mention[]
-  email                   String?                  @unique
-  passwordHash            String?
-  googleId                String?                  @unique
-  githubId                String?                  @unique
-  discordId               String?                  @unique
-  twitterId               String?                  @unique
-  avatarUrl               String?
-  avatarKey               String?
-  bio                     String?
-  emailVerified           Boolean                  @default(false)
+  id              String    @id @default(cuid())
+  aura            Int       @default(0)
+  username        String    @unique
+  displayName     String
+  mentions        Mention[]
+  email           String?   @unique
+  passwordHash    String?
+  googleId        String?   @unique
+  githubId        String?   @unique
+  discordId       String?   @unique
+  twitterId       String?   @unique
+  avatarUrl       String?
+  avatarKey       String?
+  bio             String?
+  emailVerified   Boolean   @default(false)
+  emailVerifiedAt DateTime?
+  image           String?
+  name            String?
+
+  // Relations
   sessions                Session[]
+  accounts                Account[]
+  verifications           Verification[]
   emailVerificationTokens EmailVerificationToken[]
   passwordResetTokens     PasswordResetToken[]
   posts                   Post[]
@@ -44,6 +51,7 @@ model User {
   auraIssued              AuraLog[]                @relation("AuraIssued")
 
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("users")
 }
@@ -109,12 +117,55 @@ model PasswordResetToken {
 
 // Session model
 model Session {
-  id        String   @id
+  id        String   @id @default(cuid())
   userId    String
+  token     String   @unique
   expiresAt DateTime
+  ipAddress String?
+  userAgent String?
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@map("sessions")
+}
+
+// Account model
+model Account {
+  id                    String    @id @default(cuid())
+  userId                String
+  accountId             String
+  providerId            String
+  accessToken           String?
+  refreshToken          String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  idToken               String?
+  password              String?
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([providerId, accountId])
+  @@map("accounts")
+}
+
+// Verification model
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  user       User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("verifications")
 }
 
 // Follow model

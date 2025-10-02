@@ -1,4 +1,3 @@
-import { validateRequest } from "@zephyr/auth/auth";
 import { prisma } from "@zephyr/db";
 import type { Metadata } from "next";
 import NavigationCard from "@/components/Home/sidebars/left/navigation-card";
@@ -7,6 +6,7 @@ import SuggestedConnections from "@/components/Home/sidebars/right/suggested-con
 import TrendingTopics from "@/components/Home/sidebars/right/trending-topics";
 import StickyFooter from "@/components/Layouts/stinky-footer";
 import { getUserData } from "@/hooks/use-user-data";
+import { authClient } from "@/lib/auth";
 import Bookmarks from "./bookmarks";
 
 export const metadata: Metadata = {
@@ -14,19 +14,19 @@ export const metadata: Metadata = {
 };
 
 export default async function Page() {
-  const { user } = await validateRequest();
-  const userData = user ? await getUserData(user.id) : null;
+  const session = await authClient.getSession();
+  const userData = session?.user ? await getUserData(session.user.id) : null;
 
   let bookmarkCount = 0;
   let hnBookmarkCount = 0;
 
-  if (user) {
+  if (session?.user) {
     const [postBookmarks, hnBookmarks] = await Promise.all([
       prisma.bookmark.count({
-        where: { userId: user.id },
+        where: { userId: session.user.id },
       }),
       prisma.hNBookmark.count({
-        where: { userId: user.id },
+        where: { userId: session.user.id },
       }),
     ]);
 

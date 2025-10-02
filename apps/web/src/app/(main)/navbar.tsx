@@ -1,9 +1,10 @@
-import { validateRequest } from "@zephyr/auth/auth";
 import { prisma } from "@zephyr/db";
 import Header from "@/components/Layouts/header";
+import { authClient } from "@/lib/auth";
 
 export default async function Navbar() {
-  const { user } = await validateRequest();
+  const session = await authClient.getSession();
+  const user = session?.user;
 
   if (!user) {
     return null;

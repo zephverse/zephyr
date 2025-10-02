@@ -1,21 +1,18 @@
 "use server";
 
-import { lucia, validateRequest } from "@zephyr/auth/auth";
-import { cookies } from "next/headers";
+import { authClient } from "@/lib/auth";
 
 export async function logout() {
   try {
-    const { session } = await validateRequest();
-    if (session) {
-      await lucia.invalidateSession(session.id);
-    }
-
-    const cookieStore = await cookies();
-    const sessionCookie = lucia.createBlankSessionCookie();
-
-    cookieStore.set(sessionCookie.name, sessionCookie.value, {
-      ...sessionCookie.attributes,
-      path: "/",
+    await authClient.signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          // Handle successful logout if needed
+        },
+        onError: (error) => {
+          console.error("Logout error:", error);
+        },
+      },
     });
 
     return { redirect: "/login" };

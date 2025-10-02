@@ -1,8 +1,8 @@
 "use server";
 
-import { validateRequest } from "@zephyr/auth/auth";
 import { createCommentSchema } from "@zephyr/auth/validation";
 import { getCommentDataInclude, type PostData, prisma } from "@zephyr/db";
+import { authClient } from "@/lib/auth";
 
 export async function submitComment({
   post,
@@ -11,9 +11,9 @@ export async function submitComment({
   post: PostData;
   content: string;
 }) {
-  const { user } = await validateRequest();
+  const session = await authClient.getSession();
 
-  if (!user) {
+  if (!session?.user) {
     throw new Error("Unauthorized");
   }
 
@@ -24,16 +24,16 @@ export async function submitComment({
       data: {
         content: contentValidated,
         postId: post.id,
-        userId: user.id,
+        userId: session.user.id,
       },
-      include: getCommentDataInclude(user.id),
+      include: getCommentDataInclude(session.user.id),
     }),
-    ...(post.user.id !== user.id
+    ...(post.session.user.id !== session.user.id
       ? [
           prisma.notification.create({
             data: {
-              issuerId: user.id,
-              recipientId: post.user.id,
+              issuerId: session.user.id,
+              recipientId: post.session.user.id,
               postId: post.id,
               type: "COMMENT",
             },
@@ -46,9 +46,9 @@ export async function submitComment({
 }
 
 export async function deleteComment(id: string) {
-  const { user } = await validateRequest();
+  const session = await authClient.getSession();
 
-  if (!user) {
+  if (!session?.user) {
     throw new Error("Unauthorized");
   }
 
@@ -60,13 +60,13 @@ export async function deleteComment(id: string) {
     throw new Error("Comment not found");
   }
 
-  if (comment.userId !== user.id) {
+  if (comment.userId !== session.user.id) {
     throw new Error("Unauthorized");
   }
 
   const deletedComment = await prisma.comment.delete({
     where: { id },
-    include: getCommentDataInclude(user.id),
+    include: getCommentDataInclude(session.user.id),
   });
 
   return deletedComment;

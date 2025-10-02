@@ -1,4 +1,3 @@
-import { validateRequest } from "@zephyr/auth/auth";
 import { getPostDataInclude, prisma, type UserData } from "@zephyr/db";
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
@@ -13,6 +12,7 @@ import UserAvatar from "@/components/Layouts/user-avatar";
 import UserTooltip from "@/components/Layouts/user-tooltip";
 import Linkify from "@/helpers/global/linkify";
 import { getUserData } from "@/hooks/use-user-data";
+import { authClient } from "@/lib/auth";
 
 type PageProps = {
   params: Promise<{ postId: string }>;
@@ -36,11 +36,11 @@ const getPost = cache(async (postId: string, loggedInUser: string) => {
 export async function generateMetadata(props: PageProps) {
   const params = await props.params;
   const { postId } = params;
-  const { user } = await validateRequest();
-  if (!user) {
+  const session = await authClient.getSession();
+  if (!session?.user) {
     return {};
   }
-  const post = await getPost(postId, user.id);
+  const post = await getPost(postId, session.user.id);
 
   return {
     title: `${post.user.displayName}: ${post.content.slice(0, 50)}...`,
@@ -50,10 +50,10 @@ export async function generateMetadata(props: PageProps) {
 export default async function Page(props: PageProps) {
   const params = await props.params;
   const { postId } = params;
-  const { user } = await validateRequest();
-  const userData = user ? await getUserData(user.id) : null;
+  const session = await authClient.getSession();
+  const userData = session?.user ? await getUserData(session.user.id) : null;
 
-  if (!user) {
+  if (!session?.user) {
     return (
       <p className="text-destructive">
         You&apos;re not logged in. Please log in to view this page.
@@ -61,7 +61,7 @@ export default async function Page(props: PageProps) {
     );
   }
 
-  const post = await getPost(postId, user.id);
+  const post = await getPost(postId, session.user.id);
 
   return (
     <main className="flex w-full min-w-0 gap-5">
@@ -101,9 +101,9 @@ type UserInfoSidebarProps = {
 };
 
 async function UserInfoSidebar({ user }: UserInfoSidebarProps) {
-  const { user: loggedInUser } = await validateRequest();
+  const session = await authClient.getSession();
 
-  if (!loggedInUser) {
+  if (!session?.user) {
     return null;
   }
 
@@ -131,13 +131,13 @@ async function UserInfoSidebar({ user }: UserInfoSidebarProps) {
           {user.bio}
         </div>
       </Linkify>
-      {user.id !== loggedInUser.id && (
+      {user.id !== session.user.id && (
         <FollowButton
           initialState={{
             followers: user._count.followers,
             isFollowedByUser: user.followers.some(
               // @ts-expect-error
-              ({ followerId }) => followerId === loggedInUser.id
+              ({ followerId }) => followerId === session.user.id
             ),
           }}
           userId={user.id}

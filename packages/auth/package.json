@@ -8,21 +8,32 @@
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./core": {
+      "types": "./src/core/index.ts",
+      "default": "./src/core/index.ts"
+    },
+    "./validation": {
+      "types": "./src/validation/index.ts",
+      "default": "./src/validation/index.ts"
+    }
+  },
   "dependencies": {
-    "@lucia-auth/adapter-prisma": "^4.0.1",
+    "@prisma/client": "^6.16.3",
     "@zephyr/db": "workspace:*",
-    "arctic": "^3.7.0",
-    "deep-email-validator": "^0.1.21",
-    "email-validator": "^2.0.4",
-    "jsonwebtoken": "^9.0.2",
-    "lucia": "^3.2.2",
+    "better-auth": "^1.3.24",
     "next": "15.5.4",
+    "pg": "^8.14.0",
     "react": "^19.2.0",
-    "unsend": "^1.5.1",
     "zod": "^4.1.11"
   },
   "devDependencies": {
-    "@types/jsonwebtoken": "^9.0.10",
     "@zephyr/config": "workspace:*",
     "typescript": "^5.9.3"
   }

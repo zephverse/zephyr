@@ -1,6 +1,5 @@
 "use server";
 
-import { validateRequest } from "@zephyr/auth/auth";
 import {
   getPostDataInclude,
   POST_VIEWS_KEY_PREFIX,
@@ -8,11 +7,12 @@ import {
   prisma,
   redis,
 } from "@zephyr/db";
+import { authClient } from "@/lib/auth";
 
 export async function deletePost(id: string) {
-  const { user } = await validateRequest();
+  const session = await authClient.getSession();
 
-  if (!user) {
+  if (!session?.user) {
     throw new Error("Unauthorized");
   }
 
@@ -24,13 +24,13 @@ export async function deletePost(id: string) {
     throw new Error("Post not found");
   }
 
-  if (post.userId !== user.id) {
+  if (post.userId !== session.user.id) {
     throw new Error("Unauthorized");
   }
 
   const deletedPost = await prisma.post.delete({
     where: { id },
-    include: getPostDataInclude(user.id),
+    include: getPostDataInclude(session.user.id),
   });
 
   try {

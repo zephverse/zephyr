@@ -1,10 +1,10 @@
-import { validateRequest } from "@zephyr/auth/auth";
 import type { Metadata } from "next";
 import NavigationCard from "@/components/Home/sidebars/left/navigation-card";
 import ProfileCard from "@/components/Home/sidebars/right/profile-card";
 import TrendingTopics from "@/components/Home/sidebars/right/trending-topics";
 import StickyFooter from "@/components/Layouts/stinky-footer";
 import { getUserData } from "@/hooks/use-user-data";
+import { authClient } from "@/lib/auth";
 import PostEditorPage from "./post-editor-page";
 
 export const metadata: Metadata = {
@@ -13,8 +13,8 @@ export const metadata: Metadata = {
 };
 
 export default async function Page() {
-  const { user } = await validateRequest();
-  const userData = user ? await getUserData(user.id) : null;
+  const session = await authClient.getSession();
+  const userData = session?.user ? await getUserData(session.user.id) : null;
 
   return (
     <main className="flex w-full min-w-0 gap-5">

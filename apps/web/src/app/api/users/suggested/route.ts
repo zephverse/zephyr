@@ -1,5 +1,5 @@
 import { Prisma } from "@prisma/client";
-import { validateRequest } from "@zephyr/auth/auth";
+import { getSessionFromRequest } from "@zephyr/auth/core";
 
 export type { UserData } from "@zephyr/db";
 
@@ -13,9 +13,9 @@ const RECENTLY_SHOWN_CACHE_KEY = (userId: string) =>
   `recently-shown-users:${userId}`;
 const RECENTLY_SHOWN_TTL = 3600;
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const { user } = await validateRequest();
+    const { user } = await getSessionFromRequest(req);
 
     if (!user) {
       return Response.json({ error: "Not authenticated" }, { status: 401 });

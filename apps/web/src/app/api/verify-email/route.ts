@@ -1,140 +1,16 @@
-import { lucia } from "@zephyr/auth/auth";
-import { prisma } from "@zephyr/db";
-import jwt from "jsonwebtoken";
-import { cookies } from "next/headers";
+// Email verification is now handled automatically by Better Auth
+// This route can be removed or used for custom verification logic if needed
+
 import type { NextRequest } from "next/server";
 
-const ERROR_TYPES = {
-  INVALID_TOKEN: "invalid-token",
-  TOKEN_EXPIRED: "token-expired",
-  USER_NOT_FOUND: "user-not-found",
-  VERIFICATION_FAILED: "verification-failed",
-  SERVER_ERROR: "server-error",
-  JWT_SECRET_MISSING: "jwt-secret-missing",
-  CONFIG_ERROR: "configuration-error",
-} as const;
+export function GET(req: NextRequest) {
+  const token = req.nextUrl.searchParams.get("token");
 
-type ErrorType = (typeof ERROR_TYPES)[keyof typeof ERROR_TYPES];
-
-type JwtPayload = {
-  userId: string;
-  email: string;
-  timestamp: number;
-};
-
-const regex = /\/$/;
-const getBaseUrl = () => {
-  if (process.env.NEXT_PUBLIC_SITE_URL) {
-    return process.env.NEXT_PUBLIC_SITE_URL.replace(regex, "");
+  if (!token) {
+    return Response.redirect("/verify-email?error=invalid-token");
   }
 
-  if (process.env.NODE_ENV === "development") {
-    return "http://localhost:3000";
-  }
-
-  console.error("NEXT_PUBLIC_SITE_URL not configured in production");
-  throw new Error("Missing NEXT_PUBLIC_SITE_URL configuration");
-};
-
-const createErrorRedirect = (errorType: ErrorType) => {
-  const baseUrl = getBaseUrl();
-  console.log(
-    `Creating error redirect to: ${baseUrl}/verify-email?error=${errorType}`
-  );
-  return Response.redirect(`${baseUrl}/verify-email?error=${errorType}`);
-};
-
-const createSuccessRedirect = () => {
-  const baseUrl = getBaseUrl();
-  console.log(`Creating success redirect to: ${baseUrl}/?verified=true`);
-  return Response.redirect(`${baseUrl}/?verified=true`);
-};
-
-export async function GET(req: NextRequest) {
-  console.log("Starting email verification process");
-
-  try {
-    if (!process.env.JWT_SECRET) {
-      console.error("JWT_SECRET not configured");
-      return createErrorRedirect(ERROR_TYPES.JWT_SECRET_MISSING);
-    }
-
-    const token = req.nextUrl.searchParams.get("token");
-    if (!token) {
-      console.log("No verification token provided");
-      return createErrorRedirect(ERROR_TYPES.INVALID_TOKEN);
-    }
-
-    const verificationToken = await prisma.emailVerificationToken.findUnique({
-      where: { token },
-      include: { user: true },
-    });
-
-    if (!verificationToken) {
-      console.log("Verification token not found in database");
-      return createErrorRedirect(ERROR_TYPES.INVALID_TOKEN);
-    }
-
-    if (verificationToken.expiresAt < new Date()) {
-      console.log("Verification token has expired");
-      await prisma.emailVerificationToken.delete({
-        where: { id: verificationToken.id },
-      });
-      return createErrorRedirect(ERROR_TYPES.TOKEN_EXPIRED);
-    }
-
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET) as JwtPayload;
-
-      const user = await prisma.user.findUnique({
-        where: { id: decoded.userId },
-        select: {
-          id: true,
-          username: true,
-          displayName: true,
-          emailVerified: true,
-        },
-      });
-
-      if (!user) {
-        console.log(`User not found: ${decoded.userId}`);
-        return createErrorRedirect(ERROR_TYPES.USER_NOT_FOUND);
-      }
-
-      if (user.emailVerified) {
-        console.log(`Email already verified for user: ${user.id}`);
-        return createSuccessRedirect();
-      }
-
-      await prisma.$transaction(async (tx) => {
-        await tx.user.update({
-          where: { id: decoded.userId },
-          data: { emailVerified: true },
-        });
-
-        await tx.emailVerificationToken.delete({
-          where: { id: verificationToken.id },
-        });
-      });
-
-      // @ts-expect-error
-      const session = await lucia.createSession(decoded.userId, {});
-      const sessionCookie = lucia.createSessionCookie(session.id);
-      const cookieStore = await cookies();
-      cookieStore.set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes
-      );
-
-      console.log(`Email verification successful for user: ${user.id}`);
-      return createSuccessRedirect();
-    } catch (jwtError) {
-      console.error("JWT verification failed:", jwtError);
-      return createErrorRedirect(ERROR_TYPES.VERIFICATION_FAILED);
-    }
-  } catch (error) {
-    console.error("Verification process failed:", error);
-    return createErrorRedirect(ERROR_TYPES.SERVER_ERROR);
-  }
+  // Redirect to Better Auth email verification
+  const baseUrl = process.env.NEXT_PUBLIC_AUTH_URL || "http://localhost:3001";
+  return Response.redirect(`${baseUrl}/api/auth/verify-email?token=${token}`);
 }

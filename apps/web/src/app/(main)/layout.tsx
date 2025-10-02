@@ -1,6 +1,6 @@
-import { validateRequest } from "@zephyr/auth/auth";
 import { redirect } from "next/navigation";
 import type React from "react";
+import { authClient } from "@/lib/auth";
 import Navbar from "./navbar";
 import SessionProvider from "./session-provider";
 
@@ -9,9 +9,10 @@ export default async function Layout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await validateRequest();
+  // Get session from Better Auth
+  const session = await authClient.getSession();
 
-  if (!session.user) {
+  if (!session?.user) {
     redirect("/login");
   }
 

@@ -1,32 +1,11 @@
-import { google } from "@zephyr/auth/auth";
-import { generateCodeVerifier, generateState } from "arctic";
-import { cookies } from "next/headers";
+import { authClient } from "@/lib/auth";
 
 export async function GET() {
-  const state = generateState();
-  const codeVerifier = generateCodeVerifier();
-
-  (await cookies()).set("state", state, {
-    path: "/",
-    secure: process.env.NODE_ENV === "production",
-    httpOnly: true,
-    maxAge: 60 * 10,
-    sameSite: "lax",
+  // Redirect to Better Auth Google OAuth
+  const url = await authClient.signIn.social({
+    provider: "google",
+    callbackURL: "/",
   });
 
-  (await cookies()).set("code_verifier", codeVerifier, {
-    path: "/",
-    secure: process.env.NODE_ENV === "production",
-    httpOnly: true,
-    maxAge: 60 * 10,
-    sameSite: "lax",
-  });
-
-  const url = await google.createAuthorizationURL(state, codeVerifier, [
-    "email",
-    "profile",
-    "openid",
-  ]);
-
-  return Response.redirect(url.toString());
+  return Response.redirect(url.url);
 }

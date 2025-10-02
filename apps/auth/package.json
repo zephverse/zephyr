@@ -21,6 +21,7 @@
     "@zephyr/next": "workspace:*",
     "better-auth": "^1.3.24",
     "next": "15.5.4",
+    "pg": "^8.14.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "zod": "^4.1.11"

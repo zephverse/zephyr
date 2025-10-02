@@ -1,24 +1,24 @@
 "use server";
 
-import { validateRequest } from "@zephyr/auth/auth";
 import {
   type UpdateUserProfileValues,
   updateUserProfileSchema,
 } from "@zephyr/auth/validation";
 import { getUserDataSelect, prisma } from "@zephyr/db";
+import { authClient } from "@/lib/auth";
 
 export async function updateUserProfile(values: UpdateUserProfileValues) {
   const validatedValues = updateUserProfileSchema.parse(values);
-  const { user } = await validateRequest();
+  const session = await authClient.getSession();
 
-  if (!user) {
+  if (!session?.user) {
     throw new Error("Unauthorized");
   }
 
   const updatedUser = await prisma.user.update({
-    where: { id: user.id },
+    where: { id: session.user.id },
     data: validatedValues,
-    select: getUserDataSelect(user.id),
+    select: getUserDataSelect(session.user.id),
   });
 
   return updatedUser;

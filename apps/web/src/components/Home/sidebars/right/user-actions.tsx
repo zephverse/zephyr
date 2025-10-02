@@ -1,14 +1,14 @@
 "use server";
 
 import { Prisma } from "@prisma/client";
-import { validateRequest } from "@zephyr/auth/auth";
 import { prisma } from "@zephyr/db";
+import { authClient } from "@/lib/auth";
 
 export async function getSuggestedConnections() {
   try {
-    const { user } = await validateRequest();
+    const session = await authClient.getSession();
 
-    if (!user) {
+    if (!session?.user) {
       throw new Error("User not authenticated");
     }
 
@@ -16,11 +16,11 @@ export async function getSuggestedConnections() {
       where: {
         NOT: {
           OR: [
-            { id: user.id },
+            { id: session.user.id },
             {
               followers: {
                 some: {
-                  followerId: user.id,
+                  followerId: session.user.id,
                 },
               },
             },

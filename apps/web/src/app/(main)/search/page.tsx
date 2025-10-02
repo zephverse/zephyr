@@ -1,4 +1,3 @@
-import { validateRequest } from "@zephyr/auth/auth";
 import type { Metadata } from "next";
 import Friends from "@/components/Home/sidebars/left/friends";
 import NavigationCard from "@/components/Home/sidebars/left/navigation-card";
@@ -6,6 +5,7 @@ import ProfileCard from "@/components/Home/sidebars/right/profile-card";
 import TrendingTopics from "@/components/Home/sidebars/right/trending-topics";
 import StickyFooter from "@/components/Layouts/stinky-footer";
 import { getUserData } from "@/hooks/use-user-data";
+import { authClient } from "@/lib/auth";
 import SearchResults from "./search-result";
 
 type PageProps = {
@@ -23,8 +23,8 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
 export default async function Page(props: PageProps) {
   const searchParams = await props.searchParams;
   const { q } = searchParams;
-  const { user } = await validateRequest();
-  const userData = user ? await getUserData(user.id) : null;
+  const session = await authClient.getSession();
+  const userData = session?.user ? await getUserData(session.user.id) : null;
 
   return (
     <main className="flex w-full min-w-0 gap-5">

@@ -1,23 +1,11 @@
-import { discord } from "@zephyr/auth/auth";
-import { generateState } from "arctic";
-import { cookies } from "next/headers";
+import { authClient } from "@/lib/auth";
 
 export async function GET() {
-  const state = generateState();
-
-  (await cookies()).set("state", state, {
-    path: "/",
-    secure: process.env.NODE_ENV === "production",
-    httpOnly: true,
-    maxAge: 60 * 10,
-    sameSite: "lax",
+  // Redirect to Better Auth Discord OAuth
+  const url = await authClient.signIn.social({
+    provider: "discord",
+    callbackURL: "/",
   });
 
-  // @ts-expect-error - will be fixed in a future PR
-  const url = await discord.createAuthorizationURL(state, [
-    "identify",
-    "email",
-  ]);
-
-  return Response.redirect(url.toString());
+  return Response.redirect(url.url);
 }

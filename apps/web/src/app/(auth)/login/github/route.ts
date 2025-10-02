@@ -1,22 +1,11 @@
-import { github } from "@zephyr/auth/auth";
-import { generateState } from "arctic";
-import { cookies } from "next/headers";
+import { authClient } from "@/lib/auth";
 
 export async function GET() {
-  const state = generateState();
-
-  (await cookies()).set("state", state, {
-    path: "/",
-    secure: process.env.NODE_ENV === "production",
-    httpOnly: true,
-    maxAge: 60 * 10,
-    sameSite: "lax",
+  // Redirect to Better Auth GitHub OAuth
+  const url = await authClient.signIn.social({
+    provider: "github",
+    callbackURL: "/",
   });
 
-  const url = await github.createAuthorizationURL(state, [
-    "read:user",
-    "user:email",
-  ]);
-
-  return Response.redirect(url.toString());
+  return Response.redirect(url.url);
 }

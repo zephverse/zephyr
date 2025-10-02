@@ -1,9 +1,9 @@
-import { validateRequest } from "@zephyr/auth/auth";
 import type { Metadata } from "next";
 import BrowseUsers from "@/components/Discover/browse-users";
 import DiscoverySidebar from "@/components/Discover/discover-sidebar";
 import Friends from "@/components/Home/sidebars/left/friends";
 import { getUserData } from "@/hooks/use-user-data";
+import { authClient } from "@/lib/auth";
 
 export const metadata: Metadata = {
   title: "Browse Users",
@@ -11,8 +11,8 @@ export const metadata: Metadata = {
 };
 
 export default async function BrowsePage() {
-  const { user } = await validateRequest();
-  const userData = user ? await getUserData(user.id) : null;
+  const session = await authClient.getSession();
+  const userData = session?.user ? await getUserData(session.user.id) : null;
 
   return (
     <main className="flex w-full min-w-0 gap-5">
