@@ -1,6 +1,6 @@
 <div align="center">
 
-  <a href="https://github.com/parazeeknova/zephyr">
+  <a href="https://github.com/zephverse/zephyr">
     <img src="https://storage-r2.zephyyrr.in/Assets/zephyr-githubanner.jpg" alt="Zephyr Banner" width="90%"/>
   </a>
 </div>
@@ -10,8 +10,8 @@
 <div align="center">
 
   <a href="#-local-development-setup"><kbd> <br> Development <br> </kbd></a>&ensp;&ensp;
-  <a href="https://github.com/parazeeknova/zephyr/blob/main/.github/CONTRIBUTING.md"><kbd> <br> Contributing <br> </kbd></a>&ensp;&ensp;
-  <a href="https://github.com/parazeeknova/zephyr/issues"><kbd> <br> Roadmap <br> </kbd></a>&ensp;&ensp;
+  <a href="https://github.com/zephverse/zephyr/blob/main/.github/CONTRIBUTING.md"><kbd> <br> Contributing <br> </kbd></a>&ensp;&ensp;
+  <a href="https://github.com/zephverse/zephyr/issues"><kbd> <br> Roadmap <br> </kbd></a>&ensp;&ensp;
   <a href="https://github.com/singularityworks-xyz"><kbd> <br> Singularity Works <br> </kbd></a>&ensp;&ensp;
   <a href="#-troubleshooting"><kbd> <br> Troubleshoot <br> </kbd></a>&ensp;&ensp;
 
@@ -50,69 +50,33 @@ btw here are some cool artworks for our collaboration:
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/zephyr.git && cd zephyr
+git clone https://github.com/zephverse/zephyr && cd zephyr
 
-# 1.5 For Automatic setup (This will install packages, format using ultracite & setup local .env files and start init docker containers)
-bun run dev:aio
-
-# Manual setup
 # 2. Install the dependencies
-bun install # (skip if you ran: dev:aio)
+bun install
 
 # 3. First time setup or after clean
 # This will start required containers and run migration containers required for prisma schema & minio buckets
-bun run docker:dev # (skip if you ran: dev:aio)
+bun run docker:dev
 # Clean everything and start fresh if you encounter any issues
-bun run docker:clean:dev && bun run docker:dev
+bun run docker:clean && bun run docker:dev
 
-# 3.5 (Optional) Run the migrations manually
-bun run docker:dev-noinit # This will start the required services without running the migrations
-cd packages/db && bun prisma generate && bun prisma db push
-# For minio buckets, create the following buckets from the MinIO console at http://localhost:9001 
-`uploads`, `temp`, `backups`
+# 4. Setup the environment variables automatically
+bun run env:dev
 
-# 4. Start the development containers if not already started (optional)
-bun run docker:start # (optional if you want to start the containers manually)
-
-# 5. Setup the environment variables automatically
-bun run env:local # (skip if you ran: dev:aio)
-
-# Set `.env` variables form `.env.example` file manually (optional if you want auth and other services)
-cp .env.example .env # Unix/Linux/Mac
-copy .env.example .env # Windows
-# Read the `.env.example` file for more information
-# Some useful commands are:
-bun run env:validate # Validate the environment variables
-
-# 6. Start the development server
+# 5. Start the development server
 bun run dev
 # or
 turbo dev
 
-# TIP ⚠️ : Check package.json for more scripts in the root directory
 # If you encounter any issues, refer to the troubleshooting section below or report the issue on the Issues page
 ```
-
-<!-- ###### _<div align="center"><sub>Using Zephyr Forge (deprecated) ⚠️</sub></div>_
-
-> [!WARNING]
-> **Zephyr Forge** is deprecated and no longer maintained. It is recommended to use the manual installation process for setting up the development environment.
-
-[Zephyr Forge](https://github.com/parazeeknova/zephyr-forge) is a powerful utility designed to streamline the setup process for Zephyr development environments. It automates the entire configuration process, handling everything from dependency checks to Docker container management.
-
-<div align="center">
-
-```bash
-bunx zephyr-forge@latest setup
-```
-
-</div> -->
 
 #### What a sucessful docker setup looks like after running ```bun run docker:dev```:
 
 <div align="center">
 
-  <img src="https://github.com/parazeeknova/zephyr/blob/main/.github/assets/docker.png?raw=true" alt="Docker setup" width="95%"/>
+  <img src="https://github.com/zephverse/zephyr/blob/main/.github/assets/docker.png?raw=true" alt="Docker setup" width="95%"/>
 
 </div>
 
@@ -122,17 +86,8 @@ If everything goes well, you should be able to access the following services:
 - Next.js: http://localhost:3000
 - PostgreSQL: http://localhost:5433
 - Redis: http://localhost:6379
-- MinIO Console: http://localhost:9001 or http://localhost:9000
-
-<!-- #### _<div align="left"><sub>// Screenshots</sub></div>_
-
-|                    Homepage                     |                      Notifications                       |                    Bookmarks                     |
-| :---------------------------------------------: | :------------------------------------------------------: | :----------------------------------------------: |
-| ![homepage](./assets//screenshots/homepage.png) | ![notifications](./assets/screenshots/notifications.png) | ![bookamrks](./assets/screenshots/bookmarks.png) |
-
-|                   Profile                    |                    Chat                    |                  Users                   |
-| :------------------------------------------: | :----------------------------------------: | :--------------------------------------: |
-| ![profile](./assets/screenshots/profile.png) | ![settings](./assets/screenshots/chat.png) | ![users](./assets/screenshots/users.png) | -->
+- Prisma Studio: http://localhost:5555
+- MinIO Console: http://localhost:9001
 
 #### _<div align="left"><sub>// Troubleshooting 🍋‍🟩</sub></div>_
 
@@ -154,11 +109,7 @@ If you encounter any issues with Prisma or the migrations failed, try running th
 
 ```bash
 # Navigate to the db package
-cd packages/db
-
-# Run the following commands
-bunx prisma generate
-bunx prisma db push
+cd packages/db && bun prisma generate
 ```
 
 ###### _<div align="left"><sub>// Minio 🦩</sub></div>_
@@ -175,25 +126,14 @@ Password: minioadmin
 ```
 Create the following uploads bucket manually from the MinIO console
 
-If you still encounter any issues with the development server, report the issue on the [Issues](https://github.com/parazeeknova/zephyr/issues) page.
+If you still encounter any issues with the development server, report the issue on the [Issues](https://github.com/zephverse/zephyr/issues) page.
 
 #### _<div align="left"><sub>// Contributors</sub></div>_
 
 <br>
-<a href="https://github.com/parazeeknova/zephyr/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=parazeeknova/zephyr" />
+<a href="https://github.com/zephverse/zephyr/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=zephverse/zephyr" />
 </a>
-
-<br>
-
-<!-- #### _<div align="left"><sub>// Analytics 📊</sub></div>_
-![Alt](https://repobeats.axiom.co/api/embed/21d8d944036757fcd0624e71d0b2598ca8b8041f.svg "Repobeats analytics image") -->
-
-<div align="center">
-  <a href="https://zephyyrr.in">
-    <img src="https://raw.githubusercontent.com/parazeeknova/nyxtext-zenith/f4ef877c1ac8c4a5b393a19a086bec2d379b3916/.github/assets/misc/catppuccin_cat.svg" alt="Catppuccino Cat">
-  </a>
-</div>
 
 <br>
 <br>
@@ -216,20 +156,13 @@ If you still encounter any issues with the development server, report the issue 
         <sub>Your Companion for Zephyr</sub>
       </a>
     </td>
-    <!-- <td align="center">
-      <a href="https://zephyyrr.in">
-        <img src="https://storage-r2.zephyyrr.in/Assets/chat.png" alt="Zephara" width="80px"/><br>
-        <strong>Zephara (WIP)</strong><br>
-        <sub>Chat for Zephyr</sub>
-      </a>
-    </td> -->
   </tr>
 </table>
 
 ##### *<div align="center"><sub>Copyright © 2025 Parazeeknova</sub></div>*
 
 <p align="center">
-<strong>Zephyr</strong> is licensed under the <a href="https://github.com/parazeeknova/zephyr/blob/main/LICENSE">AGPL License</a>.
+<strong>Zephyr</strong> is licensed under the <a href="https://github.com/zephverse/zephyr/blob/main/LICENSE">AGPL License</a>.
 </p>
 
 

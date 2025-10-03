@@ -44,7 +44,7 @@
     },
     "apps/web": {
       "name": "@zephyr/web",
-      "version": "2.0.36-dev",
+      "version": "2.0.37-dev",
       "dependencies": {
         "@aws-sdk/client-s3": "^3.901.0",
         "@aws-sdk/s3-request-presigner": "^3.901.0",
@@ -106,7 +106,7 @@
     },
     "packages/aggregator": {
       "name": "@zephyr/aggregator",
-      "version": "2.0.36-dev",
+      "version": "2.0.37-dev",
       "dependencies": {
         "@zephyr/db": "workspace:*",
         "ky": "^1.11.0",
@@ -120,7 +120,7 @@
     },
     "packages/auth": {
       "name": "@zephyr/auth",
-      "version": "2.0.36-dev",
+      "version": "2.0.37-dev",
       "dependencies": {
         "@prisma/client": "^6.16.3",
         "@zephyr/db": "workspace:*",
@@ -137,11 +137,11 @@
     },
     "packages/config": {
       "name": "@zephyr/config",
-      "version": "2.0.36-dev",
+      "version": "2.0.37-dev",
     },
     "packages/db": {
       "name": "@zephyr/db",
-      "version": "2.0.36-dev",
+      "version": "2.0.37-dev",
       "dependencies": {
         "@prisma/client": "^6.16.3",
         "@t3-oss/env-nextjs": "^0.13.8",
@@ -157,11 +157,9 @@
     },
     "packages/next": {
       "name": "@zephyr/next",
-      "version": "2.0.36-dev",
+      "version": "2.0.37-dev",
       "dependencies": {
-        "@t3-oss/env-nextjs": "^0.13.8",
         "next": "15.5.4",
-        "zod": "^4.1.11",
       },
       "devDependencies": {
         "@zephyr/config": "workspace:*",
@@ -169,7 +167,7 @@
     },
     "packages/tailwind": {
       "name": "@zephyr/tailwind",
-      "version": "2.0.36-dev",
+      "version": "2.0.37-dev",
       "dependencies": {
         "@tailwindcss/typography": "^0.5.19",
         "tailwind-merge": "^3.3.1",
@@ -183,7 +181,7 @@
     },
     "packages/ui": {
       "name": "@zephyr/ui",
-      "version": "2.0.36-dev",
+      "version": "2.0.37-dev",
       "dependencies": {
         "@radix-ui/react-accordion": "^1.2.12",
         "@radix-ui/react-alert-dialog": "^1.1.15",

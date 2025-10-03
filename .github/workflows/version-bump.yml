@@ -65,6 +65,11 @@ jobs:
             sed -i "s/\"version\": \".*\"/\"version\": \"$NEW_VERSION\"/" apps/web/package.json
           fi
 
+          # Update apps/auth/package.json
+          if [ -f "apps/auth/package.json" ]; then
+            sed -i "s/\"version\": \".*\"/\"version\": \"$NEW_VERSION\"/" apps/auth/package.json
+          fi
+
           # Update all package.json files in packages directory
           find packages -name "package.json" -type f -exec sed -i "s/\"version\": \".*\"/\"version\": \"$NEW_VERSION\"/" {} \;
 
@@ -78,6 +83,9 @@ jobs:
           git add package.json
           if [ -f "apps/web/package.json" ]; then
             git add apps/web/package.json
+          fi
+          if [ -f "apps/auth/package.json" ]; then
+            git add apps/auth/package.json
           fi
           git add packages/*/package.json
           git commit -m "chore: bump version to ${{ env.NEW_VERSION }} [skip ci]"

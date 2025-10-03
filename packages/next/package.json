@@ -16,9 +16,7 @@
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {
-    "@t3-oss/env-nextjs": "^0.13.8",
-    "next": "15.5.4",
-    "zod": "^4.1.11"
+    "next": "15.5.4"
   },
   "devDependencies": {
     "@zephyr/config": "workspace:*"

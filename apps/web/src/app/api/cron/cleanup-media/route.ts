@@ -29,7 +29,7 @@ async function cleanupUnusedMedia() {
       where: {
         postId: null,
         createdAt: {
-          lte: new Date(Date.now() - 24 * 60 * 60 * 1000), // 24 hours old
+          lte: new Date(Date.now() - 24 * 60 * 60 * 1000),
         },
       },
       select: {
@@ -49,7 +49,6 @@ async function cleanupUnusedMedia() {
     log(`📊 ${validMedia.length} files have valid storage keys`);
 
     if (validMedia.length > 0) {
-      // Log details of files to be deleted
       for (const file of validMedia) {
         log(`📝 Queued for deletion: ${file.key}
         Type: ${file.type}

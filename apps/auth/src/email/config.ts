@@ -3,12 +3,12 @@ import { env } from "../../env";
 export const emailConfig = {
   company: {
     name: "Zephyr",
-    website: env.NEXT_PUBLIC_SITE_URL,
+    website: env.NEXT_PUBLIC_URL,
     supportEmail: env.SUPPORT_EMAIL,
   },
 
   assets: {
-    backgroundImage: `${env.NEXT_PUBLIC_SITE_URL}/assets/auth/signup-image.jpg`,
+    backgroundImage: `${env.NEXT_PUBLIC_URL}/assets/auth/signup-image.jpg`,
     colors: {
       primary: "#f97316",
       primaryHover: "#fb923c",
@@ -57,15 +57,15 @@ export const emailConfig = {
 
   legal: {
     privacy: {
-      url: `${env.NEXT_PUBLIC_SITE_URL}/privacy`,
+      url: `${env.NEXT_PUBLIC_URL}/privacy`,
       text: "Privacy Policy",
     },
     terms: {
-      url: `${env.NEXT_PUBLIC_SITE_URL}/toc`,
+      url: `${env.NEXT_PUBLIC_URL}/toc`,
       text: "Terms of Service",
     },
     unsubscribe: {
-      url: `${env.NEXT_PUBLIC_SITE_URL}/soon`,
+      url: `${env.NEXT_PUBLIC_URL}/soon`,
       text: "Unsubscribe",
     },
   },

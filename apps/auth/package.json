@@ -1,6 +1,6 @@
 {
   "name": "@zephyr/auth-app",
-  "version": "2.0.36-dev",
+  "version": "2.0.37-dev",
   "description": "Zephyr Auth Service - betterAuth with tRPC runtime host",
   "private": true,
   "scripts": {

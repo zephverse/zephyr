@@ -43,11 +43,11 @@ export const auth = betterAuth({
   },
 
   session: {
-    expiresIn: 60 * 60 * 24 * 7, // 7 days
-    updateAge: 60 * 60 * 24, // 1 day (refreshes session after 1 day of inactivity)
+    expiresIn: 60 * 60 * 24 * 7,
+    updateAge: 60 * 60 * 24,
     cookieCache: {
       enabled: true,
-      maxAge: 5 * 60, // 5 minutes
+      maxAge: 5 * 60,
     },
   },
 
@@ -56,7 +56,7 @@ export const auth = betterAuth({
     generateId: () => crypto.randomUUID(),
   },
 
-  trustedOrigins: [env.NEXT_PUBLIC_SITE_URL, "http://localhost:3000"],
+  trustedOrigins: [env.NEXT_PUBLIC_URL, "http://localhost:3000"],
 
   ...(env.NODE_ENV === "production" && {
     emailVerification: {

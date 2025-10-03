@@ -48,7 +48,7 @@ const SENDER = "zephyyrr.in";
 const TRAILING_SLASH_REGEX = /\/$/;
 
 function getBaseUrl(): string {
-  return env.NEXT_PUBLIC_SITE_URL.replace(TRAILING_SLASH_REGEX, "");
+  return env.NEXT_PUBLIC_URL.replace(TRAILING_SLASH_REGEX, "");
 }
 
 type EmailResult = {

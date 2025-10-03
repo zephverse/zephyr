@@ -27,15 +27,14 @@
     "build": "bun run check && turbo build",
     "dep:check": "bunx sherif@latest",
     "dep:fix": "bunx sherif@latest --fix",
-    "env:check": "bun scripts/check-env.js",
-    "env:local": "bun -e \"const fs=require('fs');const path=require('path');fs.copyFileSync('.env.example','.env');fs.copyFileSync(path.join('apps','web','.env.example'),path.join('apps','web','.env'));fs.copyFileSync(path.join('packages','db','.env.example'),path.join('packages','db','.env'));console.log('✅ Environment files copied successfully');\"",
+    "env:dev": "bun -e \"const fs=require('fs');const path=require('path');fs.copyFileSync('.env.example','.env');fs.copyFileSync(path.join('apps','web','.env.example'),path.join('apps','web','.env'));fs.copyFileSync(path.join('apps','auth','.env.example'),path.join('apps','auth','.env'));fs.copyFileSync(path.join('packages','db','.env.example'),path.join('packages','db','.env'));console.log('✅ Environment files copied successfully');\"",
     "clean": "bun -e \"const fs = require('fs'); const path = require('path'); function rm(dir) { if (fs.existsSync(dir)) { console.log('Deleting ' + dir); fs.rmSync(dir, { recursive: true, force: true }); } } function findAndDelete(folder) { const walk = (dir) => { const files = fs.readdirSync(dir); files.forEach(file => { const fullPath = path.join(dir, file); if (fs.statSync(fullPath).isDirectory()) { if (file === folder) { rm(fullPath); } else { walk(fullPath); } } }); }; walk(process.cwd()); } ['node_modules', '.next', '.turbo'].forEach(findAndDelete); console.log('✅ Cleanup completed');\"",
     "db:up": "cd packages/db && bunx prisma generate && bunx prisma db push",
-    "docker:logs": "docker compose -f docker-compose.dev.yml logs -f",
-    "docker:dev": "docker compose -f docker-compose.dev.yml --profile init up -d --build",
-    "docker:dev-noinit": "docker compose -f docker-compose.dev.yml up --build",
-    "docker:down": "docker compose -f docker-compose.dev.yml down",
-    "docker:clean:dev": "docker compose -f docker-compose.dev.yml down -v && docker volume rm zephyr_postgres_data_dev zephyr_redis_data_dev zephyr_minio_data_dev && rm -f .dev-init"
+    "docker:logs": "docker compose -f docker/docker-compose.dev.yml logs -f",
+    "docker:dev": "docker compose -f docker/docker-compose.dev.yml --profile init --profile studio up -d --build",
+    "docker:noinit": "docker compose -f docker/docker-compose.dev.yml up --build",
+    "docker:down": "docker compose -f docker/docker-compose.dev.yml down",
+    "docker:clean": "docker compose -f docker/docker-compose.dev.yml down -v && docker volume rm zephyr-dev-postgres-data zephyr-dev-redis-data zephyr-dev-minio-data && rm -f .dev-init"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.4",
