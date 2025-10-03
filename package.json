@@ -1,21 +1,8 @@
 {
   "name": "zephyr",
-  "displayName": "Zephyr",
   "version": "2.0.37-dev",
-  "description": "A seamless, next-gen social experience built for speed, privacy, and effortless connection.",
-  "author": "parazeeknova",
   "license": "AGPL-3.0",
   "homepage": "https://zephyyrr.in",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/parazeeknova/zephyr"
-  },
-  "readme": ".github/README.md",
-  "keywords": [
-    "socialmedia",
-    "aggregator",
-    "zephyr"
-  ],
   "private": true,
   "workspaces": [
     "apps/*",
@@ -33,6 +20,7 @@
     "docker:logs": "docker compose -f docker/docker-compose.dev.yml logs -f",
     "docker:dev": "docker compose -f docker/docker-compose.dev.yml --profile init --profile studio up -d --build",
     "docker:noinit": "docker compose -f docker/docker-compose.dev.yml up --build",
+    "docker:apps": "docker compose -f docker/docker-compose.dev.yml up web auth -d --build",
     "docker:down": "docker compose -f docker/docker-compose.dev.yml down",
     "docker:clean": "docker compose -f docker/docker-compose.dev.yml down -v && docker volume rm zephyr-dev-postgres-data zephyr-dev-redis-data zephyr-dev-minio-data && rm -f .dev-init"
   },

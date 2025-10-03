@@ -150,6 +150,55 @@ services:
         echo "MinIO initialization complete!"
       '
 
+  web:
+    build:
+      context: ..
+      dockerfile: ./apps/web/Dockerfile
+    container_name: zephyr-dev-web
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_APP_URL=http://localhost:3000
+      - NEXT_PUBLIC_AUTH_URL=http://localhost:3001
+      - DATABASE_URL=postgresql://postgres:postgres@zephyr-dev-postgres:5432/zephyr?schema=public
+      - REDIS_URL=redis://zephyr-dev-redis:6379
+      - MINIO_ENDPOINT=http://zephyr-dev-minio:9000
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin
+    depends_on:
+      postgres-dev:
+        condition: service_healthy
+      redis-dev:
+        condition: service_healthy
+      minio-dev:
+        condition: service_healthy
+    networks:
+      - dev_network
+    restart: unless-stopped
+
+  auth:
+    build:
+      context: ..
+      dockerfile: ./apps/auth/Dockerfile
+    container_name: zephyr-dev-auth
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_APP_URL=http://localhost:3000
+      - NEXT_PUBLIC_AUTH_URL=http://localhost:3001
+      - DATABASE_URL=postgresql://postgres:postgres@zephyr-dev-postgres:5432/zephyr?schema=public
+      - REDIS_URL=redis://zephyr-dev-redis:6379
+    depends_on:
+      postgres-dev:
+        condition: service_healthy
+      redis-dev:
+        condition: service_healthy
+    networks:
+      - dev_network
+    restart: unless-stopped
+
 networks:
   dev_network:
     driver: bridge
