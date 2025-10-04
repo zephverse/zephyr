@@ -1,6 +1,6 @@
 import { initTRPC, TRPCError } from "@trpc/server";
 import type { FetchCreateContextFnOptions } from "@trpc/server/adapters/fetch";
-import { getSessionFromRequest } from "../auth/middleware";
+import { getSessionFromRequest } from "@zephyr/auth/core";
 
 export async function createContext(opts: FetchCreateContextFnOptions) {
   const authContext = await getSessionFromRequest(opts.req);

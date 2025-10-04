@@ -3,6 +3,7 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { username } from "better-auth/plugins";
 import { env } from "../../env";
+import { hashPasswordWithScrypt, verifyPasswordWithScrypt } from "./password";
 
 export type EmailService = {
   sendVerificationEmail?: (
@@ -45,6 +46,14 @@ export function createAuthConfig(config: AuthConfig = {}) {
     emailAndPassword: {
       enabled: true,
       requireEmailVerification: true,
+      password: {
+        // @ts-expect-error types are wrong
+        hash: async ({ password }) => ({
+          hash: await hashPasswordWithScrypt(password),
+        }),
+        verify: async ({ password, hash }) =>
+          await verifyPasswordWithScrypt(password, hash),
+      },
       sendResetPassword: emailService?.sendPasswordResetEmail
         ? async ({ user, url }) => {
             await emailService.sendPasswordResetEmail?.(

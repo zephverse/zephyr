@@ -1,6 +1,6 @@
 "use server";
 
-import { authClient } from "@/lib/auth";
+import { env } from "@root/env";
 
 type SignUpResponse = {
   error?: string;
@@ -18,37 +18,33 @@ export async function signUp(credentials: {
   password: string;
 }): Promise<SignUpResponse> {
   try {
-    const result = await authClient.signUp.email({
-      email: credentials.email,
-      password: credentials.password,
-      name: credentials.username,
-      username: credentials.username,
+    const authBase = env.NEXT_PUBLIC_AUTH_URL;
+    const res = await fetch(`${authBase}/api/trpc/pendingSignupStart`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({
+        email: credentials.email,
+        username: credentials.username,
+        password: credentials.password,
+        displayName: credentials.username,
+      }),
     });
-
-    if (result.error) {
-      return {
-        success: false,
-        error: result.error.message || "Signup failed",
-      };
-    }
-
-    const requiresVerification = process.env.NODE_ENV === "production";
-
-    if (requiresVerification) {
-      return {
-        success: true,
-        message:
-          "Account created successfully. Please check your email for verification.",
-        emailVerification: {
-          email: credentials.email,
-          isNewToken: true,
-        },
-      };
+    const data = await res.json().catch(() => ({}) as unknown);
+    const ok = data?.result?.data?.success === true || data?.success === true;
+    if (!ok) {
+      const err = data?.result?.data?.error || data?.error || "Signup failed";
+      return { success: false, error: err };
     }
 
     return {
       success: true,
-      message: "Account created successfully! Welcome aboard!",
+      message:
+        "Pending signup created. Please check your email to verify your address.",
+      emailVerification: {
+        email: credentials.email,
+        isNewToken: true,
+      },
     };
   } catch (error) {
     console.error("Signup error:", error);
@@ -67,17 +63,22 @@ export async function resendVerificationEmail(email: string): Promise<{
   error?: string;
 }> {
   try {
-    const result = await authClient.sendVerificationEmail({
-      email,
+    const authBase = env.NEXT_PUBLIC_AUTH_URL;
+    const res = await fetch(`${authBase}/api/trpc/pendingSignupResend`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ email }),
     });
-
-    if (result.error) {
-      return {
-        success: false,
-        error: result.error.message || "Failed to resend verification email",
-      };
+    const data = await res.json().catch(() => ({}) as unknown);
+    const ok = data?.result?.data?.success === true || data?.success === true;
+    if (!ok) {
+      const err =
+        data?.result?.data?.error ||
+        data?.error ||
+        "Failed to resend verification email";
+      return { success: false, error: err };
     }
-
     return { success: true };
   } catch (error) {
     console.error("Resend verification email error:", error);

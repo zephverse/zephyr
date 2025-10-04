@@ -210,7 +210,9 @@ export default function VerifyEmailPage() {
           if (ok) {
             verificationChannel.postMessage("verification-success");
             setStatus("success");
-            router.push("/");
+            router.replace("/verify-email?verified=1");
+            setStatus("success");
+            setTimeout(() => router.push("/"), 100);
           } else {
             setStatus("error");
           }
