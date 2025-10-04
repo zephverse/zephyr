@@ -18,11 +18,10 @@
     "clean": "bun -e \"const fs = require('fs'); const path = require('path'); function rm(dir) { if (fs.existsSync(dir)) { console.log('Deleting ' + dir); fs.rmSync(dir, { recursive: true, force: true }); } } function findAndDelete(folder) { const walk = (dir) => { const files = fs.readdirSync(dir); files.forEach(file => { const fullPath = path.join(dir, file); if (fs.statSync(fullPath).isDirectory()) { if (file === folder) { rm(fullPath); } else { walk(fullPath); } } }); }; walk(process.cwd()); } ['node_modules', '.next', '.turbo'].forEach(findAndDelete); console.log('✅ Cleanup completed');\"",
     "db:up": "cd packages/db && bunx prisma generate && bunx prisma db push",
     "docker:logs": "docker compose -f docker/docker-compose.dev.yml logs -f",
-    "docker:dev": "docker compose -f docker/docker-compose.dev.yml --profile init --profile studio up -d --build",
-    "docker:noinit": "docker compose -f docker/docker-compose.dev.yml up --build",
-    "docker:apps": "docker compose -f docker/docker-compose.dev.yml up web auth -d --build",
+    "docker:dev": "docker compose -f docker/docker-compose.dev.yml --profile init --profile studio up -d",
+    "docker:apps": "docker compose -f docker/docker-compose.dev.yml --profile apps up web auth -d --build",
     "docker:down": "docker compose -f docker/docker-compose.dev.yml down",
-    "docker:clean": "docker compose -f docker/docker-compose.dev.yml down -v && docker volume rm zephyr-dev-postgres-data zephyr-dev-redis-data zephyr-dev-minio-data && rm -f .dev-init"
+    "docker:clean": "docker compose -f docker/docker-compose.dev.yml down -v && docker volume rm zephyr-dev-postgres-data zephyr-dev-redis-data zephyr-dev-minio-data zephyr-dev-redisinsight-data && rm -f .dev-init"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.4",

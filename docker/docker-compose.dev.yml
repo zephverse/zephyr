@@ -55,6 +55,8 @@ services:
       dockerfile: docker/Dockerfile.prisma
     environment:
       DATABASE_URL: postgresql://postgres:postgres@postgres-dev:5432/zephyr?schema=public
+      POSTGRES_PRISMA_URL: postgresql://postgres:postgres@postgres-dev:5432/zephyr?schema=public
+      POSTGRES_URL_NON_POOLING: postgresql://postgres:postgres@postgres-dev:5432/zephyr?schema=public
     networks:
       - dev_network
     depends_on:
@@ -70,6 +72,8 @@ services:
       dockerfile: docker/Dockerfile.prisma
     environment:
       DATABASE_URL: postgresql://postgres:postgres@postgres-dev:5432/zephyr?schema=public
+      POSTGRES_PRISMA_URL: postgresql://postgres:postgres@postgres-dev:5432/zephyr?schema=public
+      POSTGRES_URL_NON_POOLING: postgresql://postgres:postgres@postgres-dev:5432/zephyr?schema=public
     ports:
       - "5555:5555"
     networks:
@@ -81,11 +85,11 @@ services:
 
   redis-dev:
     container_name: zephyr-dev-redis
-    image: redis:8-alpine
+    image: redis:latest
     ports:
       - "${REDIS_PORT:-6379}:6379"
     command: >
-      redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru --requirepass zephyrredis --appendonly yes --appendfsync everysec --loglevel notice --save 900 1
+      redis-server --requirepass zephyrredis --maxmemory 256mb --maxmemory-policy allkeys-lru --appendonly yes --appendfsync everysec --loglevel notice --save 900 1
     volumes:
       - redis_data_dev:/data
     networks:
@@ -95,6 +99,26 @@ services:
       interval: 10s
       timeout: 3s
       retries: 3
+    restart: unless-stopped
+
+  redis-insight:
+    profiles: ["studio"]
+    container_name: zephyr-dev-redis-insight
+    image: redislabs/redisinsight:latest
+    ports:
+      - "5540:5540"
+    environment:
+      - RI_REDIS_HOST=redis-dev
+      - RI_REDIS_PORT=6379
+      - RI_REDIS_PASSWORD=zephyrredis
+      - RI_REDIS_ALIAS=Zephyr Redis Dev
+    volumes:
+      - redisinsight:/data
+    networks:
+      - dev_network
+    depends_on:
+      redis-dev:
+        condition: service_healthy
     restart: unless-stopped
 
   minio-dev:
@@ -122,7 +146,7 @@ services:
   minio-init:
     profiles: ["init"]
     container_name: zephyr-dev-minio-init
-    image: minio/mc
+    image: alpine:latest
     depends_on:
       minio-dev:
         condition: service_healthy
@@ -130,27 +154,30 @@ services:
       MC_HOST_minio: http://minioadmin:minioadmin@minio-dev:9000
     networks:
       - dev_network
-    command: >
-      sh -c '
-        echo "Creating MinIO buckets..." &&
-        mc mb minio/uploads || true &&
-        mc mb minio/avatars || true &&
-        mc mb minio/temp || true &&
-        mc mb minio/backups || true &&
-        echo "Setting bucket policies..." &&
-        mc anonymous set download minio/uploads || true &&
-        mc anonymous set download minio/avatars || true &&
-        mc anonymous set download minio/temp || true &&
-        mc anonymous set download minio/backups || true &&
-        echo "Enabling versioning..." &&
-        mc version enable minio/uploads || true &&
-        mc version enable minio/avatars || true &&
-        mc version enable minio/temp || true &&
-        mc version enable minio/backups || true &&
-        echo "MinIO initialization complete!"
-      '
+    command: ["/bin/sh", "-c", "
+        apk add --no-cache curl &&
+        curl -O https://dl.min.io/client/mc/release/linux-amd64/mc &&
+        chmod +x mc &&
+        echo 'Creating MinIO buckets...' &&
+        ./mc mb minio/uploads || true &&
+        ./mc mb minio/avatars || true &&
+        ./mc mb minio/temp || true &&
+        ./mc mb minio/backups || true &&
+        echo 'Setting bucket policies...' &&
+        ./mc anonymous set download minio/uploads || true &&
+        ./mc anonymous set download minio/avatars || true &&
+        ./mc anonymous set download minio/temp || true &&
+        ./mc anonymous set download minio/backups || true &&
+        echo 'Enabling versioning...' &&
+        ./mc version enable minio/uploads || true &&
+        ./mc version enable minio/avatars || true &&
+        ./mc version enable minio/temp || true &&
+        ./mc version enable minio/backups || true &&
+        echo 'MinIO initialization complete!'
+      "]
 
   web:
+    profiles: ["apps"]
     build:
       context: ..
       dockerfile: ./apps/web/Dockerfile
@@ -162,7 +189,7 @@ services:
       - NEXT_PUBLIC_APP_URL=http://localhost:3000
       - NEXT_PUBLIC_AUTH_URL=http://localhost:3001
       - DATABASE_URL=postgresql://postgres:postgres@zephyr-dev-postgres:5432/zephyr?schema=public
-      - REDIS_URL=redis://zephyr-dev-redis:6379
+      - REDIS_URL=redis://:zephyrredis@zephyr-dev-redis:6379/0
       - MINIO_ENDPOINT=http://zephyr-dev-minio:9000
       - MINIO_ACCESS_KEY=minioadmin
       - MINIO_SECRET_KEY=minioadmin
@@ -178,6 +205,7 @@ services:
     restart: unless-stopped
 
   auth:
+    profiles: ["apps"]
     build:
       context: ..
       dockerfile: ./apps/auth/Dockerfile
@@ -189,7 +217,7 @@ services:
       - NEXT_PUBLIC_APP_URL=http://localhost:3000
       - NEXT_PUBLIC_AUTH_URL=http://localhost:3001
       - DATABASE_URL=postgresql://postgres:postgres@zephyr-dev-postgres:5432/zephyr?schema=public
-      - REDIS_URL=redis://zephyr-dev-redis:6379
+      - REDIS_URL=redis://:zephyrredis@zephyr-dev-redis:6379/0
     depends_on:
       postgres-dev:
         condition: service_healthy
@@ -211,3 +239,5 @@ volumes:
     name: zephyr-dev-redis-data
   minio_data_dev:
     name: zephyr-dev-minio-data
+  redisinsight:
+    name: zephyr-dev-redisinsight-data

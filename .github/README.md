@@ -83,9 +83,11 @@ turbo dev
 ###### _<div align="left"><sub>// Ports:</sub></div>_
 If everything goes well, you should be able to access the following services:
 
-- Next.js: http://localhost:3000
+- Zephyr web: http://localhost:3000
+- Zephyr auth: http://localhost:3001
 - PostgreSQL: http://localhost:5433
 - Redis: http://localhost:6379
+- RedisInsight: http://localhost:5540
 - Prisma Studio: http://localhost:5555
 - MinIO Console: http://localhost:9001
 
@@ -99,7 +101,6 @@ If you encounter any issues with the pre-commit hooks, try running the following
 # Ensure that your code is formatted and linted
 bun run check
 ```
-or just skip git hooks.
 
 If you encounter any issues with the development setup, try the following steps:
 
@@ -111,20 +112,6 @@ If you encounter any issues with Prisma or the migrations failed, try running th
 # Navigate to the db package
 cd packages/db && bun prisma generate
 ```
-
-###### _<div align="left"><sub>// Minio 🦩</sub></div>_
-
-If you encounter any issues with Minio or the buckets are not created, try the following steps:
-
-```bash
-# Ensure MinIO is running
-Access MinIO Console at http://localhost:9001
-# Login with default credentials:
-Username: minioadmin
-Password: minioadmin
-
-```
-Create the following uploads bucket manually from the MinIO console
 
 If you still encounter any issues with the development server, report the issue on the [Issues](https://github.com/zephverse/zephyr/issues) page.
 
