@@ -183,7 +183,12 @@ export default function LoginForm() {
           stable: { x: 0 },
         }}
       >
-        <form className="space-y-3" onSubmit={form.handleSubmit(onSubmit)}>
+        <form
+          autoComplete="on"
+          className="space-y-3"
+          noValidate
+          onSubmit={form.handleSubmit(onSubmit)}
+        >
           <AnimatePresence mode="wait">
             {error && (
               <motion.div
@@ -249,12 +254,13 @@ export default function LoginForm() {
             name="username"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Username</FormLabel>
+                <FormLabel>Username or Email</FormLabel>
                 <FormControl>
                   <div className="relative">
                     <Input
-                      placeholder="cooluser"
+                      placeholder="cooluser or email@cool.user"
                       {...field}
+                      autoComplete="username"
                       className={`transition-all duration-500 ease-in-out ${
                         errorFields.username
                           ? "border-destructive/50 bg-destructive/10"
@@ -264,6 +270,7 @@ export default function LoginForm() {
                           ? "border-primary shadow-lg shadow-primary/20"
                           : ""
                       }`}
+                      name="username"
                       onMouseEnter={() => setHoveredField("username")}
                       onMouseLeave={() => setHoveredField(null)}
                     />
@@ -294,6 +301,7 @@ export default function LoginForm() {
                     <PasswordInput
                       placeholder="supersecret"
                       {...field}
+                      autoComplete="current-password"
                       className={`transition-all duration-500 ease-in-out ${
                         errorFields.password
                           ? "border-destructive/50 bg-destructive/10"
@@ -303,6 +311,7 @@ export default function LoginForm() {
                           ? "border-primary shadow-lg shadow-primary/20"
                           : ""
                       }`}
+                      name="password"
                       onMouseEnter={() => setHoveredField("password")}
                       onMouseLeave={() => setHoveredField(null)}
                     />

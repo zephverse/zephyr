@@ -14,7 +14,7 @@
     "build": "bun run check && turbo build",
     "dep:check": "bunx sherif@latest",
     "dep:fix": "bunx sherif@latest --fix",
-    "env:dev": "bun -e \"const fs=require('fs');const path=require('path');fs.copyFileSync('.env.example','.env');fs.copyFileSync(path.join('apps','web','.env.example'),path.join('apps','web','.env'));fs.copyFileSync(path.join('apps','auth','.env.example'),path.join('apps','auth','.env'));fs.copyFileSync(path.join('packages','db','.env.example'),path.join('packages','db','.env'));console.log('✅ Environment files copied successfully');\"",
+    "env:dev": "bun -e \"const fs=require('fs');const path=require('path');fs.copyFileSync(path.join('apps','web','.env.example'),path.join('apps','web','.env'));fs.copyFileSync(path.join('apps','auth','.env.example'),path.join('apps','auth','.env'));console.log('✅ Environment files copied successfully');\"",
     "clean": "bun -e \"const fs = require('fs'); const path = require('path'); function rm(dir) { if (fs.existsSync(dir)) { console.log('Deleting ' + dir); fs.rmSync(dir, { recursive: true, force: true }); } } function findAndDelete(folder) { const walk = (dir) => { const files = fs.readdirSync(dir); files.forEach(file => { const fullPath = path.join(dir, file); if (fs.statSync(fullPath).isDirectory()) { if (file === folder) { rm(fullPath); } else { walk(fullPath); } } }); }; walk(process.cwd()); } ['node_modules', '.next', '.turbo'].forEach(findAndDelete); console.log('✅ Cleanup completed');\"",
     "db:up": "cd packages/db && bunx prisma generate && bunx prisma db push",
     "docker:logs": "docker compose -f docker/docker-compose.dev.yml logs -f",

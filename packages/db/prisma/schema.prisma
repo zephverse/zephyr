@@ -17,6 +17,7 @@ model User {
   aura            Int       @default(0)
   username        String    @unique
   displayName     String
+  displayUsername String?
   mentions        Mention[]
   email           String?   @unique
   passwordHash    String?

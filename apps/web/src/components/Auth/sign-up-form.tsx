@@ -160,7 +160,17 @@ export default function SignUpForm() {
         const result = await signUp(values);
 
         if (result.success) {
-          if (result.skipVerification) {
+          if (result.emailVerification) {
+            setIsVerifying(true);
+            setIsVerificationEmailSent(true);
+            startCountdown();
+            toast({
+              title: "Verify Your Email!",
+              description:
+                "Check your inbox for the verification email, it's in there somewhere!",
+            });
+          } else {
+            // No email verification required (development mode)
             toast({
               title: "Account Created! 🎉",
               description:
@@ -177,25 +187,6 @@ export default function SignUpForm() {
             }
 
             window.location.href = "/";
-          } else {
-            setIsVerifying(true);
-            setIsVerificationEmailSent(true);
-            startCountdown();
-            toast({
-              title: "Verify Your Email!",
-              description:
-                "Check your inbox for the verification email, it's in there somewhere!",
-            });
-
-            if (
-              process.env.NODE_ENV === "development" &&
-              result.verificationUrl
-            ) {
-              console.info(
-                "Development Mode - Verification URL:",
-                result.verificationUrl
-              );
-            }
           }
         } else if (result.error) {
           setError(result.error);
@@ -280,7 +271,9 @@ export default function SignUpForm() {
         >
           <Form {...form}>
             <form
+              autoComplete="on"
               className="space-y-3"
+              noValidate
               onSubmit={form.handleSubmit(onSubmit, handleInvalidSubmit)}
             >
               {error && (
@@ -302,11 +295,13 @@ export default function SignUpForm() {
                         <Input
                           placeholder="cooluser"
                           {...field}
+                          autoComplete="username"
                           className={`transition-all duration-500 ease-in-out ${
                             hoveredField === "username"
                               ? "border-primary shadow-lg shadow-primary/20"
                               : ""
                           }`}
+                          name="username"
                           onMouseEnter={() => setHoveredField("username")}
                           onMouseLeave={() => setHoveredField(null)}
                         />
@@ -329,11 +324,13 @@ export default function SignUpForm() {
                           placeholder="you@example.com"
                           type="email"
                           {...field}
+                          autoComplete="email"
                           className={`transition-all duration-500 ease-in-out ${
                             hoveredField === "email"
                               ? "border-primary shadow-lg shadow-primary/20"
                               : ""
                           }`}
+                          name="email"
                           onMouseEnter={() => setHoveredField("email")}
                           onMouseLeave={() => setHoveredField(null)}
                         />
@@ -354,11 +351,13 @@ export default function SignUpForm() {
                       <PasswordInput
                         placeholder="••••••••"
                         {...field}
+                        autoComplete="new-password"
                         className={`transition-all duration-500 ease-in-out ${
                           hoveredField === "password"
                             ? "border-primary shadow-lg shadow-primary/20"
                             : ""
                         }`}
+                        name="password"
                         onChange={(e) => {
                           field.onChange(e);
                           setPassword(e.target.value);

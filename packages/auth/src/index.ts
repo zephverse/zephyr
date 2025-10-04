@@ -1,8 +1,6 @@
-// Better Auth exports
 // biome-ignore lint/performance/noBarrelFile: This is a small auth package with limited exports
 export * from "./core";
 
-// Validation exports
 export { DISPOSABLE_EMAIL_DOMAINS } from "./validation/constants";
 export {
   createPostSchema,

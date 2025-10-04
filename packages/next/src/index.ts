@@ -5,21 +5,6 @@ export const config: NextConfig = {
   reactStrictMode: true,
   experimental: {
     staleTimes: { dynamic: 30 },
-    serverActions: {
-      bodySizeLimit: "1mb",
-      allowedOrigins: ["*"],
-    },
-  },
-  typescript: {
-    ignoreBuildErrors: true,
-    tsconfigPath: "./tsconfig.json",
-  },
-  compiler: {
-    styledComponents: true,
-    removeConsole:
-      process.env.NODE_ENV === "production"
-        ? { exclude: ["error", "warn"] }
-        : false,
   },
   images: {
     remotePatterns: [
@@ -27,8 +12,6 @@ export const config: NextConfig = {
       { protocol: "https", hostname: "avatars.githubusercontent.com" },
       { protocol: "https", hostname: "cdn.discordapp.com" },
       { protocol: "https", hostname: "pbs.twimg.com" },
-      { protocol: "http", hostname: "localhost" },
-      { protocol: "https", hostname: "localhost" },
     ],
     unoptimized: process.env.NODE_ENV === "development",
   },

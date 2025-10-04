@@ -1,10 +1,10 @@
 {
   "name": "@zephyr/auth-app",
   "version": "2.0.37-dev",
-  "description": "Zephyr Auth Service - betterAuth with tRPC runtime host",
+  "description": "Zephyr Auth Service",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3001",
+    "dev": "next dev --turbopack -p 3001",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",

@@ -1,50 +1,124 @@
 import { prisma } from "@zephyr/db";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
+import { username } from "better-auth/plugins";
+import { env } from "../../env";
 
-export const auth = betterAuth({
-  database: prismaAdapter(prisma, {
-    provider: "postgresql",
-  }),
+export type EmailService = {
+  sendVerificationEmail?: (
+    email: string,
+    token: string
+  ) => Promise<{ success: boolean; error?: string; verificationUrl?: string }>;
+  sendPasswordResetEmail?: (
+    email: string,
+    token: string
+  ) => Promise<{ success: boolean; error?: string; resetUrl?: string }>;
+};
 
-  socialProviders: {
-    google: {
-      clientId: process.env.GOOGLE_CLIENT_ID as string,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
-    },
-    github: {
-      clientId: process.env.GITHUB_CLIENT_ID as string,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
-    },
-    discord: {
-      clientId: process.env.DISCORD_CLIENT_ID as string,
-      clientSecret: process.env.DISCORD_CLIENT_SECRET as string,
-    },
-  },
+export type AuthConfig = {
+  emailService?: EmailService;
+  environment?: "development" | "production";
+};
 
-  account: {
-    accountLinking: {
+export function createAuthConfig(config: AuthConfig = {}) {
+  const { emailService, environment = env.NODE_ENV || "development" } = config;
+
+  return betterAuth({
+    database: prismaAdapter(prisma, {
+      provider: "postgresql",
+    }),
+
+    user: {
+      fields: {
+        name: "displayName",
+      },
+      additionalFields: {
+        displayUsername: {
+          type: "string",
+          required: false,
+        },
+      },
+    },
+
+    plugins: [username()],
+
+    emailAndPassword: {
       enabled: true,
-      trustedProviders: ["google", "github", "discord"],
+      requireEmailVerification: environment === "production",
+      sendResetPassword: emailService?.sendPasswordResetEmail
+        ? async ({ user, url }) => {
+            await emailService.sendPasswordResetEmail?.(
+              user.email,
+              url.split("/").pop() || ""
+            );
+          }
+        : ({ user, url }) => {
+            if (environment === "development") {
+              console.log(`Reset password email for ${user.email}: ${url}`);
+            } else {
+              throw new Error("Password reset email service not configured");
+            }
+            return Promise.resolve();
+          },
     },
-  },
 
-  session: {
-    expiresIn: 60 * 60 * 24 * 7, // 7 days
-    updateAge: 60 * 60 * 24, // 1 day (refreshes session after 1 day of inactivity)
-    cookieCache: {
-      enabled: true,
-      maxAge: 5 * 60, // 5 minutes
+    socialProviders: {
+      google: {
+        clientId: env.GOOGLE_CLIENT_ID || "",
+        clientSecret: env.GOOGLE_CLIENT_SECRET || "",
+      },
+      github: {
+        clientId: env.GITHUB_CLIENT_ID || "",
+        clientSecret: env.GITHUB_CLIENT_SECRET || "",
+      },
+      discord: {
+        clientId: env.DISCORD_CLIENT_ID || "",
+        clientSecret: env.DISCORD_CLIENT_SECRET || "",
+      },
     },
-  },
 
-  advanced: {
-    cookiePrefix: "zephyr",
-    generateId: () => crypto.randomUUID(),
-  },
+    account: {
+      accountLinking: {
+        enabled: true,
+        trustedProviders: ["google", "github", "discord"],
+      },
+    },
 
-  trustedOrigins: [
-    process.env.NEXT_PUBLIC_URL as string,
-    "http://localhost:3000",
-  ],
-});
+    session: {
+      expiresIn: 60 * 60 * 24 * 7,
+      updateAge: 60 * 60 * 24,
+      cookieCache: {
+        enabled: true,
+        maxAge: 5 * 60,
+      },
+    },
+
+    advanced: {
+      cookiePrefix: "zephyr",
+      database: {
+        generateId: () => crypto.randomUUID(),
+      },
+    },
+
+    trustedOrigins: [env.NEXT_PUBLIC_URL, "http://localhost:3000"],
+
+    telemetry: {
+      enabled: false,
+    },
+
+    ...(environment === "production" &&
+      emailService?.sendVerificationEmail && {
+        emailVerification: {
+          sendVerificationEmail: async ({ user, url }) => {
+            await emailService.sendVerificationEmail?.(
+              user.email,
+              url.split("/").pop() || ""
+            );
+          },
+          sendOnSignUp: true,
+        },
+      }),
+  });
+}
+
+export const auth = createAuthConfig();

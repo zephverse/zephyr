@@ -6,33 +6,49 @@ type SignUpResponse = {
   error?: string;
   success: boolean;
   message?: string;
+  emailVerification?: {
+    email: string;
+    isNewToken: boolean;
+  };
 };
 
 export async function signUp(credentials: {
-  name: string;
+  username: string;
   email: string;
   password: string;
 }): Promise<SignUpResponse> {
   try {
-    await authClient.signUp.email({
+    const result = await authClient.signUp.email({
       email: credentials.email,
       password: credentials.password,
-      name: credentials.name,
-      fetchOptions: {
-        onSuccess: () => {
-          // Signup successful - email verification will be handled automatically
-        },
-        onError: (error) => {
-          console.error("Signup error:", error);
-          return { error: error.message || "Signup failed", success: false };
-        },
-      },
+      name: credentials.username,
+      username: credentials.username,
     });
+
+    if (result.error) {
+      return {
+        success: false,
+        error: result.error.message || "Signup failed",
+      };
+    }
+
+    const requiresVerification = process.env.NODE_ENV === "production";
+
+    if (requiresVerification) {
+      return {
+        success: true,
+        message:
+          "Account created successfully. Please check your email for verification.",
+        emailVerification: {
+          email: credentials.email,
+          isNewToken: true,
+        },
+      };
+    }
 
     return {
       success: true,
-      message:
-        "Account created successfully. Please check your email for verification.",
+      message: "Account created successfully! Welcome aboard!",
     };
   } catch (error) {
     console.error("Signup error:", error);
@@ -51,20 +67,16 @@ export async function resendVerificationEmail(email: string): Promise<{
   error?: string;
 }> {
   try {
-    // Better Auth handles email verification resending automatically
-    // We can use the sendVerificationEmail method to resend
-    await authClient.sendVerificationEmail({
+    const result = await authClient.sendVerificationEmail({
       email,
-      fetchOptions: {
-        onSuccess: () => {
-          // Verification email sent successfully
-        },
-        onError: (error) => {
-          console.error("Resend verification email error:", error);
-          throw new Error("Failed to resend verification email");
-        },
-      },
     });
+
+    if (result.error) {
+      return {
+        success: false,
+        error: result.error.message || "Failed to resend verification email",
+      };
+    }
 
     return { success: true };
   } catch (error) {
