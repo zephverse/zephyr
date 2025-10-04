@@ -46,7 +46,7 @@ export const emailConfig = {
 
   social: {
     github: {
-      url: "https://github.com/parazeeknova/zephyr",
+      url: "https://github.com/zephverse/zephyr",
       icon: "https://github.githubassets.com/assets/GitHub-Mark-ea2971cee799.png",
     },
     discord: {
@@ -92,8 +92,8 @@ export const emailConfig = {
       community: "👥 Join Community",
     },
     links: {
-      repo: "https://github.com/parazeeknova/zephyr",
-      contribute: "https://github.com/parazeeknova/zephyr/contribute",
+      repo: "https://github.com/zephverse/zephyr",
+      contribute: "https://github.com/zephverse/zephyr/contribute",
       discord: "https://discordapp.com/users/parazeeknova",
     },
   },

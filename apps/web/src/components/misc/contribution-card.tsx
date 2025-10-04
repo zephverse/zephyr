@@ -22,7 +22,7 @@ export default function ContributeCard({ isCollapsed }: ContributeCardProps) {
           variant="ghost"
         >
           <Link
-            href="https://github.com/parazeeknova/zephyr"
+            href="https://github.com/zephverse/zephyr"
             rel="noopener noreferrer"
             target="_blank"
           >
@@ -48,7 +48,7 @@ export default function ContributeCard({ isCollapsed }: ContributeCardProps) {
         <div className="space-y-2">
           <Link
             className="group flex items-center justify-between rounded-lg p-2 transition-colors hover:bg-accent"
-            href="https://github.com/parazeeknova/zephyr"
+            href="https://github.com/zephverse/zephyr"
             rel="noopener noreferrer"
             target="_blank"
           >
@@ -61,7 +61,7 @@ export default function ContributeCard({ isCollapsed }: ContributeCardProps) {
 
           <Link
             className="group flex items-center justify-between rounded-lg p-2 transition-colors hover:bg-accent"
-            href="https://github.com/parazeeknova/zephyr/issues"
+            href="https://github.com/zephverse/zephyr/issues"
             rel="noopener noreferrer"
             target="_blank"
           >
@@ -81,7 +81,7 @@ export default function ContributeCard({ isCollapsed }: ContributeCardProps) {
         >
           <Button asChild className="w-full gap-2" size="sm" variant="outline">
             <Link
-              href="https://github.com/parazeeknova/zephyr"
+              href="https://github.com/zephverse/zephyr"
               rel="noopener noreferrer"
               target="_blank"
             >

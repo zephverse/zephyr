@@ -42,7 +42,7 @@ export default function Error({
   };
 
   const handleCreateIssue = () => {
-    const githubIssueUrl = `https://github.com/parazeeknova/zephyr/issues/new?title=${encodeURIComponent(
+    const githubIssueUrl = `https://github.com/zephverse/zephyr/issues/new?title=${encodeURIComponent(
       errorDetails.title
     )}&body=${encodeURIComponent(errorDetails.body)}`;
     window.open(githubIssueUrl, "_blank");
@@ -198,7 +198,7 @@ export default function Error({
               <span>Need help? You can:</span>
               <Link
                 className="text-primary hover:underline"
-                href="https://github.com/parazeeknova/zephyr/issues"
+                href="https://github.com/zephverse/zephyr/issues"
                 target="_blank"
               >
                 Open a GitHub issue

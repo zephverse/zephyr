@@ -11,7 +11,7 @@ export function GithubIssueButton() {
         variant="outline"
       >
         <a
-          href="https://github.com/parazeeknova/zephyr/issues/new/"
+          href="https://github.com/zephverse/zephyr/issues/new/"
           rel="noopener noreferrer"
           target="_blank"
         >
