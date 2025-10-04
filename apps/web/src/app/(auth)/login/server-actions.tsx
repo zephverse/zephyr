@@ -3,7 +3,7 @@
 import { authClient } from "@/lib/auth";
 
 export async function loginAction(credentials: {
-  email: string;
+  username: string;
   password: string;
 }): Promise<{
   error?: string;
@@ -11,7 +11,7 @@ export async function loginAction(credentials: {
 }> {
   try {
     await authClient.signIn.email({
-      email: credentials.email,
+      email: credentials.username,
       password: credentials.password,
       fetchOptions: {
         onSuccess: () => {
@@ -19,7 +19,7 @@ export async function loginAction(credentials: {
         },
         onError: (error) => {
           console.error("Login error:", error);
-          return { error: error.message || "Login failed", success: false };
+          throw new Error("Login failed");
         },
       },
     });
@@ -27,6 +27,6 @@ export async function loginAction(credentials: {
     return { success: true };
   } catch (error) {
     console.error("Login error:", error);
-    return { error: "Invalid email or password", success: false };
+    return { error: "Invalid username/email or password", success: false };
   }
 }

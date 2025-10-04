@@ -5,6 +5,7 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
+      "@root/*": ["./*"],
       "@zephyr/*": ["../../packages/*/src"]
     }
   },

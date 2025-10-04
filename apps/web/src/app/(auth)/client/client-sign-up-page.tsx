@@ -139,7 +139,7 @@ export default function ClientSignupPage() {
 
         <div className="relative z-10 flex flex-1 items-center justify-center p-4 sm:p-8">
           <motion.div
-            className="relative flex w-full max-w-5xl flex-col rounded-2xl border border-white/10 bg-card/40 shadow-2xl backdrop-blur-xl lg:flex-row"
+            className="relative flex w-full max-w-5xl flex-col items-stretch rounded-2xl border border-white/10 bg-card/40 shadow-2xl backdrop-blur-xl lg:flex-row"
             variants={scaleUp}
             whileHover={{ boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)" }}
           >
@@ -158,7 +158,7 @@ export default function ClientSignupPage() {
                 </motion.div>
 
                 <motion.div
-                  className="mt-6 text-center"
+                  className="mt-4 text-center"
                   custom={2}
                   variants={contentAnimation}
                 >
@@ -171,10 +171,10 @@ export default function ClientSignupPage() {
               </div>
             </div>
 
-            <div className="hidden overflow-hidden rounded-r-2xl lg:block lg:w-1/2">
+            <div className="hidden overflow-hidden rounded-r-2xl lg:flex lg:w-1/2">
               <motion.div
                 animate={{ opacity: 1, x: 0 }}
-                className="relative min-h-[200px] w-full bg-primary/80 lg:min-h-[650px]"
+                className="relative h-full w-full bg-primary/80"
                 initial={{ opacity: 0, x: 50 }}
                 transition={{ duration: 0.8, ease: "easeOut" }}
               >

@@ -72,7 +72,7 @@ export const emailConfig = {
 
   templates: {
     verification: {
-      subject: "🎉 One Last Step to Join the Zephyr Community!",
+      subject: "🎉 One Last Step to Join the Zephyr!",
       buttonText: "Verify Email Address",
       expiryTime: "1 hour",
     },

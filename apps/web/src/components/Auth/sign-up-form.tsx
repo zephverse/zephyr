@@ -153,41 +153,20 @@ export default function SignUpForm() {
       });
       return;
     }
-    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Signup form submission requires multiple validation steps and error handling
     startTransition(async () => {
       try {
         setIsLoading(true);
         const result = await signUp(values);
 
         if (result.success) {
-          if (result.emailVerification) {
-            setIsVerifying(true);
-            setIsVerificationEmailSent(true);
-            startCountdown();
-            toast({
-              title: "Verify Your Email!",
-              description:
-                "Check your inbox for the verification email, it's in there somewhere!",
-            });
-          } else {
-            // No email verification required (development mode)
-            toast({
-              title: "Account Created! 🎉",
-              description:
-                process.env.NODE_ENV === "development"
-                  ? "Development mode: Email verification skipped (cheat code activated!)"
-                  : "Welcome to the squad! You're officially part of the fam!",
-              duration: 3000,
-            });
-
-            form.reset();
-
-            if (process.env.NODE_ENV === "development") {
-              await new Promise((resolve) => setTimeout(resolve, 1000));
-            }
-
-            window.location.href = "/";
-          }
+          setIsVerifying(true);
+          setIsVerificationEmailSent(true);
+          startCountdown();
+          toast({
+            title: "Verify Your Email!",
+            description:
+              "Check your inbox for the verification email, it's in there somewhere!",
+          });
         } else if (result.error) {
           setError(result.error);
           toast({
@@ -376,14 +355,6 @@ export default function SignUpForm() {
                 )}
               />
 
-              <LoadingButton
-                className="w-full"
-                loading={isPending || isLoading}
-                type="submit"
-              >
-                Create account
-              </LoadingButton>
-
               <div className="space-y-3 pt-2">
                 <div className="flex items-center space-x-2">
                   <Checkbox
@@ -443,6 +414,14 @@ export default function SignUpForm() {
                     </Link>
                   </label>
                 </div>
+
+                <LoadingButton
+                  className="my-4 w-full"
+                  loading={isPending || isLoading}
+                  type="submit"
+                >
+                  Create account
+                </LoadingButton>
               </div>
 
               <div className="relative">

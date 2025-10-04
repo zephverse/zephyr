@@ -1,6 +1,5 @@
 "use client";
 
-// @ts-expect-error - Image optimization is not supported in this file
 import HOME from "@assets/previews/home.png";
 import { Button } from "@zephyr/ui/shadui/button";
 import { motion } from "framer-motion";

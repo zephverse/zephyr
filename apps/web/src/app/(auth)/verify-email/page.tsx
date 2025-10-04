@@ -199,7 +199,25 @@ export default function VerifyEmailPage() {
     if (error) {
       setStatus("error");
     } else if (token) {
-      router.push(`/api/verify-email?token=${token}`);
+      (async () => {
+        try {
+          const res = await fetch(
+            `/api/verify-email?token=${encodeURIComponent(token)}`,
+            { method: "GET", credentials: "include" }
+          );
+          const data = await res.json().catch(() => ({}) as unknown);
+          const ok = (data as { ok?: boolean }).ok === true || res.ok;
+          if (ok) {
+            verificationChannel.postMessage("verification-success");
+            setStatus("success");
+            router.push("/");
+          } else {
+            setStatus("error");
+          }
+        } catch {
+          setStatus("error");
+        }
+      })();
     } else {
       setStatus("error");
     }

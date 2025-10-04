@@ -1,7 +1,6 @@
 import { z } from "zod";
-import { DISPOSABLE_EMAIL_DOMAINS } from "./constants";
+import { validateEmailBasic } from "./email-validator";
 
-const emailRegex = /^[a-zA-Z0-9._+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const threerepeatRegex = /(.)\1{2,}/;
 const commonsequencesRegex = /(?:abc|123|qwe|xyz)/i;
 const wordRegex = /\s+/;
@@ -20,52 +19,16 @@ const requiredPassword = z
 const requiredString = z.string().trim().min(1, "This field is required!");
 
 export const signUpSchema = z.object({
-  email: requiredEmail
-    .email("That's not an email, that's a cry for help")
-    .refine(
-      (email) => {
-        const isValidFormat = emailRegex.test(email);
-        const isNotObviouslyFake = !(
-          email.includes("fake") ||
-          email.includes("temp") ||
-          email.includes("spam") ||
-          email.includes("trash") ||
-          email.includes("junk") ||
-          email.includes("disposable")
-        );
-        return isValidFormat && isNotObviouslyFake;
-      },
-      { message: "Nah, this email is sus" }
-    )
-    .refine(
-      (email) => {
-        const domain = email.split("@")[1]?.toLowerCase();
-        return domain ? !DISPOSABLE_EMAIL_DOMAINS.includes(domain) : false;
-      },
-      { message: "We need a real email, not some burner account" }
-    )
-    .refine(
-      (email) => {
-        const domain = email.split("@")[1]?.toLowerCase();
-        const suspicious = [
-          "mailbox",
-          "temporary",
-          "dispose",
-          "trash",
-          "spam",
-          "fake",
-          "temp",
-          "dump",
-          "junk",
-          "throw",
-        ];
-        return !suspicious.some((word) => domain?.includes(word));
-      },
-      {
-        message:
-          "This email looks like it's about to ghost us - use your main one!",
-      }
-    ),
+  email: requiredEmail.refine(
+    async (email) => {
+      const validation = await validateEmailBasic(email);
+      return validation.isValid;
+    },
+    {
+      message:
+        "This email doesn't pass our validation checks. Please use a real email address.",
+    }
+  ),
   username: requiredUsername.regex(
     /^[a-zA-Z0-9_]+$/,
     "Username can only contain letters, numbers, and underscores (no weird symbols pls)"

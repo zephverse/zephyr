@@ -1,3 +1,4 @@
+import { validateEmailAdvanced } from "@zephyr/auth/validation";
 import { Resend } from "resend";
 import { env } from "../../env";
 import { emailConfig } from "./config";
@@ -7,17 +8,7 @@ import { getVerificationEmailHtml } from "./templates/verification-email";
 let resend: Resend | null = null;
 
 export function isEmailServiceConfigured(): boolean {
-  const configured = Boolean(env.RESEND_API_KEY);
-  if (!configured) {
-    const message = isDevelopmentMode()
-      ? "Development mode: Email service not configured - verification will be skipped"
-      : "Production mode: Email service not configured - this is required for production";
-    console.log(message);
-    if (!isDevelopmentMode()) {
-      throw new Error("Email service must be configured in production");
-    }
-  }
-  return configured;
+  return Boolean(env.RESEND_API_KEY);
 }
 
 export function isDevelopmentMode(): boolean {
@@ -27,13 +18,7 @@ export function isDevelopmentMode(): boolean {
 function initializeResend(): void {
   if (!resend) {
     if (!env.RESEND_API_KEY) {
-      if (isDevelopmentMode()) {
-        console.log(
-          "Development mode: RESEND_API_KEY not set, email will be skipped"
-        );
-        return;
-      }
-      throw new Error("RESEND_API_KEY is required in production");
+      throw new Error("RESEND_API_KEY is required");
     }
     try {
       resend = new Resend(env.RESEND_API_KEY);
@@ -71,26 +56,10 @@ function getVerificationResult(
   };
 }
 
-function handleDevelopmentMode(): EmailResult {
-  if (!isEmailServiceConfigured()) {
-    console.log("Development mode: Skipping email verification");
-    return getVerificationResult({
-      success: true,
-      skipped: true,
-      message: "Email verification skipped in development mode",
-    });
-  }
-  return getVerificationResult({
-    success: false,
-    error: "Email service not initialized in development mode",
-    skipped: true,
-  });
-}
-
 function initializeEmailService(): EmailResult | null {
   try {
     initializeResend();
-    return null; // Success
+    return null;
   } catch {
     return getVerificationResult({
       success: false,
@@ -104,13 +73,38 @@ function getVerificationUrl(token: string): string {
   return `${baseUrl}/verify-email?token=${token}`;
 }
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: it
 export async function sendVerificationEmail(
   email: string,
   token: string
 ): Promise<EmailResult> {
-  if (isDevelopmentMode() && !isEmailServiceConfigured()) {
-    return handleDevelopmentMode();
+  const validationOptions = {
+    skipSmtpCheck: true,
+    skipMxCheck: false,
+    timeout: 5000,
+  };
+
+  const validation = await validateEmailAdvanced(email, validationOptions);
+
+  if (!validation.isValid) {
+    console.warn(`Email validation failed for ${email}:`, {
+      score: validation.score,
+      confidence: validation.confidence,
+      reasons: validation.reasons,
+      disposable: validation.disposable,
+    });
+
+    return getVerificationResult({
+      success: false,
+      error: `Email validation failed: ${validation.reasons.join(", ")}`,
+    });
+  }
+
+  if (isDevelopmentMode()) {
+    console.log(`Email validation passed for ${email}:`, {
+      score: validation.score,
+      confidence: validation.confidence,
+      reasons: validation.reasons,
+    });
   }
 
   const initResult = initializeEmailService();
@@ -119,12 +113,10 @@ export async function sendVerificationEmail(
   }
 
   if (!resend) {
-    return isDevelopmentMode()
-      ? handleDevelopmentMode()
-      : getVerificationResult({
-          success: false,
-          error: "Email service not initialized",
-        });
+    return getVerificationResult({
+      success: false,
+      error: "Email service not initialized",
+    });
   }
 
   const verificationUrl = getVerificationUrl(token);
@@ -135,24 +127,24 @@ export async function sendVerificationEmail(
 
   try {
     const { error } = await resend.emails.send({
-      from: `🚀 Zephyr <no-reply@${SENDER}>`,
+      from: `🪁 Zephyr <no-reply@${SENDER}>`,
       to: email,
       subject: emailConfig.templates.verification.subject,
-      html: getVerificationEmailHtml(verificationUrl),
+      html: await getVerificationEmailHtml(verificationUrl),
     });
 
     if (error) {
       console.error("Resend error:", error);
       return getVerificationResult({
         success: false,
-        verificationUrl: isDevelopmentMode() ? verificationUrl : undefined,
+        verificationUrl,
         error: error.message || "Failed to send verification email",
       });
     }
 
     return getVerificationResult({
       success: true,
-      verificationUrl: isDevelopmentMode() ? verificationUrl : undefined,
+      verificationUrl,
     });
   } catch (error) {
     const errorMessage =
@@ -164,7 +156,7 @@ export async function sendVerificationEmail(
 
     return getVerificationResult({
       success: false,
-      verificationUrl: isDevelopmentMode() ? verificationUrl : undefined,
+      verificationUrl,
       error: errorMessage,
     });
   }
@@ -174,13 +166,6 @@ export async function sendPasswordResetEmail(
   email: string,
   token: string
 ): Promise<{ success: boolean; error?: string; resetUrl?: string }> {
-  if (isDevelopmentMode() && !isEmailServiceConfigured()) {
-    console.log("Development mode: Skipping password reset email");
-    return {
-      success: true,
-    };
-  }
-
   try {
     initializeResend();
 
@@ -199,7 +184,7 @@ export async function sendPasswordResetEmail(
       from: `🔒 Zephyr <no-reply@${SENDER}>`,
       to: email,
       subject: emailConfig.templates.passwordReset.subject,
-      html: getPasswordResetEmailHtml(resetUrl),
+      html: await getPasswordResetEmailHtml(resetUrl),
     });
 
     if (error) {
@@ -236,9 +221,7 @@ export function validateEmailServiceConfig(): {
   if (!env.RESEND_API_KEY) {
     return {
       isValid: false,
-      message: isDevelopmentMode()
-        ? "Email service not configured (RESEND_API_KEY missing) - verification will be skipped in development"
-        : "Email service configuration required in production mode",
+      message: "Email service configuration required (RESEND_API_KEY missing)",
     };
   }
 

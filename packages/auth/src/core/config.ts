@@ -44,7 +44,7 @@ export function createAuthConfig(config: AuthConfig = {}) {
 
     emailAndPassword: {
       enabled: true,
-      requireEmailVerification: environment === "production",
+      requireEmailVerification: true,
       sendResetPassword: emailService?.sendPasswordResetEmail
         ? async ({ user, url }) => {
             await emailService.sendPasswordResetEmail?.(
@@ -106,18 +106,24 @@ export function createAuthConfig(config: AuthConfig = {}) {
       enabled: false,
     },
 
-    ...(environment === "production" &&
-      emailService?.sendVerificationEmail && {
-        emailVerification: {
-          sendVerificationEmail: async ({ user, url }) => {
-            await emailService.sendVerificationEmail?.(
-              user.email,
-              url.split("/").pop() || ""
-            );
-          },
-          sendOnSignUp: true,
+    ...(emailService?.sendVerificationEmail && {
+      emailVerification: {
+        sendVerificationEmail: async ({ user, url }) => {
+          let token = "";
+          try {
+            const parsed = new URL(url);
+            token =
+              parsed.searchParams.get("token") ||
+              parsed.pathname.split("/").filter(Boolean).pop() ||
+              "";
+          } catch {
+            token = url.split("/").pop() || "";
+          }
+          await emailService.sendVerificationEmail?.(user.email, token);
         },
-      }),
+        sendOnSignUp: true,
+      },
+    }),
   });
 }
 

@@ -96,7 +96,7 @@ export default function LoginForm() {
   function handleLoginError(loginErrorMessage: string) {
     setError(loginErrorMessage);
     setShake(true);
-    if (loginErrorMessage.includes("Incorrect username or password")) {
+    if (loginErrorMessage.includes("Invalid username/email or password")) {
       setErrorFields({ username: true, password: true });
     }
     toast({

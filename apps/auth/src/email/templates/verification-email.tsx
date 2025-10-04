@@ -3,7 +3,9 @@ import {
   Button,
   Container,
   Head,
+  Hr,
   Html,
+  Img,
   Link,
   Preview,
   render,
@@ -24,58 +26,36 @@ export const VerificationEmail = ({
     <Preview>{emailConfig.templates.verification.subject}</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Section style={box}>
-          <Text style={heading}>
-            Welcome to <span style={brand}>{emailConfig.company.name}</span> ✨
-          </Text>
-          <Text style={paragraph}>
-            We're thrilled to have you join our community of innovators and
-            creators!
-          </Text>
+        <Section style={outerCard}>
+          <Section style={header}>
+            <Img
+              alt={`${emailConfig.company.name} logo`}
+              src="https://storage-r2.zephyyrr.in/Assets/zephyr-logo.png"
+              style={logo}
+              width={120}
+            />
+          </Section>
 
-          <Section style={card}>
-            <Text style={emoji}>🔐</Text>
-            <Text style={subheading}>Verify Your Email</Text>
+          <Section style={innerCard}>
+            <Text style={heading}>Verify your email</Text>
             <Text style={paragraph}>
               Please verify your email address within{" "}
               {emailConfig.templates.verification.expiryTime} to complete your
               registration.
             </Text>
-            <Button href={verificationUrl} style={button}>
+            <Button href={verificationUrl} style={ctaButton}>
               {emailConfig.templates.verification.buttonText}
             </Button>
-          </Section>
 
-          <Section style={features}>
-            <Text style={featuresTitle}>What's Next? 🎯</Text>
-            {emailConfig.assets.features.map((feature) => (
-              <Section key={feature.title} style={featureCard}>
-                <Text style={featureEmoji}>{feature.emoji}</Text>
-                <div>
-                  <Text style={featureTitle}>{feature.title}</Text>
-                  <Text style={featureDescription}>{feature.description}</Text>
-                </div>
-              </Section>
-            ))}
-          </Section>
+            <Hr style={divider} />
 
-          <Section style={card}>
-            <Text style={helpTitle}>Need Help? 💁‍♂️</Text>
-            <Text style={paragraph}>
-              Our support team is here to help you 24/7
+            <Text style={note}>
+              If the button doesn't work, copy and paste this link into your
+              browser:
             </Text>
-            <Text style={links}>
-              <Link
-                href={`mailto:${emailConfig.company.supportEmail}`}
-                style={link}
-              >
-                Contact Support
-              </Link>
-              {" • "}
-              <Link href={emailConfig.company.website} style={link}>
-                Help Center
-              </Link>
-            </Text>
+            <Link href={verificationUrl} style={codeLink}>
+              {verificationUrl}
+            </Link>
           </Section>
 
           <Text style={footerLinks}>
@@ -102,6 +82,8 @@ export const VerificationEmail = ({
 export const getVerificationEmailHtml = (verificationUrl: string) =>
   render(<VerificationEmail verificationUrl={verificationUrl} />);
 
+const brandPrimary = "#F85522";
+
 const main = {
   backgroundColor: "#f9fafb",
   fontFamily:
@@ -110,152 +92,100 @@ const main = {
 
 const container = {
   margin: "0 auto",
-  padding: "20px 0 48px",
-  maxWidth: "700px",
+  padding: "24px 0 48px",
+  maxWidth: "640px",
 };
 
-const box = {
-  backgroundColor: "rgba(255, 255, 255, 0.98)",
-  backdropFilter: "blur(10px)",
-  borderRadius: "24px",
-  padding: "40px",
-  boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-  border: "1px solid #e5e7eb",
+const outerCard = {
+  backgroundColor: "#ffffff",
+  border: `1px solid ${brandPrimary}`,
+  borderRadius: "20px",
+  boxShadow:
+    "0 0 0 3px rgba(248,85,34,0.10), 0 8px 24px rgba(248,85,34,0.18), 0 10px 20px rgba(0,0,0,0.05)",
+  padding: "8px",
+};
+
+const header = {
+  padding: "20px 12px 0",
+  textAlign: "center" as const,
+};
+
+const logo = {
+  display: "block",
+  margin: "0 auto 8px",
+};
+
+const innerCard = {
+  backgroundColor: emailConfig.assets.colors.cardBg,
+  border: `1px solid ${emailConfig.assets.colors.border}`,
+  borderRadius: "16px",
+  margin: "12px",
+  padding: "28px 24px",
+  textAlign: "center" as const,
 };
 
 const heading = {
-  fontSize: "24px",
-  fontWeight: "600",
   color: emailConfig.assets.colors.textDark,
-  textAlign: "center" as const,
-  margin: "0 0 12px",
-};
-
-const brand = {
-  background: `linear-gradient(135deg, ${emailConfig.assets.colors.primary} 0%, ${emailConfig.assets.colors.primaryHover} 100%)`,
-  color: "white",
-  padding: "4px 12px",
-  borderRadius: "12px",
-  display: "inline-block",
-  fontWeight: "700",
+  fontSize: "22px",
+  fontWeight: 700,
+  letterSpacing: "0.2px",
+  margin: "0 0 10px",
 };
 
 const paragraph = {
+  color: emailConfig.assets.colors.text,
   fontSize: "16px",
   lineHeight: "24px",
-  color: emailConfig.assets.colors.text,
-  margin: "0 0 24px",
+  margin: "0 0 22px",
 };
 
-const card = {
-  backgroundColor: emailConfig.assets.colors.cardBg,
-  borderRadius: "16px",
-  padding: "24px",
-  border: `1px solid ${emailConfig.assets.colors.border}`,
-  marginBottom: "16px",
-  textAlign: "center" as const,
-};
-
-const emoji = {
-  fontSize: "48px",
-  marginBottom: "16px",
-  display: "block",
-};
-
-const subheading = {
-  fontSize: "20px",
-  fontWeight: "600",
-  color: emailConfig.assets.colors.textDark,
-  margin: "0 0 12px",
-};
-
-const button = {
-  backgroundColor: emailConfig.assets.colors.primary,
-  borderRadius: "12px",
-  color: "#fff",
-  fontSize: "16px",
-  fontWeight: "600",
-  textDecoration: "none",
-  textAlign: "center" as const,
+const ctaButton = {
+  backgroundColor: brandPrimary,
+  borderRadius: "9999px",
+  color: "#ffffff",
   display: "inline-block",
-  padding: "16px 40px",
-  boxShadow: "0 4px 6px -1px rgba(249, 115, 22, 0.25)",
-};
-
-const features = {
-  margin: "32px 0",
-};
-
-const featuresTitle = {
-  fontSize: "20px",
-  fontWeight: "600",
-  color: emailConfig.assets.colors.textDark,
+  fontSize: "16px",
+  fontWeight: 700,
+  padding: "14px 28px",
   textAlign: "center" as const,
-  margin: "0 0 24px",
-};
-
-const featureCard = {
-  backgroundColor: emailConfig.assets.colors.cardBg,
-  borderRadius: "16px",
-  padding: "16px",
-  border: `1px solid ${emailConfig.assets.colors.border}`,
-  marginBottom: "16px",
-  display: "flex",
-  alignItems: "center",
-  gap: "16px",
-};
-
-const featureEmoji = {
-  fontSize: "32px",
-  paddingRight: "8px",
-};
-
-const featureTitle = {
-  fontSize: "18px",
-  fontWeight: "600",
-  color: emailConfig.assets.colors.textDark,
-  margin: "0 0 4px",
-};
-
-const featureDescription = {
-  fontSize: "14px",
-  color: emailConfig.assets.colors.text,
-  margin: "0",
-};
-
-const helpTitle = {
-  fontSize: "18px",
-  fontWeight: "600",
-  color: emailConfig.assets.colors.textDark,
-  margin: "0 0 12px",
-};
-
-const links = {
-  margin: "0 0 16px",
-};
-
-const link = {
-  color: emailConfig.assets.colors.primary,
   textDecoration: "none",
-  fontSize: "14px",
-  margin: "0 12px",
+};
+
+const divider = {
+  borderColor: emailConfig.assets.colors.border,
+  margin: "24px 0 12px",
+};
+
+const note = {
+  color: emailConfig.assets.colors.textLight,
+  fontSize: "12px",
+  margin: "0 0 8px",
+};
+
+const codeLink = {
+  color: brandPrimary,
+  display: "inline-block",
+  fontSize: "12px",
+  maxWidth: "100%",
+  overflowWrap: "anywhere" as const,
+  textDecoration: "underline",
 };
 
 const footerLinks = {
   textAlign: "center" as const,
-  marginBottom: "16px",
+  margin: "20px 0 8px",
 };
 
 const footerLink = {
   color: emailConfig.assets.colors.text,
-  textDecoration: "none",
   fontSize: "12px",
   margin: "0 8px",
+  textDecoration: "none",
 };
 
 const footer = {
-  fontSize: "12px",
   color: emailConfig.assets.colors.textLight,
+  fontSize: "12px",
+  margin: "0 0 8px",
   textAlign: "center" as const,
-  margin: "0",
 };

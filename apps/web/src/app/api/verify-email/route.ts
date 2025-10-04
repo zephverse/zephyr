@@ -1,16 +1,38 @@
-// Email verification is now handled automatically by Better Auth
-// This route can be removed or used for custom verification logic if needed
-
+import { keys } from "@root/keys";
 import type { NextRequest } from "next/server";
 
-export function GET(req: NextRequest) {
+export async function GET(req: NextRequest) {
   const token = req.nextUrl.searchParams.get("token");
-
   if (!token) {
-    return Response.redirect("/verify-email?error=invalid-token");
+    return Response.json(
+      { ok: false, error: "missing-token" },
+      { status: 400 }
+    );
   }
 
-  // Redirect to Better Auth email verification
-  const baseUrl = process.env.NEXT_PUBLIC_AUTH_URL || "http://localhost:3001";
-  return Response.redirect(`${baseUrl}/api/auth/verify-email?token=${token}`);
+  const authBase = keys.NEXT_PUBLIC_AUTH_URL;
+  const url = `${authBase}/api/auth/verify-email?token=${encodeURIComponent(token)}`;
+
+  try {
+    const res = await fetch(url, {
+      method: "GET",
+      headers: {
+        "user-agent": req.headers.get("user-agent") ?? "",
+      },
+      credentials: "include",
+    });
+
+    const data = await res.json().catch(() => ({}) as unknown);
+    const ok =
+      (data as { status?: boolean; ok?: boolean }).status === true ||
+      (data as { status?: boolean; ok?: boolean }).ok === true ||
+      res.ok;
+
+    return Response.json({ ok }, { status: ok ? 200 : 400 });
+  } catch {
+    return Response.json(
+      { ok: false, error: "network-error" },
+      { status: 502 }
+    );
+  }
 }
