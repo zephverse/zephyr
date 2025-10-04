@@ -253,7 +253,7 @@ export default function LoginForm() {
                 <FormControl>
                   <div className="relative">
                     <Input
-                      placeholder="Username"
+                      placeholder="cooluser"
                       {...field}
                       className={`transition-all duration-500 ease-in-out ${
                         errorFields.username
@@ -292,7 +292,7 @@ export default function LoginForm() {
                 <FormControl>
                   <div className="relative">
                     <PasswordInput
-                      placeholder="Password"
+                      placeholder="supersecret"
                       {...field}
                       className={`transition-all duration-500 ease-in-out ${
                         errorFields.password
