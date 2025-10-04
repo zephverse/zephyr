@@ -21,7 +21,8 @@
     "docker:dev": "docker compose -f docker/docker-compose.dev.yml --profile init --profile studio up -d",
     "docker:apps": "docker compose -f docker/docker-compose.dev.yml --profile apps up web auth -d --build",
     "docker:down": "docker compose -f docker/docker-compose.dev.yml down",
-    "docker:clean": "docker compose -f docker/docker-compose.dev.yml down -v && docker volume rm zephyr-dev-postgres-data zephyr-dev-redis-data zephyr-dev-minio-data zephyr-dev-redisinsight-data && rm -f .dev-init"
+    "docker:clean": "docker compose -f docker/docker-compose.dev.yml down -v && docker volume rm zephyr-dev-postgres-data zephyr-dev-redis-data zephyr-dev-minio-data zephyr-dev-redisinsight-data && rm -f .dev-init",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.4",

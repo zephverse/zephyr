@@ -3,9 +3,7 @@
 import signupImage from "@assets/auth/signup-image.jpg";
 import loginImage from "@assets/previews/login.png";
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertTriangle } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 import AnimatedAuthLink from "@/components/Auth/animated-auth-link";
 import SignUpForm from "@/components/Auth/sign-up-form";
 
@@ -129,33 +127,6 @@ export default function ClientSignupPage() {
         <div className="absolute inset-0 z-0 bg-gradient-to-bl from-primary/5 via-background to-background/95" />
 
         <motion.div
-          animate={{ opacity: 1, y: 0 }}
-          className="absolute top-0 left-0 z-20 w-full"
-          initial={{ opacity: 0, y: -8 }}
-          transition={{ duration: 0.4, ease: "easeOut" }}
-        >
-          <div className="mx-auto w-full max-w-5xl p-2 sm:p-3">
-            <div className="flex items-start gap-2 rounded-md border border-amber-500/20 bg-amber-50/90 px-3 py-2 text-amber-900 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-amber-50/60 sm:items-center dark:border-amber-400/20 dark:bg-amber-950/40 dark:text-amber-200">
-              <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-500 sm:h-4 sm:w-4 dark:text-amber-300" />
-              <p className="text-xs leading-snug sm:text-sm">
-                We’re collaborating on a Zephyr ×{" "}
-                <Link
-                  className="underline decoration-amber-400/60 underline-offset-2 hover:decoration-amber-400"
-                  href="https://singularityworks.xyz"
-                  rel="noopener noreferrer"
-                  target="_blank"
-                >
-                  Singularity Works
-                </Link>{" "}
-                UI revamp. Some services may be intermittently unavailable; you
-                may encounter errors ex: signup using email does not work, use
-                google or github etc. Thanks for your patience.
-              </p>
-            </div>
-          </div>
-        </motion.div>
-
-        <motion.div
           className="absolute right-20 hidden h-full items-center md:flex"
           variants={slideIn}
         >
@@ -200,7 +171,7 @@ export default function ClientSignupPage() {
               </div>
             </div>
 
-            <div className="overflow-hidden rounded-r-2xl lg:w-1/2">
+            <div className="hidden overflow-hidden rounded-r-2xl lg:block lg:w-1/2">
               <motion.div
                 animate={{ opacity: 1, x: 0 }}
                 className="relative min-h-[200px] w-full bg-primary/80 lg:min-h-[650px]"

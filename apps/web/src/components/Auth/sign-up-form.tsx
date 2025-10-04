@@ -75,6 +75,7 @@ export default function SignUpForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [isVerificationEmailSent, setIsVerificationEmailSent] = useState(false);
+  const [hoveredField, setHoveredField] = useState<string | null>(null);
   const verificationChannel = new BroadcastChannel("email-verification");
   const [isAgeVerified, setIsAgeVerified] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -127,7 +128,7 @@ export default function SignUpForm() {
 
       toast({
         variant: "destructive",
-        title: "Invalid Input",
+        title: "Oopsie daisy! 🤭",
         description: errorMessage,
         duration: 3000,
       });
@@ -145,8 +146,9 @@ export default function SignUpForm() {
     if (!(isAgeVerified && acceptedTerms)) {
       toast({
         variant: "destructive",
-        title: "Required Agreements",
-        description: "Please accept the age verification and terms of service.",
+        title: "Hold up!",
+        description:
+          "You gotta check those boxes, we can't let just anyone join the squad!",
         duration: 3000,
       });
       return;
@@ -160,11 +162,11 @@ export default function SignUpForm() {
         if (result.success) {
           if (result.skipVerification) {
             toast({
-              title: "Account Created",
+              title: "Account Created! 🎉",
               description:
                 process.env.NODE_ENV === "development"
-                  ? "Development mode: Email verification skipped"
-                  : "Account created successfully",
+                  ? "Development mode: Email verification skipped (cheat code activated!)"
+                  : "Welcome to the squad! You're officially part of the fam!",
               duration: 3000,
             });
 
@@ -180,8 +182,9 @@ export default function SignUpForm() {
             setIsVerificationEmailSent(true);
             startCountdown();
             toast({
-              title: "Verification Required",
-              description: "Please check your email to verify your account.",
+              title: "Verify Your Email!",
+              description:
+                "Check your inbox for the verification email, it's in there somewhere!",
             });
 
             if (
@@ -198,7 +201,7 @@ export default function SignUpForm() {
           setError(result.error);
           toast({
             variant: "destructive",
-            title: "Signup Failed",
+            title: "Signup Failed!",
             description: result.error,
           });
         }
@@ -208,11 +211,11 @@ export default function SignUpForm() {
         setError(errorMessage);
         toast({
           variant: "destructive",
-          title: "Error",
+          title: "Something went wrong!",
           description:
             process.env.NODE_ENV === "development"
               ? errorMessage
-              : "An unexpected error occurred",
+              : "An unexpected error occurred, try again? Our bad!",
         });
       } finally {
         setIsLoading(false);
@@ -233,15 +236,16 @@ export default function SignUpForm() {
       if (result.success) {
         startCountdown();
         toast({
-          title: "Email Sent",
-          description: "A new verification email has been sent.",
+          title: "Email Sent!",
+          description: "A new verification email has been sent to your inbox!",
           duration: 3000,
         });
       } else {
         toast({
           variant: "destructive",
           title: "Failed to Resend",
-          description: result.error || "Failed to resend verification email",
+          description:
+            result.error || "Failed to resend verification email, try again?",
           duration: 5000,
         });
       }
@@ -249,8 +253,8 @@ export default function SignUpForm() {
       console.error("Error resending verification email:", resendError);
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Failed to resend verification email. Please try again.",
+        title: "Something went wrong!",
+        description: "Failed to resend verification email, try again? Our bad!",
       });
     } finally {
       setIsResending(false);
@@ -295,7 +299,17 @@ export default function SignUpForm() {
                     <FormLabel>Username</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Input placeholder="cooluser" {...field} />
+                        <Input
+                          placeholder="cooluser"
+                          {...field}
+                          className={`transition-all duration-500 ease-in-out ${
+                            hoveredField === "username"
+                              ? "border-primary shadow-lg shadow-primary/20"
+                              : ""
+                          }`}
+                          onMouseEnter={() => setHoveredField("username")}
+                          onMouseLeave={() => setHoveredField(null)}
+                        />
                         <User className="-translate-y-1/2 absolute top-1/2 right-3 h-4 w-4 text-muted-foreground" />
                       </div>
                     </FormControl>
@@ -315,6 +329,13 @@ export default function SignUpForm() {
                           placeholder="you@example.com"
                           type="email"
                           {...field}
+                          className={`transition-all duration-500 ease-in-out ${
+                            hoveredField === "email"
+                              ? "border-primary shadow-lg shadow-primary/20"
+                              : ""
+                          }`}
+                          onMouseEnter={() => setHoveredField("email")}
+                          onMouseLeave={() => setHoveredField(null)}
                         />
                         <Mail className="-translate-y-1/2 absolute top-1/2 right-3 h-4 w-4 text-muted-foreground" />
                       </div>
@@ -333,10 +354,17 @@ export default function SignUpForm() {
                       <PasswordInput
                         placeholder="••••••••"
                         {...field}
+                        className={`transition-all duration-500 ease-in-out ${
+                          hoveredField === "password"
+                            ? "border-primary shadow-lg shadow-primary/20"
+                            : ""
+                        }`}
                         onChange={(e) => {
                           field.onChange(e);
                           setPassword(e.target.value);
                         }}
+                        onMouseEnter={() => setHoveredField("password")}
+                        onMouseLeave={() => setHoveredField(null)}
                       />
                     </FormControl>
                     <PasswordStrengthChecker
@@ -361,11 +389,17 @@ export default function SignUpForm() {
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     checked={isAgeVerified}
-                    className="border-primary/20 data-[state=checked]:border-primary/80 data-[state=checked]:bg-primary/80"
+                    className={`border-primary/20 transition-all duration-500 ease-in-out data-[state=checked]:border-primary/80 data-[state=checked]:bg-primary/80 ${
+                      hoveredField === "ageVerify"
+                        ? "border-primary shadow-lg shadow-primary/20"
+                        : ""
+                    }`}
                     id={ageVerifyId}
                     onCheckedChange={(checked) =>
                       setIsAgeVerified(checked as boolean)
                     }
+                    onMouseEnter={() => setHoveredField("ageVerify")}
+                    onMouseLeave={() => setHoveredField(null)}
                   />
                   <label
                     className="text-muted-foreground text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
@@ -378,11 +412,17 @@ export default function SignUpForm() {
                 <div className="flex items-start space-x-2">
                   <Checkbox
                     checked={acceptedTerms}
-                    className="mt-1 border-primary/20 data-[state=checked]:border-primary/80 data-[state=checked]:bg-primary/80"
+                    className={`mt-1 border-primary/20 transition-all duration-500 ease-in-out data-[state=checked]:border-primary/80 data-[state=checked]:bg-primary/80 ${
+                      hoveredField === "terms"
+                        ? "border-primary shadow-lg shadow-primary/20"
+                        : ""
+                    }`}
                     id={termsId}
                     onCheckedChange={(checked) =>
                       setAcceptedTerms(checked as boolean)
                     }
+                    onMouseEnter={() => setHoveredField("terms")}
+                    onMouseLeave={() => setHoveredField(null)}
                   />
                   <label
                     className="text-muted-foreground text-sm leading-tight peer-disabled:cursor-not-allowed peer-disabled:opacity-70"

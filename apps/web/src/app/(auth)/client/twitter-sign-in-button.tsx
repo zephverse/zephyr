@@ -25,7 +25,6 @@ function TwitterIcon() {
   return (
     // biome-ignore lint/a11y/noSvgWithoutTitle: Twitter icon is purely decorative
     <svg
-      className="transform transition-transform duration-300 group-hover:scale-110"
       height="24"
       viewBox="0 0 24 24"
       width="24"

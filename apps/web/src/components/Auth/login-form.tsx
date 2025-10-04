@@ -1,5 +1,5 @@
 "use client";
-// @ts-expect-error - no types
+
 import supportImage from "@assets/previews/help.png";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type LoginValues, loginSchema } from "@zephyr/auth/validation";
@@ -37,6 +37,7 @@ export default function LoginForm() {
     username?: boolean;
     password?: boolean;
   }>({});
+  const [hoveredField, setHoveredField] = useState<string | null>(null);
 
   const form = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
@@ -86,7 +87,7 @@ export default function LoginForm() {
       toast({
         variant: "destructive",
         title: "Login Failed",
-        description: "An unexpected error occurred. Please try again.",
+        description: "Something went wrong, try again? Our bad!",
         duration: 5000,
       });
     }
@@ -119,8 +120,9 @@ export default function LoginForm() {
     if (emailVerification.isNewToken) {
       setIsVerificationEmailSent(true);
       toast({
-        title: "Verification Required",
-        description: "Please check your inbox for the verification email.",
+        title: "Verify Your Email!",
+        description:
+          "Check your inbox for the verification email, it's in there somewhere!",
         duration: 5000,
       });
     }
@@ -128,8 +130,8 @@ export default function LoginForm() {
 
   function handleLoginSuccess() {
     toast({
-      title: "Welcome Back!",
-      description: "Successfully logged in to your account.",
+      title: "Welcome back, queen!",
+      description: "You're in! Let's get this bread!",
       duration: 3000,
     });
     router.refresh();
@@ -146,14 +148,15 @@ export default function LoginForm() {
       if (result.error) {
         toast({
           variant: "destructive",
-          title: "Verification Failed",
+          title: "Verification Failed!",
           description: result.error,
           duration: 5000,
         });
       } else if (result.success) {
         toast({
-          title: "Verification Email Sent",
-          description: "Please check your inbox to verify your email address.",
+          title: "Verification Email Sent!",
+          description:
+            "Check your inbox (and spam folder, just in case) to verify your email!",
           duration: 5000,
         });
       }
@@ -161,8 +164,8 @@ export default function LoginForm() {
       console.error("Resend verification error:", resendError);
       toast({
         variant: "destructive",
-        title: "Verification Failed",
-        description: "An unexpected error occurred. Please try again.",
+        title: "Verification Failed!",
+        description: "Something went wrong, try again? Our bad!",
         duration: 5000,
       });
     }
@@ -252,11 +255,17 @@ export default function LoginForm() {
                     <Input
                       placeholder="Username"
                       {...field}
-                      className={`transition-all duration-200 ${
+                      className={`transition-all duration-500 ease-in-out ${
                         errorFields.username
                           ? "border-destructive/50 bg-destructive/10"
                           : ""
+                      } ${
+                        hoveredField === "username"
+                          ? "border-primary shadow-lg shadow-primary/20"
+                          : ""
                       }`}
+                      onMouseEnter={() => setHoveredField("username")}
+                      onMouseLeave={() => setHoveredField(null)}
                     />
                     {errorFields.username && (
                       <motion.div
@@ -285,11 +294,17 @@ export default function LoginForm() {
                     <PasswordInput
                       placeholder="Password"
                       {...field}
-                      className={`transition-all duration-200 ${
+                      className={`transition-all duration-500 ease-in-out ${
                         errorFields.password
                           ? "border-destructive/50 bg-destructive/10"
                           : ""
+                      } ${
+                        hoveredField === "password"
+                          ? "border-primary shadow-lg shadow-primary/20"
+                          : ""
                       }`}
+                      onMouseEnter={() => setHoveredField("password")}
+                      onMouseLeave={() => setHoveredField(null)}
                     />
                   </div>
                 </FormControl>

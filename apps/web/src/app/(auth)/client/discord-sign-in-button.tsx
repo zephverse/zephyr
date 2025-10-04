@@ -24,7 +24,6 @@ function DiscordIcon() {
   return (
     // biome-ignore lint/a11y/noSvgWithoutTitle: Discord icon is purely decorative
     <svg
-      className="transform transition-transform duration-300 group-hover:scale-110"
       height="24"
       viewBox="0 0 127.14 96.36"
       width="24"

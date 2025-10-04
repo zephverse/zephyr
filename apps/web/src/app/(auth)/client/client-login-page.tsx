@@ -3,9 +3,10 @@
 import loginImage from "@assets/auth/login-image.jpg";
 import signupImage from "@assets/previews/signup.png";
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertTriangle, ArrowRight, FileText, Shield } from "lucide-react";
+import { ArrowRight, FileText, Shield } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
 import AnimatedAuthLink from "@/components/Auth/animated-auth-link";
 import AuthButtonWrapper from "@/components/Auth/auth-button-wrapper";
 import LoginForm from "@/components/Auth/login-form";
@@ -124,6 +125,8 @@ export const AnimatedZephyrText = () => {
 };
 
 export default function ClientLoginPage() {
+  const [showMoreOptions, setShowMoreOptions] = useState(false);
+
   return (
     <AnimatePresence>
       <motion.div
@@ -133,33 +136,6 @@ export default function ClientLoginPage() {
         variants={fadeIn}
       >
         <div className="absolute inset-0 z-0 bg-gradient-to-br from-primary/5 via-background to-background/95" />
-
-        <motion.div
-          animate={{ opacity: 1, y: 0 }}
-          className="absolute top-0 left-0 z-20 w-full"
-          initial={{ opacity: 0, y: -8 }}
-          transition={{ duration: 0.4, ease: "easeOut" }}
-        >
-          <div className="mx-auto w-full max-w-5xl p-2 sm:p-3">
-            <div className="flex items-start gap-2 rounded-md border border-amber-500/20 bg-amber-50/90 px-3 py-2 text-amber-900 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-amber-50/60 sm:items-center dark:border-amber-400/20 dark:bg-amber-950/40 dark:text-amber-200">
-              <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-500 sm:h-4 sm:w-4 dark:text-amber-300" />
-              <p className="text-xs leading-snug sm:text-sm">
-                We’re collaborating on a Zephyr ×{" "}
-                <Link
-                  className="underline decoration-amber-400/60 underline-offset-2 hover:decoration-amber-400"
-                  href="https://singularityworks.xyz"
-                  rel="noopener noreferrer"
-                  target="_blank"
-                >
-                  Singularity Works
-                </Link>{" "}
-                UI revamp. Some services may be intermittently unavailable; you
-                may encounter errors ex: signup using email does not work, use
-                google or github etc. Thanks for your patience.
-              </p>
-            </div>
-          </div>
-        </motion.div>
 
         <motion.div
           className="absolute left-20 hidden h-full items-center md:flex"
@@ -178,7 +154,7 @@ export default function ClientLoginPage() {
             variants={scaleUp}
             whileHover={{ boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)" }}
           >
-            <div className="overflow-hidden rounded-l-2xl lg:w-1/2">
+            <div className="hidden overflow-hidden rounded-l-2xl lg:block lg:w-1/2">
               <motion.div
                 animate={{ opacity: 1, x: 0 }}
                 className="relative min-h-[200px] w-full bg-primary/80 lg:min-h-[850px]"
@@ -213,27 +189,71 @@ export default function ClientLoginPage() {
                 </motion.h2>
 
                 <motion.div
-                  className="mb-6 space-y-4"
+                  className="mb-6"
                   custom={1}
                   variants={contentAnimation}
                 >
-                  <AuthButtonWrapper className="w-full">
-                    <GoogleSignInButton />
-                  </AuthButtonWrapper>
+                  {showMoreOptions ? (
+                    <motion.div
+                      animate={{ opacity: 1 }}
+                      initial={{ opacity: 0 }}
+                      transition={{
+                        duration: 0.4,
+                        ease: "easeOut",
+                      }}
+                    >
+                      <div className="grid grid-cols-3 gap-3">
+                        <AuthButtonWrapper className="h-full">
+                          <GithubSignInButton />
+                        </AuthButtonWrapper>
+                        <AuthButtonWrapper className="h-full">
+                          <DiscordSignInButton />
+                        </AuthButtonWrapper>
+                        <AuthButtonWrapper className="h-full">
+                          <TwitterSignInButton />
+                        </AuthButtonWrapper>
+                      </div>
 
-                  <div className="grid grid-cols-3 gap-3">
-                    <AuthButtonWrapper>
-                      <GithubSignInButton />
-                    </AuthButtonWrapper>
+                      <div className="w-full text-center">
+                        <motion.button
+                          animate={{ opacity: 1 }}
+                          className="inline-flex cursor-pointer items-center justify-center gap-1 text-muted-foreground text-sm transition-colors duration-300 hover:text-primary"
+                          initial={{ opacity: 0 }}
+                          onClick={() => setShowMoreOptions(false)}
+                          transition={{
+                            duration: 0.3,
+                            delay: 0.2,
+                          }}
+                        >
+                          Show less
+                        </motion.button>
+                      </div>
+                    </motion.div>
+                  ) : (
+                    <>
+                      <AuthButtonWrapper className="w-full">
+                        <GoogleSignInButton />
+                      </AuthButtonWrapper>
 
-                    <AuthButtonWrapper>
-                      <DiscordSignInButton />
-                    </AuthButtonWrapper>
-
-                    <AuthButtonWrapper>
-                      <TwitterSignInButton />
-                    </AuthButtonWrapper>
-                  </div>
+                      <motion.div
+                        animate={{ opacity: 1 }}
+                        className="w-full text-center"
+                        initial={{ opacity: 0 }}
+                        transition={{
+                          duration: 0.4,
+                          ease: "easeOut",
+                        }}
+                      >
+                        <button
+                          className="cursor-pointer text-muted-foreground text-sm transition-colors duration-300 hover:text-primary"
+                          onClick={() => setShowMoreOptions(true)}
+                          type="button"
+                        >
+                          See more options
+                        </button>
+                      </motion.div>
+                    </>
+                  )}
                 </motion.div>
 
                 <motion.div
