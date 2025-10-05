@@ -31,6 +31,20 @@ export async function GET(
   const comments = await prisma.comment.findMany({
     where: { postId },
     orderBy: { createdAt: "desc" },
+    include: {
+      user: {
+        select: {
+          id: true,
+          username: true,
+          displayName: true,
+          avatarUrl: true,
+        },
+      },
+    },
   });
-  return Response.json(comments);
+
+  return Response.json({
+    comments,
+    previousCursor: null, // For now, no pagination
+  });
 }

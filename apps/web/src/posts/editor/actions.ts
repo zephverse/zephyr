@@ -8,7 +8,6 @@ import {
   prisma,
   tagCache,
 } from "@zephyr/db";
-import { authClient } from "@/lib/auth";
 
 type ExtendedCreatePostInput = CreatePostInput & {
   hnStory?: {
@@ -24,30 +23,30 @@ type ExtendedCreatePostInput = CreatePostInput & {
 
 const AURA_REWARDS = {
   BASE_POST: 10,
-  HN_SHARE: 15, // Add a reward for sharing HN stories
+  HN_SHARE: 15,
   ATTACHMENTS: {
     IMAGE: {
       BASE: 20,
       PER_ITEM: 5,
-      MAX_BONUS: 25, // Max bonus for multiple images (5 images)
+      MAX_BONUS: 25,
     },
     VIDEO: {
       BASE: 40,
       PER_ITEM: 10,
-      MAX_BONUS: 20, // Max bonus for multiple videos
+      MAX_BONUS: 20,
     },
     AUDIO: {
       BASE: 25,
       PER_ITEM: 8,
-      MAX_BONUS: 16, // Max bonus for multiple audio files
+      MAX_BONUS: 16,
     },
     CODE: {
       BASE: 15,
       PER_ITEM: 15,
-      MAX_BONUS: 45, // Max bonus for multiple code files
+      MAX_BONUS: 45,
     },
   },
-  MAX_TOTAL: 150, // Reasonable max total per post
+  MAX_TOTAL: 150,
 };
 
 type AttachmentType = "IMAGE" | "VIDEO" | "AUDIO" | "CODE";
@@ -94,10 +93,21 @@ async function calculateAuraReward(mediaIds: string[], hasHnStory: boolean) {
 
 export async function submitPost(input: ExtendedCreatePostInput) {
   try {
-    const session = await authClient.getSession();
-    if (!session?.user) {
-      throw new Error("Unauthorized");
+    console.log("Checking session for post submission...");
+    const { getSessionFromApi } = await import("@/lib/session");
+    const sessionData = await getSessionFromApi();
+    console.log("Session check:", {
+      hasSession: !!sessionData,
+      hasUser: !!sessionData?.user,
+    });
+
+    if (!sessionData?.user) {
+      console.error("Session check failed - user not authenticated");
+      throw new Error(
+        "You are not logged in. Please log in again to submit your post."
+      );
     }
+    console.log("Session validated, proceeding with post submission");
 
     const validatedInput = createPostSchema.parse({
       content: input.content,
@@ -131,7 +141,7 @@ export async function submitPost(input: ExtendedCreatePostInput) {
       const post = await tx.post.create({
         data: {
           content: validatedInput.content,
-          userId: session.session.user.id,
+          userId: sessionData.user.id,
           aura: 0,
           attachments: {
             connect: validatedInput.mediaIds.map((id) => ({ id })),
@@ -152,7 +162,7 @@ export async function submitPost(input: ExtendedCreatePostInput) {
               : undefined,
         },
         include: {
-          ...getPostDataInclude(session.user.id),
+          ...getPostDataInclude(sessionData.user.id),
           tags: true,
           mentions: {
             include: {
@@ -192,7 +202,7 @@ export async function submitPost(input: ExtendedCreatePostInput) {
               data: {
                 type: "MENTION",
                 recipientId: userId,
-                issuerId: session.user.id,
+                issuerId: sessionData.user.id,
                 postId: post.id,
               },
             })
@@ -201,14 +211,14 @@ export async function submitPost(input: ExtendedCreatePostInput) {
       }
 
       await tx.user.update({
-        where: { id: session.user.id },
+        where: { id: sessionData.user.id },
         data: { aura: { increment: auraReward } },
       });
 
       await tx.auraLog.create({
         data: {
-          userId: session.user.id,
-          issuerId: session.user.id,
+          userId: sessionData.user.id,
+          issuerId: sessionData.user.id,
           amount: AURA_REWARDS.BASE_POST,
           type: "POST_CREATION",
           postId: post.id,
@@ -218,8 +228,8 @@ export async function submitPost(input: ExtendedCreatePostInput) {
       if (input.hnStory) {
         await tx.auraLog.create({
           data: {
-            userId: session.user.id,
-            issuerId: session.user.id,
+            userId: sessionData.user.id,
+            issuerId: sessionData.user.id,
             amount: AURA_REWARDS.HN_SHARE,
             type: "POST_ATTACHMENT_BONUS",
             postId: post.id,
@@ -234,8 +244,8 @@ export async function submitPost(input: ExtendedCreatePostInput) {
       if (attachmentBonus > 0) {
         await tx.auraLog.create({
           data: {
-            userId: session.user.id,
-            issuerId: session.user.id,
+            userId: sessionData.user.id,
+            issuerId: sessionData.user.id,
             amount: attachmentBonus,
             type: "POST_ATTACHMENT_BONUS",
             postId: post.id,
@@ -246,7 +256,7 @@ export async function submitPost(input: ExtendedCreatePostInput) {
       const completePost = await tx.post.findUnique({
         where: { id: post.id },
         include: {
-          ...getPostDataInclude(session.user.id),
+          ...getPostDataInclude(sessionData.user.id),
           tags: true,
           mentions: {
             include: {
@@ -283,8 +293,9 @@ export async function getPostViews(postId: string) {
 }
 
 export async function updatePostTags(postId: string, tags: string[]) {
-  const session = await authClient.getSession();
-  if (!session?.user) {
+  const { getSessionFromApi } = await import("@/lib/session");
+  const sessionData = await getSessionFromApi();
+  if (!sessionData?.user) {
     throw new Error("Unauthorized");
   }
 
@@ -296,7 +307,7 @@ export async function updatePostTags(postId: string, tags: string[]) {
   if (!post) {
     throw new Error("Post not found");
   }
-  if (post.userId !== session.user.id) {
+  if (post.userId !== sessionData.user.id) {
     throw new Error("Unauthorized");
   }
 
@@ -316,7 +327,7 @@ export async function updatePostTags(postId: string, tags: string[]) {
           disconnect: tagsToRemove.map((tagName) => ({ name: tagName })),
         },
       },
-      include: getPostDataInclude(session.user.id),
+      include: getPostDataInclude(sessionData.user.id),
     });
 
     await Promise.all([
@@ -330,8 +341,9 @@ export async function updatePostTags(postId: string, tags: string[]) {
 
 export async function updatePostMentions(postId: string, mentions: string[]) {
   try {
-    const session = await authClient.getSession();
-    if (!session?.user) {
+    const { getSessionFromApi } = await import("@/lib/session");
+    const sessionData = await getSessionFromApi();
+    if (!sessionData?.user) {
       throw new Error("Unauthorized");
     }
 
@@ -343,7 +355,7 @@ export async function updatePostMentions(postId: string, mentions: string[]) {
     if (!post) {
       throw new Error("Post not found");
     }
-    if (post.userId !== session.user.id) {
+    if (post.userId !== sessionData.user.id) {
       throw new Error("Unauthorized");
     }
 
@@ -364,7 +376,7 @@ export async function updatePostMentions(postId: string, mentions: string[]) {
           data: mentions.map((userId) => ({
             type: "MENTION",
             recipientId: userId,
-            issuerId: session.user.id,
+            issuerId: sessionData.user.id,
             postId,
           })),
         });
@@ -373,7 +385,7 @@ export async function updatePostMentions(postId: string, mentions: string[]) {
       return await tx.post.findUnique({
         where: { id: postId },
         include: {
-          ...getPostDataInclude(session.user.id),
+          ...getPostDataInclude(sessionData.user.id),
           hnStoryShare: true,
         },
       });

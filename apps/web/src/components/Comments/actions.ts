@@ -2,7 +2,6 @@
 
 import { createCommentSchema } from "@zephyr/auth/validation";
 import { getCommentDataInclude, type PostData, prisma } from "@zephyr/db";
-import { authClient } from "@/lib/auth";
 
 export async function submitComment({
   post,
@@ -11,9 +10,10 @@ export async function submitComment({
   post: PostData;
   content: string;
 }) {
-  const session = await authClient.getSession();
+  const { getSessionFromApi } = await import("@/lib/session");
+  const sessionData = await getSessionFromApi();
 
-  if (!session?.user) {
+  if (!sessionData?.user) {
     throw new Error("Unauthorized");
   }
 
@@ -24,16 +24,16 @@ export async function submitComment({
       data: {
         content: contentValidated,
         postId: post.id,
-        userId: session.user.id,
+        userId: sessionData.user.id,
       },
-      include: getCommentDataInclude(session.user.id),
+      include: getCommentDataInclude(sessionData.user.id),
     }),
-    ...(post.session.user.id !== session.user.id
+    ...(post.user.id !== sessionData.user.id
       ? [
           prisma.notification.create({
             data: {
-              issuerId: session.user.id,
-              recipientId: post.session.user.id,
+              issuerId: sessionData.user.id,
+              recipientId: post.user.id,
               postId: post.id,
               type: "COMMENT",
             },
@@ -46,9 +46,10 @@ export async function submitComment({
 }
 
 export async function deleteComment(id: string) {
-  const session = await authClient.getSession();
+  const { getSessionFromApi } = await import("@/lib/session");
+  const sessionData = await getSessionFromApi();
 
-  if (!session?.user) {
+  if (!sessionData?.user) {
     throw new Error("Unauthorized");
   }
 
@@ -60,13 +61,13 @@ export async function deleteComment(id: string) {
     throw new Error("Comment not found");
   }
 
-  if (comment.userId !== session.user.id) {
+  if (comment.userId !== sessionData.user.id) {
     throw new Error("Unauthorized");
   }
 
   const deletedComment = await prisma.comment.delete({
     where: { id },
-    include: getCommentDataInclude(session.user.id),
+    include: getCommentDataInclude(sessionData.user.id),
   });
 
   return deletedComment;

@@ -142,7 +142,6 @@ export default function UserButton({
   const handleLogout = async () => {
     setShowLogoutDialog(false);
 
-    // Clear all client-side caches
     queryClient.removeQueries({ queryKey: ["user"] });
     queryClient.removeQueries({ queryKey: ["avatar"] });
     queryClient.removeQueries({ queryKey: ["post-feed"] });
@@ -150,31 +149,21 @@ export default function UserButton({
     queryClient.removeQueries({ queryKey: ["unread-count"] });
     queryClient.clear();
 
-    // Clear localStorage and sessionStorage
     try {
       localStorage.clear();
       sessionStorage.clear();
-      console.log("Cleared localStorage and sessionStorage");
     } catch (e) {
       console.log("Failed to clear storage:", e);
     }
 
     try {
       const result = await logout();
-      console.log("Logout result:", result);
-
       if (result.redirect) {
-        console.log("Redirecting to:", result.redirect);
-        // Force a hard navigation to ensure clean state
         window.location.replace(result.redirect);
       } else {
-        // If no redirect returned, fallback to login
-        console.log("No redirect in result, defaulting to /login");
         window.location.replace("/login");
       }
-    } catch (error) {
-      console.error("Failed to logout:", error);
-      // Fallback: still redirect to login
+    } catch {
       window.location.replace("/login");
     }
   };

@@ -44,7 +44,7 @@ export default function AuraVoteButton({
               .delete(`/api/posts/${postId}/votes`)
               .json<VoteInfo>()
           : await kyInstance
-              .post(`/api/posts/${postId}/votes`, { json: { vote } })
+              .post(`/api/posts/${postId}/votes`, { json: { value: vote } })
               .json<VoteInfo>();
       return { serverResponse: response, voteAttempted: vote };
     },

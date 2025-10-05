@@ -57,12 +57,32 @@ export async function POST(
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
   const { value } = await request.json();
-  await prisma.vote.upsert({
-    where: { userId_postId: { userId: user.id, postId } },
-    create: { userId: user.id, postId, value },
-    update: { value },
+
+  if (typeof value !== "number" || value === 0) {
+    await prisma.vote.deleteMany({ where: { userId: user.id, postId } });
+  } else {
+    await prisma.vote.upsert({
+      where: { userId_postId: { userId: user.id, postId } },
+      create: { userId: user.id, postId, value },
+      update: { value },
+    });
+  }
+
+  const post = await prisma.post.findUnique({
+    where: { id: postId },
+    include: getPostDataInclude(user.id),
   });
-  return Response.json({ success: true });
+
+  if (!post) {
+    return Response.json({ error: "Post not found" }, { status: 404 });
+  }
+
+  const voteInfo: VoteInfo = {
+    aura: post.aura,
+    userVote: post.vote[0]?.value || 0,
+  };
+
+  return Response.json(voteInfo);
 }
 
 export async function DELETE(
@@ -76,5 +96,20 @@ export async function DELETE(
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
   await prisma.vote.deleteMany({ where: { userId: user.id, postId } });
-  return Response.json({ success: true });
+
+  const post = await prisma.post.findUnique({
+    where: { id: postId },
+    include: getPostDataInclude(user.id),
+  });
+
+  if (!post) {
+    return Response.json({ error: "Post not found" }, { status: 404 });
+  }
+
+  const voteInfo: VoteInfo = {
+    aura: post.aura,
+    userVote: 0,
+  };
+
+  return Response.json(voteInfo);
 }

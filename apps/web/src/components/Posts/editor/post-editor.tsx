@@ -230,7 +230,7 @@ export default function PostEditor() {
             <UserAvatar avatarUrl={userData.avatarUrl} />
           </motion.div>
         </div>
-        <div {...rootProps} className="w-full">
+        <div className="w-full">
           <AnimatePresence>
             {isEditorFocused && (
               <motion.div
@@ -262,6 +262,7 @@ export default function PostEditor() {
               isDragActive && "ring-2 ring-primary ring-offset-2"
             )}
             variants={itemVariants}
+            {...rootProps}
           >
             <EditorContent
               className={cn(
@@ -293,8 +294,13 @@ export default function PostEditor() {
                 />
               </div>
             )}
+            {/* Hidden file input for drag & drop - positioned absolutely to avoid interfering with editor clicks */}
+            <input
+              {...getInputProps()}
+              className="pointer-events-none absolute inset-0 opacity-0"
+              style={{ width: 0, height: 0 }}
+            />
           </motion.div>
-          <input {...getInputProps()} />
         </div>
       </motion.div>
 
