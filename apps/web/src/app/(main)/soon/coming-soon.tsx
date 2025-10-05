@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "framer-motion";
 import {
   Construction,
   MessageSquareMore,
@@ -8,6 +7,7 @@ import {
   Sparkles,
   Wand,
 } from "lucide-react";
+import { motion } from "motion/react";
 import type React from "react";
 import { FossBanner } from "@/components/misc/foss-banner";
 

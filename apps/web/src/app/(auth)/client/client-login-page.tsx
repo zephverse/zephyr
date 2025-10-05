@@ -2,8 +2,8 @@
 
 import loginImage from "@assets/auth/login-image.jpg";
 import signupImage from "@assets/previews/signup.png";
-import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, FileText, Shield } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";

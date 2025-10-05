@@ -17,8 +17,8 @@ import {
 } from "@zephyr/ui/shadui/form";
 import { Input } from "@zephyr/ui/shadui/input";
 import { Textarea } from "@zephyr/ui/shadui/textarea";
-import { motion } from "framer-motion";
 import { UserCircle } from "lucide-react";
+import { motion } from "motion/react";
 import { useForm } from "react-hook-form";
 import { LoadingButton } from "@/components/Auth/loading-button";
 import { useUpdateProfileMutation } from "../../users/[username]/avatar-mutations";

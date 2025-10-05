@@ -2,8 +2,8 @@
 
 import { Button } from "@zephyr/ui/shadui/button";
 import { Card, CardContent } from "@zephyr/ui/shadui/card";
-import { motion } from "framer-motion";
 import { CompassIcon, Home, Newspaper, Search, TrendingUp } from "lucide-react";
+import { motion } from "motion/react";
 import Link from "next/link";
 
 type NavigationCardProps = {

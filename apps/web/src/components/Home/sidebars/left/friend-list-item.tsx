@@ -8,8 +8,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@zephyr/ui/shadui/dropdown-menu";
-import { motion } from "framer-motion";
 import { ImageOff, MoreHorizontal, UserMinus } from "lucide-react";
+import { motion } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
 import type React from "react";

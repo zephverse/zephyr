@@ -6,7 +6,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@zephyr/ui/shadui/tooltip";
-import { AnimatePresence, motion } from "framer-motion";
 import {
   FastForward,
   Maximize,
@@ -18,6 +17,7 @@ import {
   Volume2,
   VolumeX,
 } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 

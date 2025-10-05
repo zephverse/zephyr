@@ -10,7 +10,7 @@ import { procedure, protectedProcedure, router } from "../trpc";
 import { emailRouter } from "./email";
 
 const PENDING_PREFIX = "pending-signup:";
-const PENDING_TTL_SECONDS = 60 * 60 * 12;
+const PENDING_TTL_SECONDS = 60 * 60 * 2;
 const RATE_PREFIX = "rate:pending:";
 const RATE_WINDOW_SECONDS = 60 * 10;
 const RATE_MAX_START_PER_WINDOW = 5;
@@ -21,6 +21,7 @@ type PendingSignup = {
   username: string;
   passwordHash: string;
   displayName: string;
+  password: string;
 };
 
 function getClientIpFromHeaders(headers: Headers | undefined): string {
@@ -196,6 +197,7 @@ export const appRouter = router({
           username: input.username,
           passwordHash: hashedPassword,
           displayName: input.username,
+          password: input.password,
         };
 
         await writePendingSignup(token, payload);
@@ -324,6 +326,7 @@ export const appRouter = router({
           email: data.email,
           username: data.username,
           displayName: data.displayName,
+          displayUsername: data.username,
           passwordHash: data.passwordHash,
           emailVerified: true,
           emailVerifiedAt: new Date(),
@@ -334,12 +337,14 @@ export const appRouter = router({
 
       try {
         const emailLower = data.email.toLowerCase();
+        const passwordObj = JSON.stringify({ hash: data.passwordHash });
+
         await prisma.account.create({
           data: {
             userId: user.id,
             providerId: "email",
             accountId: emailLower,
-            password: data.passwordHash,
+            password: passwordObj,
           },
         });
 
@@ -349,7 +354,7 @@ export const appRouter = router({
               userId: user.id,
               providerId: "credential",
               accountId: emailLower,
-              password: data.passwordHash,
+              password: passwordObj,
             },
           })
           .catch(() => {
@@ -364,7 +369,12 @@ export const appRouter = router({
 
       await redis.del(key);
       debugLog.api("pendingSignupVerify:redis-del");
-      return { success: true, userId: user.id } as const;
+      return {
+        success: true,
+        userId: user.id,
+        email: data.email,
+        password: data.password,
+      } as const;
     }),
 
   devBackfillCredential: procedure
@@ -403,13 +413,15 @@ export const appRouter = router({
         }),
       ]);
       const passwordHash = await hashPasswordWithScrypt(input.password);
+      const passwordObj = JSON.stringify({ hash: passwordHash });
+
       if (!emailAcct) {
         await prisma.account.create({
           data: {
             userId: user.id,
             providerId: "email",
             accountId: emailLower,
-            password: passwordHash,
+            password: passwordObj,
           },
         });
       }
@@ -419,7 +431,7 @@ export const appRouter = router({
             userId: user.id,
             providerId: "credential",
             accountId: emailLower,
-            password: passwordHash,
+            password: passwordObj,
           },
         });
       }

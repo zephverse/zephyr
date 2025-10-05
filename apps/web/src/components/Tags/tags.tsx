@@ -9,8 +9,8 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@zephyr/ui/shadui/dialog";
-import { AnimatePresence, motion } from "framer-motion";
 import { Hash, Plus } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useState } from "react";
 import { cn, formatNumber } from "@/lib/utils";
 import { useUpdateTagsMutation } from "./mutations/tag-mention-mutation";

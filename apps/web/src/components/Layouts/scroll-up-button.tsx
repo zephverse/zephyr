@@ -1,8 +1,8 @@
 "use client";
 
 import { Button } from "@zephyr/ui/shadui/button";
-import { motion } from "framer-motion";
 import { ArrowUp } from "lucide-react";
+import { motion } from "motion/react";
 import type React from "react";
 import { useId } from "react";
 

@@ -16,8 +16,8 @@ import {
   TabsList,
   TabsTrigger,
 } from "@zephyr/ui/shadui/tabs";
-import { AnimatePresence, motion } from "framer-motion";
 import { Check, Copy, Download, Mail, Share2 } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
 import { QRCodeSVG } from "qrcode.react";
 import { useCallback, useEffect, useState } from "react";

@@ -22,7 +22,6 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@zephyr/ui/shadui/dropdown-menu";
-import { motion } from "framer-motion";
 import {
   Check,
   LogOutIcon,
@@ -32,6 +31,7 @@ import {
   Sun,
   UserIcon,
 } from "lucide-react";
+import { motion } from "motion/react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import type React from "react";
@@ -141,20 +141,41 @@ export default function UserButton({
 
   const handleLogout = async () => {
     setShowLogoutDialog(false);
+
+    // Clear all client-side caches
     queryClient.removeQueries({ queryKey: ["user"] });
     queryClient.removeQueries({ queryKey: ["avatar"] });
     queryClient.removeQueries({ queryKey: ["post-feed"] });
+    queryClient.removeQueries({ queryKey: ["notifications"] });
+    queryClient.removeQueries({ queryKey: ["unread-count"] });
     queryClient.clear();
+
+    // Clear localStorage and sessionStorage
+    try {
+      localStorage.clear();
+      sessionStorage.clear();
+      console.log("Cleared localStorage and sessionStorage");
+    } catch (e) {
+      console.log("Failed to clear storage:", e);
+    }
 
     try {
       const result = await logout();
+      console.log("Logout result:", result);
+
       if (result.redirect) {
-        window.location.href = result.redirect;
-      } else if (result.error) {
-        console.error("Logout error:", result.error);
+        console.log("Redirecting to:", result.redirect);
+        // Force a hard navigation to ensure clean state
+        window.location.replace(result.redirect);
+      } else {
+        // If no redirect returned, fallback to login
+        console.log("No redirect in result, defaulting to /login");
+        window.location.replace("/login");
       }
     } catch (error) {
       console.error("Failed to logout:", error);
+      // Fallback: still redirect to login
+      window.location.replace("/login");
     }
   };
 

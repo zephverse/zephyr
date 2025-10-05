@@ -12,8 +12,8 @@ import {
   SelectValue,
 } from "@zephyr/ui/shadui/select";
 import { Skeleton } from "@zephyr/ui/shadui/skeleton";
-import { motion } from "framer-motion";
 import { BadgeCheckIcon, Search, Users } from "lucide-react";
+import { motion } from "motion/react";
 import Link from "next/link";
 import type React from "react";
 import { useState } from "react";

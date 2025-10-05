@@ -2,7 +2,6 @@
 
 import { Badge } from "@zephyr/ui/shadui/badge";
 import { formatDistanceToNow } from "date-fns";
-import { motion } from "framer-motion";
 import {
   ExternalLink,
   Link as LinkIcon,
@@ -10,6 +9,7 @@ import {
   ThumbsUp,
   User,
 } from "lucide-react";
+import { motion } from "motion/react";
 import Link from "next/link";
 
 type HnStoryCardProps = {

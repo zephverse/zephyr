@@ -10,8 +10,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@zephyr/ui/shadui/card";
-import { AnimatePresence, motion } from "framer-motion";
 import { RefreshCw, UserRound, Users } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 import type React from "react";
 import { useEffect, useState } from "react";

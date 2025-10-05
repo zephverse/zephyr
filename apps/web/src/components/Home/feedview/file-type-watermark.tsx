@@ -1,4 +1,3 @@
-import { AnimatePresence, motion } from "framer-motion";
 import {
   AudioWaveform,
   CodeIcon,
@@ -7,6 +6,7 @@ import {
   ImageIcon,
   VideoIcon,
 } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { FILE_CONFIGS, type FileTypeConfig } from "@/lib/utils/mime-utils";

@@ -1,8 +1,8 @@
 "use client";
 
 import { useToast } from "@zephyr/ui/hooks/use-toast";
-import { AnimatePresence, motion } from "framer-motion";
 import { AlertTriangle, ArrowLeft } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";

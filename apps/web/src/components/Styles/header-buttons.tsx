@@ -5,7 +5,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@zephyr/ui/shadui/tooltip";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import Link from "next/link";
 import type React from "react";
 

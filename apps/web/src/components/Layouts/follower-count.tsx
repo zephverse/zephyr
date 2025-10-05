@@ -1,7 +1,7 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { Users } from "lucide-react";
+import { motion } from "motion/react";
 import { formatNumber } from "@/lib/utils";
 
 type FollowerCountProps = {

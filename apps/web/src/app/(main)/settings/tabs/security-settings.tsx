@@ -12,8 +12,8 @@ import {
   FormMessage,
 } from "@zephyr/ui/shadui/form";
 import { Input } from "@zephyr/ui/shadui/input";
-import { motion } from "framer-motion";
 import { KeyRound, Mail } from "lucide-react";
+import { motion } from "motion/react";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";

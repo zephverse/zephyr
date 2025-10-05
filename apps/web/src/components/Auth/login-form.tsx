@@ -13,8 +13,8 @@ import {
   FormMessage,
 } from "@zephyr/ui/shadui/form";
 import { Input } from "@zephyr/ui/shadui/input";
-import { AnimatePresence, motion } from "framer-motion";
 import { AlertCircle, Mail, XCircle } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";

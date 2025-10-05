@@ -2,7 +2,7 @@
 
 import signupImage from "@assets/auth/signup-image.jpg";
 import loginImage from "@assets/previews/login.png";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
 import AnimatedAuthLink from "@/components/Auth/animated-auth-link";
 import SignUpForm from "@/components/Auth/sign-up-form";

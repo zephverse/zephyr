@@ -8,8 +8,8 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@zephyr/ui/shadui/dialog";
-import { AnimatePresence, motion } from "framer-motion";
 import { AtSign, Sparkles } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import UserAvatar from "@/components/Layouts/user-avatar";

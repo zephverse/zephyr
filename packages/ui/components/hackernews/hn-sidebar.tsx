@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "framer-motion";
 import {
   Activity,
   Briefcase,
@@ -14,6 +13,7 @@ import {
   TrendingUp,
   // @ts-expect-error - lucide-react is not typed
 } from "lucide-react";
+import { motion } from "motion/react";
 import { cn } from "../../lib/utils";
 import { Button } from "../../shadui/button";
 import { Card } from "../../shadui/card";

@@ -2,7 +2,7 @@
 
 import { Badge } from "@zephyr/ui/shadui/badge";
 import { Card, CardContent } from "@zephyr/ui/shadui/card";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import type React from "react";
 
 type SkillsProps = {

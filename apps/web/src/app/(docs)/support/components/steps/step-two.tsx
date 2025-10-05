@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@zephyr/ui/shadui/select";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { CATEGORIES, PRIORITIES } from "../../constants";
 import type { StepProps } from "../../types";
 import { stepVariants } from "./variants";

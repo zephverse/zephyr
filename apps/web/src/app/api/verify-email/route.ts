@@ -33,7 +33,23 @@ export async function GET(req: NextRequest) {
         // @ts-expect-error loose parsing
         data?.success === true ||
         res.ok;
-      return ok === true;
+
+      // Return credentials if verification succeeded
+      if (
+        ok === true &&
+        wrapped &&
+        typeof wrapped === "object" &&
+        "email" in wrapped &&
+        "password" in wrapped
+      ) {
+        return {
+          ok: true,
+          email: wrapped.email as string,
+          password: wrapped.password as string,
+        };
+      }
+
+      return ok === true ? { ok: true } : false;
     } catch {
       return false;
     }
@@ -42,8 +58,24 @@ export async function GET(req: NextRequest) {
   const url = `${authBase}/api/auth/verify-email?token=${encodeURIComponent(token)}`;
 
   try {
-    const pendingOk = await tryPending();
-    if (pendingOk) {
+    const pendingResult = await tryPending();
+    if (
+      pendingResult &&
+      typeof pendingResult === "object" &&
+      pendingResult.ok &&
+      pendingResult.email &&
+      pendingResult.password
+    ) {
+      return Response.json(
+        {
+          ok: true,
+          email: pendingResult.email,
+          password: pendingResult.password,
+        },
+        { status: 200 }
+      );
+    }
+    if (pendingResult) {
       return Response.json({ ok: true }, { status: 200 });
     }
     const res = await fetch(url, {

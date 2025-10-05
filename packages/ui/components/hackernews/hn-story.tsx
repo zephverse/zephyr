@@ -2,7 +2,6 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
-import { motion } from "framer-motion";
 import {
   Bookmark,
   Clock,
@@ -14,6 +13,7 @@ import {
   User,
   // @ts-expect-error - lucide-react is not typed
 } from "lucide-react";
+import { motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import type React from "react";
 import { toast } from "../../hooks/use-toast";

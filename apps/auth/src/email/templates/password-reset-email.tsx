@@ -19,7 +19,10 @@ type PasswordResetEmailProps = {
 export const PasswordResetEmail = ({ resetUrl }: PasswordResetEmailProps) => (
   <Html>
     <Head />
-    <Preview>{emailConfig.templates.passwordReset.subject}</Preview>
+    <Preview>
+      We received a request to reset your Zephyr password. Click to reset it
+      now.
+    </Preview>
     <Body style={main}>
       <Container style={container}>
         <Section style={box}>

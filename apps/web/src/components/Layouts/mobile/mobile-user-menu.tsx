@@ -1,7 +1,6 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { AnimatePresence, motion, type Variants } from "framer-motion";
 import {
   LogOutIcon,
   Monitor,
@@ -12,6 +11,7 @@ import {
   UserIcon,
   X,
 } from "lucide-react";
+import { AnimatePresence, motion, type Variants } from "motion/react";
 import Link from "next/link";
 import type React from "react";
 import UserAvatar from "@/components/Layouts/user-avatar";

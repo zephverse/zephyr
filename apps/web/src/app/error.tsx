@@ -2,8 +2,8 @@
 
 import HOME from "@assets/previews/home.png";
 import { Button } from "@zephyr/ui/shadui/button";
-import { motion } from "framer-motion";
 import { AlertOctagon, Copy, RotateCcw } from "lucide-react";
+import { motion } from "motion/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo, useState } from "react";

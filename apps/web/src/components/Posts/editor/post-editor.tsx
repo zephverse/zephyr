@@ -3,8 +3,8 @@
 import Placeholder from "@tiptap/extension-placeholder";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { AnimatePresence, motion } from "framer-motion";
 import { Loader2, Wind } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import { type ClipboardEvent, useCallback, useEffect, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { useSession } from "@/app/(main)/session-provider";

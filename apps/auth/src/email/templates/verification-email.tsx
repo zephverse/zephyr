@@ -23,7 +23,10 @@ export const VerificationEmail = ({
 }: VerificationEmailProps) => (
   <Html>
     <Head />
-    <Preview>{emailConfig.templates.verification.subject}</Preview>
+    <Preview>
+      Welcome to Zephyr! Click to verify your email and complete your
+      registration.
+    </Preview>
     <Body style={main}>
       <Container style={container}>
         <Section style={outerCard}>

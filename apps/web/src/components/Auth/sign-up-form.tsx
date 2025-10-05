@@ -16,8 +16,8 @@ import {
   FormMessage,
 } from "@zephyr/ui/shadui/form";
 import { Input } from "@zephyr/ui/shadui/input";
-import { motion } from "framer-motion";
 import { AlertCircle, Mail, User } from "lucide-react";
+import { motion } from "motion/react";
 import Link from "next/link";
 import { useCallback, useEffect, useId, useState, useTransition } from "react";
 import {

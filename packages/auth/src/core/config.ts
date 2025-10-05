@@ -48,12 +48,22 @@ export function createAuthConfig(config: AuthConfig = {}) {
       requireEmailVerification: true,
       password: {
         // @ts-expect-error types are wrong
-        hash: async ({ password }) => ({
-          hash: await hashPasswordWithScrypt(password),
-        }),
+        hash: async ({ password }) => {
+          const hash = await hashPasswordWithScrypt(password);
+          return { hash };
+        },
         verify: async ({ password, hash }) => {
-          const stored =
-            typeof hash === "string" ? hash : (hash as { hash: string }).hash;
+          let stored: string;
+          if (typeof hash === "string") {
+            try {
+              const parsed = JSON.parse(hash);
+              stored = parsed.hash || hash;
+            } catch {
+              stored = hash;
+            }
+          } else {
+            stored = (hash as { hash: string }).hash;
+          }
           return await verifyPasswordWithScrypt(password, stored);
         },
       },
@@ -100,19 +110,20 @@ export function createAuthConfig(config: AuthConfig = {}) {
       expiresIn: 60 * 60 * 24 * 7,
       updateAge: 60 * 60 * 24,
       cookieCache: {
-        enabled: true,
-        maxAge: 5 * 60,
+        enabled: false,
       },
     },
 
     advanced: {
-      cookiePrefix: "zephyr",
-      database: {
-        generateId: () => crypto.randomUUID(),
-      },
+      useSecureCookies: false,
+      generateId: crypto.randomUUID,
     },
 
-    trustedOrigins: [env.NEXT_PUBLIC_URL, "http://localhost:3000"],
+    trustedOrigins: [
+      env.NEXT_PUBLIC_URL,
+      "http://localhost:3000",
+      "http://localhost:3001",
+    ],
 
     telemetry: {
       enabled: false,
@@ -134,6 +145,7 @@ export function createAuthConfig(config: AuthConfig = {}) {
           await emailService.sendVerificationEmail?.(user.email, token);
         },
         sendOnSignUp: true,
+        autoSignInAfterVerification: true,
       },
     }),
   });

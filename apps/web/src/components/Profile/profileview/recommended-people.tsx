@@ -3,8 +3,8 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@zephyr/ui/shadui/avatar";
 import { Button } from "@zephyr/ui/shadui/button";
 import { Card, CardContent } from "@zephyr/ui/shadui/card";
-import { motion } from "framer-motion";
 import { ChevronRight } from "lucide-react";
+import { motion } from "motion/react";
 import type React from "react";
 
 type RecommendationsProps = {

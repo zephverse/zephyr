@@ -11,8 +11,8 @@ import {
   TabsList,
   TabsTrigger,
 } from "@zephyr/ui/shadui/tabs";
-import { motion } from "framer-motion";
 import { Newspaper, Terminal } from "lucide-react";
+import { motion } from "motion/react";
 import Post from "@/components/Home/feedview/post-card";
 import InfiniteScrollContainer from "@/components/Layouts/infinite-scroll-container";
 import LoadMoreSkeleton from "@/components/Layouts/skeletons/load-more-skeleton";
