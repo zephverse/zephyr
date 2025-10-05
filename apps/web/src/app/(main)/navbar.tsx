@@ -1,9 +1,9 @@
 import { prisma } from "@zephyr/db";
 import Header from "@/components/Layouts/header";
-import { authClient } from "@/lib/auth";
+import { getSessionFromApi } from "@/lib/session";
 
 export default async function Navbar() {
-  const session = await authClient.getSession();
+  const session = await getSessionFromApi();
   const user = session?.user;
 
   if (!user) {

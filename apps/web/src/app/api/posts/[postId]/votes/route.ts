@@ -1,5 +1,5 @@
-import { validateRequest } from "@zephyr/auth/auth";
 import { getPostDataInclude, type PostData, prisma } from "@zephyr/db";
+import { getSessionFromApi } from "@/lib/session";
 
 type VoteInfo = {
   aura: number;
@@ -14,14 +14,15 @@ export async function GET(
   const { postId } = params;
 
   try {
-    const { user: loggedInUser } = await validateRequest();
-    if (!loggedInUser) {
+    const session = await getSessionFromApi();
+    const user = session?.user;
+    if (!user) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const post = await prisma.post.findUnique({
       where: { id: postId },
-      include: getPostDataInclude(loggedInUser.id),
+      include: getPostDataInclude(user.id),
     });
 
     if (!post) {
@@ -46,281 +47,34 @@ export async function GET(
 }
 
 export async function POST(
-  req: Request,
-  props: { params: Promise<{ postId: string }> }
+  request: Request,
+  context: { params: Promise<{ postId: string }> }
 ) {
-  const params = await props.params;
-  const { postId } = params;
-
-  try {
-    const { user: loggedInUser } = await validateRequest();
-    if (!loggedInUser) {
-      return Response.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { vote } = await req.json();
-
-    if (vote !== 1 && vote !== -1) {
-      return Response.json({ error: "Invalid vote value" }, { status: 400 });
-    }
-
-    const updatedPost = await prisma.$transaction(async (tx) => {
-      const post = await tx.post.findUnique({
-        where: { id: postId },
-        select: {
-          id: true,
-          userId: true,
-          user: {
-            select: {
-              id: true,
-              aura: true,
-            },
-          },
-        },
-      });
-
-      if (!post) {
-        throw new Error("Post not found");
-      }
-
-      const existingVote = await tx.vote.findUnique({
-        where: {
-          userId_postId: {
-            userId: loggedInUser.id,
-            postId,
-          },
-        },
-      });
-
-      let voteChange = vote;
-      let shouldNotify = false;
-      let auraChange = vote;
-
-      if (existingVote) {
-        if (existingVote.value === vote) {
-          await tx.vote.delete({
-            where: {
-              userId_postId: {
-                userId: loggedInUser.id,
-                postId,
-              },
-            },
-          });
-          voteChange = -vote;
-          auraChange = -vote;
-
-          await tx.user.update({
-            where: { id: post.userId },
-            data: { aura: { decrement: Math.abs(auraChange) } },
-          });
-        } else {
-          await tx.vote.update({
-            where: {
-              userId_postId: {
-                userId: loggedInUser.id,
-                postId,
-              },
-            },
-            data: { value: vote },
-          });
-          voteChange = vote * 2;
-          auraChange = vote * 2;
-          shouldNotify = vote === 1;
-
-          await tx.user.update({
-            where: { id: post.userId },
-            data: { aura: { increment: vote * 2 } },
-          });
-        }
-      } else {
-        await tx.vote.create({
-          data: {
-            userId: loggedInUser.id,
-            postId,
-            value: vote,
-          },
-        });
-        shouldNotify = vote === 1;
-
-        await tx.user.update({
-          where: { id: post.userId },
-          data: { aura: { increment: vote } },
-        });
-      }
-
-      const txUpdatedPost = await tx.post.update({
-        where: { id: postId },
-        data: { aura: { increment: voteChange } },
-        include: {
-          ...getPostDataInclude(loggedInUser.id),
-          user: true,
-        },
-      });
-
-      if (shouldNotify && txUpdatedPost.userId !== loggedInUser.id) {
-        await tx.notification.create({
-          data: {
-            recipientId: txUpdatedPost.userId,
-            issuerId: loggedInUser.id,
-            postId,
-            type: "AMPLIFY",
-          },
-        });
-      }
-
-      await tx.auraLog.create({
-        data: {
-          userId: post.userId,
-          amount: auraChange,
-          type: "POST_VOTE",
-          postId: post.id,
-          issuerId: loggedInUser.id,
-        },
-      });
-
-      return txUpdatedPost;
-    });
-
-    const voteInfo: VoteInfo = {
-      aura: updatedPost.aura,
-      userVote:
-        updatedPost.vote?.length > 0 ? (updatedPost.vote[0]?.value ?? 0) : 0,
-    };
-
-    // @ts-expect-error
-    const postData: PostData & VoteInfo = {
-      ...updatedPost,
-      ...voteInfo,
-    };
-
-    return Response.json(postData);
-  } catch (error) {
-    console.error(error);
-    return Response.json({ error: "Internal server error" }, { status: 500 });
+  const { postId } = await context.params;
+  const session = await getSessionFromApi();
+  const user = session?.user;
+  if (!user) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const { value } = await request.json();
+  await prisma.vote.upsert({
+    where: { userId_postId: { userId: user.id, postId } },
+    create: { userId: user.id, postId, value },
+    update: { value },
+  });
+  return Response.json({ success: true });
 }
 
 export async function DELETE(
-  _req: Request,
-  props: { params: Promise<{ postId: string }> }
+  _request: Request,
+  context: { params: Promise<{ postId: string }> }
 ) {
-  const params = await props.params;
-  const { postId } = params;
-
-  try {
-    const { user: loggedInUser } = await validateRequest();
-    if (!loggedInUser) {
-      return Response.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const existingVote = await prisma.vote.findUnique({
-      where: {
-        userId_postId: {
-          userId: loggedInUser.id,
-          postId,
-        },
-      },
-    });
-
-    if (!existingVote) {
-      const post = await prisma.post.findUnique({
-        where: { id: postId },
-        include: getPostDataInclude(loggedInUser.id),
-      });
-
-      if (!post) {
-        return Response.json({ error: "Post not found" }, { status: 404 });
-      }
-
-      return Response.json({
-        ...post,
-        aura: post.aura,
-        userVote: 0,
-      });
-    }
-
-    const updatedPost = await prisma.$transaction(async (tx) => {
-      const txExistingVote = await tx.vote.findUnique({
-        where: {
-          userId_postId: {
-            userId: loggedInUser.id,
-            postId,
-          },
-        },
-        select: { value: true },
-      });
-
-      if (!txExistingVote) {
-        return null;
-      }
-
-      const post = await tx.post.findUnique({
-        where: { id: postId },
-        select: { userId: true },
-      });
-
-      if (!post) {
-        throw new Error("Post not found");
-      }
-
-      await tx.vote.delete({
-        where: {
-          userId_postId: {
-            userId: loggedInUser.id,
-            postId,
-          },
-        },
-      });
-
-      await tx.user.update({
-        where: { id: post.userId },
-        data: { aura: { decrement: txExistingVote.value } },
-      });
-
-      if (txExistingVote.value === 1) {
-        await tx.notification.deleteMany({
-          where: {
-            issuerId: loggedInUser.id,
-            postId,
-            type: "AMPLIFY",
-          },
-        });
-      }
-
-      await tx.auraLog.create({
-        data: {
-          userId: post.userId,
-          amount: -txExistingVote.value,
-          type: "POST_VOTE_REMOVED",
-          postId,
-          issuerId: loggedInUser.id,
-        },
-      });
-
-      return tx.post.update({
-        where: { id: postId },
-        data: { aura: { decrement: txExistingVote.value } },
-        include: getPostDataInclude(loggedInUser.id),
-      });
-    });
-
-    if (!updatedPost) {
-      return Response.json({ error: "Vote not found" }, { status: 404 });
-    }
-
-    const voteInfo: VoteInfo = {
-      aura: updatedPost.aura,
-      userVote: 0,
-    };
-
-    const postData: PostData & VoteInfo = {
-      ...updatedPost,
-      ...voteInfo,
-    };
-
-    return Response.json(postData);
-  } catch (error) {
-    console.error(error);
-    return Response.json({ error: "Internal server error" }, { status: 500 });
+  const { postId } = await context.params;
+  const session = await getSessionFromApi();
+  const user = session?.user;
+  if (!user) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
+  await prisma.vote.deleteMany({ where: { userId: user.id, postId } });
+  return Response.json({ success: true });
 }

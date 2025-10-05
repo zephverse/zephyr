@@ -5,7 +5,7 @@ import ProfileCard from "@/components/Home/sidebars/right/profile-card";
 import TrendingTopics from "@/components/Home/sidebars/right/trending-topics";
 import StickyFooter from "@/components/Layouts/stinky-footer";
 import { getUserData } from "@/hooks/use-user-data";
-import { authClient } from "@/lib/auth";
+import { getSessionFromApi } from "@/lib/session";
 import SearchResults from "./search-result";
 
 type PageProps = {
@@ -23,7 +23,7 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
 export default async function Page(props: PageProps) {
   const searchParams = await props.searchParams;
   const { q } = searchParams;
-  const session = await authClient.getSession();
+  const session = await getSessionFromApi();
   const userData = session?.user ? await getUserData(session.user.id) : null;
 
   return (

@@ -2,11 +2,11 @@
 
 import { Prisma } from "@prisma/client";
 import { prisma } from "@zephyr/db";
-import { authClient } from "@/lib/auth";
+import { getSessionFromApi } from "@/lib/session";
 
 export async function getSuggestedConnections() {
   try {
-    const session = await authClient.getSession();
+    const session = await getSessionFromApi();
 
     if (!session?.user) {
       throw new Error("User not authenticated");

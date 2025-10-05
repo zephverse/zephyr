@@ -1,10 +1,10 @@
 import { getUserDataSelect, prisma } from "@zephyr/db";
 import { redirect } from "next/navigation";
-import { authClient } from "@/lib/auth";
+import { getSessionFromApi } from "@/lib/session";
 import ClientSettings from "./client-settings";
 
 export default async function SettingsPage() {
-  const session = await authClient.getSession();
+  const session = await getSessionFromApi();
 
   if (!session?.user) {
     redirect("/login");

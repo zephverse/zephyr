@@ -1,9 +1,9 @@
 import { getUserData } from "@/hooks/use-user-data";
-import { authClient } from "@/lib/auth";
+import { getSessionFromApi } from "@/lib/session";
 import ClientHome from "./client-home";
 
 export default async function Page() {
-  const session = await authClient.getSession();
+  const session = await getSessionFromApi();
 
   if (!session?.user) {
     return (

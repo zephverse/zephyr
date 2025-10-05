@@ -3,7 +3,7 @@ import DiscoverySidebar from "@/components/Discover/discover-sidebar";
 import TrendingUsers from "@/components/Discover/trending-users";
 import Friends from "@/components/Home/sidebars/left/friends";
 import { getUserData } from "@/hooks/use-user-data";
-import { authClient } from "@/lib/auth";
+import { getSessionFromApi } from "@/lib/session";
 
 export const metadata: Metadata = {
   title: "Trending Users | Zephyr",
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 };
 
 export default async function TrendingPage() {
-  const session = await authClient.getSession();
+  const session = await getSessionFromApi();
   // biome-ignore lint/correctness/noUnusedVariables: user is used in the component
   const userData = session?.user ? await getUserData(session.user.id) : null;
 

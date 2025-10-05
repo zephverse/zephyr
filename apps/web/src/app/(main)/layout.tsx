@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import type React from "react";
-import { authClient } from "@/lib/auth";
+import { getSessionFromApi } from "@/lib/session";
 import Navbar from "./navbar";
 import SessionProvider from "./session-provider";
 
@@ -9,8 +9,7 @@ export default async function Layout({
 }: {
   children: React.ReactNode;
 }) {
-  // Get session from Better Auth
-  const session = await authClient.getSession();
+  const session = await getSessionFromApi();
 
   if (!session?.user) {
     redirect("/login");

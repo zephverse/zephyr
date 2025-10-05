@@ -29,22 +29,6 @@ const tabVariants = {
   visible: { opacity: 1, y: 0 },
 };
 
-interface BookmarkedPostsPage extends PostsPage {
-  posts: Array<
-    PostsPage["posts"][0] & {
-      hnStoryShare?: {
-        storyId: number;
-        title: string;
-        url?: string | null;
-        by: string;
-        time: number;
-        score: number;
-        descendants: number;
-      } | null;
-    }
-  >;
-}
-
 export default function Bookmarks() {
   const {
     data: postsData,
@@ -61,8 +45,7 @@ export default function Bookmarks() {
           "/api/posts/bookmarked",
           pageParam ? { searchParams: { cursor: pageParam } } : {}
         )
-        .json<BookmarkedPostsPage>();
-
+        .json<PostsPage>();
       return response;
     },
     initialPageParam: null as string | null,
@@ -85,7 +68,7 @@ export default function Bookmarks() {
       if (!response.ok) {
         throw new Error("Failed to fetch HN bookmarks");
       }
-      return response.json() as Promise<HnBookmarksResponse>;
+      return (await response.json()) as HnBookmarksResponse;
     },
     initialPageParam: null as string | null,
     getNextPageParam: (lastPage) => lastPage.nextCursor,
@@ -93,7 +76,9 @@ export default function Bookmarks() {
     refetchOnWindowFocus: false,
   });
 
-  const posts = postsData?.pages.flatMap((page) => page.posts) || [];
+  const posts = (postsData?.pages.flatMap((page) => page.posts) || []).filter(
+    Boolean
+  );
   const hnStories = hnData?.pages.flatMap((page) => page.stories) || [];
 
   if (postsStatus === "pending" || hnStatus === "pending") {

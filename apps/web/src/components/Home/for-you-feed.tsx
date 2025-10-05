@@ -37,7 +37,7 @@ export default function ForYouFeed() {
   });
 
   const posts = useMemo(
-    () => data?.pages.flatMap((page) => page.posts) || [],
+    () => (data?.pages.flatMap((page) => page.posts) || []).filter(Boolean),
     [data?.pages]
   );
 

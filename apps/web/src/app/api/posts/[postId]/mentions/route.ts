@@ -1,35 +1,21 @@
 import { NotificationType } from "@prisma/client";
-import { validateRequest } from "@zephyr/auth/auth";
 import { prisma } from "@zephyr/db";
+import { getSessionFromApi } from "@/lib/session";
 
-export async function GET({ params }: { params: { postId: string } }) {
-  try {
-    const { user } = await validateRequest();
-    if (!user) {
-      return Response.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const mentions = await prisma.mention.findMany({
-      where: {
-        postId: params.postId,
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            username: true,
-            displayName: true,
-            avatarUrl: true,
-          },
-        },
-      },
-    });
-
-    return Response.json({ mentions: mentions.map((m) => m.user) });
-  } catch (error) {
-    console.error("Error fetching mentions:", error);
-    return Response.json({ error: "Internal server error" }, { status: 500 });
+export async function GET(
+  _req: Request,
+  ctx: { params: Promise<{ postId: string }> }
+) {
+  const session = await getSessionFromApi();
+  const user = session?.user;
+  if (!user) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const { postId } = await ctx.params;
+  const mentions = await prisma.mention.findMany({
+    where: { postId },
+  });
+  return Response.json(mentions);
 }
 
 export async function POST(
@@ -37,7 +23,7 @@ export async function POST(
   { params }: { params: { postId: string } }
 ) {
   try {
-    const { user } = await validateRequest();
+    const { user } = await getSessionFromApi();
     if (!user) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }

@@ -1,32 +1,16 @@
-import { validateRequest } from "@zephyr/auth/auth";
 import { getUserDataSelect, prisma } from "@zephyr/db";
+import { getSessionFromApi } from "@/lib/session";
 
 export async function GET() {
-  try {
-    const { user } = await validateRequest();
-
-    if (!user) {
-      return Response.json({ error: "Not authenticated" }, { status: 401 });
-    }
-
-    const newUsers = await prisma.user.findMany({
-      take: 10,
-      orderBy: {
-        createdAt: "desc",
-      },
-      where: {
-        id: {
-          not: user.id,
-        },
-      },
-      select: getUserDataSelect(user.id),
-    });
-
-    return Response.json(newUsers);
-  } catch (_error) {
-    return Response.json(
-      { error: "Failed to fetch new users" },
-      { status: 500 }
-    );
+  const session = await getSessionFromApi();
+  const user = session?.user;
+  if (!user) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const users = await prisma.user.findMany({
+    take: 10,
+    orderBy: { createdAt: "desc" },
+    select: getUserDataSelect(user.id),
+  });
+  return Response.json(users);
 }

@@ -1,22 +1,23 @@
-import { validateRequest } from "@zephyr/auth/auth";
 import {
   type NotificationsPage,
   notificationsInclude,
   prisma,
 } from "@zephyr/db";
 import type { NextRequest } from "next/server";
+import { getSessionFromApi } from "@/lib/session";
 
 export async function GET(req: NextRequest) {
   try {
     const cursor = req.nextUrl.searchParams.get("cursor") || undefined;
     const pageSize = 10;
-    const { user } = await validateRequest();
-    if (!user) {
+    const session = await getSessionFromApi();
+    if (!session?.user) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const userId = session.user.id;
     const notifications = await prisma.notification.findMany({
       where: {
-        recipientId: user.id,
+        recipientId: userId,
       },
       include: notificationsInclude,
       orderBy: { createdAt: "desc" },

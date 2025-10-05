@@ -1,7 +1,7 @@
 import { getUserDataSelect, prisma } from "@zephyr/db";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { cache } from "react";
-import { authClient } from "@/lib/auth";
+import { getSessionFromApi } from "@/lib/session";
 import ClientProfile from "./client-profile";
 
 type PageProps = {
@@ -29,14 +29,10 @@ const getUser = cache(async (username: string, loggedInUserId: string) => {
 export default async function Page(props: PageProps) {
   const params = await props.params;
   const { username } = params;
-  const session = await authClient.getSession();
+  const session = await getSessionFromApi();
 
   if (!session?.user) {
-    return (
-      <p className="text-destructive">
-        You&apos;re not authorized to view this page.
-      </p>
-    );
+    redirect(`/login?next=/users/${encodeURIComponent(username)}`);
   }
 
   const userData = await getUser(username, session.user.id);

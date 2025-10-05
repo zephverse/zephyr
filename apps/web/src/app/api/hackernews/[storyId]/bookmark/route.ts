@@ -1,5 +1,5 @@
-import { validateRequest } from "@zephyr/auth/auth";
 import { prisma } from "@zephyr/db";
+import { getSessionFromApi } from "@/lib/session";
 
 export async function GET(
   _req: Request,
@@ -9,7 +9,7 @@ export async function GET(
   const { storyId } = params;
 
   try {
-    const { user: loggedInUser } = await validateRequest();
+    const { user: loggedInUser } = await getSessionFromApi();
 
     if (!loggedInUser) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
@@ -33,63 +33,32 @@ export async function GET(
 
 export async function POST(
   _req: Request,
-  props: { params: Promise<{ storyId: string }> }
+  ctx: { params: Promise<{ storyId: string }> }
 ) {
-  const params = await props.params;
-  const { storyId } = params;
-
-  try {
-    const { user: loggedInUser } = await validateRequest();
-
-    if (!loggedInUser) {
-      return Response.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    await prisma.hNBookmark.upsert({
-      where: {
-        userId_storyId: {
-          userId: loggedInUser.id,
-          storyId: Number.parseInt(storyId, 10),
-        },
-      },
-      create: {
-        userId: loggedInUser.id,
-        storyId: Number.parseInt(storyId, 10),
-      },
-      update: {},
-    });
-
-    return new Response();
-  } catch (error) {
-    console.error(error);
-    return Response.json({ error: "Internal server error" }, { status: 500 });
+  const session = await getSessionFromApi();
+  const user = session?.user;
+  if (!user) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const { storyId } = await ctx.params;
+  await prisma.hNBookmark.create({
+    data: { userId: user.id, storyId: Number(storyId) },
+  });
+  return Response.json({ success: true });
 }
 
 export async function DELETE(
   _req: Request,
-  props: { params: Promise<{ storyId: string }> }
+  ctx: { params: Promise<{ storyId: string }> }
 ) {
-  const params = await props.params;
-  const { storyId } = params;
-
-  try {
-    const { user: loggedInUser } = await validateRequest();
-
-    if (!loggedInUser) {
-      return Response.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    await prisma.hNBookmark.deleteMany({
-      where: {
-        userId: loggedInUser.id,
-        storyId: Number.parseInt(storyId, 10),
-      },
-    });
-
-    return new Response();
-  } catch (error) {
-    console.error(error);
-    return Response.json({ error: "Internal server error" }, { status: 500 });
+  const session = await getSessionFromApi();
+  const user = session?.user;
+  if (!user) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const { storyId } = await ctx.params;
+  await prisma.hNBookmark.deleteMany({
+    where: { userId: user.id, storyId: Number(storyId) },
+  });
+  return Response.json({ success: true });
 }

@@ -33,8 +33,8 @@ export const FeedView: React.FC<FeedViewProps> = ({ posts: initialPosts }) => {
         });
 
         if (feedQueries.length > 0) {
-          const updatedPosts = feedQueries.flatMap(
-            ([, data]) => data?.pages?.flatMap((page) => page.posts) || []
+          const updatedPosts = feedQueries.flatMap(([, data]) =>
+            (data?.pages?.flatMap((page) => page.posts) || []).filter(Boolean)
           );
 
           if (updatedPosts.length) {
@@ -53,22 +53,28 @@ export const FeedView: React.FC<FeedViewProps> = ({ posts: initialPosts }) => {
   }, [queryClient]);
 
   useEffect(() => {
+    const safeInitial = (initialPosts || []).filter(Boolean);
+    const initialFirstId = safeInitial[0]?.id;
+    const currentFirstId = posts[0]?.id;
     if (
-      initialPosts.length > 0 &&
-      (posts.length === 0 || initialPosts[0].id !== posts[0]?.id)
+      safeInitial.length > 0 &&
+      (posts.length === 0 ||
+        (initialFirstId && currentFirstId !== initialFirstId))
     ) {
       const uniquePosts = Array.from(
-        new Map(initialPosts.map((post) => [post.id, post])).values()
+        new Map(safeInitial.map((post) => [post.id, post])).values()
       );
       setPosts(uniquePosts);
     }
   }, [initialPosts, posts]);
 
   const sortedPosts = useMemo(() => {
-    const sorted = [...posts].sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+    const sorted = [...posts]
+      .filter(Boolean)
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
 
     return {
       all: sorted,

@@ -1,29 +1,17 @@
-import { validateRequest } from "@zephyr/auth/auth";
 import type { NotificationCountInfo } from "@zephyr/db";
 import { prisma } from "@zephyr/db";
+import { getSessionFromApi } from "@/lib/session";
 
 export async function GET() {
-  try {
-    const { user } = await validateRequest();
-
-    if (!user) {
-      return Response.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const unreadCount = await prisma.notification.count({
-      where: {
-        recipientId: user.id,
-        read: false,
-      },
-    });
-
-    const data: NotificationCountInfo = {
-      unreadCount,
-    };
-
-    return Response.json(data);
-  } catch (error) {
-    console.error(error);
-    return Response.json({ error: "Internal server error" }, { status: 500 });
+  const session = await getSessionFromApi();
+  if (!session?.user) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const userId = session.user.id;
+
+  const unreadCount = await prisma.notification.count({
+    where: { recipientId: userId, read: false },
+  });
+
+  return Response.json({ unreadCount } satisfies NotificationCountInfo);
 }

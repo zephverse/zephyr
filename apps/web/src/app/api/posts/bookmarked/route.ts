@@ -1,52 +1,15 @@
-import { validateRequest } from "@zephyr/auth/auth";
-import { getPostDataInclude, type PostsPage, prisma } from "@zephyr/db";
-import type { NextRequest } from "next/server";
+import { prisma } from "@zephyr/db";
+import { getSessionFromApi } from "@/lib/session";
 
-export async function GET(req: NextRequest) {
-  try {
-    const cursor = req.nextUrl.searchParams.get("cursor") || undefined;
-    const pageSize = 10;
-    const { user } = await validateRequest();
-
-    if (!user) {
-      return Response.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const standardInclude = getPostDataInclude(user.id);
-    const enhancedInclude = {
-      ...standardInclude,
-      hnStoryShare: true,
-    };
-
-    const bookmarks = await prisma.bookmark.findMany({
-      where: {
-        userId: user.id,
-      },
-      include: {
-        post: {
-          include: enhancedInclude,
-        },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-      take: pageSize + 1,
-      cursor: cursor ? { id: cursor } : undefined,
-    });
-
-    const nextCursor =
-      bookmarks.length > pageSize && bookmarks[pageSize]
-        ? bookmarks[pageSize].id
-        : null;
-
-    const data: PostsPage = {
-      posts: bookmarks.slice(0, pageSize).map((bookmark) => bookmark.post),
-      nextCursor,
-    };
-
-    return Response.json(data);
-  } catch (error) {
-    console.error(error);
-    return Response.json({ error: "Internal server error" }, { status: 500 });
+export async function GET() {
+  const session = await getSessionFromApi();
+  const user = session?.user;
+  if (!user) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const posts = await prisma.bookmark.findMany({
+    where: { userId: user.id },
+    include: { post: true },
+  });
+  return Response.json(posts);
 }

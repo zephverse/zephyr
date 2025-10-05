@@ -51,8 +51,11 @@ export function createAuthConfig(config: AuthConfig = {}) {
         hash: async ({ password }) => ({
           hash: await hashPasswordWithScrypt(password),
         }),
-        verify: async ({ password, hash }) =>
-          await verifyPasswordWithScrypt(password, hash),
+        verify: async ({ password, hash }) => {
+          const stored =
+            typeof hash === "string" ? hash : (hash as { hash: string }).hash;
+          return await verifyPasswordWithScrypt(password, stored);
+        },
       },
       sendResetPassword: emailService?.sendPasswordResetEmail
         ? async ({ user, url }) => {

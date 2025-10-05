@@ -1,17 +1,18 @@
-import { validateRequest } from "@zephyr/auth/src";
 import { prisma, tagCache } from "@zephyr/db";
 import { type NextRequest, NextResponse } from "next/server";
+import { getSessionFromApi } from "@/lib/session";
 
 export async function POST(
   req: NextRequest,
   context: { params: Promise<{ postId: string }> }
 ) {
   try {
-    const [{ user }, params] = await Promise.all([
-      validateRequest(),
+    const [session, params] = await Promise.all([
+      getSessionFromApi(),
       context.params,
     ]);
 
+    const user = session?.user;
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

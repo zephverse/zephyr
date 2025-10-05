@@ -3,7 +3,7 @@ import DiscoverySidebar from "@/components/Discover/discover-sidebar";
 import NewUsers from "@/components/Discover/new-users";
 import Friends from "@/components/Home/sidebars/left/friends";
 import { getUserData } from "@/hooks/use-user-data";
-import { authClient } from "@/lib/auth";
+import { getSessionFromApi } from "@/lib/session";
 
 export const metadata: Metadata = {
   title: "New Users",
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 };
 
 export default async function NewUsersPage() {
-  const session = await authClient.getSession();
+  const session = await getSessionFromApi();
   const userData = session?.user ? await getUserData(session.user.id) : null;
 
   return (

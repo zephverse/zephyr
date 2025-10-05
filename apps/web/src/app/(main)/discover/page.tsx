@@ -5,7 +5,7 @@ import TrendingUsers from "@/components/Discover/trending-users";
 import Friends from "@/components/Home/sidebars/left/friends";
 import NavigationCard from "@/components/Home/sidebars/left/navigation-card";
 import { getUserData } from "@/hooks/use-user-data";
-import { authClient } from "@/lib/auth";
+import { getSessionFromApi } from "@/lib/session";
 
 export const metadata: Metadata = {
   title: "Discover",
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 };
 
 export default async function DiscoveryPage() {
-  const session = await authClient.getSession();
+  const session = await getSessionFromApi();
   const userData = session?.user ? await getUserData(session.user.id) : null;
 
   return (

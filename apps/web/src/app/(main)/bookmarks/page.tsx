@@ -6,7 +6,7 @@ import SuggestedConnections from "@/components/Home/sidebars/right/suggested-con
 import TrendingTopics from "@/components/Home/sidebars/right/trending-topics";
 import StickyFooter from "@/components/Layouts/stinky-footer";
 import { getUserData } from "@/hooks/use-user-data";
-import { authClient } from "@/lib/auth";
+import { getSessionFromApi } from "@/lib/session";
 import Bookmarks from "./bookmarks";
 
 export const metadata: Metadata = {
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 };
 
 export default async function Page() {
-  const session = await authClient.getSession();
+  const session = await getSessionFromApi();
   const userData = session?.user ? await getUserData(session.user.id) : null;
 
   let bookmarkCount = 0;

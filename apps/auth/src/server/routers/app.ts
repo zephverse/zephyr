@@ -1,5 +1,8 @@
 import { randomUUID } from "node:crypto";
-import { hashPasswordWithScrypt } from "@zephyr/auth/core";
+import {
+  hashPasswordWithScrypt,
+  verifyPasswordWithScrypt,
+} from "@zephyr/auth/core";
 import { debugLog } from "@zephyr/config/debug";
 import { prisma, redis } from "@zephyr/db";
 import { z } from "zod";
@@ -329,9 +332,150 @@ export const appRouter = router({
       });
       debugLog.api("pendingSignupVerify:user-created", { userId: user.id });
 
+      try {
+        const emailLower = data.email.toLowerCase();
+        await prisma.account.create({
+          data: {
+            userId: user.id,
+            providerId: "email",
+            accountId: emailLower,
+            password: data.passwordHash,
+          },
+        });
+
+        await prisma.account
+          .create({
+            data: {
+              userId: user.id,
+              providerId: "credential",
+              accountId: emailLower,
+              password: data.passwordHash,
+            },
+          })
+          .catch(() => {
+            /* ignore errors, account might already exist */
+          });
+        debugLog.api("pendingSignupVerify:account-created");
+      } catch (e) {
+        debugLog.api("pendingSignupVerify:account-exists-or-error", {
+          message: e instanceof Error ? e.message : String(e),
+        });
+      }
+
       await redis.del(key);
       debugLog.api("pendingSignupVerify:redis-del");
       return { success: true, userId: user.id } as const;
+    }),
+
+  devBackfillCredential: procedure
+    .input(
+      z.object({
+        usernameOrEmail: z.string().min(1),
+        password: z.string().min(1),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const identifier = input.usernameOrEmail;
+      const user = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { email: { equals: identifier, mode: "insensitive" } },
+            { username: { equals: identifier, mode: "insensitive" } },
+          ],
+        },
+        select: { id: true, email: true },
+      });
+      if (!user?.email) {
+        return {
+          success: false,
+          error: "user-not-found-or-email-missing",
+        } as const;
+      }
+      const emailLower = user.email.toLowerCase();
+      const [emailAcct, credAcct] = await Promise.all([
+        prisma.account.findFirst({
+          where: { providerId: "email", accountId: emailLower },
+          select: { id: true },
+        }),
+        prisma.account.findFirst({
+          where: { providerId: "credential", accountId: emailLower },
+          select: { id: true },
+        }),
+      ]);
+      const passwordHash = await hashPasswordWithScrypt(input.password);
+      if (!emailAcct) {
+        await prisma.account.create({
+          data: {
+            userId: user.id,
+            providerId: "email",
+            accountId: emailLower,
+            password: passwordHash,
+          },
+        });
+      }
+      if (!credAcct) {
+        await prisma.account.create({
+          data: {
+            userId: user.id,
+            providerId: "credential",
+            accountId: emailLower,
+            password: passwordHash,
+          },
+        });
+      }
+      return {
+        success: true,
+        message:
+          emailAcct && credAcct ? "already-exists" : "created-missing-accounts",
+      } as const;
+    }),
+
+  devCheckPassword: procedure
+    .input(z.object({ email: z.string().email(), password: z.string().min(1) }))
+    .mutation(async ({ input }) => {
+      const acct = await prisma.account.findFirst({
+        where: {
+          providerId: "email",
+          accountId: input.email.toLowerCase(),
+        },
+        select: { password: true },
+      });
+      if (!acct?.password) {
+        return { exists: false, match: false } as const;
+      }
+      const match = await verifyPasswordWithScrypt(
+        input.password,
+        acct.password
+      );
+      return { exists: true, match } as const;
+    }),
+
+  devGetAuthDebug: procedure
+    .input(z.object({ usernameOrEmail: z.string().min(1) }))
+    .query(async ({ input }) => {
+      const identifier = input.usernameOrEmail;
+      const user = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { email: { equals: identifier, mode: "insensitive" } },
+            { username: { equals: identifier, mode: "insensitive" } },
+          ],
+        },
+        select: { id: true, email: true, emailVerified: true },
+      });
+      const email = user?.email?.toLowerCase() ?? null;
+      const acct = email
+        ? await prisma.account.findFirst({
+            where: { providerId: "email", accountId: email },
+            select: { id: true },
+          })
+        : null;
+      return {
+        userExists: Boolean(user),
+        email,
+        emailVerified: Boolean(user?.emailVerified),
+        hasCredentialAccount: Boolean(acct),
+      } as const;
     }),
 });
 

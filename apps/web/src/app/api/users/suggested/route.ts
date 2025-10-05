@@ -1,5 +1,5 @@
 import { Prisma } from "@prisma/client";
-import { getSessionFromRequest } from "@zephyr/auth/core";
+import { getSessionFromApi } from "@/lib/session";
 
 export type { UserData } from "@zephyr/db";
 
@@ -13,9 +13,10 @@ const RECENTLY_SHOWN_CACHE_KEY = (userId: string) =>
   `recently-shown-users:${userId}`;
 const RECENTLY_SHOWN_TTL = 3600;
 
-export async function GET(req: Request) {
+export async function GET(_req: Request) {
   try {
-    const { user } = await getSessionFromRequest(req);
+    const session = await getSessionFromApi();
+    const user = session?.user;
 
     if (!user) {
       return Response.json({ error: "Not authenticated" }, { status: 401 });
@@ -166,5 +167,3 @@ export const suggestedUsersCache = {
     }
   },
 };
-
-export type { UserData };
