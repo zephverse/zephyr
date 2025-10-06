@@ -123,8 +123,10 @@ export function createAuthConfig(config: AuthConfig = {}) {
     },
 
     advanced: {
-      useSecureCookies: false,
-      generateId: crypto.randomUUID,
+      useSecureCookies: environment === "production",
+      database: {
+        generateId: crypto.randomUUID,
+      },
     },
 
     trustedOrigins: [

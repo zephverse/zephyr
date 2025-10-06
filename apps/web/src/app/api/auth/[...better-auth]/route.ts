@@ -9,7 +9,7 @@ async function proxy(request: NextRequest) {
   target.search = url.search;
 
   const headers = new Headers(request.headers);
-  headers.set("host", new URL(AUTH_BASE).host);
+  headers.delete("host");
 
   const init: RequestInit = {
     method: request.method,
