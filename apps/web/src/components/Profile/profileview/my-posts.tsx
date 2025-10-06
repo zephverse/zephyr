@@ -16,8 +16,8 @@ import {
   TabsList,
   TabsTrigger,
 } from "@zephyr/ui/shadui/tabs";
-import { motion } from "framer-motion";
 import { BookOpen, Edit, Plus, Settings, Upload } from "lucide-react";
+import { motion } from "motion/react";
 import type React from "react";
 
 type MyPostsProps = {

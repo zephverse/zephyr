@@ -1,7 +1,7 @@
 import type { Media } from "@prisma/client";
 import { Button } from "@zephyr/ui/shadui/button";
-import { AnimatePresence, motion } from "framer-motion";
 import { FileAudioIcon, FileCode, FileIcon } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
 import { useState } from "react";
 import { MdPlayArrow } from "react-icons/md";

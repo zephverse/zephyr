@@ -1,69 +1,55 @@
-import { validateRequest } from "@zephyr/auth/auth";
-import { getPostDataInclude, prisma, searchSuggestionsCache } from "@zephyr/db";
+import { getPostDataInclude, type PostsPage, prisma } from "@zephyr/db";
 import type { NextRequest } from "next/server";
+import { getSessionFromApi } from "@/lib/session";
 
-export async function GET(req: NextRequest) {
-  try {
-    const { user } = await validateRequest();
-    if (!user) {
-      return Response.json({ error: "Unauthorized" }, { status: 401 });
-    }
+const searchSuggestionsCache = {
+  addToHistory(_userId: string, _query: string) {
+    return;
+  },
+  addSuggestion(_query: string) {
+    return;
+  },
+  removeHistoryItem(_userId: string, _query: string) {
+    return;
+  },
+  clearHistory(_userId: string) {
+    return;
+  },
+};
 
-    const searchParams = req.nextUrl.searchParams;
-    const q = searchParams.get("q") || "";
-    const type = searchParams.get("type");
-    const cursor = searchParams.get("cursor");
-
-    if (type === "suggestions") {
-      const suggestions = await searchSuggestionsCache.getSuggestions(q);
-      return Response.json(suggestions);
-    }
-
-    if (type === "history") {
-      const history = await searchSuggestionsCache.getHistory(user.id);
-      return Response.json(history);
-    }
-
-    const searchQuery = q.split(" ").join(" & ");
-    const pageSize = 10;
-
-    if (q) {
-      await Promise.all([
-        searchSuggestionsCache.addToHistory(user.id, q),
-        searchSuggestionsCache.addSuggestion(q),
-      ]);
-    }
-
-    const posts = await prisma.post.findMany({
-      where: {
-        OR: [
-          { content: { search: searchQuery } },
-          { user: { displayName: { search: searchQuery } } },
-          { user: { username: { search: searchQuery } } },
-        ],
-      },
-      include: getPostDataInclude(user.id),
-      orderBy: { createdAt: "desc" },
-      take: pageSize + 1,
-      cursor: cursor ? { id: cursor } : undefined,
-    });
-
-    const nextCursor =
-      posts.length > pageSize && posts[pageSize] ? posts[pageSize].id : null;
-
-    return Response.json({
-      posts: posts.slice(0, pageSize),
-      nextCursor,
-    });
-  } catch (error) {
-    console.error("Error in search API:", error);
-    return Response.json({ error: "Internal server error" }, { status: 500 });
+export async function GET(request: Request) {
+  const session = await getSessionFromApi();
+  const user = session?.user;
+  if (!user) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const url = new URL(request.url);
+  const q = url.searchParams.get("q") || "";
+  const cursor = url.searchParams.get("cursor") || undefined;
+  const pageSize = 10;
+
+  const posts = await prisma.post.findMany({
+    where: {
+      content: { contains: q, mode: "insensitive" },
+    },
+    include: getPostDataInclude(user.id),
+    orderBy: { createdAt: "desc" },
+    take: pageSize + 1,
+    cursor: cursor ? { id: cursor } : undefined,
+  });
+
+  const nextCursor = posts.length > pageSize ? posts[pageSize].id : null;
+  const data: PostsPage = {
+    posts: posts.slice(0, pageSize),
+    nextCursor,
+  };
+  return Response.json(data);
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const { user } = await validateRequest();
+    const session = await getSessionFromApi();
+    const user = session?.user;
     if (!user) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -87,7 +73,8 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
-    const { user } = await validateRequest();
+    const session = await getSessionFromApi();
+    const user = session?.user;
     if (!user) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }

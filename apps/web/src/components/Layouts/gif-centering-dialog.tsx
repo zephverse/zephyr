@@ -7,7 +7,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@zephyr/ui/shadui/dialog";
-import { motion } from "framer-motion";
 import {
   ChevronDown,
   ChevronLeft,
@@ -16,6 +15,7 @@ import {
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
+import { motion } from "motion/react";
 import { useRef, useState } from "react";
 import { useUpdateAvatarMutation } from "@/app/(main)/users/[username]/avatar-mutations";
 import LoadingButton from "@/components/Auth/loading-button";
@@ -126,6 +126,7 @@ export default function GifCenteringDialog({
               className="absolute inset-0 flex items-center justify-center"
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
             >
+              {/* @ts-expect-error */}
               <Image
                 alt="GIF preview"
                 className="max-w-none"

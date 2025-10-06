@@ -1,4 +1,3 @@
-import { validateRequest } from "@zephyr/auth/auth";
 import type { Metadata } from "next";
 import DiscoverySidebar from "@/components/Discover/discover-sidebar";
 import SuggestedUsers from "@/components/Discover/suggested-users";
@@ -6,6 +5,7 @@ import TrendingUsers from "@/components/Discover/trending-users";
 import Friends from "@/components/Home/sidebars/left/friends";
 import NavigationCard from "@/components/Home/sidebars/left/navigation-card";
 import { getUserData } from "@/hooks/use-user-data";
+import { getSessionFromApi } from "@/lib/session";
 
 export const metadata: Metadata = {
   title: "Discover",
@@ -13,8 +13,8 @@ export const metadata: Metadata = {
 };
 
 export default async function DiscoveryPage() {
-  const { user } = await validateRequest();
-  const userData = user ? await getUserData(user.id) : null;
+  const session = await getSessionFromApi();
+  const userData = session?.user ? await getUserData(session.user.id) : null;
 
   return (
     <main className="flex w-full min-w-0 gap-5">

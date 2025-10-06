@@ -1,18 +1,18 @@
-import { validateRequest } from "@zephyr/auth/auth";
 import { getUserDataSelect, prisma } from "@zephyr/db";
 import { redirect } from "next/navigation";
+import { getSessionFromApi } from "@/lib/session";
 import ClientSettings from "./client-settings";
 
 export default async function SettingsPage() {
-  const { user: authUser } = await validateRequest();
+  const session = await getSessionFromApi();
 
-  if (!authUser) {
+  if (!session?.user) {
     redirect("/login");
   }
 
   const user = await prisma.user.findUnique({
-    where: { id: authUser.id },
-    select: getUserDataSelect(authUser.id),
+    where: { id: session.user.id },
+    select: getUserDataSelect(session.user.id),
   });
 
   if (!user) {

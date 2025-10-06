@@ -3,8 +3,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { Separator } from "@zephyr/ui/shadui/separator";
 import { Skeleton } from "@zephyr/ui/shadui/skeleton";
-import { motion } from "framer-motion";
 import { AtSignIcon, MessageSquareIcon } from "lucide-react";
+import { motion } from "motion/react";
 import React, { useMemo } from "react";
 import PostCard from "../Home/feedview/post-card";
 

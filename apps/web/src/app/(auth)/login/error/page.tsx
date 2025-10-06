@@ -1,8 +1,8 @@
 "use client";
 
 import { Button } from "@zephyr/ui/shadui/button";
-import { AnimatePresence, motion } from "framer-motion";
 import { AlertCircle } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 

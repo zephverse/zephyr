@@ -121,9 +121,7 @@ export function SVGViewer({
     if (e.touches.length === 1) {
       setIsDragging(true);
       setDragStart({
-        // @ts-expect-error
         x: e.touches[0].clientX - position.x,
-        // @ts-expect-error
         y: e.touches[0].clientY - position.y,
       });
     }
@@ -132,9 +130,7 @@ export function SVGViewer({
   const handleTouchMove = (e: React.TouchEvent) => {
     if (isDragging && e.touches.length === 1) {
       setPosition({
-        // @ts-expect-error
         x: e.touches[0].clientX - dragStart.x,
-        // @ts-expect-error
         y: e.touches[0].clientY - dragStart.y,
       });
     }

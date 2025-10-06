@@ -1,7 +1,7 @@
-import { validateRequest } from "@zephyr/auth/src";
 import { debugLog } from "@zephyr/config/debug";
 import { type FollowerInfo, followerInfoCache, prisma } from "@zephyr/db";
-import { suggestedUsersCache } from "../../suggested/route";
+import { getSessionFromApi } from "@/lib/session";
+import { suggestedUsersCache } from "@/lib/suggested-users-cache";
 
 const FOLLOW_AURA_REWARD = 5;
 
@@ -15,7 +15,8 @@ export async function POST(
   debugLog.api("Processing follow request:", userId);
 
   try {
-    const { user: loggedInUser } = await validateRequest();
+    const session = await getSessionFromApi();
+    const loggedInUser = session?.user;
 
     if (!loggedInUser) {
       debugLog.api("Unauthorized follow attempt");
@@ -105,7 +106,8 @@ export async function GET(
   const { userId } = params;
 
   try {
-    const { user: loggedInUser } = await validateRequest();
+    const session = await getSessionFromApi();
+    const loggedInUser = session?.user;
     if (!loggedInUser) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -160,7 +162,8 @@ export async function DELETE(
   const { userId } = params;
 
   try {
-    const { user: loggedInUser } = await validateRequest();
+    const session = await getSessionFromApi();
+    const loggedInUser = session?.user;
 
     if (!loggedInUser) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });

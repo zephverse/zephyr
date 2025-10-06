@@ -1,6 +1,5 @@
 "use client";
 
-// @ts-expect-error - static image import
 import resetImage from "@assets/auth/confirm-reset-image.jpg";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@zephyr/ui/hooks/use-toast";
@@ -13,8 +12,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@zephyr/ui/shadui/form";
-import { AnimatePresence, motion } from "framer-motion";
 import { AlertCircle, Lock } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";

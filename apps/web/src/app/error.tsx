@@ -1,10 +1,9 @@
 "use client";
 
-// @ts-expect-error - Image optimization is not supported in this file
 import HOME from "@assets/previews/home.png";
 import { Button } from "@zephyr/ui/shadui/button";
-import { motion } from "framer-motion";
 import { AlertOctagon, Copy, RotateCcw } from "lucide-react";
+import { motion } from "motion/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -42,7 +41,7 @@ export default function Error({
   };
 
   const handleCreateIssue = () => {
-    const githubIssueUrl = `https://github.com/parazeeknova/zephyr/issues/new?title=${encodeURIComponent(
+    const githubIssueUrl = `https://github.com/zephverse/zephyr/issues/new?title=${encodeURIComponent(
       errorDetails.title
     )}&body=${encodeURIComponent(errorDetails.body)}`;
     window.open(githubIssueUrl, "_blank");
@@ -198,7 +197,7 @@ export default function Error({
               <span>Need help? You can:</span>
               <Link
                 className="text-primary hover:underline"
-                href="https://github.com/parazeeknova/zephyr/issues"
+                href="https://github.com/zephverse/zephyr/issues"
                 target="_blank"
               >
                 Open a GitHub issue

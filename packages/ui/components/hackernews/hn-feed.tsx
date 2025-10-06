@@ -2,7 +2,6 @@
 
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import type { HNApiResponse } from "@zephyr/aggregator/hackernews";
-import { AnimatePresence, motion } from "framer-motion";
 import {
   Briefcase,
   ChevronDown,
@@ -11,6 +10,7 @@ import {
   RefreshCw,
   Search,
 } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useMemo, useState } from "react";
 import { useToast } from "../../hooks/use-toast";
 import { Button } from "../../shadui/button";

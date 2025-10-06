@@ -89,7 +89,8 @@ export function useTags(postId?: string) {
       return { previousTags };
     },
 
-    onError: (context) => {
+    // biome-ignore lint/suspicious/noExplicitAny: ignore
+    onError: (context: any) => {
       if (postId && context?.previousTags) {
         queryClient.setQueryData(["post", postId], context.previousTags);
       }

@@ -1,7 +1,7 @@
 import { Button } from "@zephyr/ui/shadui/button";
 import { Textarea } from "@zephyr/ui/shadui/textarea";
-import { motion } from "framer-motion";
 import { Loader2, Upload } from "lucide-react";
+import { motion } from "motion/react";
 import type { StepThreeProps } from "../../types";
 import { SupportMediaPreview } from "../support-media-preview";
 import { stepVariants } from "./variants";

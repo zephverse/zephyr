@@ -2,7 +2,6 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
-import { motion } from "framer-motion";
 import {
   Bookmark,
   Clock,
@@ -12,8 +11,8 @@ import {
   Share2,
   ThumbsUp,
   User,
-  // @ts-expect-error - lucide-react is not typed
 } from "lucide-react";
+import { motion, type Variants } from "motion/react";
 import { useRouter } from "next/navigation";
 import type React from "react";
 import { toast } from "../../hooks/use-toast";
@@ -27,7 +26,7 @@ import {
 } from "../../shadui/tooltip";
 import { useHnShareStore } from "../../store/hn-share-store";
 
-const storyVariants = {
+const storyVariants: Variants = {
   initial: { opacity: 0, y: 20 },
   animate: { opacity: 1, y: 0 },
   hover: {
@@ -36,7 +35,7 @@ const storyVariants = {
   },
 };
 
-const iconButtonVariants = {
+const iconButtonVariants: Variants = {
   initial: { scale: 1 },
   hover: { scale: 1.1 },
 };
@@ -98,12 +97,17 @@ export function HNStory({ story }: HnStoryProps) {
     }
   };
 
-  const handleVisit = (e: React.MouseEvent<HTMLAnchorElement>) => {
+  const handleVisitAnchor = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.stopPropagation(); // Prevent event bubbling
+    // Anchor will handle opening the link naturally with href and target
+  };
+
+  const handleVisitButton = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation(); // Prevent event bubbling
     window.open(story.url, "_blank", "noopener,noreferrer");
   };
 
-  const handleCommentClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+  const handleCommentClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation(); // Prevent event bubbling
     window.open(
       `https://news.ycombinator.com/item?id=${story.id}`,
@@ -161,7 +165,7 @@ export function HNStory({ story }: HnStoryProps) {
               <motion.a
                 className="relative z-10 cursor-pointer font-medium text-xl transition-colors hover:text-orange-500"
                 href={story.url}
-                onClick={handleVisit}
+                onClick={handleVisitAnchor}
                 rel="noopener noreferrer"
                 target="_blank"
                 whileHover={{ x: 2 }}
@@ -175,7 +179,7 @@ export function HNStory({ story }: HnStoryProps) {
                       <motion.a
                         className="inline-flex items-center"
                         href={story.url}
-                        onClick={handleVisit}
+                        onClick={handleVisitAnchor}
                         rel="noopener noreferrer"
                         target="_blank"
                         whileHover={{ scale: 1.05 }}
@@ -238,7 +242,6 @@ export function HNStory({ story }: HnStoryProps) {
 
         <div className="relative z-10 flex flex-wrap items-center gap-2 sm:gap-4">
           <motion.button
-            // @ts-expect-error
             className="group flex cursor-pointer items-center gap-2 text-muted-foreground text-sm transition-colors hover:text-orange-500"
             onClick={handleCommentClick}
             whileHover={{ scale: 1.05 }}
@@ -281,9 +284,8 @@ export function HNStory({ story }: HnStoryProps) {
 
           {story.url && (
             <motion.button
-              // @ts-expect-error
               className="group ml-auto flex cursor-pointer items-center gap-2 text-muted-foreground text-sm transition-colors hover:text-orange-500"
-              onClick={handleVisit}
+              onClick={handleVisitButton}
               whileHover={{ scale: 1.05 }}
             >
               <ExternalLink className="h-4 w-4" />

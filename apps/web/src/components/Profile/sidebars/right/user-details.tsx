@@ -13,7 +13,6 @@ import {
   TooltipTrigger,
 } from "@zephyr/ui/shadui/tooltip";
 import { formatDate, parseISO } from "date-fns";
-import { motion } from "framer-motion";
 import {
   BadgeCheckIcon,
   Flame,
@@ -21,6 +20,7 @@ import {
   UserPlus,
   Users,
 } from "lucide-react";
+import { motion } from "motion/react";
 import type React from "react";
 import { useMemo, useState } from "react";
 import EditProfileButton from "@/components/Layouts/edit-profile-button";

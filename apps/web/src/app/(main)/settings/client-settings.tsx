@@ -7,7 +7,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@zephyr/ui/shadui/tabs";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { AnimatedZephyrText } from "@/app/(auth)/client/client-login-page";
 import { FossBanner } from "@/components/misc/foss-banner";
 import { LegalLinksCard } from "@/components/misc/legal-links-card";
@@ -26,7 +26,6 @@ export default function ClientSettings({ user }: ClientSettingsProps) {
         animate={{ opacity: 1, y: 0 }}
         className="container max-w-4xl px-4 py-8 md:px-8 md:py-12 lg:py-16"
         initial={{ opacity: 0, y: 20 }}
-        // @ts-expect-error
         transition={{ duration: 0.5 }}
       >
         <h1 className="mb-10 bg-gradient-to-r from-primary to-secondary bg-clip-text text-center font-bold text-2xl text-transparent md:text-3xl lg:text-4xl">

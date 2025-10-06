@@ -1,5 +1,5 @@
 "use client";
-// @ts-expect-error - no types
+
 import supportImage from "@assets/previews/help.png";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type LoginValues, loginSchema } from "@zephyr/auth/validation";
@@ -13,8 +13,8 @@ import {
   FormMessage,
 } from "@zephyr/ui/shadui/form";
 import { Input } from "@zephyr/ui/shadui/input";
-import { AnimatePresence, motion } from "framer-motion";
 import { AlertCircle, Mail, XCircle } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
@@ -37,6 +37,7 @@ export default function LoginForm() {
     username?: boolean;
     password?: boolean;
   }>({});
+  const [hoveredField, setHoveredField] = useState<string | null>(null);
 
   const form = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
@@ -76,8 +77,6 @@ export default function LoginForm() {
 
       if (result.error) {
         handleLoginError(result.error);
-      } else if (result.emailVerification) {
-        handleEmailVerification(result.emailVerification);
       } else if (result.success) {
         handleLoginSuccess();
       }
@@ -86,7 +85,7 @@ export default function LoginForm() {
       toast({
         variant: "destructive",
         title: "Login Failed",
-        description: "An unexpected error occurred. Please try again.",
+        description: "Something went wrong, try again? Our bad!",
         duration: 5000,
       });
     }
@@ -95,7 +94,7 @@ export default function LoginForm() {
   function handleLoginError(loginErrorMessage: string) {
     setError(loginErrorMessage);
     setShake(true);
-    if (loginErrorMessage.includes("Incorrect username or password")) {
+    if (loginErrorMessage.includes("Invalid username/email or password")) {
       setErrorFields({ username: true, password: true });
     }
     toast({
@@ -111,25 +110,10 @@ export default function LoginForm() {
     });
   }
 
-  function handleEmailVerification(emailVerification: {
-    email: string;
-    isNewToken: boolean;
-  }) {
-    setUnverifiedEmail(emailVerification.email);
-    if (emailVerification.isNewToken) {
-      setIsVerificationEmailSent(true);
-      toast({
-        title: "Verification Required",
-        description: "Please check your inbox for the verification email.",
-        duration: 5000,
-      });
-    }
-  }
-
   function handleLoginSuccess() {
     toast({
-      title: "Welcome Back!",
-      description: "Successfully logged in to your account.",
+      title: "Welcome back, queen!",
+      description: "You're in! Let's get this bread!",
       duration: 3000,
     });
     router.refresh();
@@ -146,14 +130,15 @@ export default function LoginForm() {
       if (result.error) {
         toast({
           variant: "destructive",
-          title: "Verification Failed",
+          title: "Verification Failed!",
           description: result.error,
           duration: 5000,
         });
       } else if (result.success) {
         toast({
-          title: "Verification Email Sent",
-          description: "Please check your inbox to verify your email address.",
+          title: "Verification Email Sent!",
+          description:
+            "Check your inbox (and spam folder, just in case) to verify your email!",
           duration: 5000,
         });
       }
@@ -161,8 +146,8 @@ export default function LoginForm() {
       console.error("Resend verification error:", resendError);
       toast({
         variant: "destructive",
-        title: "Verification Failed",
-        description: "An unexpected error occurred. Please try again.",
+        title: "Verification Failed!",
+        description: "Something went wrong, try again? Our bad!",
         duration: 5000,
       });
     }
@@ -180,7 +165,12 @@ export default function LoginForm() {
           stable: { x: 0 },
         }}
       >
-        <form className="space-y-3" onSubmit={form.handleSubmit(onSubmit)}>
+        <form
+          autoComplete="on"
+          className="space-y-3"
+          noValidate
+          onSubmit={form.handleSubmit(onSubmit)}
+        >
           <AnimatePresence mode="wait">
             {error && (
               <motion.div
@@ -246,17 +236,25 @@ export default function LoginForm() {
             name="username"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Username</FormLabel>
+                <FormLabel>Username or Email</FormLabel>
                 <FormControl>
                   <div className="relative">
                     <Input
-                      placeholder="Username"
+                      placeholder="cooluser or email@cool.user"
                       {...field}
-                      className={`transition-all duration-200 ${
+                      autoComplete="username"
+                      className={`transition-all duration-500 ease-in-out ${
                         errorFields.username
                           ? "border-destructive/50 bg-destructive/10"
                           : ""
+                      } ${
+                        hoveredField === "username"
+                          ? "border-primary shadow-lg shadow-primary/20"
+                          : ""
                       }`}
+                      name="username"
+                      onMouseEnter={() => setHoveredField("username")}
+                      onMouseLeave={() => setHoveredField(null)}
                     />
                     {errorFields.username && (
                       <motion.div
@@ -283,13 +281,21 @@ export default function LoginForm() {
                 <FormControl>
                   <div className="relative">
                     <PasswordInput
-                      placeholder="Password"
+                      placeholder="supersecret"
                       {...field}
-                      className={`transition-all duration-200 ${
+                      autoComplete="current-password"
+                      className={`transition-all duration-500 ease-in-out ${
                         errorFields.password
                           ? "border-destructive/50 bg-destructive/10"
                           : ""
+                      } ${
+                        hoveredField === "password"
+                          ? "border-primary shadow-lg shadow-primary/20"
+                          : ""
                       }`}
+                      name="password"
+                      onMouseEnter={() => setHoveredField("password")}
+                      onMouseLeave={() => setHoveredField(null)}
                     />
                   </div>
                 </FormControl>

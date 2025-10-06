@@ -8,8 +8,9 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@zephyr/ui/shadui/dialog";
-import { AnimatePresence, motion } from "framer-motion";
 import { AtSign, Sparkles } from "lucide-react";
+import { easeInOut } from "motion";
+import { AnimatePresence, motion, type Variants } from "motion/react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import UserAvatar from "@/components/Layouts/user-avatar";
@@ -28,7 +29,7 @@ const containerVariants = {
   },
 };
 
-const tagVariants = {
+const tagVariants: Variants = {
   initial: { opacity: 0, y: -3 },
   animate: {
     opacity: 1,
@@ -57,7 +58,7 @@ const tagVariants = {
   },
 };
 
-const glowVariants = {
+const glowVariants: Variants = {
   initial: { opacity: 0 },
   animate: {
     opacity: [0.25, 0.4, 0.25],
@@ -66,7 +67,7 @@ const glowVariants = {
     transition: {
       duration: 2,
       repeat: Number.POSITIVE_INFINITY,
-      ease: "easeInOut",
+      ease: easeInOut,
     },
   },
 };

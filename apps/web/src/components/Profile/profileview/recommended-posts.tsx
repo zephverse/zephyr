@@ -1,7 +1,6 @@
 "use client";
 
-import { LayoutGrid } from "@zephyr/ui/shadui/layout-grid";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import Image from "next/image";
 import type React from "react";
 
@@ -61,7 +60,13 @@ const RecommendedPosts: React.FC<RecommendedPostsProps> = ({ posts }) => {
             initial={{ opacity: 0, scale: 0.9 }}
             transition={{ delay: 0.4, duration: 0.5 }}
           >
-            <LayoutGrid cards={cardsWithContent} />
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {cardsWithContent.map((card) => (
+                <div className={card.className} key={card.id}>
+                  {card.content}
+                </div>
+              ))}
+            </div>
           </motion.div>
         </div>
       </motion.div>

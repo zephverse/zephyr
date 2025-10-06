@@ -1,8 +1,8 @@
 "use client";
 
 import type { SignUpValues } from "@zephyr/auth/validation";
-import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Lightbulb, Wand2 } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 import type { UseFormSetValue } from "react-hook-form";
 import {

@@ -16,8 +16,8 @@ import {
   TabsList,
   TabsTrigger,
 } from "@zephyr/ui/shadui/tabs";
-import { AnimatePresence, motion } from "framer-motion";
 import { Check, Copy, Download, Mail, Share2 } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
 import { QRCodeSVG } from "qrcode.react";
 import { useCallback, useEffect, useState } from "react";
@@ -302,7 +302,8 @@ const ShareButton = ({
         const svgData = new XMLSerializer().serializeToString(svg);
         const canvas = document.createElement("canvas");
         const ctx = canvas.getContext("2d");
-        const img = new Image();
+        // biome-ignore lint/suspicious/noExplicitAny: <img> is not in lib.dom.d.ts
+        const img = new (Image as any)();
         img.onload = () => {
           canvas.width = img.width;
           canvas.height = img.height;

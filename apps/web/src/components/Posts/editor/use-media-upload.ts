@@ -33,7 +33,7 @@ export default function useMediaUpload() {
       const { mediaId, url } = await response.json();
       return { mediaId, url };
     } catch (error: unknown) {
-      throw new Error(error.message || "Upload failed");
+      throw new Error(error instanceof Error ? error.message : "Upload failed");
     }
   }
 
@@ -78,7 +78,8 @@ export default function useMediaUpload() {
           } catch (error: unknown) {
             toast({
               variant: "destructive",
-              description: error.message,
+              description:
+                error instanceof Error ? error.message : "Upload failed",
             });
             setAttachments((prev) => prev.filter((a) => a.file !== file));
           }

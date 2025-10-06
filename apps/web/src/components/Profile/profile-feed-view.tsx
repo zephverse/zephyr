@@ -11,8 +11,8 @@ import {
   TabsList,
   TabsTrigger,
 } from "@zephyr/ui/shadui/tabs";
-import { motion } from "framer-motion";
 import { AtSignIcon, FileTextIcon } from "lucide-react";
+import { motion } from "motion/react";
 import type React from "react";
 import { useCallback, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";

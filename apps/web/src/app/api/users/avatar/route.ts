@@ -106,12 +106,17 @@ export async function DELETE(request: Request) {
   }
 }
 
-export async function GET(
-  _request: Request,
-  { params }: { params: { userId: string } }
-) {
+export async function GET(request: Request) {
   try {
-    const { userId } = params;
+    const url = new URL(request.url);
+    const userId = url.searchParams.get("userId");
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: "userId is required" },
+        { status: 400 }
+      );
+    }
     const cachedAvatar = await avatarCache.get(userId);
     if (cachedAvatar) {
       return NextResponse.json(cachedAvatar);

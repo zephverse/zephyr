@@ -3,8 +3,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { SearchSuggestion } from "@zephyr/db";
 import { Input } from "@zephyr/ui/shadui/input";
-import { AnimatePresence, motion } from "framer-motion";
 import { HashIcon } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";

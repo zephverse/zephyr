@@ -4,8 +4,8 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import type { PostsPage } from "@zephyr/db";
 import { Alert, AlertDescription } from "@zephyr/ui/shadui/alert";
 import { Separator } from "@zephyr/ui/shadui/separator";
-import { motion } from "framer-motion";
 import { FileText, Search } from "lucide-react";
+import { motion } from "motion/react";
 import Post from "@/components/Home/feedview/post-card";
 import InfiniteScrollContainer from "@/components/Layouts/infinite-scroll-container";
 import LoadMoreSkeleton from "@/components/Layouts/skeletons/load-more-skeleton";
@@ -101,7 +101,6 @@ export default function SearchResults({ query }: SearchResultsProps) {
                   animate={{ opacity: 1, y: 0 }}
                   className="rounded-xl border bg-card transition-colors hover:bg-muted"
                   initial={{ opacity: 0, y: 20 }}
-                  // @ts-expect-error
                   key={post.id}
                 >
                   <Post post={post} />

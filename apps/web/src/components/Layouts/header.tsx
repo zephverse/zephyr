@@ -9,7 +9,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@zephyr/ui/shadui/tooltip";
-import { motion } from "framer-motion";
 import {
   Bookmark,
   Compass,
@@ -20,6 +19,7 @@ import {
   Settings,
   UsersIcon,
 } from "lucide-react";
+import { motion } from "motion/react";
 import { Playwrite_CA } from "next/font/google";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";

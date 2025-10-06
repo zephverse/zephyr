@@ -3,8 +3,8 @@
 import type { TrendingTopic } from "@zephyr/db";
 import { Button } from "@zephyr/ui/shadui/button";
 import { Card, CardContent } from "@zephyr/ui/shadui/card";
-import { AnimatePresence, motion } from "framer-motion";
 import { LucideTrendingUp, RefreshCw } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 import type React from "react";
 import { useEffect, useState, useTransition } from "react";

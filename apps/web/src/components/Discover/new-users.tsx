@@ -5,8 +5,8 @@ import type { UserData as BaseUserData } from "@zephyr/db";
 import { Card } from "@zephyr/ui/shadui/card";
 import { Skeleton } from "@zephyr/ui/shadui/skeleton";
 import { formatDistanceToNow } from "date-fns";
-import { motion } from "framer-motion";
 import { BadgeCheckIcon, Users } from "lucide-react";
+import { motion } from "motion/react";
 import Link from "next/link";
 import type React from "react";
 import FollowButton from "@/components/Layouts/follow-button";
@@ -114,8 +114,6 @@ const NewUsers: React.FC<NewUsersProps> = () => {
                     isFollowedByUser: false,
                   }
                 }
-                size="sm"
-                // @ts-expect-error
                 userId={user.id}
               />
             </Card>

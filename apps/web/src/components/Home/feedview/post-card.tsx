@@ -4,8 +4,8 @@ import type { PostData, TagWithCount } from "@zephyr/db";
 import { Button } from "@zephyr/ui/shadui/button";
 import { Card, CardContent } from "@zephyr/ui/shadui/card";
 import { Separator } from "@zephyr/ui/shadui/separator";
-import { motion } from "framer-motion";
 import { ArrowUpRight, Eye, Flame, MessageSquare, Share2 } from "lucide-react";
+import { motion } from "motion/react";
 import Link from "next/link";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
@@ -66,7 +66,8 @@ const PostCard: React.FC<PostCardProps> = ({
         <div className="mt-2 mb-3">
           <MentionTags
             isOwner={post.user.id === user.id}
-            mentions={post.mentions.map((m) => m.user)}
+            // biome-ignore lint/suspicious/noExplicitAny: Post.mentions comes from the database and is typed as 'any' there
+            mentions={post.mentions.map((m) => m.user as any)}
             onMentionsChange={(newMentions) => {
               handlePostUpdate({
                 ...post,

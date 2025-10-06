@@ -1,9 +1,9 @@
-import { validateRequest } from "@zephyr/auth/auth";
 import type { Metadata } from "next";
 import DiscoverySidebar from "@/components/Discover/discover-sidebar";
 import NewUsers from "@/components/Discover/new-users";
 import Friends from "@/components/Home/sidebars/left/friends";
 import { getUserData } from "@/hooks/use-user-data";
+import { getSessionFromApi } from "@/lib/session";
 
 export const metadata: Metadata = {
   title: "New Users",
@@ -11,8 +11,8 @@ export const metadata: Metadata = {
 };
 
 export default async function NewUsersPage() {
-  const { user } = await validateRequest();
-  const userData = user ? await getUserData(user.id) : null;
+  const session = await getSessionFromApi();
+  const userData = session?.user ? await getUserData(session.user.id) : null;
 
   return (
     <main className="flex w-full min-w-0 gap-5">

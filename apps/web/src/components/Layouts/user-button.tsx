@@ -22,7 +22,6 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@zephyr/ui/shadui/dropdown-menu";
-import { motion } from "framer-motion";
 import {
   Check,
   LogOutIcon,
@@ -32,6 +31,7 @@ import {
   Sun,
   UserIcon,
 } from "lucide-react";
+import { motion } from "motion/react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import type React from "react";
@@ -107,16 +107,14 @@ export default function UserButton({
         };
       } catch (_error) {
         return {
-          url: user.avatarUrl ? getSecureImageUrl(user.avatarUrl) : null,
-          // @ts-expect-error
-          key: user.avatarKey,
+          url: user.image ? getSecureImageUrl(user.image) : null,
+          key: null,
         };
       }
     },
     initialData: {
-      url: user.avatarUrl ? getSecureImageUrl(user.avatarUrl) : null,
-      // @ts-expect-error
-      key: user.avatarKey,
+      url: user.image ? getSecureImageUrl(user.image) : null,
+      key: null,
     },
     staleTime: 1000 * 60 * 5,
   });
@@ -141,20 +139,30 @@ export default function UserButton({
 
   const handleLogout = async () => {
     setShowLogoutDialog(false);
+
     queryClient.removeQueries({ queryKey: ["user"] });
     queryClient.removeQueries({ queryKey: ["avatar"] });
     queryClient.removeQueries({ queryKey: ["post-feed"] });
+    queryClient.removeQueries({ queryKey: ["notifications"] });
+    queryClient.removeQueries({ queryKey: ["unread-count"] });
     queryClient.clear();
+
+    try {
+      localStorage.clear();
+      sessionStorage.clear();
+    } catch (e) {
+      console.log("Failed to clear storage:", e);
+    }
 
     try {
       const result = await logout();
       if (result.redirect) {
-        window.location.href = result.redirect;
-      } else if (result.error) {
-        console.error("Logout error:", result.error);
+        window.location.replace(result.redirect);
+      } else {
+        window.location.replace("/login");
       }
-    } catch (error) {
-      console.error("Failed to logout:", error);
+    } catch {
+      window.location.replace("/login");
     }
   };
 
@@ -291,7 +299,7 @@ export default function UserButton({
             >
               <DropdownMenuLabel className="relative font-normal">
                 <div className="flex flex-col space-y-1 p-2">
-                  {user.displayName && (
+                  {user.name && (
                     <motion.div
                       variants={{
                         closed: { opacity: 0, x: -20 },
@@ -307,7 +315,7 @@ export default function UserButton({
                       }}
                     >
                       <p className="font-medium text-sm leading-none">
-                        {user.displayName}
+                        {user.name}
                       </p>
                     </motion.div>
                   )}

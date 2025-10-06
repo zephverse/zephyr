@@ -37,7 +37,7 @@ export type StepThreeProps = {
   onBack?: () => void;
   loading: boolean;
   attachments: Attachment[];
-  fileInputRef: React.RefObject<HTMLInputElement>;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
   handleFileUpload: (files: FileList) => Promise<void>;
   setAttachments: React.Dispatch<React.SetStateAction<Attachment[]>>;
 };

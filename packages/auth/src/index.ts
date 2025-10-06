@@ -1,17 +1,5 @@
-// biome-ignore lint/performance/noBarrelFile: This is the internal package interface for auth/src
-export {
-  createBlankSessionCookie,
-  createSessionCookie,
-  lucia,
-  validateRequest,
-} from "./core/lucia";
-// Email service exports (from previous restructuring)
-export { sendPasswordResetEmail, sendVerificationEmail } from "./email/service";
-
-// OAuth providers
-export { discord, github, google, twitter } from "./providers/oauth";
-// Validation exports
-export { DISPOSABLE_EMAIL_DOMAINS } from "./validation/constants";
+// biome-ignore lint/performance/noBarrelFile: This is a small auth package with limited exports
+export * from "./core";
 export {
   createPostSchema,
   type LoginValues,
@@ -21,3 +9,9 @@ export {
   type UpdateUserProfileValues,
   updateUserProfileSchema,
 } from "./validation/schemas";
+export {
+  type EmailValidationOptions,
+  type EmailValidationResult,
+  validateEmailAdvanced,
+  validateEmailBasic,
+} from "./validation/server-validation";

@@ -1,140 +1,102 @@
-import { lucia } from "@zephyr/auth/auth";
-import { prisma } from "@zephyr/db";
-import jwt from "jsonwebtoken";
-import { cookies } from "next/headers";
+import { keys } from "@root/keys";
 import type { NextRequest } from "next/server";
 
-const ERROR_TYPES = {
-  INVALID_TOKEN: "invalid-token",
-  TOKEN_EXPIRED: "token-expired",
-  USER_NOT_FOUND: "user-not-found",
-  VERIFICATION_FAILED: "verification-failed",
-  SERVER_ERROR: "server-error",
-  JWT_SECRET_MISSING: "jwt-secret-missing",
-  CONFIG_ERROR: "configuration-error",
-} as const;
-
-type ErrorType = (typeof ERROR_TYPES)[keyof typeof ERROR_TYPES];
-
-type JwtPayload = {
-  userId: string;
-  email: string;
-  timestamp: number;
-};
-
-const regex = /\/$/;
-const getBaseUrl = () => {
-  if (process.env.NEXT_PUBLIC_SITE_URL) {
-    return process.env.NEXT_PUBLIC_SITE_URL.replace(regex, "");
-  }
-
-  if (process.env.NODE_ENV === "development") {
-    return "http://localhost:3000";
-  }
-
-  console.error("NEXT_PUBLIC_SITE_URL not configured in production");
-  throw new Error("Missing NEXT_PUBLIC_SITE_URL configuration");
-};
-
-const createErrorRedirect = (errorType: ErrorType) => {
-  const baseUrl = getBaseUrl();
-  console.log(
-    `Creating error redirect to: ${baseUrl}/verify-email?error=${errorType}`
-  );
-  return Response.redirect(`${baseUrl}/verify-email?error=${errorType}`);
-};
-
-const createSuccessRedirect = () => {
-  const baseUrl = getBaseUrl();
-  console.log(`Creating success redirect to: ${baseUrl}/?verified=true`);
-  return Response.redirect(`${baseUrl}/?verified=true`);
-};
-
 export async function GET(req: NextRequest) {
-  console.log("Starting email verification process");
+  const token = req.nextUrl.searchParams.get("token");
+  if (!token) {
+    return Response.json(
+      { ok: false, error: "missing-token" },
+      { status: 400 }
+    );
+  }
+
+  const authBase = keys.NEXT_PUBLIC_AUTH_URL;
+  const tryPending = async () => {
+    try {
+      const res = await fetch(`${authBase}/api/trpc/pendingSignupVerify`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "user-agent": req.headers.get("user-agent") ?? "",
+        },
+        credentials: "include",
+        body: JSON.stringify({ token }),
+      });
+      const data = (await res.json().catch(() => ({}) as unknown)) as
+        | { result?: { data?: unknown } }
+        | { success?: boolean };
+      // @ts-expect-error loose parsing for cross-shape tolerance
+      const wrapped = data?.result?.data;
+      const ok =
+        (wrapped &&
+          (wrapped.success === true || wrapped?.json?.success === true)) ||
+        // @ts-expect-error loose parsing
+        data?.success === true ||
+        res.ok;
+
+      // Return credentials if verification succeeded
+      if (
+        ok === true &&
+        wrapped &&
+        typeof wrapped === "object" &&
+        "email" in wrapped &&
+        "password" in wrapped
+      ) {
+        return {
+          ok: true,
+          email: wrapped.email as string,
+          password: wrapped.password as string,
+        };
+      }
+
+      return ok === true ? { ok: true } : false;
+    } catch {
+      return false;
+    }
+  };
+
+  const url = `${authBase}/api/auth/verify-email?token=${encodeURIComponent(token)}`;
 
   try {
-    if (!process.env.JWT_SECRET) {
-      console.error("JWT_SECRET not configured");
-      return createErrorRedirect(ERROR_TYPES.JWT_SECRET_MISSING);
+    const pendingResult = await tryPending();
+    if (
+      pendingResult &&
+      typeof pendingResult === "object" &&
+      pendingResult.ok &&
+      pendingResult.email &&
+      pendingResult.password
+    ) {
+      return Response.json(
+        {
+          ok: true,
+          email: pendingResult.email,
+          password: pendingResult.password,
+        },
+        { status: 200 }
+      );
     }
-
-    const token = req.nextUrl.searchParams.get("token");
-    if (!token) {
-      console.log("No verification token provided");
-      return createErrorRedirect(ERROR_TYPES.INVALID_TOKEN);
+    if (pendingResult) {
+      return Response.json({ ok: true }, { status: 200 });
     }
-
-    const verificationToken = await prisma.emailVerificationToken.findUnique({
-      where: { token },
-      include: { user: true },
+    const res = await fetch(url, {
+      method: "GET",
+      headers: {
+        "user-agent": req.headers.get("user-agent") ?? "",
+      },
+      credentials: "include",
     });
 
-    if (!verificationToken) {
-      console.log("Verification token not found in database");
-      return createErrorRedirect(ERROR_TYPES.INVALID_TOKEN);
-    }
+    const data = await res.json().catch(() => ({}) as unknown);
+    const ok =
+      (data as { status?: boolean; ok?: boolean }).status === true ||
+      (data as { status?: boolean; ok?: boolean }).ok === true ||
+      res.ok;
 
-    if (verificationToken.expiresAt < new Date()) {
-      console.log("Verification token has expired");
-      await prisma.emailVerificationToken.delete({
-        where: { id: verificationToken.id },
-      });
-      return createErrorRedirect(ERROR_TYPES.TOKEN_EXPIRED);
-    }
-
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET) as JwtPayload;
-
-      const user = await prisma.user.findUnique({
-        where: { id: decoded.userId },
-        select: {
-          id: true,
-          username: true,
-          displayName: true,
-          emailVerified: true,
-        },
-      });
-
-      if (!user) {
-        console.log(`User not found: ${decoded.userId}`);
-        return createErrorRedirect(ERROR_TYPES.USER_NOT_FOUND);
-      }
-
-      if (user.emailVerified) {
-        console.log(`Email already verified for user: ${user.id}`);
-        return createSuccessRedirect();
-      }
-
-      await prisma.$transaction(async (tx) => {
-        await tx.user.update({
-          where: { id: decoded.userId },
-          data: { emailVerified: true },
-        });
-
-        await tx.emailVerificationToken.delete({
-          where: { id: verificationToken.id },
-        });
-      });
-
-      // @ts-expect-error
-      const session = await lucia.createSession(decoded.userId, {});
-      const sessionCookie = lucia.createSessionCookie(session.id);
-      const cookieStore = await cookies();
-      cookieStore.set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes
-      );
-
-      console.log(`Email verification successful for user: ${user.id}`);
-      return createSuccessRedirect();
-    } catch (jwtError) {
-      console.error("JWT verification failed:", jwtError);
-      return createErrorRedirect(ERROR_TYPES.VERIFICATION_FAILED);
-    }
-  } catch (error) {
-    console.error("Verification process failed:", error);
-    return createErrorRedirect(ERROR_TYPES.SERVER_ERROR);
+    return Response.json({ ok }, { status: ok ? 200 : 400 });
+  } catch {
+    return Response.json(
+      { ok: false, error: "network-error" },
+      { status: 502 }
+    );
   }
 }

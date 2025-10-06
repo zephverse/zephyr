@@ -1,21 +1,8 @@
 {
   "name": "zephyr",
-  "displayName": "Zephyr",
-  "version": "2.0.36-dev",
-  "description": "A seamless, next-gen social experience built for speed, privacy, and effortless connection.",
-  "author": "parazeeknova",
+  "version": "2.0.37-dev",
   "license": "AGPL-3.0",
   "homepage": "https://zephyyrr.in",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/parazeeknova/zephyr"
-  },
-  "readme": ".github/README.md",
-  "keywords": [
-    "socialmedia",
-    "aggregator",
-    "zephyr"
-  ],
   "private": true,
   "workspaces": [
     "apps/*",
@@ -25,25 +12,23 @@
     "check": "biome check --write .",
     "dev": "turbo dev",
     "build": "bun run check && turbo build",
-    "postinstall": "cd packages/db && bunx prisma generate",
     "dep:check": "bunx sherif@latest",
     "dep:fix": "bunx sherif@latest --fix",
-    "env:check": "bun scripts/check-env.js",
-    "env:local": "bun -e \"const fs=require('fs');const path=require('path');fs.copyFileSync('.env.example','.env');fs.copyFileSync(path.join('apps','web','.env.example'),path.join('apps','web','.env'));fs.copyFileSync(path.join('packages','db','.env.example'),path.join('packages','db','.env'));console.log('✅ Environment files copied successfully');\"",
-    "prepare": "husky",
+    "env:dev": "bun -e \"const fs=require('fs');const path=require('path');fs.copyFileSync(path.join('apps','web','.env.example'),path.join('apps','web','.env'));fs.copyFileSync(path.join('apps','auth','.env.example'),path.join('apps','auth','.env'));console.log('✅ Environment files copied successfully');\"",
     "clean": "bun -e \"const fs = require('fs'); const path = require('path'); function rm(dir) { if (fs.existsSync(dir)) { console.log('Deleting ' + dir); fs.rmSync(dir, { recursive: true, force: true }); } } function findAndDelete(folder) { const walk = (dir) => { const files = fs.readdirSync(dir); files.forEach(file => { const fullPath = path.join(dir, file); if (fs.statSync(fullPath).isDirectory()) { if (file === folder) { rm(fullPath); } else { walk(fullPath); } } }); }; walk(process.cwd()); } ['node_modules', '.next', '.turbo'].forEach(findAndDelete); console.log('✅ Cleanup completed');\"",
     "db:up": "cd packages/db && bunx prisma generate && bunx prisma db push",
-    "docker:logs": "docker compose -f docker-compose.dev.yml logs -f",
-    "docker:dev": "docker compose -f docker-compose.dev.yml --profile init up -d --build",
-    "docker:dev-noinit": "docker compose -f docker-compose.dev.yml up --build",
-    "docker:down": "docker compose -f docker-compose.dev.yml down",
-    "docker:clean:dev": "docker compose -f docker-compose.dev.yml down -v && docker volume rm zephyr_postgres_data_dev zephyr_redis_data_dev zephyr_minio_data_dev && rm -f .dev-init"
+    "docker:logs": "docker compose -f docker/docker-compose.dev.yml logs -f",
+    "docker:dev": "docker compose -f docker/docker-compose.dev.yml --profile init --profile studio up -d",
+    "docker:apps": "docker compose -f docker/docker-compose.dev.yml --profile apps up web auth -d --build",
+    "docker:down": "docker compose -f docker/docker-compose.dev.yml down",
+    "docker:clean": "docker compose -f docker/docker-compose.dev.yml down -v && docker volume rm zephyr-dev-postgres-data zephyr-dev-redis-data zephyr-dev-minio-data zephyr-dev-redisinsight-data && rm -f .dev-init",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.4",
-    "@types/node": "^24.6.1",
-    "@types/react": "^19.1.16",
-    "@types/react-dom": "^19.1.9",
+    "@types/node": "^24.6.2",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
     "dotenv": "^17.2.3",
     "husky": "^9.1.7",
     "react-markdown": "9.0.3",

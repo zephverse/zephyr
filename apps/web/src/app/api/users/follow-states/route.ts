@@ -1,9 +1,10 @@
-import { validateRequest } from "@zephyr/auth/src";
 import { prisma } from "@zephyr/db";
+import { getSessionFromApi } from "@/lib/session";
 
 export async function POST(req: Request) {
   try {
-    const { user: loggedInUser } = await validateRequest();
+    const session = await getSessionFromApi();
+    const loggedInUser = session?.user;
     if (!loggedInUser) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }

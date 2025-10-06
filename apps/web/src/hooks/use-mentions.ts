@@ -54,7 +54,8 @@ export function useMentions(postId?: string) {
       return { previousMentions };
     },
 
-    onError: (context) => {
+    // biome-ignore lint/suspicious/noExplicitAny: ignore
+    onError: (context: any) => {
       if (postId && context?.previousMentions) {
         queryClient.setQueryData(
           ["mentions", postId],

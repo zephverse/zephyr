@@ -1,0 +1,243 @@
+name: zephyr-dev
+
+services:
+  postgres-dev:
+    container_name: zephyr-dev-postgres
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: zephyr
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+    command: >
+      postgres -c listen_addresses='*' -c max_connections=50 -c shared_buffers=128MB -c work_mem=4MB -c maintenance_work_mem=32MB -c effective_cache_size=256MB -c wal_level=replica -c max_wal_senders=4 -c log_statement=none -c timezone=UTC
+    networks:
+      - dev_network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d zephyr" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  postgres-init:
+    profiles: ["init"]
+    container_name: zephyr-dev-postgres-init
+    image: postgres:18-alpine
+    environment:
+      PGPASSWORD: postgres
+    networks:
+      - dev_network
+    depends_on:
+      postgres-dev:
+        condition: service_healthy
+    command: >
+      sh -c '
+        echo "Initializing PostgreSQL extensions..." &&
+        psql -h postgres-dev -U postgres -d zephyr -c "
+          CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";
+          CREATE EXTENSION IF NOT EXISTS \"pgcrypto\";
+          CREATE EXTENSION IF NOT EXISTS \"pg_stat_statements\";
+          ALTER DATABASE zephyr SET timezone TO '\''UTC'\'';
+        " &&
+        echo "PostgreSQL initialization complete!"
+      '
+
+  prisma-migrate:
+    profiles: ["init"]
+    container_name: zephyr-dev-prisma-migrate
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.prisma
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres-dev:5432/zephyr?schema=public
+      POSTGRES_PRISMA_URL: postgresql://postgres:postgres@postgres-dev:5432/zephyr?schema=public
+      POSTGRES_URL_NON_POOLING: postgresql://postgres:postgres@postgres-dev:5432/zephyr?schema=public
+    networks:
+      - dev_network
+    depends_on:
+      postgres-dev:
+        condition: service_healthy
+    command: ["sh", "-c", "bunx prisma generate --schema packages/db/prisma/schema.prisma && bunx prisma db push --accept-data-loss --schema packages/db/prisma/schema.prisma"]
+
+  prisma-studio:
+    profiles: ["studio", "init"]
+    container_name: zephyr-dev-prisma-studio
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.prisma
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres-dev:5432/zephyr?schema=public
+      POSTGRES_PRISMA_URL: postgresql://postgres:postgres@postgres-dev:5432/zephyr?schema=public
+      POSTGRES_URL_NON_POOLING: postgresql://postgres:postgres@postgres-dev:5432/zephyr?schema=public
+    ports:
+      - "5555:5555"
+    networks:
+      - dev_network
+    depends_on:
+      postgres-dev:
+        condition: service_healthy
+    command: ["sh", "-c", "bunx prisma studio --port 5555 --hostname 0.0.0.0 --schema packages/db/prisma/schema.prisma"]
+
+  redis-dev:
+    container_name: zephyr-dev-redis
+    image: redis:latest
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    command: >
+      redis-server --requirepass zephyrredis --maxmemory 256mb --maxmemory-policy allkeys-lru --appendonly yes --appendfsync everysec --loglevel notice --save 900 1
+    volumes:
+      - redis_data_dev:/data
+    networks:
+      - dev_network
+    healthcheck:
+      test: [ "CMD", "redis-cli", "-a", "zephyrredis", "ping" ]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    restart: unless-stopped
+
+  redis-insight:
+    profiles: ["studio"]
+    container_name: zephyr-dev-redis-insight
+    image: redislabs/redisinsight:latest
+    ports:
+      - "5540:5540"
+    environment:
+      - RI_REDIS_HOST=redis-dev
+      - RI_REDIS_PORT=6379
+      - RI_REDIS_PASSWORD=zephyrredis
+      - RI_REDIS_ALIAS=Zephyr Redis Dev
+    volumes:
+      - redisinsight:/data
+    networks:
+      - dev_network
+    depends_on:
+      redis-dev:
+        condition: service_healthy
+    restart: unless-stopped
+
+  minio-dev:
+    container_name: zephyr-dev-minio
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio_data_dev:/data
+    networks:
+      - dev_network
+    command: minio server /data --console-address ":9001"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  minio-init:
+    profiles: ["init"]
+    container_name: zephyr-dev-minio-init
+    image: alpine:latest
+    depends_on:
+      minio-dev:
+        condition: service_healthy
+    environment:
+      MC_HOST_minio: http://minioadmin:minioadmin@minio-dev:9000
+    networks:
+      - dev_network
+    command: ["/bin/sh", "-c", "
+        apk add --no-cache curl &&
+        curl -O https://dl.min.io/client/mc/release/linux-amd64/mc &&
+        chmod +x mc &&
+        echo 'Creating MinIO buckets...' &&
+        ./mc mb minio/uploads || true &&
+        ./mc mb minio/avatars || true &&
+        ./mc mb minio/temp || true &&
+        ./mc mb minio/backups || true &&
+        echo 'Setting bucket policies...' &&
+        ./mc anonymous set download minio/uploads || true &&
+        ./mc anonymous set download minio/avatars || true &&
+        ./mc anonymous set download minio/temp || true &&
+        ./mc anonymous set download minio/backups || true &&
+        echo 'Enabling versioning...' &&
+        ./mc version enable minio/uploads || true &&
+        ./mc version enable minio/avatars || true &&
+        ./mc version enable minio/temp || true &&
+        ./mc version enable minio/backups || true &&
+        echo 'MinIO initialization complete!'
+      "]
+
+  web:
+    profiles: ["apps"]
+    build:
+      context: ..
+      dockerfile: ./apps/web/Dockerfile
+    container_name: zephyr-dev-web
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_APP_URL=http://localhost:3000
+      - NEXT_PUBLIC_AUTH_URL=http://localhost:3001
+      - DATABASE_URL=postgresql://postgres:postgres@zephyr-dev-postgres:5432/zephyr?schema=public
+      - REDIS_URL=redis://:zephyrredis@zephyr-dev-redis:6379/0
+      - MINIO_ENDPOINT=http://zephyr-dev-minio:9000
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin
+    depends_on:
+      postgres-dev:
+        condition: service_healthy
+      redis-dev:
+        condition: service_healthy
+      minio-dev:
+        condition: service_healthy
+    networks:
+      - dev_network
+    restart: unless-stopped
+
+  auth:
+    profiles: ["apps"]
+    build:
+      context: ..
+      dockerfile: ./apps/auth/Dockerfile
+    container_name: zephyr-dev-auth
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_APP_URL=http://localhost:3000
+      - NEXT_PUBLIC_AUTH_URL=http://localhost:3001
+      - DATABASE_URL=postgresql://postgres:postgres@zephyr-dev-postgres:5432/zephyr?schema=public
+      - REDIS_URL=redis://:zephyrredis@zephyr-dev-redis:6379/0
+    depends_on:
+      postgres-dev:
+        condition: service_healthy
+      redis-dev:
+        condition: service_healthy
+    networks:
+      - dev_network
+    restart: unless-stopped
+
+networks:
+  dev_network:
+    driver: bridge
+    name: zephyr-dev-network
+
+volumes:
+  postgres_data_dev:
+    name: zephyr-dev-postgres-data
+  redis_data_dev:
+    name: zephyr-dev-redis-data
+  minio_data_dev:
+    name: zephyr-dev-minio-data
+  redisinsight:
+    name: zephyr-dev-redisinsight-data

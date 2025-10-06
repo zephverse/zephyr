@@ -19,7 +19,7 @@ export function FossBanner({ className }: FossBannerProps) {
         contributions and suggestions to improve our platform. Visit our{" "}
         <Link
           className="font-medium text-primary hover:underline"
-          href="https://github.com/parazeeknova/zephyr"
+          href="https://github.com/zephverse/zephyr"
           rel="noopener noreferrer"
           target="_blank"
         >

@@ -1,4 +1,3 @@
-// @ts-expect-error - image does not have types
 import DGIMAGE from "@assets/auth/signup-image.jpg";
 import type { Metadata } from "next";
 import Image from "next/image";

@@ -23,7 +23,7 @@ export const siteConfig = {
   authors: [{ name: "parazeeknova", url: "https://folio.zephyyrr.in" }],
   creator: "Harsh Sahu",
   links: {
-    github: "https://github.com/parazeeknova/zephyr",
-    twitter: "https://twitter.com/hashcodes_",
+    github: "https://github.com/zephverse/zephyr",
+    twitter: "https://twitter.com/parazeeknova",
   },
 } as const;

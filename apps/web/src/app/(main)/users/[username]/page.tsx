@@ -1,7 +1,7 @@
-import { validateRequest } from "@zephyr/auth/auth";
 import { getUserDataSelect, prisma } from "@zephyr/db";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { cache } from "react";
+import { getSessionFromApi } from "@/lib/session";
 import ClientProfile from "./client-profile";
 
 type PageProps = {
@@ -29,21 +29,17 @@ const getUser = cache(async (username: string, loggedInUserId: string) => {
 export default async function Page(props: PageProps) {
   const params = await props.params;
   const { username } = params;
-  const { user: loggedInUser } = await validateRequest();
+  const session = await getSessionFromApi();
 
-  if (!loggedInUser) {
-    return (
-      <p className="text-destructive">
-        You&apos;re not authorized to view this page.
-      </p>
-    );
+  if (!session?.user) {
+    redirect(`/login?next=/users/${encodeURIComponent(username)}`);
   }
 
-  const userData = await getUser(username, loggedInUser.id);
+  const userData = await getUser(username, session.user.id);
 
   return (
     <ClientProfile
-      loggedInUserId={loggedInUser.id}
+      loggedInUserId={session.user.id}
       userData={userData}
       username={username}
     />

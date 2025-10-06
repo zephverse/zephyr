@@ -1,9 +1,10 @@
-import { validateRequest } from "@zephyr/auth/src";
 import { followerInfoCache } from "@zephyr/db";
+import { getSessionFromApi } from "@/lib/session";
 
 export async function GET(req: Request) {
   try {
-    const { user } = await validateRequest();
+    const session = await getSessionFromApi();
+    const user = session?.user;
     if (!user) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }

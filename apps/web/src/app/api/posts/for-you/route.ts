@@ -1,131 +1,31 @@
 import type { Prisma } from "@prisma/client";
-import { validateRequest } from "@zephyr/auth/auth";
-import {
-  getPostDataInclude,
-  type PostsPage,
-  prisma,
-  tagCache,
-} from "@zephyr/db";
-import { type NextRequest, NextResponse } from "next/server";
+import { getPostDataInclude, type PostsPage, prisma } from "@zephyr/db";
+import { getSessionFromApi } from "@/lib/session";
 
-export async function GET(req: NextRequest) {
-  try {
-    const cursor = req.nextUrl.searchParams.get("cursor");
-    const tags = req.nextUrl.searchParams
-      .get("tags")
-      ?.split(",")
-      .filter((tag: string) => Boolean(tag));
-
-    const { user } = await validateRequest();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const pageSize = 8;
-
-    const query: Prisma.PostFindManyArgs = {
-      include: {
-        ...getPostDataInclude(user.id),
-        tags: {
-          include: {
-            _count: {
-              select: {
-                posts: true,
-              },
-            },
-          },
-        },
-        mentions: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                username: true,
-                displayName: true,
-                avatarUrl: true,
-              },
-            },
-          },
-        },
-        hnStoryShare: true, // Include HN story share data
-      },
-      orderBy: { createdAt: "desc" },
-      take: pageSize + 1,
-      cursor: cursor ? { id: cursor } : undefined,
-      where: tags?.length
-        ? {
-            tags: {
-              some: {
-                name: {
-                  in: tags,
-                },
-              },
-            },
-          }
-        : undefined,
-    };
-
-    const posts = await prisma.post.findMany(query);
-
-    if (!posts) {
-      return NextResponse.json({
-        posts: [],
-        nextCursor: null as string | null,
-      } satisfies PostsPage);
-    }
-
-    if (posts.length > 0) {
-      const allTags = posts.flatMap(
-        (post) =>
-          // @ts-expect-error
-          post.tags?.map((tag) => ({
-            name: tag.name,
-            count: tag._count?.posts,
-          })) ?? []
-      );
-
-      await Promise.all(
-        [...new Set(allTags.map((t) => t.name))].map((tagName: string) =>
-          tagCache.incrementTagCount(tagName)
-        )
-      );
-    }
-
-    const nextCursor: string | null =
-      posts.length > pageSize ? (posts[pageSize]?.id ?? null) : null;
-
-    const responseData: PostsPage = {
-      // @ts-expect-error
-      posts: posts.slice(0, pageSize).map((post) => ({
-        ...post,
-        // @ts-expect-error
-        tags: post.tags.map((tag) => ({
-          ...tag,
-          _count: tag._count || { posts: 0 },
-        })),
-        // @ts-expect-error
-        mentions: post.mentions || [],
-        // @ts-expect-error
-        hnStoryShare: post.hnStoryShare,
-      })),
-      nextCursor,
-    };
-
-    return NextResponse.json(responseData, {
-      headers: {
-        "Cache-Control": "public, s-maxage=20, stale-while-revalidate=30",
-      },
-    });
-  } catch (error) {
-    console.error("Error details:", {
-      message: error instanceof Error ? error.message : "Unknown error",
-      name: error instanceof Error ? error.name : "Unknown",
-      stack: error instanceof Error ? error.stack : undefined,
-    });
-
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+export async function GET(request: Request) {
+  const session = await getSessionFromApi();
+  if (!session?.user) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const userId = session.user.id;
+
+  const url = new URL(request.url);
+  const cursor = url.searchParams.get("cursor") || undefined;
+  const pageSize = 20;
+
+  const where: Prisma.PostWhereInput = {};
+  const posts = await prisma.post.findMany({
+    where,
+    include: getPostDataInclude(userId),
+    orderBy: { createdAt: "desc" },
+    take: pageSize + 1,
+    cursor: cursor ? { id: cursor } : undefined,
+  });
+
+  const nextCursor = posts.length > pageSize ? posts[pageSize].id : null;
+  const data: PostsPage = {
+    posts: posts.slice(0, pageSize),
+    nextCursor,
+  };
+  return Response.json(data);
 }

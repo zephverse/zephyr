@@ -1,8 +1,8 @@
 "use client";
 
 import { useToast } from "@zephyr/ui/hooks/use-toast";
-import { AnimatePresence, motion } from "framer-motion";
 import { AlertTriangle, ArrowLeft } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
@@ -19,7 +19,7 @@ export default function SupportForm() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
 
   const [formData, setFormData] = useState({

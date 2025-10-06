@@ -17,8 +17,8 @@ import {
 } from "@zephyr/ui/shadui/form";
 import { Input } from "@zephyr/ui/shadui/input";
 import { Textarea } from "@zephyr/ui/shadui/textarea";
-import { motion } from "framer-motion";
 import { UserCircle } from "lucide-react";
+import { motion } from "motion/react";
 import { useForm } from "react-hook-form";
 import { LoadingButton } from "@/components/Auth/loading-button";
 import { useUpdateProfileMutation } from "../../users/[username]/avatar-mutations";
@@ -61,7 +61,6 @@ export default function ProfileSettings({ user }: ProfileSettingsProps) {
       animate={{ opacity: 1, y: 0 }}
       className="space-y-6"
       initial={{ opacity: 0, y: 20 }}
-      // @ts-expect-error
       transition={{ duration: 0.3 }}
     >
       <div className="relative overflow-hidden rounded-lg border border-border/50 bg-background/30 p-6 backdrop-blur-md">
@@ -135,7 +134,6 @@ export default function ProfileSettings({ user }: ProfileSettingsProps) {
               animate={{ opacity: 1, y: 0 }}
               className="pt-2"
               initial={{ opacity: 0, y: 20 }}
-              // @ts-expect-error
               transition={{ delay: 0.3 }}
             >
               <LoadingButton

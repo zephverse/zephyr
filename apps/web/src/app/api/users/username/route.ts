@@ -1,6 +1,6 @@
-import { validateRequest } from "@zephyr/auth/auth";
 import { prisma } from "@zephyr/db";
 import { z } from "zod";
+import { getSessionFromApi } from "@/lib/session";
 
 const usernameSchema = z.object({
   username: z
@@ -13,9 +13,18 @@ const usernameSchema = z.object({
     ),
 });
 
+export async function GET() {
+  const session = await getSessionFromApi();
+  if (!session?.user) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  return Response.json({ username: session.user.email });
+}
+
 export async function PATCH(request: Request) {
   try {
-    const { user } = await validateRequest();
+    const session = await getSessionFromApi();
+    const user = session?.user;
     if (!user) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }

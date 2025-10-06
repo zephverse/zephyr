@@ -1,16 +1,15 @@
 "use client";
-import { useQueryClient } from "@tanstack/react-query";
+
 import type { UserData } from "@zephyr/db";
 import { Card, CardContent, CardTitle } from "@zephyr/ui/shadui/card";
 import { ScrollArea } from "@zephyr/ui/shadui/scroll-area";
-import { AnimatePresence, motion } from "framer-motion";
 import { Users } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import type React from "react";
 import { useState } from "react";
 import FriendsSkeleton from "@/components/Layouts/skeletons/friends-skeleton";
 import UnfollowUserDialog from "@/components/Layouts/unfollow-user-dialog";
 import { useFollowedUsers } from "@/hooks/user-follower-info";
-import { useUnfollowUserMutation } from "@/hooks/user-mutations";
 import { FriendListItem } from "./friend-list-item";
 import { getRandomTitle } from "./random-titles";
 import { ViewSwitcher } from "./view-switcher";
@@ -52,23 +51,11 @@ const FriendsList: React.FC<FriendsListProps> = ({
 const Friends: React.FC<FriendsProps> = ({ isCollapsed }) => {
   const { data: followedUsers, isLoading } = useFollowedUsers();
   const [title, _setTitle] = useState(getRandomTitle());
-  const queryClient = useQueryClient();
-  const unfollowMutation = useUnfollowUserMutation();
   const [userToUnfollow, setUserToUnfollow] = useState<UserData | null>(null);
   const [viewType, setViewType] = useState<"grid" | "list">("list");
 
   const handleUnfollow = (user: UserData) => setUserToUnfollow(user);
   const handleCloseDialog = () => setUserToUnfollow(null);
-
-  const performUnfollow = async (userId: string) => {
-    try {
-      await unfollowMutation.mutateAsync(userId);
-      queryClient.invalidateQueries({ queryKey: ["followed-users"] });
-      handleCloseDialog();
-    } catch (error) {
-      console.error("Failed to unfollow user:", error);
-    }
-  };
 
   if (isLoading) {
     return <FriendsSkeleton isCollapsed={isCollapsed} />;
@@ -150,10 +137,8 @@ const Friends: React.FC<FriendsProps> = ({ isCollapsed }) => {
 
       {userToUnfollow && (
         <UnfollowUserDialog
-          handleUnfollow={() => performUnfollow(userToUnfollow.id)}
           onClose={handleCloseDialog}
           open={!!userToUnfollow}
-          // @ts-expect-error
           user={userToUnfollow}
         />
       )}

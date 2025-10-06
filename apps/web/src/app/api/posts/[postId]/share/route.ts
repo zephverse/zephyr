@@ -1,10 +1,11 @@
 import { shareStatsCache } from "@zephyr/db";
 import { type NextRequest, NextResponse } from "next/server";
 
-type Params = { params: { postId: string } };
-
-export async function POST(request: NextRequest, params: Params) {
-  const { postId } = await params.params;
+export async function POST(
+  request: NextRequest,
+  ctx: { params: Promise<{ postId: string }> }
+) {
+  const { postId } = await ctx.params;
 
   if (!postId) {
     return NextResponse.json({ error: "Post ID is required" }, { status: 400 });

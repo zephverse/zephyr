@@ -1,4 +1,3 @@
-import { validateRequest } from "@zephyr/auth/auth";
 import type { Metadata } from "next";
 import NavigationCard from "@/components/Home/sidebars/left/navigation-card";
 import ProfileCard from "@/components/Home/sidebars/right/profile-card";
@@ -6,15 +5,20 @@ import SuggestedConnections from "@/components/Home/sidebars/right/suggested-con
 import TrendingTopics from "@/components/Home/sidebars/right/trending-topics";
 import StickyFooter from "@/components/Layouts/stinky-footer";
 import { getUserData } from "@/hooks/use-user-data";
+import { authClient } from "@/lib/auth";
 import Notifications from "./notifications";
 
 export const metadata: Metadata = {
   title: "Rustles",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function Page() {
-  const { user } = await validateRequest();
-  const userData = user ? await getUserData(user.id) : null;
+  const session = await authClient.getSession();
+  const userData = session?.data?.user
+    ? await getUserData(session.data.user.id)
+    : null;
 
   return (
     <main className="flex w-full min-w-0 gap-5">

@@ -3,10 +3,6 @@ import { keys } from "../keys";
 
 const createRedisConfig = (): RedisOptions => {
   const config: RedisOptions = {
-    host: keys.REDIS_HOST,
-    port: Number.parseInt(String(keys.REDIS_PORT) || "6379", 10),
-    password: keys.REDIS_PASSWORD,
-    db: 0,
     maxRetriesPerRequest: 2,
     connectTimeout: 5000, // 5 seconds
     commandTimeout: 3000, // 3 seconds
@@ -34,7 +30,7 @@ const createRedisConfig = (): RedisOptions => {
 let redis: IoRedis;
 
 try {
-  redis = new IoRedis(createRedisConfig());
+  redis = new IoRedis(keys.REDIS_URL, createRedisConfig());
 } catch (error) {
   console.error("Failed to initialize Redis client:", error);
   throw error;

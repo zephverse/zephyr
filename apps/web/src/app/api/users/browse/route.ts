@@ -1,9 +1,10 @@
-import { validateRequest } from "@zephyr/auth/auth";
 import { getUserDataSelect, prisma } from "@zephyr/db";
+import { getSessionFromApi } from "@/lib/session";
 
 export async function GET(request: Request) {
   try {
-    const { user } = await validateRequest();
+    const session = await getSessionFromApi();
+    const user = session?.user;
     if (!user) {
       return Response.json({ error: "Not authenticated" }, { status: 401 });
     }

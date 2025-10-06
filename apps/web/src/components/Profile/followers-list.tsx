@@ -9,8 +9,8 @@ import {
 } from "@zephyr/ui/shadui/dialog";
 import { Input } from "@zephyr/ui/shadui/input";
 import { ScrollArea } from "@zephyr/ui/shadui/scroll-area";
-import { AnimatePresence, motion } from "framer-motion";
 import { Ghost, SearchIcon, Users2 } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 import FollowButton from "@/components/Layouts/follow-button";
 import UserAvatar from "@/components/Layouts/user-avatar";

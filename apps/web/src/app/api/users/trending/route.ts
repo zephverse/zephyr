@@ -1,16 +1,16 @@
-import { validateRequest } from "@zephyr/auth/src";
 import { getUserDataSelect, prisma } from "@zephyr/db";
+import { getSessionFromApi } from "@/lib/session";
 
 export async function GET() {
   try {
-    const { user } = await validateRequest();
-    const userId = user?.id;
+    const session = await getSessionFromApi();
+    const userId = session?.user?.id;
 
     const trendingUsers = await prisma.user.findMany({
       take: 6,
       where: {
         id: {
-          not: userId,
+          not: userId || undefined,
         },
       },
       orderBy: [
@@ -25,7 +25,7 @@ export async function GET() {
           },
         },
       ],
-      select: getUserDataSelect(""),
+      select: getUserDataSelect(userId || ""),
     });
 
     return Response.json(trendingUsers);

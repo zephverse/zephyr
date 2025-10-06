@@ -78,7 +78,7 @@ example: `feat[MODULE]: Add new module`
 
 #### _<div align="left"><sub>// Troubleshooting</sub></div>_
 
-**Having trouble?** [Open an issue](https://github.com/parazeeknova/zephyr/issues)
+**Having trouble?** [Open an issue](https://github.com/zephverse/zephyr/issues)
 
 
 ###### _<div align="left"><sub>// Common Issues</sub></div>_

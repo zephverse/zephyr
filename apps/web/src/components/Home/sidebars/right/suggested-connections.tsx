@@ -10,8 +10,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@zephyr/ui/shadui/card";
-import { AnimatePresence, motion } from "framer-motion";
 import { RefreshCw, UserRound, Users } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 import type React from "react";
 import { useEffect, useState } from "react";
@@ -203,10 +203,7 @@ const SuggestedConnections: React.FC = () => {
                         isFollowedByUser: false,
                       }
                     }
-                    size="xs"
-                    // @ts-expect-error
                     userId={connection.id}
-                    variant="outline"
                   />
                 </motion.li>
               ))}
@@ -229,10 +226,9 @@ const SuggestedConnections: React.FC = () => {
       <CardFooter className="border-border/10 border-t p-2">
         <Button
           className="h-7 w-full text-[11px] text-muted-foreground hover:text-primary"
-          // @ts-expect-error
           disabled={isRefreshing}
           onClick={handleRefresh}
-          size="xs"
+          size="sm"
           variant="ghost"
         >
           <RefreshCw

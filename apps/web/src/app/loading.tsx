@@ -3,8 +3,8 @@
 import { GooeyText } from "@zephyr/ui/components/ui/gooey-text-morphing";
 import { SpiralAnimation } from "@zephyr/ui/components/ui/spiral-animation";
 import { Button } from "@zephyr/ui/shadui/button";
-import { AnimatePresence, motion } from "framer-motion";
 import { Home } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getRandomFact } from "@/components/Constants/loading-facts";

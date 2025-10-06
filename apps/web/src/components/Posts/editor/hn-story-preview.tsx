@@ -3,7 +3,6 @@
 import type { HNStoryType } from "@zephyr/ui/components";
 import { Badge } from "@zephyr/ui/shadui/badge";
 import { Card } from "@zephyr/ui/shadui/card";
-import { motion } from "framer-motion";
 import {
   ExternalLink,
   Link,
@@ -12,6 +11,7 @@ import {
   User,
   X,
 } from "lucide-react";
+import { motion } from "motion/react";
 
 type HnStoryPreviewProps = {
   story: HNStoryType;
