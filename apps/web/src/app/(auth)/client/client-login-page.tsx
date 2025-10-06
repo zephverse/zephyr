@@ -14,6 +14,7 @@ import LoginForm from "@/components/Auth/login-form";
 import DiscordSignInButton from "./discord-sign-in-button";
 import GithubSignInButton from "./github-sign-in-button";
 import GoogleSignInButton from "./google-sign-in-button";
+import RedditSignInButton from "./reddit-sign-in-button";
 import TwitterSignInButton from "./twitter-sign-in-button";
 
 const fadeIn: Variants = {
@@ -232,9 +233,14 @@ export default function ClientLoginPage() {
                     </motion.div>
                   ) : (
                     <>
-                      <AuthButtonWrapper className="w-full">
-                        <GoogleSignInButton />
-                      </AuthButtonWrapper>
+                      <div className="grid grid-cols-1 gap-0 sm:grid-cols-2 md:gap-2">
+                        <AuthButtonWrapper className="w-full">
+                          <GoogleSignInButton />
+                        </AuthButtonWrapper>
+                        <AuthButtonWrapper className="w-full">
+                          <RedditSignInButton />
+                        </AuthButtonWrapper>
+                      </div>
 
                       <motion.div
                         animate={{ opacity: 1 }}

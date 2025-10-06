@@ -92,25 +92,34 @@ export function createAuthConfig(config: AuthConfig = {}) {
       google: {
         clientId: env.GOOGLE_CLIENT_ID || "",
         clientSecret: env.GOOGLE_CLIENT_SECRET || "",
+        redirectURI: `${env.NEXT_PUBLIC_URL}/api/auth/callback/google`,
       },
       github: {
         clientId: env.GITHUB_CLIENT_ID || "",
         clientSecret: env.GITHUB_CLIENT_SECRET || "",
+        redirectURI: `${env.NEXT_PUBLIC_URL}/api/auth/callback/github`,
       },
       discord: {
         clientId: env.DISCORD_CLIENT_ID || "",
         clientSecret: env.DISCORD_CLIENT_SECRET || "",
+        redirectURI: `${env.NEXT_PUBLIC_URL}/api/auth/callback/discord`,
       },
       twitter: {
         clientId: env.TWITTER_CLIENT_ID || "",
         clientSecret: env.TWITTER_CLIENT_SECRET || "",
+        redirectURI: `${env.NEXT_PUBLIC_URL}/api/auth/callback/twitter`,
+      },
+      reddit: {
+        clientId: env.REDDIT_CLIENT_ID || "",
+        clientSecret: env.REDDIT_CLIENT_SECRET || "",
+        redirectURI: `${env.NEXT_PUBLIC_URL}/api/auth/callback/reddit`,
       },
     },
 
     account: {
       accountLinking: {
         enabled: true,
-        trustedProviders: ["google", "github", "discord"],
+        trustedProviders: ["google", "github", "discord", "reddit", "twitter"],
       },
     },
 
@@ -127,6 +136,10 @@ export function createAuthConfig(config: AuthConfig = {}) {
       database: {
         generateId: crypto.randomUUID,
       },
+    },
+
+    verification: {
+      modelName: "verification",
     },
 
     trustedOrigins: [
