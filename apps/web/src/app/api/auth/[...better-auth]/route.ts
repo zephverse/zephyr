@@ -23,24 +23,39 @@ async function proxy(request: NextRequest) {
     init.body = body;
   }
 
-  const upstream = await fetch(target.toString(), init);
+  try {
+    const upstream = await fetch(target.toString(), init);
+    const body = await upstream.arrayBuffer();
 
-  const responseHeaders = new Headers();
-  upstream.headers.forEach((value, key) => {
-    if (key.toLowerCase() === "transfer-encoding") {
-      return;
-    }
-    if (key.toLowerCase() === "content-length") {
-      return;
-    }
-    responseHeaders.append(key, value);
-  });
+    const responseHeaders = new Headers();
+    upstream.headers.forEach((value, key) => {
+      if (key.toLowerCase() === "transfer-encoding") {
+        return;
+      }
+      if (key.toLowerCase() === "content-length") {
+        return;
+      }
+      if (key.toLowerCase() === "content-encoding") {
+        return;
+      }
+      if (key.toLowerCase() === "connection") {
+        return;
+      }
+      responseHeaders.append(key, value);
+    });
 
-  return new Response(upstream.body, {
-    status: upstream.status,
-    statusText: upstream.statusText,
-    headers: responseHeaders,
-  });
+    return new Response(body, {
+      status: upstream.status,
+      statusText: upstream.statusText,
+      headers: responseHeaders,
+    });
+  } catch (error) {
+    console.error("Auth proxy error:", error);
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
+      status: 500,
+      headers: { "content-type": "application/json" },
+    });
+  }
 }
 
 export function GET(request: NextRequest) {

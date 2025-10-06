@@ -131,6 +131,7 @@ export function createAuthConfig(config: AuthConfig = {}) {
       env.NEXT_PUBLIC_URL,
       "http://localhost:3000",
       "http://localhost:3001",
+      "https://zephyyrr.in",
     ],
 
     telemetry: {
