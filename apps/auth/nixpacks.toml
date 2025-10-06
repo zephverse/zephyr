@@ -1,0 +1,11 @@
+[phases.setup]
+nixPkgs = ["nodejs", "bun", "openssl"]
+
+[phases.install]
+cmds = ["bun install"]
+
+[phases.build]
+cmds = ["bunx turbo build"]
+
+[start]
+cmd = "bun run start"
