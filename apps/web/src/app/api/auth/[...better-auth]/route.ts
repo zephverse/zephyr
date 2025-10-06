@@ -110,8 +110,7 @@ async function proxy(request: NextRequest) {
       statusText: upstream.statusText,
       headers: responseHeaders,
     });
-  } catch (error) {
-    console.error("Auth proxy error:", error);
+  } catch {
     return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
       headers: { "content-type": "application/json" },

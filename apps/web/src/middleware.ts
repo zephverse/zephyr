@@ -1,55 +1,31 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-const PUBLIC_PATHS = new Set([
-  "/login",
-  "/signup",
-  "/verify-email",
-  "/reset-password",
-]);
-
-const PROTECTED_PREFIXES = [
-  "/",
-  "/compose",
-  "/settings",
-  "/discover",
-  "/bookmarks",
-  "/notifications",
-  "/users",
-  "/posts",
-  "/search",
-];
-
 function isProtectedPath(pathname: string): boolean {
-  if (PUBLIC_PATHS.has(pathname)) {
+  if (
+    pathname.startsWith("/api/") ||
+    pathname.startsWith("/_next") ||
+    pathname === "/favicon.ico"
+  ) {
     return false;
   }
-  if (pathname.startsWith("/api/")) {
-    return false;
-  }
-  if (pathname.startsWith("/_next")) {
-    return false;
-  }
-  if (pathname === "/favicon.ico") {
-    return false;
-  }
-  return PROTECTED_PREFIXES.some(
-    (p) => pathname === p || pathname.startsWith(`${p}/`)
-  );
+  return pathname === "/";
 }
 
 export async function middleware(request: NextRequest) {
   const { pathname, origin, search } = request.nextUrl;
-  if (!isProtectedPath(pathname)) {
-    return NextResponse.next();
+
+  if (
+    process.env.NODE_ENV === "production" &&
+    request.headers.get("x-forwarded-proto") !== "https"
+  ) {
+    return NextResponse.redirect(
+      `https://${request.headers.get("host")}${request.nextUrl.pathname}${request.nextUrl.search}`,
+      301
+    );
   }
 
-  // Fast-path: if Better Auth session cookie is present, allow without network call
-  const rawCookie = request.headers.get("cookie") || "";
-  if (
-    rawCookie.includes("__Secure-better-auth.session_token=") ||
-    rawCookie.includes("better-auth.session_token=")
-  ) {
+  if (!isProtectedPath(pathname)) {
     return NextResponse.next();
   }
 
