@@ -10,6 +10,13 @@ async function proxy(request: NextRequest) {
 
   const headers = new Headers(request.headers);
   headers.delete("host");
+  const forwardedHost =
+    request.headers.get("x-forwarded-host") || request.nextUrl.host;
+  const forwardedProto =
+    request.headers.get("x-forwarded-proto") ||
+    request.nextUrl.protocol.replace(":", "");
+  headers.set("x-forwarded-host", forwardedHost);
+  headers.set("x-forwarded-proto", forwardedProto);
 
   const init: RequestInit = {
     method: request.method,
@@ -26,23 +33,59 @@ async function proxy(request: NextRequest) {
   try {
     const upstream = await fetch(target.toString(), init);
     const body = await upstream.arrayBuffer();
-
     const responseHeaders = new Headers();
     upstream.headers.forEach((value, key) => {
-      if (key.toLowerCase() === "transfer-encoding") {
-        return;
-      }
-      if (key.toLowerCase() === "content-length") {
-        return;
-      }
-      if (key.toLowerCase() === "content-encoding") {
-        return;
-      }
-      if (key.toLowerCase() === "connection") {
+      const lower = key.toLowerCase();
+      if (
+        lower === "transfer-encoding" ||
+        lower === "content-length" ||
+        lower === "content-encoding" ||
+        lower === "connection" ||
+        lower === "set-cookie"
+      ) {
         return;
       }
       responseHeaders.append(key, value);
     });
+
+    const hostForCookie = (
+      request.headers.get("x-forwarded-host") ||
+      request.nextUrl.host ||
+      ""
+    ).split(":")[0];
+    const getSetCookie = (
+      upstream.headers as unknown as { getSetCookie?: () => string[] }
+    ).getSetCookie?.bind(upstream.headers);
+    const setCookieValues: string[] = getSetCookie ? getSetCookie() || [] : [];
+
+    function rewriteCookieDomain(cookieStr: string): string {
+      // biome-ignore lint/performance/useTopLevelRegex: ignore
+      const parts = cookieStr.split(/;\s*/);
+      let sawDomain = false;
+      const rewritten = parts.map((attr) => {
+        const [k, _v] = attr.split("=");
+        if (k.toLowerCase() === "domain") {
+          sawDomain = true;
+          return `Domain=${hostForCookie}`;
+        }
+        return attr;
+      });
+      if (!sawDomain && hostForCookie) {
+        rewritten.push(`Domain=${hostForCookie}`);
+      }
+      return rewritten.join("; ");
+    }
+
+    if (setCookieValues.length > 0) {
+      for (const c of setCookieValues) {
+        responseHeaders.append("set-cookie", rewriteCookieDomain(c));
+      }
+    } else {
+      const single = upstream.headers.get("set-cookie");
+      if (single) {
+        responseHeaders.append("set-cookie", rewriteCookieDomain(single));
+      }
+    }
 
     return new Response(body, {
       status: upstream.status,
