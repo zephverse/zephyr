@@ -24,7 +24,7 @@ export const keys = createEnv({
     MINIO_ENABLE_OBJECT_LOCKING: z.enum(["on", "off"]).default("on"),
     CRON_SECRET: z.string().optional(),
     CRON_SECRET_KEY: z.string().optional(),
-    NODE_ENV: z.enum(["development", "production"]).default("development"),
+    NODE_ENV: z.enum(["development", "production"]),
     NEXT_TELEMETRY_DISABLED: z.enum(["0", "1"]).default("1"),
     TURBO_TELEMETRY_DISABLED: z.enum(["0", "1"]).default("1"),
     BETTER_AUTH_TELEMETRY: z.enum(["0", "1"]).default("0"),
@@ -36,9 +36,9 @@ export const keys = createEnv({
       .string()
       .transform((val) => Number.parseInt(val, 10))
       .default(3000),
-    NEXT_PUBLIC_URL: z.url().default("http://localhost:3000"),
+    NEXT_PUBLIC_URL: z.url(),
     NEXT_PUBLIC_MINIO_ENDPOINT: z.url(),
-    NEXT_PUBLIC_AUTH_URL: z.url().default("http://localhost:3001"),
+    NEXT_PUBLIC_AUTH_URL: z.url(),
   },
 
   runtimeEnv: {

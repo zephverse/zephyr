@@ -19,7 +19,7 @@ export const keys = createEnv({
     REDDIT_CLIENT_ID: z.string().optional(),
     REDDIT_CLIENT_SECRET: z.string().optional(),
     BETTER_AUTH_SECRET: z.string().min(1),
-    NODE_ENV: z.enum(["development", "production"]).default("development"),
+    NODE_ENV: z.enum(["development", "production"]),
     NEXT_TELEMETRY_DISABLED: z.enum(["0", "1"]).default("1"),
     TURBO_TELEMETRY_DISABLED: z.enum(["0", "1"]).default("1"),
     BETTER_AUTH_TELEMETRY: z.enum(["0", "1"]).default("0"),
@@ -27,8 +27,8 @@ export const keys = createEnv({
   },
 
   client: {
-    NEXT_PUBLIC_AUTH_URL: z.url().default("http://localhost:3001"),
-    NEXT_PUBLIC_URL: z.url().default("http://localhost:3000"),
+    NEXT_PUBLIC_AUTH_URL: z.url(),
+    NEXT_PUBLIC_URL: z.url(),
   },
 
   runtimeEnv: {
