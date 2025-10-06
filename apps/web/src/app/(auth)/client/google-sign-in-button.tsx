@@ -11,7 +11,7 @@ export default function GoogleSignInButton() {
 
   return (
     <Button
-      className="w-full border-0 bg-white/5 text-foreground backdrop-blur-xs transition-all duration-300 hover:bg-white/10"
+      className="w-full border-0 bg-white py-5 text-gray-900 backdrop-blur-xs transition-all duration-300 hover:bg-gray-50"
       onClick={handleGoogleSignIn}
       variant="outline"
     >

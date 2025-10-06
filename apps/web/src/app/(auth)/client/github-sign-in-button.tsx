@@ -12,7 +12,7 @@ export default function GithubSignInButton() {
 
   return (
     <Button
-      className="w-full border-0 bg-white/5 text-foreground backdrop-blur-xs transition-all duration-300 hover:bg-white/10"
+      className="w-full border-0 bg-black py-6 text-white backdrop-blur-xs transition-all duration-300"
       onClick={handleGithubSignIn}
       variant="outline"
     >

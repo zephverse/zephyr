@@ -1,9 +1,6 @@
-// Prisma schema for the Zephyr database
-
 generator client {
   provider        = "prisma-client-js"
   previewFeatures = ["fullTextSearchPostgres"]
-  binaryTargets   = ["native", "debian-openssl-3.0.x", "linux-arm64-openssl-3.0.x"]
 }
 
 datasource db {
@@ -12,7 +9,6 @@ datasource db {
   directUrl = env("POSTGRES_URL_NON_POOLING")
 }
 
-// User model
 model User {
   id              String    @id @default(cuid())
   aura            Int       @default(0)
@@ -26,6 +22,7 @@ model User {
   githubId        String?   @unique
   discordId       String?   @unique
   twitterId       String?   @unique
+  redditId        String?   @unique
   avatarUrl       String?
   avatarKey       String?
   bio             String?
@@ -34,9 +31,9 @@ model User {
   image           String?
   name            String?
 
-  // Relations
   sessions              Session[]
   accounts              Account[]
+  verifications         Verification[]
   passwordResetTokens   PasswordResetToken[]
   posts                 Post[]
   following             Follow[]             @relation("Following")
@@ -56,7 +53,6 @@ model User {
   @@map("users")
 }
 
-// Aura log model for tracking user's aura
 model AuraLog {
   id        String   @id @default(cuid())
   userId    String
@@ -89,7 +85,6 @@ enum AuraType {
   POST_BOOKMARK_RECEIVED
 }
 
-// Password reset token model
 model PasswordResetToken {
   id        String   @id @default(cuid())
   token     String   @unique
@@ -102,7 +97,6 @@ model PasswordResetToken {
   @@map("password_reset_tokens")
 }
 
-// Session model
 model Session {
   id        String   @id @default(cuid())
   userId    String
@@ -118,7 +112,6 @@ model Session {
   @@map("sessions")
 }
 
-// Account model
 model Account {
   id                    String    @id @default(cuid())
   userId                String
@@ -140,7 +133,20 @@ model Account {
   @@map("accounts")
 }
 
-// Follow model
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("verification")
+}
+
 model Follow {
   followerId  String
   follower    User   @relation("Following", fields: [followerId], references: [id], onDelete: Cascade)
@@ -151,7 +157,6 @@ model Follow {
   @@map("follows")
 }
 
-// Post model
 model Post {
   id                   String         @id @default(cuid())
   content              String
@@ -176,7 +181,6 @@ model Post {
   @@map("posts")
 }
 
-// Tag model for post categorization
 model Tag {
   id        String   @id @default(cuid())
   name      String   @unique
@@ -185,7 +189,6 @@ model Tag {
   posts     Post[]
 }
 
-// Media model for post attachments
 model Media {
   id        String    @id @default(cuid())
   postId    String?
@@ -208,7 +211,6 @@ enum MediaType {
   CODE
 }
 
-// Upvotes & Downvotes model
 model Vote {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -220,7 +222,6 @@ model Vote {
   @@map("votes")
 }
 
-// Bookmark model
 model Bookmark {
   id     String @id @default(cuid())
   userId String
@@ -245,7 +246,6 @@ model HNBookmark {
   @@index([userId])
 }
 
-// Hacker News story share model
 model HNStoryShare {
   id          String   @id @default(cuid())
   postId      String   @unique
@@ -262,7 +262,6 @@ model HNStoryShare {
   @@map("hn_story_shares")
 }
 
-// Comment model
 model Comment {
   id        String    @id @default(cuid())
   content   String
@@ -276,7 +275,6 @@ model Comment {
   @@map("comments")
 }
 
-// Notification model
 model Notification {
   id          String           @id @default(cuid())
   recipientId String
@@ -300,7 +298,6 @@ enum NotificationType {
   MENTION
 }
 
-// Mention user-post model
 model Mention {
   id        String   @id @default(cuid())
   postId    String
@@ -313,7 +310,6 @@ model Mention {
   @@map("mentions")
 }
 
-// ShareStats model
 model ShareStats {
   id        String   @id @default(cuid())
   postId    String
@@ -327,5 +323,3 @@ model ShareStats {
   @@unique([postId, platform])
   @@map("share_stats")
 }
-
-// Prisma schema for the Zephyr database
