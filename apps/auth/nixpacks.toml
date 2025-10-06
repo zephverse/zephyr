@@ -2,22 +2,11 @@
 nixPkgs = ["nodejs", "bun", "openssl"]
 workdir = "/app"
 
-# [phases.install]
-# cmds = ["bun install"]
-
-# [phases.build]
-# cmds = ["bunx turbo build"]
-
-# [start]
-# cmd = "bun run start"
-
-# Alternative configuration if build path is set to apps/auth
-
 [phases.install]
-cmds = ["cd ../.. && bun install"]
+cmds = ["bun install"]
 
 [phases.build]
-cmds = ["cd ../.. && bunx turbo build --filter=@zephyr/auth-app"]
+cmds = ["bunx turbo build --filter=@zephyr/auth-app"]
 
 [start]
 cmd = "bun run start"
