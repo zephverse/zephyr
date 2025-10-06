@@ -4,6 +4,7 @@ import Placeholder from "@tiptap/extension-placeholder";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { Loader2, Wind } from "lucide-react";
+import { easeInOut } from "motion";
 import { AnimatePresence, motion } from "motion/react";
 import { type ClipboardEvent, useCallback, useEffect, useState } from "react";
 import { useDropzone } from "react-dropzone";
@@ -47,7 +48,7 @@ const textVariants = {
     x: [0, 2, 0, -2, 0],
     transition: {
       duration: 3,
-      ease: "easeInOut",
+      ease: easeInOut,
       repeat: Number.POSITIVE_INFINITY,
     },
   },
@@ -63,7 +64,6 @@ export default function PostEditor() {
   const { data: userData } = useQuery({
     queryKey: ["user", user.id],
     queryFn: () => kyInstance.get(`/api/users/${user.id}`).json<UserData>(),
-    initialData: user,
     staleTime: 1000 * 60 * 5,
   });
 
@@ -227,7 +227,7 @@ export default function PostEditor() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            <UserAvatar avatarUrl={userData.avatarUrl} />
+            <UserAvatar avatarUrl={userData?.avatarUrl || user.image} />
           </motion.div>
         </div>
         <div className="w-full">
@@ -256,51 +256,52 @@ export default function PostEditor() {
             )}
           </AnimatePresence>
 
-          <motion.div
-            className={cn(
-              "relative rounded-2xl transition-all duration-300",
-              isDragActive && "ring-2 ring-primary ring-offset-2"
-            )}
-            variants={itemVariants}
-            {...rootProps}
-          >
-            <EditorContent
+          <div {...rootProps}>
+            <motion.div
               className={cn(
-                "max-h-[20rem] w-full overflow-y-auto rounded-2xl bg-[hsl(var(--background-alt))] px-5 py-3 text-foreground",
-                "transition-all duration-300 ease-in-out",
-                "focus-within:ring-2 focus-within:ring-primary",
-                isDragActive && "outline-dashed outline-primary"
+                "relative rounded-2xl transition-all duration-300",
+                isDragActive && "ring-2 ring-primary ring-offset-2"
               )}
-              editor={editor}
-              onPaste={onPaste}
-            />
-            {isDragActive && (
-              <motion.div
-                animate={{ opacity: 1 }}
-                className="absolute inset-0 flex items-center justify-center rounded-2xl bg-primary/10 backdrop-blur-sm"
-                exit={{ opacity: 0 }}
-                initial={{ opacity: 0 }}
-              >
-                <p className="font-medium text-lg text-primary">
-                  Drop files here
-                </p>
-              </motion.div>
-            )}
-            {isHnSharing && sharedHnStory && (
-              <div className="mt-3">
-                <HNStoryPreview
-                  onRemoveAction={() => hnShareStore.clearState()}
-                  story={sharedHnStory}
-                />
-              </div>
-            )}
-            {/* Hidden file input for drag & drop - positioned absolutely to avoid interfering with editor clicks */}
-            <input
-              {...getInputProps()}
-              className="pointer-events-none absolute inset-0 opacity-0"
-              style={{ width: 0, height: 0 }}
-            />
-          </motion.div>
+              variants={itemVariants}
+            >
+              <EditorContent
+                className={cn(
+                  "max-h-[20rem] w-full overflow-y-auto rounded-2xl bg-[hsl(var(--background-alt))] px-5 py-3 text-foreground",
+                  "transition-all duration-300 ease-in-out",
+                  "focus-within:ring-2 focus-within:ring-primary",
+                  isDragActive && "outline-dashed outline-primary"
+                )}
+                editor={editor}
+                onPaste={onPaste}
+              />
+              {isDragActive && (
+                <motion.div
+                  animate={{ opacity: 1 }}
+                  className="absolute inset-0 flex items-center justify-center rounded-2xl bg-primary/10 backdrop-blur-sm"
+                  exit={{ opacity: 0 }}
+                  initial={{ opacity: 0 }}
+                >
+                  <p className="font-medium text-lg text-primary">
+                    Drop files here
+                  </p>
+                </motion.div>
+              )}
+              {isHnSharing && sharedHnStory && (
+                <div className="mt-3">
+                  <HNStoryPreview
+                    onRemoveAction={() => hnShareStore.clearState()}
+                    story={sharedHnStory}
+                  />
+                </div>
+              )}
+              {/* Hidden file input for drag & drop - positioned absolutely to avoid interfering with editor clicks */}
+              <input
+                {...getInputProps()}
+                className="pointer-events-none absolute inset-0 opacity-0"
+                style={{ width: 0, height: 0 }}
+              />
+            </motion.div>
+          </div>
         </div>
       </motion.div>
 

@@ -203,10 +203,7 @@ const SuggestedConnections: React.FC = () => {
                         isFollowedByUser: false,
                       }
                     }
-                    size="xs"
-                    // @ts-expect-error
                     userId={connection.id}
-                    variant="outline"
                   />
                 </motion.li>
               ))}
@@ -229,10 +226,9 @@ const SuggestedConnections: React.FC = () => {
       <CardFooter className="border-border/10 border-t p-2">
         <Button
           className="h-7 w-full text-[11px] text-muted-foreground hover:text-primary"
-          // @ts-expect-error
           disabled={isRefreshing}
           onClick={handleRefresh}
-          size="xs"
+          size="sm"
           variant="ghost"
         >
           <RefreshCw

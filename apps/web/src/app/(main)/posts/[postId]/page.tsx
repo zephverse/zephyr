@@ -37,10 +37,10 @@ export async function generateMetadata(props: PageProps) {
   const params = await props.params;
   const { postId } = params;
   const session = await authClient.getSession();
-  if (!session?.user) {
+  if (!session?.data?.user) {
     return {};
   }
-  const post = await getPost(postId, session.user.id);
+  const post = await getPost(postId, session.data.user.id);
 
   return {
     title: `${post.user.displayName}: ${post.content.slice(0, 50)}...`,
@@ -51,9 +51,11 @@ export default async function Page(props: PageProps) {
   const params = await props.params;
   const { postId } = params;
   const session = await authClient.getSession();
-  const userData = session?.user ? await getUserData(session.user.id) : null;
+  const userData = session?.data?.user
+    ? await getUserData(session.data.user.id)
+    : null;
 
-  if (!session?.user) {
+  if (!session?.data?.user) {
     return (
       <p className="text-destructive">
         You&apos;re not logged in. Please log in to view this page.
@@ -61,7 +63,7 @@ export default async function Page(props: PageProps) {
     );
   }
 
-  const post = await getPost(postId, session.user.id);
+  const post = await getPost(postId, session.data.user.id);
 
   return (
     <main className="flex w-full min-w-0 gap-5">
@@ -103,7 +105,7 @@ type UserInfoSidebarProps = {
 async function UserInfoSidebar({ user }: UserInfoSidebarProps) {
   const session = await authClient.getSession();
 
-  if (!session?.user) {
+  if (!session?.data?.user) {
     return null;
   }
 
@@ -131,7 +133,7 @@ async function UserInfoSidebar({ user }: UserInfoSidebarProps) {
           {user.bio}
         </div>
       </Linkify>
-      {user.id !== session.user.id && (
+      {user.id !== session.data.user.id && (
         <FollowButton
           initialState={{
             followers: user._count.followers,

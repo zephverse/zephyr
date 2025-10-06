@@ -114,8 +114,6 @@ const NewUsers: React.FC<NewUsersProps> = () => {
                     isFollowedByUser: false,
                   }
                 }
-                size="sm"
-                // @ts-expect-error
                 userId={user.id}
               />
             </Card>

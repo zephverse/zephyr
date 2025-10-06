@@ -10,7 +10,8 @@ import {
   DialogTitle,
 } from "@zephyr/ui/shadui/dialog";
 import { Hash, Plus } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
+import { easeInOut } from "motion";
+import { AnimatePresence, motion, type Variants } from "motion/react";
 import { useCallback, useEffect, useState } from "react";
 import { cn, formatNumber } from "@/lib/utils";
 import { useUpdateTagsMutation } from "./mutations/tag-mention-mutation";
@@ -35,7 +36,7 @@ const containerVariants = {
   },
 };
 
-const tagVariants = {
+const tagVariants: Variants = {
   initial: { opacity: 0, y: -3 },
   animate: {
     opacity: 1,
@@ -73,7 +74,7 @@ const glowVariants = {
     transition: {
       duration: 2,
       repeat: Number.POSITIVE_INFINITY,
-      ease: "easeInOut",
+      ease: easeInOut,
     },
   },
 };

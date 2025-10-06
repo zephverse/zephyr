@@ -20,22 +20,25 @@ export async function GET(
 
 export async function POST(
   request: Request,
-  { params }: { params: { postId: string } }
+  ctx: { params: Promise<{ postId: string }> }
 ) {
   try {
-    const { user } = await getSessionFromApi();
-    if (!user) {
+    const sessionResponse = await getSessionFromApi();
+    if (!sessionResponse?.user) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const user = sessionResponse.user;
+
     const { userIds } = await request.json();
+    const { postId } = await ctx.params;
 
     const filteredUserIds = Array.isArray(userIds)
       ? userIds.filter((id) => id !== user.id)
       : [];
 
     const post = await prisma.post.findUnique({
-      where: { id: params.postId },
+      where: { id: postId },
       select: { userId: true },
     });
 
@@ -49,13 +52,13 @@ export async function POST(
 
     await prisma.$transaction(async (tx) => {
       await tx.mention.deleteMany({
-        where: { postId: params.postId },
+        where: { postId },
       });
 
       const mentionPromises = filteredUserIds.map((userId: string) =>
         tx.mention.create({
           data: {
-            postId: params.postId,
+            postId,
             userId,
           },
         })
@@ -67,7 +70,7 @@ export async function POST(
             type: NotificationType.MENTION,
             recipientId: userId,
             issuerId: user.id,
-            postId: params.postId,
+            postId,
           },
         })
       );
@@ -77,7 +80,7 @@ export async function POST(
 
     const updatedMentions = await prisma.mention.findMany({
       where: {
-        postId: params.postId,
+        postId,
       },
       include: {
         user: {

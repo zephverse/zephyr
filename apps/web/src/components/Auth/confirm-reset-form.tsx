@@ -1,6 +1,5 @@
 "use client";
 
-// @ts-expect-error - static image import
 import resetImage from "@assets/auth/confirm-reset-image.jpg";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@zephyr/ui/hooks/use-toast";

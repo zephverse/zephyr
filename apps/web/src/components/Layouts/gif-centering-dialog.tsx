@@ -126,6 +126,7 @@ export default function GifCenteringDialog({
               className="absolute inset-0 flex items-center justify-center"
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
             >
+              {/* @ts-expect-error */}
               <Image
                 alt="GIF preview"
                 className="max-w-none"

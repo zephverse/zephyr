@@ -3,6 +3,7 @@
 import loginImage from "@assets/auth/login-image.jpg";
 import signupImage from "@assets/previews/signup.png";
 import { ArrowRight, FileText, Shield } from "lucide-react";
+import type { Variants } from "motion/react";
 import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
@@ -15,7 +16,7 @@ import GithubSignInButton from "./github-sign-in-button";
 import GoogleSignInButton from "./google-sign-in-button";
 import TwitterSignInButton from "./twitter-sign-in-button";
 
-const fadeIn = {
+const fadeIn: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
@@ -26,7 +27,7 @@ const fadeIn = {
   },
 };
 
-const slideIn = {
+const slideIn: Variants = {
   hidden: { x: -100, opacity: 0 },
   visible: {
     x: 0,
@@ -40,7 +41,7 @@ const slideIn = {
   },
 };
 
-const scaleUp = {
+const scaleUp: Variants = {
   hidden: { scale: 0.95, opacity: 0, y: 20 },
   visible: {
     scale: 1,
@@ -55,7 +56,7 @@ const scaleUp = {
   },
 };
 
-const contentAnimation = {
+const contentAnimation: Variants = {
   hidden: { opacity: 0, y: 20 },
   visible: (custom: number) => ({
     opacity: 1,

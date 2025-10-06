@@ -1,7 +1,7 @@
 import { debugLog } from "@zephyr/config/debug";
 import { type FollowerInfo, followerInfoCache, prisma } from "@zephyr/db";
 import { getSessionFromApi } from "@/lib/session";
-import { suggestedUsersCache } from "../../suggested/route";
+import { suggestedUsersCache } from "@/lib/suggested-users-cache";
 
 const FOLLOW_AURA_REWARD = 5;
 

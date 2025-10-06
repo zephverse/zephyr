@@ -1,19 +1,24 @@
 import { Button } from "@zephyr/ui/shadui/button";
 import { useId } from "react";
+import { authClient } from "@/lib/auth";
 
 export default function TwitterSignInButton() {
+  const handleTwitterSignIn = async () => {
+    await authClient.signIn.social({
+      provider: "twitter",
+      callbackURL: "/",
+    });
+  };
+
   return (
     <Button
-      asChild
       className="w-full border-0 bg-white/5 text-foreground backdrop-blur-xs transition-all duration-300 hover:bg-white/10"
+      onClick={handleTwitterSignIn}
       variant="outline"
     >
-      <a
-        className="flex items-center justify-center py-6"
-        href="/login/twitter"
-      >
+      <div className="flex items-center justify-center py-6">
         <TwitterIcon />
-      </a>
+      </div>
     </Button>
   );
 }

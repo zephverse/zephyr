@@ -1,13 +1,37 @@
 import type { AuthContext } from "@zephyr/auth/core";
+import { prisma } from "@zephyr/db";
 import type { NextRequest } from "next/server";
 import { auth } from "./config";
 
 export async function getSessionFromRequest(
   req: Request | NextRequest
 ): Promise<AuthContext> {
-  const authRequest = auth.authRequest(req);
-  const session = await authRequest.validate();
-  return { session, user: session?.user ?? null };
+  try {
+    const session = await auth.api.getSession({
+      headers: req.headers,
+    });
+
+    if (!session) {
+      return { session: null, user: null };
+    }
+
+    // Fetch username from database
+    const userData = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { username: true },
+    });
+
+    return {
+      session: session.session,
+      user: {
+        ...session.user,
+        username: userData?.username || "",
+      },
+    };
+  } catch (error) {
+    console.error("Error getting session:", error);
+    return { session: null, user: null };
+  }
 }
 
 export async function requireAuth(req: Request | NextRequest): Promise<{

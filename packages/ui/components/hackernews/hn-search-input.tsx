@@ -1,8 +1,7 @@
 "use client";
 
-// @ts-expect-error - no types available
 import { Search, X } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion, type Variants } from "motion/react";
 import { useRef, useState } from "react";
 import { cn } from "../../lib/utils";
 import { Input } from "../../shadui/input";
@@ -14,7 +13,7 @@ type HnSearchInputProps = {
   className?: string;
 };
 
-const searchVariants = {
+const searchVariants: Variants = {
   initial: { scale: 0.95, opacity: 0 },
   animate: {
     scale: 1,

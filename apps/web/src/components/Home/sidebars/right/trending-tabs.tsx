@@ -32,7 +32,7 @@ const TabContent = ({ activeTab }: { activeTab: TabId }) => (
             return <TrendingTopics />;
           case "tags":
             return <TagsBar />;
-          case "users":
+          case "mentions":
             return <MentionedUsersBar />;
           default:
             return <TrendingTopics />;

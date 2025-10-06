@@ -1,6 +1,5 @@
 "use client";
 
-// @ts-expect-error - no types
 import resetImage from "@assets/auth/password-reset-image.jpg";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@zephyr/ui/hooks/use-toast";
@@ -14,6 +13,7 @@ import {
 } from "@zephyr/ui/shadui/form";
 import { Input } from "@zephyr/ui/shadui/input";
 import { ArrowLeft, KeyRound, Mail } from "lucide-react";
+import { easeInOut } from "motion";
 import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
@@ -55,11 +55,6 @@ const floatAnimation = {
   initial: { y: 0 },
   animate: {
     y: [-10, 10, -10],
-    transition: {
-      duration: 6,
-      repeat: Number.POSITIVE_INFINITY,
-      ease: "easeInOut",
-    },
   },
 };
 
@@ -245,6 +240,11 @@ export default function ResetPasswordForm() {
                         animate="animate"
                         className="mb-6 inline-block"
                         initial="initial"
+                        transition={{
+                          duration: 6,
+                          repeat: Number.POSITIVE_INFINITY,
+                          ease: easeInOut,
+                        }}
                         variants={floatAnimation}
                       >
                         <div className="rounded-full bg-blue-400/10 p-4">

@@ -34,6 +34,10 @@ export function createAuthConfig(config: AuthConfig = {}) {
         name: "displayName",
       },
       additionalFields: {
+        username: {
+          type: "string",
+          required: true,
+        },
         displayUsername: {
           type: "string",
           required: false,
@@ -96,6 +100,10 @@ export function createAuthConfig(config: AuthConfig = {}) {
       discord: {
         clientId: env.DISCORD_CLIENT_ID || "",
         clientSecret: env.DISCORD_CLIENT_SECRET || "",
+      },
+      twitter: {
+        clientId: env.TWITTER_CLIENT_ID || "",
+        clientSecret: env.TWITTER_CLIENT_SECRET || "",
       },
     },
 

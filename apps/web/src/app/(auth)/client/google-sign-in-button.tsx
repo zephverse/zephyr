@@ -1,19 +1,24 @@
 import { Button } from "@zephyr/ui/shadui/button";
+import { authClient } from "@/lib/auth";
 
 export default function GoogleSignInButton() {
+  const handleGoogleSignIn = async () => {
+    await authClient.signIn.social({
+      provider: "google",
+      callbackURL: "/",
+    });
+  };
+
   return (
     <Button
-      asChild
       className="w-full border-0 bg-white/5 text-foreground backdrop-blur-xs transition-all duration-300 hover:bg-white/10"
+      onClick={handleGoogleSignIn}
       variant="outline"
     >
-      <a
-        className="flex items-center justify-center gap-3 py-6"
-        href="/login/google"
-      >
+      <div className="flex items-center justify-center gap-3 py-6">
         <GoogleIcon />
         <span className="font-medium">Continue with Google</span>
-      </a>
+      </div>
     </Button>
   );
 }

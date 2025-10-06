@@ -25,9 +25,9 @@ type FileButtonProps = {
   label: string;
   type: FileButtonType;
   accept: string;
-  inputRef: RefObject<HTMLInputElement>;
+  inputRef: RefObject<HTMLInputElement | null>;
   buttonType: FileButtonType;
-  capture?: string;
+  capture?: boolean | "user" | "environment";
   hoveredButton: FileButtonType | null;
   setHoveredButton: (button: FileButtonType | null) => void;
   isMobile: boolean;
@@ -115,7 +115,6 @@ const FileButton = ({
           <input
             accept={accept}
             capture={capture}
-            // @ts-expect-error
             className="sr-only"
             multiple
             onChange={(e) => {
@@ -144,7 +143,6 @@ const FileButton = ({
           <input
             accept={accept}
             capture={capture}
-            // @ts-expect-error
             className="sr-only"
             multiple
             onChange={(e) => {
@@ -162,10 +160,10 @@ const FileButton = ({
 
 export function FileInput({ onFilesSelected, disabled }: FileInputProps) {
   const isMobile = useIsMobile();
-  const imageInputRef = useRef<HTMLInputElement>(null);
-  const audioInputRef = useRef<HTMLInputElement>(null);
-  const documentInputRef = useRef<HTMLInputElement>(null);
-  const codeInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
+  const audioInputRef = useRef<HTMLInputElement | null>(null);
+  const documentInputRef = useRef<HTMLInputElement | null>(null);
+  const codeInputRef = useRef<HTMLInputElement | null>(null);
 
   const [hoveredButton, setHoveredButton] = useState<FileButtonType | null>(
     null
@@ -192,7 +190,6 @@ export function FileInput({ onFilesSelected, disabled }: FileInputProps) {
             icon={ImageIcon}
             inputRef={imageInputRef}
             isMobile={isMobile}
-            // @ts-expect-error
             label="Photos & Videos"
             setHoveredButton={setHoveredButton}
             type="image"
@@ -207,7 +204,6 @@ export function FileInput({ onFilesSelected, disabled }: FileInputProps) {
             icon={FileAudioIcon}
             inputRef={audioInputRef}
             isMobile={isMobile}
-            // @ts-expect-error
             label="Audio Files"
             setHoveredButton={setHoveredButton}
             type="audio"
@@ -221,7 +217,6 @@ export function FileInput({ onFilesSelected, disabled }: FileInputProps) {
             icon={FileIcon}
             inputRef={documentInputRef}
             isMobile={isMobile}
-            // @ts-expect-error
             label="Documents"
             setHoveredButton={setHoveredButton}
             type="document"
@@ -235,7 +230,6 @@ export function FileInput({ onFilesSelected, disabled }: FileInputProps) {
             icon={FileCode}
             inputRef={codeInputRef}
             isMobile={isMobile}
-            // @ts-expect-error
             label="Code Files"
             setHoveredButton={setHoveredButton}
             type="code"
@@ -254,7 +248,6 @@ export function FileInput({ onFilesSelected, disabled }: FileInputProps) {
               icon={ImageIcon}
               inputRef={imageInputRef}
               isMobile={isMobile}
-              // @ts-expect-error
               label="Photos & Videos"
               setHoveredButton={setHoveredButton}
               type="image"
@@ -269,7 +262,6 @@ export function FileInput({ onFilesSelected, disabled }: FileInputProps) {
               icon={FileAudioIcon}
               inputRef={audioInputRef}
               isMobile={isMobile}
-              // @ts-expect-error
               label="Audio Files"
               setHoveredButton={setHoveredButton}
               type="audio"
@@ -283,7 +275,6 @@ export function FileInput({ onFilesSelected, disabled }: FileInputProps) {
               icon={FileIcon}
               inputRef={documentInputRef}
               isMobile={isMobile}
-              // @ts-expect-error
               label="Documents"
               setHoveredButton={setHoveredButton}
               type="document"
@@ -297,7 +288,6 @@ export function FileInput({ onFilesSelected, disabled }: FileInputProps) {
               icon={FileCode}
               inputRef={codeInputRef}
               isMobile={isMobile}
-              // @ts-expect-error
               label="Code Files"
               setHoveredButton={setHoveredButton}
               type="code"

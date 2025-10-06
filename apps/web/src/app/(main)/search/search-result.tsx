@@ -101,7 +101,6 @@ export default function SearchResults({ query }: SearchResultsProps) {
                   animate={{ opacity: 1, y: 0 }}
                   className="rounded-xl border bg-card transition-colors hover:bg-muted"
                   initial={{ opacity: 0, y: 20 }}
-                  // @ts-expect-error
                   key={post.id}
                 >
                   <Post post={post} />

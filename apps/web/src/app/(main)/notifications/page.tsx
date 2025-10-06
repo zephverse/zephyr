@@ -12,9 +12,13 @@ export const metadata: Metadata = {
   title: "Rustles",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function Page() {
   const session = await authClient.getSession();
-  const userData = session?.user ? await getUserData(session.user.id) : null;
+  const userData = session?.data?.user
+    ? await getUserData(session.data.user.id)
+    : null;
 
   return (
     <main className="flex w-full min-w-0 gap-5">

@@ -7,11 +7,12 @@ import {
   Sparkles,
   Wand,
 } from "lucide-react";
+import type { Variants } from "motion/react";
 import { motion } from "motion/react";
 import type React from "react";
 import { FossBanner } from "@/components/misc/foss-banner";
 
-const floatingAnimation = {
+const floatingAnimation: Variants = {
   initial: { y: 0 },
   animate: {
     y: [-10, 10, -10],
@@ -23,7 +24,7 @@ const floatingAnimation = {
   },
 };
 
-const iconAnimation = {
+const iconAnimation: Variants = {
   initial: { scale: 0, rotate: -180 },
   animate: {
     scale: 1,
@@ -36,7 +37,7 @@ const iconAnimation = {
   },
 };
 
-const textAnimation = {
+const textAnimation: Variants = {
   initial: { opacity: 0, y: 20 },
   animate: {
     opacity: 1,
@@ -48,7 +49,7 @@ const textAnimation = {
   },
 };
 
-const containerAnimation = {
+const containerAnimation: Variants = {
   initial: { opacity: 0 },
   animate: {
     opacity: 1,

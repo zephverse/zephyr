@@ -302,7 +302,8 @@ const ShareButton = ({
         const svgData = new XMLSerializer().serializeToString(svg);
         const canvas = document.createElement("canvas");
         const ctx = canvas.getContext("2d");
-        const img = new Image();
+        // biome-ignore lint/suspicious/noExplicitAny: <img> is not in lib.dom.d.ts
+        const img = new (Image as any)();
         img.onload = () => {
           canvas.width = img.width;
           canvas.height = img.height;

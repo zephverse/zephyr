@@ -12,7 +12,7 @@ import { authClient } from "@/lib/auth";
 export async function deletePost(id: string) {
   const session = await authClient.getSession();
 
-  if (!session?.user) {
+  if (!session?.data?.user) {
     throw new Error("Unauthorized");
   }
 
@@ -24,13 +24,13 @@ export async function deletePost(id: string) {
     throw new Error("Post not found");
   }
 
-  if (post.userId !== session.user.id) {
+  if (post.userId !== session.data.user.id) {
     throw new Error("Unauthorized");
   }
 
   const deletedPost = await prisma.post.delete({
     where: { id },
-    include: getPostDataInclude(session.user.id),
+    include: getPostDataInclude(session.data.user.id),
   });
 
   try {

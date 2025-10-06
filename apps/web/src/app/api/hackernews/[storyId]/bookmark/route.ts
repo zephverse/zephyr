@@ -9,11 +9,13 @@ export async function GET(
   const { storyId } = params;
 
   try {
-    const { user: loggedInUser } = await getSessionFromApi();
+    const sessionResponse = await getSessionFromApi();
 
-    if (!loggedInUser) {
+    if (!sessionResponse?.user) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const loggedInUser = sessionResponse.user;
 
     const bookmark = await prisma.hNBookmark.findUnique({
       where: {

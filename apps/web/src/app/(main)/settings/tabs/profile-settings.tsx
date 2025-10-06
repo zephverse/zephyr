@@ -61,7 +61,6 @@ export default function ProfileSettings({ user }: ProfileSettingsProps) {
       animate={{ opacity: 1, y: 0 }}
       className="space-y-6"
       initial={{ opacity: 0, y: 20 }}
-      // @ts-expect-error
       transition={{ duration: 0.3 }}
     >
       <div className="relative overflow-hidden rounded-lg border border-border/50 bg-background/30 p-6 backdrop-blur-md">
@@ -135,7 +134,6 @@ export default function ProfileSettings({ user }: ProfileSettingsProps) {
               animate={{ opacity: 1, y: 0 }}
               className="pt-2"
               initial={{ opacity: 0, y: 20 }}
-              // @ts-expect-error
               transition={{ delay: 0.3 }}
             >
               <LoadingButton

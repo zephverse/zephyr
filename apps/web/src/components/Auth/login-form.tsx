@@ -77,8 +77,6 @@ export default function LoginForm() {
 
       if (result.error) {
         handleLoginError(result.error);
-      } else if (result.emailVerification) {
-        handleEmailVerification(result.emailVerification);
       } else if (result.success) {
         handleLoginSuccess();
       }
@@ -110,22 +108,6 @@ export default function LoginForm() {
       ),
       duration: 5000,
     });
-  }
-
-  function handleEmailVerification(emailVerification: {
-    email: string;
-    isNewToken: boolean;
-  }) {
-    setUnverifiedEmail(emailVerification.email);
-    if (emailVerification.isNewToken) {
-      setIsVerificationEmailSent(true);
-      toast({
-        title: "Verify Your Email!",
-        description:
-          "Check your inbox for the verification email, it's in there somewhere!",
-        duration: 5000,
-      });
-    }
   }
 
   function handleLoginSuccess() {

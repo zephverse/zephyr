@@ -10,10 +10,12 @@ export async function GET(
   const { postId } = params;
 
   try {
-    const { user: loggedInUser } = await getSessionFromApi();
-    if (!loggedInUser) {
+    const sessionResponse = await getSessionFromApi();
+    if (!sessionResponse?.user) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const loggedInUser = sessionResponse.user;
 
     const bookmark = await prisma.bookmark.findUnique({
       where: {

@@ -107,16 +107,14 @@ export default function UserButton({
         };
       } catch (_error) {
         return {
-          url: user.avatarUrl ? getSecureImageUrl(user.avatarUrl) : null,
-          // @ts-expect-error
-          key: user.avatarKey,
+          url: user.image ? getSecureImageUrl(user.image) : null,
+          key: null,
         };
       }
     },
     initialData: {
-      url: user.avatarUrl ? getSecureImageUrl(user.avatarUrl) : null,
-      // @ts-expect-error
-      key: user.avatarKey,
+      url: user.image ? getSecureImageUrl(user.image) : null,
+      key: null,
     },
     staleTime: 1000 * 60 * 5,
   });
@@ -301,7 +299,7 @@ export default function UserButton({
             >
               <DropdownMenuLabel className="relative font-normal">
                 <div className="flex flex-col space-y-1 p-2">
-                  {user.displayName && (
+                  {user.name && (
                     <motion.div
                       variants={{
                         closed: { opacity: 0, x: -20 },
@@ -317,7 +315,7 @@ export default function UserButton({
                       }}
                     >
                       <p className="font-medium text-sm leading-none">
-                        {user.displayName}
+                        {user.name}
                       </p>
                     </motion.div>
                   )}

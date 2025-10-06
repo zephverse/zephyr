@@ -103,9 +103,9 @@ export default function PostMoreButton({
         <DialogContent>
           <DialogTitle>Edit Mentions</DialogTitle>
           <MentionTags
-            // @ts-expect-error
             isOwner={true}
-            mentions={mentions}
+            // biome-ignore lint/suspicious/noExplicitAny: ignore
+            mentions={mentions as any}
             onMentionsChange={handleMentionsUpdate}
             postId={post.id}
           />

@@ -50,7 +50,7 @@ export async function resetPassword(data: z.infer<typeof resetPasswordSchema>) {
 
     await authClient.resetPassword({
       token,
-      password,
+      newPassword: password,
       fetchOptions: {
         onSuccess: () => {
           // Password reset successfully

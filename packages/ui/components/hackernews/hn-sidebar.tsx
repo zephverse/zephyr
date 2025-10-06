@@ -11,9 +11,8 @@ import {
   RefreshCw,
   Search,
   TrendingUp,
-  // @ts-expect-error - lucide-react is not typed
 } from "lucide-react";
-import { motion } from "motion/react";
+import { motion, type Variants } from "motion/react";
 import { cn } from "../../lib/utils";
 import { Button } from "../../shadui/button";
 import { Card } from "../../shadui/card";
@@ -54,7 +53,7 @@ type HnSidebarProps = {
   onRefreshAction: () => void;
 };
 
-const sidebarVariants = {
+const sidebarVariants: Variants = {
   hidden: { x: -50, opacity: 0 },
   visible: {
     x: 0,

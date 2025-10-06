@@ -9,9 +9,11 @@ const emailSchema = z.object({
 export async function PATCH(request: Request) {
   try {
     const session = await authClient.getSession();
-    if (!session?.user) {
+    if (!session?.data?.user) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const user = session.data.user;
 
     const body = await request.json();
     const { email } = emailSchema.parse(body);
@@ -20,7 +22,7 @@ export async function PATCH(request: Request) {
     const existingUser = await prisma.user.findFirst({
       where: {
         email: { equals: email, mode: "insensitive" },
-        id: { not: session.user.id },
+        id: { not: user.id },
       },
     });
 
@@ -33,7 +35,7 @@ export async function PATCH(request: Request) {
 
     // Update email in database and mark as unverified
     await prisma.user.update({
-      where: { id: session.user.id },
+      where: { id: user.id },
       data: {
         email,
         emailVerified: false,

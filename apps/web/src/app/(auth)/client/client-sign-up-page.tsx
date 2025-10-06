@@ -2,12 +2,13 @@
 
 import signupImage from "@assets/auth/signup-image.jpg";
 import loginImage from "@assets/previews/login.png";
+import type { Variants } from "motion/react";
 import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
 import AnimatedAuthLink from "@/components/Auth/animated-auth-link";
 import SignUpForm from "@/components/Auth/sign-up-form";
 
-const fadeIn = {
+const fadeIn: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
@@ -18,7 +19,7 @@ const fadeIn = {
   },
 };
 
-const slideIn = {
+const slideIn: Variants = {
   hidden: { x: 100, opacity: 0 },
   visible: {
     x: 0,
@@ -32,7 +33,7 @@ const slideIn = {
   },
 };
 
-const scaleUp = {
+const scaleUp: Variants = {
   hidden: { scale: 0.95, opacity: 0, y: 20 },
   visible: {
     scale: 1,
@@ -47,7 +48,7 @@ const scaleUp = {
   },
 };
 
-const contentAnimation = {
+const contentAnimation: Variants = {
   hidden: { opacity: 0, y: 20 },
   visible: (custom: number) => ({
     opacity: 1,

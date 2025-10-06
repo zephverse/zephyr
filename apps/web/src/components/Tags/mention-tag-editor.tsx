@@ -5,13 +5,13 @@ import { useToast } from "@zephyr/ui/hooks/use-toast";
 import { Button } from "@zephyr/ui/shadui/button";
 import { Command } from "cmdk";
 import { Loader2, Search, X } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion, type Variants } from "motion/react";
 import { useState } from "react";
 import { useSession } from "@/app/(main)/session-provider";
 import { useUpdateMentionsMutation } from "@/posts/editor/mutations";
 import UserAvatar from "../Layouts/user-avatar";
 
-const tagVariants = {
+const tagVariants: Variants = {
   initial: { opacity: 0, scale: 0.9, y: -10 },
   animate: {
     opacity: 1,

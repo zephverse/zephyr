@@ -24,6 +24,6 @@ export const siteConfig = {
   creator: "Harsh Sahu",
   links: {
     github: "https://github.com/zephverse/zephyr",
-    twitter: "https://twitter.com/hashcodes_",
+    twitter: "https://twitter.com/parazeeknova",
   },
 } as const;

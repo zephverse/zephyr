@@ -1,7 +1,5 @@
 import {
   type InfiniteData,
-  type QueryFilters,
-  type QueryKey,
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
@@ -48,12 +46,7 @@ export function useSubmitPostMutation() {
       return response;
     },
     onSuccess: async (newPost) => {
-      const queryFilter: QueryFilters<
-        InfiniteData<PostsPage, string | null>,
-        Error,
-        InfiniteData<PostsPage, string | null>,
-        QueryKey
-      > = { queryKey: ["post-feed", "for-you"] };
+      const queryFilter = { queryKey: ["post-feed", "for-you"] };
 
       await queryClient.cancelQueries(queryFilter);
 

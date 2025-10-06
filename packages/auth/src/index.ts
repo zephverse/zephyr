@@ -9,3 +9,9 @@ export {
   type UpdateUserProfileValues,
   updateUserProfileSchema,
 } from "./validation/schemas";
+export {
+  type EmailValidationOptions,
+  type EmailValidationResult,
+  validateEmailAdvanced,
+  validateEmailBasic,
+} from "./validation/server-validation";

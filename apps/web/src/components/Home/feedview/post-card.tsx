@@ -66,7 +66,8 @@ const PostCard: React.FC<PostCardProps> = ({
         <div className="mt-2 mb-3">
           <MentionTags
             isOwner={post.user.id === user.id}
-            mentions={post.mentions.map((m) => m.user)}
+            // biome-ignore lint/suspicious/noExplicitAny: Post.mentions comes from the database and is typed as 'any' there
+            mentions={post.mentions.map((m) => m.user as any)}
             onMentionsChange={(newMentions) => {
               handlePostUpdate({
                 ...post,

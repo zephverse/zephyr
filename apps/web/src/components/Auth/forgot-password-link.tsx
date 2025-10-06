@@ -1,6 +1,5 @@
 "use client";
 
-// @ts-expect-error - no types
 import resetPasswordImage from "@assets/previews/passwordreset.png";
 import { HelpLink } from "../Animations/image-link-preview";
 

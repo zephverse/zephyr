@@ -22,7 +22,7 @@ type MobileUserMenuProps = {
   onCloseAction: () => void;
   user: {
     id: string;
-    username: string;
+    username?: string;
     email?: string;
     bio?: string;
     avatarUrl?: string | null;
@@ -134,7 +134,7 @@ export function MobileUserMenu({
                     >
                       <div className="-inset-4 absolute rounded-full bg-gradient-to-r from-primary/20 via-primary/30 to-primary/20 opacity-75 blur-md" />
                       <Link
-                        href={`/users/${user.username}`}
+                        href={`/users/${user.username || user.id}`}
                         onClick={onCloseAction}
                       >
                         <UserAvatar
@@ -150,7 +150,7 @@ export function MobileUserMenu({
                         {user.displayName}
                       </h3>
                       <p className="text-muted-foreground text-sm">
-                        @{user.username}
+                        {user.username ? `@${user.username}` : user.email}
                       </p>
                       {user.bio && (
                         <div className="mt-2 flex items-center justify-center gap-1 text-muted-foreground/60">
@@ -173,7 +173,7 @@ export function MobileUserMenu({
                     }}
                   >
                     <MobileMenuItem
-                      href={`/users/${user.username}`}
+                      href={`/users/${user.username || user.id}`}
                       icon={<UserIcon className="size-5" />}
                       label="Profile"
                       onClick={onCloseAction}

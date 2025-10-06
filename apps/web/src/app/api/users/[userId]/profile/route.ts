@@ -3,11 +3,12 @@ import { getSessionFromApi } from "@/lib/session";
 
 export async function PATCH(
   request: Request,
-  props: { params: { userId: string } }
+  ctx: { params: Promise<{ userId: string }> }
 ) {
+  const { userId } = await ctx.params;
   const session = await getSessionFromApi();
   const user = session?.user;
-  if (!user || user.id !== props.params.userId) {
+  if (!user || user.id !== userId) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
   const body = await request.json();

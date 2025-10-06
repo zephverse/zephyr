@@ -3,7 +3,7 @@ import { getSessionFromApi } from "@/lib/session";
 
 export async function GET(
   _req: Request,
-  props: { params: { userId: string } }
+  ctx: { params: Promise<{ userId: string }> }
 ) {
   try {
     const session = await getSessionFromApi();
@@ -12,11 +12,13 @@ export async function GET(
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { userId } = await ctx.params;
+
     const following = await prisma.user.findMany({
       where: {
         followers: {
           some: {
-            followerId: props.params.userId,
+            followerId: userId,
           },
         },
       },

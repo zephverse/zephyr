@@ -1,4 +1,4 @@
-import { validateEmailAdvanced } from "@zephyr/auth/validation";
+import { validateEmailAdvanced } from "@zephyr/auth";
 import { Resend } from "resend";
 import { env } from "../../env";
 import { emailConfig } from "./config";

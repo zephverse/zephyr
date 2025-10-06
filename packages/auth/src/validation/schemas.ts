@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { validateEmailBasic } from "./email-validator";
 
 const threerepeatRegex = /(.)\1{2,}/;
 const commonsequencesRegex = /(?:abc|123|qwe|xyz)/i;
@@ -19,16 +18,7 @@ const requiredPassword = z
 const requiredString = z.string().trim().min(1, "This field is required!");
 
 export const signUpSchema = z.object({
-  email: requiredEmail.refine(
-    async (email) => {
-      const validation = await validateEmailBasic(email);
-      return validation.isValid;
-    },
-    {
-      message:
-        "This email doesn't pass our validation checks. Please use a real email address.",
-    }
-  ),
+  email: requiredEmail.email("Please enter a valid email address"),
   username: requiredUsername.regex(
     /^[a-zA-Z0-9_]+$/,
     "Username can only contain letters, numbers, and underscores (no weird symbols pls)"

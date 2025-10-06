@@ -76,7 +76,6 @@ export default function ContributeCard({ isCollapsed }: ContributeCardProps) {
         <motion.div
           animate={{ opacity: 1 }}
           className="border-t pt-2"
-          // @ts-expect-error
           initial={false}
         >
           <Button asChild className="w-full gap-2" size="sm" variant="outline">

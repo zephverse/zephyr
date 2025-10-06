@@ -6,13 +6,13 @@ import { useToast } from "@zephyr/ui/hooks/use-toast";
 import { Button } from "@zephyr/ui/shadui/button";
 import { Command } from "cmdk";
 import { Hash, Loader2, Plus, Search, X } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion, type Variants } from "motion/react";
 import { useState } from "react";
 import { useTags } from "@/hooks/use-tags";
 import { cn } from "@/lib/utils";
 import { useUpdateTagsMutation } from "./mutations/tag-mention-mutation";
 
-const tagVariants = {
+const tagVariants: Variants = {
   initial: { opacity: 0, scale: 0.9, y: -10 },
   animate: {
     opacity: 1,

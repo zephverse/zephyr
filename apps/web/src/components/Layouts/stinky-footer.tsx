@@ -38,7 +38,7 @@ const StickyFooter: React.FC = () => (
       </a>
       <a
         className="hover:text-foreground hover:underline"
-        href="https://x.com/hashcodes_"
+        href="https://x.com/parazeeknova"
         rel="noopener noreferrer"
         target="_blank"
       >
