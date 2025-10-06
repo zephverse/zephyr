@@ -7,6 +7,7 @@ COPY packages/db/prisma ./packages/db/prisma
 RUN bunx prisma generate --schema packages/db/prisma/schema.prisma
 
 FROM oven/bun:latest AS runtime
+RUN apt-get update -y && apt-get install -y openssl
 WORKDIR /app
 COPY --from=base /app/node_modules ./node_modules
 COPY --from=base /app/packages/db/prisma ./packages/db/prisma
