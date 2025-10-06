@@ -1,4 +1,5 @@
 FROM oven/bun:latest AS base
+RUN apt-get update -y && apt-get install -y openssl
 WORKDIR /app
 COPY package.json bun.lock ./
 COPY packages/ ./packages/

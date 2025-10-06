@@ -1,4 +1,5 @@
 FROM oven/bun:latest AS base
+RUN apt-get update -y && apt-get install -y openssl
 WORKDIR /app
 COPY docker/prisma-package.json ./package.json
 RUN bun install
