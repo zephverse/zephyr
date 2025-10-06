@@ -123,14 +123,17 @@ export function createAuthConfig(config: AuthConfig = {}) {
     },
 
     advanced: {
-      useSecureCookies: false,
-      generateId: crypto.randomUUID,
+      useSecureCookies: environment === "production",
+      database: {
+        generateId: crypto.randomUUID,
+      },
     },
 
     trustedOrigins: [
       env.NEXT_PUBLIC_URL,
       "http://localhost:3000",
       "http://localhost:3001",
+      "https://zephyyrr.in",
     ],
 
     telemetry: {

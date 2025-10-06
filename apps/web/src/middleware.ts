@@ -1,63 +1,49 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-const PUBLIC_PATHS = new Set([
-  "/login",
-  "/signup",
-  "/verify-email",
-  "/reset-password",
-]);
-
-const PROTECTED_PREFIXES = [
-  "/",
-  "/compose",
-  "/settings",
-  "/discover",
-  "/bookmarks",
-  "/notifications",
-  "/users",
-  "/posts",
-  "/search",
-];
-
 function isProtectedPath(pathname: string): boolean {
-  if (PUBLIC_PATHS.has(pathname)) {
+  if (
+    pathname.startsWith("/api/") ||
+    pathname.startsWith("/_next") ||
+    pathname === "/favicon.ico"
+  ) {
     return false;
   }
-  if (pathname.startsWith("/api/")) {
-    return false;
-  }
-  if (pathname.startsWith("/_next")) {
-    return false;
-  }
-  if (pathname === "/favicon.ico") {
-    return false;
-  }
-  return PROTECTED_PREFIXES.some(
-    (p) => pathname === p || pathname.startsWith(`${p}/`)
-  );
+  return pathname === "/";
 }
 
 export async function middleware(request: NextRequest) {
-  const { pathname, origin, search } = request.nextUrl;
+  const { pathname, search } = request.nextUrl;
+
+  if (
+    process.env.NODE_ENV === "production" &&
+    request.headers.get("x-forwarded-proto") !== "https"
+  ) {
+    return NextResponse.redirect(
+      `https://${request.headers.get("host")}${request.nextUrl.pathname}${request.nextUrl.search}`,
+      301
+    );
+  }
+
   if (!isProtectedPath(pathname)) {
     return NextResponse.next();
   }
 
   try {
+    const authBase =
+      process.env.NEXT_PUBLIC_AUTH_URL || "http://localhost:3001";
     const cookie = request.headers.get("cookie") || "";
-    const res = await fetch(`${origin}/api/auth/get-session`, {
+    const res = await fetch(`${authBase}/api/auth/get-session`, {
       method: "GET",
       headers: cookie ? { cookie } : {},
       credentials: "include",
       cache: "no-store",
     });
-    if (!res.ok) {
-      throw new Error("session-fetch-failed");
-    }
-    const data = (await res.json()) as { user?: unknown } | null;
-    if (data && (data as { user?: unknown }).user) {
-      return NextResponse.next();
+    if (res.ok) {
+      const data = (await res.json()) as { user?: unknown; session?: unknown };
+      if (data?.user && data?.session) {
+        return NextResponse.next();
+      }
     }
   } catch {
     // ignore and fallthrough to redirect

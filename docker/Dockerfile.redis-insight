@@ -1,0 +1,5 @@
+FROM redislabs/redisinsight:latest AS base
+
+FROM redislabs/redisinsight:latest AS runtime
+EXPOSE 5540
+CMD ["./redisinsight"]
