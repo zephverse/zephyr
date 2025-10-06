@@ -11,6 +11,7 @@
   "scripts": {
     "check": "biome check --write .",
     "dev": "turbo dev",
+    "postinstall": "cd packages/db && bunx prisma generate && cd ../..",
     "build": "bun run check && turbo build",
     "dep:check": "bunx sherif@latest",
     "dep:fix": "bunx sherif@latest --fix",
