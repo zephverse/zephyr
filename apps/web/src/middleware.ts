@@ -44,6 +44,15 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Fast-path: if Better Auth session cookie is present, allow without network call
+  const rawCookie = request.headers.get("cookie") || "";
+  if (
+    rawCookie.includes("__Secure-better-auth.session_token=") ||
+    rawCookie.includes("better-auth.session_token=")
+  ) {
+    return NextResponse.next();
+  }
+
   try {
     const cookie = request.headers.get("cookie") || "";
     const res = await fetch(`${origin}/api/auth/get-session`, {
