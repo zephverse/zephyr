@@ -10,6 +10,7 @@ WORKDIR /app/apps/web
 RUN bun run build
 
 FROM oven/bun:latest AS runtime
+RUN apt-get update -y && apt-get install -y openssl
 WORKDIR /app
 COPY --from=base /app/node_modules ./node_modules
 COPY --from=base /app/packages ./packages

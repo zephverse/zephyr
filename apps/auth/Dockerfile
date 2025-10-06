@@ -11,6 +11,7 @@ RUN bun run build
 
 FROM oven/bun:latest AS runtime
 WORKDIR /app
+RUN apt-get update -y && apt-get install -y openssl
 COPY --from=base /app/node_modules ./node_modules
 COPY --from=base /app/packages ./packages
 COPY --from=base /app/apps/auth ./apps/auth
