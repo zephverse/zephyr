@@ -102,6 +102,9 @@ async function proxy(request: NextRequest) {
       }
     }
 
+    responseHeaders.set("cache-control", "no-store, private, max-age=0");
+    responseHeaders.append("vary", "cookie");
+
     return new Response(body, {
       status: upstream.status,
       statusText: upstream.statusText,
