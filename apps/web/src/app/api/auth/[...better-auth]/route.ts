@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 
 const AUTH_BASE = process.env.NEXT_PUBLIC_AUTH_URL || "http://localhost:3001";
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: cross origin cookie rewriting is complex by nature
 async function proxy(request: NextRequest) {
   const url = new URL(request.url);
   const target = new URL(AUTH_BASE);
@@ -61,18 +62,15 @@ async function proxy(request: NextRequest) {
     function rewriteCookieDomain(cookieStr: string): string {
       // biome-ignore lint/performance/useTopLevelRegex: ignore
       const parts = cookieStr.split(/;\s*/);
-      let sawDomain = false;
+      let _replaced = false;
       const rewritten = parts.map((attr) => {
-        const [k, _v] = attr.split("=");
+        const [k] = attr.split("=");
         if (k.toLowerCase() === "domain") {
-          sawDomain = true;
+          _replaced = true;
           return `Domain=${hostForCookie}`;
         }
         return attr;
       });
-      if (!sawDomain && hostForCookie) {
-        rewritten.push(`Domain=${hostForCookie}`);
-      }
       return rewritten.join("; ");
     }
 
@@ -84,6 +82,23 @@ async function proxy(request: NextRequest) {
       const single = upstream.headers.get("set-cookie");
       if (single) {
         responseHeaders.append("set-cookie", rewriteCookieDomain(single));
+      }
+    }
+
+    const location = upstream.headers.get("location");
+    if (location) {
+      try {
+        const locUrl = new URL(location, AUTH_BASE);
+        const webOrigin = `${request.nextUrl.protocol}//${request.nextUrl.host}`;
+        const authOrigin = new URL(AUTH_BASE).origin;
+        if (locUrl.origin === authOrigin) {
+          const rewritten = locUrl.toString().replace(authOrigin, webOrigin);
+          responseHeaders.set("location", rewritten);
+        } else {
+          responseHeaders.set("location", location);
+        }
+      } catch {
+        responseHeaders.set("location", location);
       }
     }
 
@@ -106,5 +121,13 @@ export function GET(request: NextRequest) {
 }
 
 export function POST(request: NextRequest) {
+  return proxy(request);
+}
+
+export function HEAD(request: NextRequest) {
+  return proxy(request);
+}
+
+export function OPTIONS(request: NextRequest) {
   return proxy(request);
 }
