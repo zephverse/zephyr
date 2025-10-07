@@ -323,3 +323,11 @@ model ShareStats {
   @@unique([postId, platform])
   @@map("share_stats")
 }
+
+model jwks {
+  id         String   @id @default(cuid())
+  publicKey  String
+  privateKey String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}

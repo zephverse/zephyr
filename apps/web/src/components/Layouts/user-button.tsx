@@ -37,7 +37,6 @@ import { useTheme } from "next-themes";
 import type React from "react";
 import { useEffect, useState } from "react";
 import { useMediaQuery } from "usehooks-ts";
-import { logout } from "@/app/(auth)/actions";
 import { useSession } from "@/app/(main)/session-provider";
 import UserAvatar from "@/components/Layouts/user-avatar";
 import { cn } from "@/lib/utils";
@@ -155,15 +154,30 @@ export default function UserButton({
     }
 
     try {
-      const result = await logout();
-      if (result.redirect) {
-        window.location.replace(result.redirect);
-      } else {
-        window.location.replace("/login");
-      }
+      const authUrl =
+        process.env.NEXT_PUBLIC_AUTH_URL || "http://localhost:3001";
+      const logoutUrl = `${authUrl}/api/trpc/logout`;
+
+      const controller = new AbortController();
+      await fetch(logoutUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        signal: controller.signal,
+        body: JSON.stringify({
+          reason: "user-initiated",
+          force: false,
+          clientMetadata: {
+            userAgent: navigator.userAgent,
+          },
+        }),
+      });
+
+      // (success or failure handled silently)
     } catch {
-      window.location.replace("/login");
+      // Logout API failed, but client logout still succeeds
     }
+    window.location.href = "/login";
   };
 
   if (isMobile) {

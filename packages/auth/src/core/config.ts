@@ -1,7 +1,7 @@
 import { prisma } from "@zephyr/db";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
-import { username } from "better-auth/plugins";
+import { jwt, username } from "better-auth/plugins";
 import { env } from "../../env";
 import { hashPasswordWithScrypt, verifyPasswordWithScrypt } from "./password";
 
@@ -45,7 +45,7 @@ export function createAuthConfig(config: AuthConfig = {}) {
       },
     },
 
-    plugins: [username()],
+    plugins: [username(), jwt()],
 
     emailAndPassword: {
       enabled: true,

@@ -1,11 +1,12 @@
 import IoRedis, { type RedisOptions } from "ioredis";
+import type { JSONWebKeySet } from "jose";
 import { keys } from "../keys";
 
 const createRedisConfig = (): RedisOptions => {
   const config: RedisOptions = {
     maxRetriesPerRequest: 2,
-    connectTimeout: 5000, // 5 seconds
-    commandTimeout: 3000, // 3 seconds
+    connectTimeout: 5000,
+    commandTimeout: 3000,
     retryStrategy(times: number) {
       const delay = Math.min(times * 50, 1000);
       return delay;
@@ -13,7 +14,7 @@ const createRedisConfig = (): RedisOptions => {
     lazyConnect: true,
     enableReadyCheck: true,
     showFriendlyErrorStack: true,
-    keepAlive: 10_000, // 10 seconds
+    keepAlive: 10_000,
     autoResendUnfulfilledCommands: true,
     reconnectOnError: (err) => {
       const targetError = "READONLY";
@@ -45,8 +46,8 @@ export type TrendingTopic = {
 
 const TRENDING_TOPICS_KEY = "trending:topics";
 const TRENDING_TOPICS_BACKUP_KEY = "trending:topics:backup";
-const CACHE_TTL = 3600; // 1 hour in seconds
-const BACKUP_TTL = 86_400; // 24 hours in seconds
+const CACHE_TTL = 3600;
+const BACKUP_TTL = 86_400;
 
 export const trendingTopicsCache = {
   async get(): Promise<TrendingTopic[]> {
@@ -144,6 +145,10 @@ export const trendingTopicsCache = {
 
 export const POST_VIEWS_KEY_PREFIX = "post:views:";
 export const POST_VIEWS_SET = "posts:with:views";
+export const JWKS_CACHE_KEY = "jwks:cache";
+export const SESSION_CACHE_KEY_PREFIX = "session:cache:";
+export const JWKS_CACHE_TTL = 3600;
+export const SESSION_CACHE_TTL = 300;
 
 export const postViewsCache = {
   async incrementView(postId: string): Promise<number> {
@@ -206,5 +211,110 @@ export const postViewsCache = {
       console.error("Error checking post in view set:", error);
       return false;
     }
+  },
+};
+
+export type CachedSession = {
+  session: {
+    id: string;
+    createdAt: Date;
+    updatedAt: Date;
+    userId: string;
+    expiresAt: Date;
+    token: string;
+    ipAddress?: string;
+    userAgent?: string;
+  };
+  user: {
+    id: string;
+    email: string;
+    emailVerified: boolean;
+    name: string;
+    username?: string;
+    createdAt: Date;
+    updatedAt: Date;
+  };
+};
+
+export const jwtSessionCache = {
+  async setJWKS(jwks: JSONWebKeySet): Promise<void> {
+    try {
+      await redis.setex(JWKS_CACHE_KEY, JWKS_CACHE_TTL, JSON.stringify(jwks));
+      console.log("Cached JWKS in Redis");
+    } catch (error) {
+      console.error("Error caching JWKS:", error);
+    }
+  },
+
+  async getJWKS(): Promise<JSONWebKeySet | null> {
+    try {
+      const cached = await redis.get(JWKS_CACHE_KEY);
+      if (cached) {
+        console.log("Retrieved JWKS from cache");
+        return JSON.parse(cached);
+      }
+      return null;
+    } catch (error) {
+      console.error("Error getting cached JWKS:", error);
+      return null;
+    }
+  },
+
+  async setValidatedSession(
+    tokenHash: string,
+    sessionData: CachedSession
+  ): Promise<void> {
+    try {
+      await redis.setex(
+        `${SESSION_CACHE_KEY_PREFIX}${tokenHash}`,
+        SESSION_CACHE_TTL,
+        JSON.stringify(sessionData)
+      );
+      console.log(
+        `Cached validated session for token hash: ${tokenHash.substring(0, 8)}...`
+      );
+    } catch (error) {
+      console.error("Error caching validated session:", error);
+    }
+  },
+
+  async getValidatedSession(tokenHash: string): Promise<CachedSession | null> {
+    try {
+      const cached = await redis.get(`${SESSION_CACHE_KEY_PREFIX}${tokenHash}`);
+      if (cached) {
+        console.log(
+          `Retrieved validated session from cache for token hash: ${tokenHash.substring(0, 8)}...`
+        );
+        const sessionData = JSON.parse(cached);
+        sessionData.session.expiresAt = new Date(sessionData.session.expiresAt);
+        sessionData.user.createdAt = new Date(sessionData.user.createdAt);
+        sessionData.user.updatedAt = new Date(sessionData.user.updatedAt);
+        return sessionData;
+      }
+      return null;
+    } catch (error) {
+      console.error("Error getting cached validated session:", error);
+      return null;
+    }
+  },
+
+  async invalidateSession(tokenHash: string): Promise<void> {
+    try {
+      await redis.del(`${SESSION_CACHE_KEY_PREFIX}${tokenHash}`);
+      console.log(
+        `Invalidated cached session for token hash: ${tokenHash.substring(0, 8)}...`
+      );
+    } catch (error) {
+      console.error("Error invalidating cached session:", error);
+    }
+  },
+
+  createTokenHash(token: string): string {
+    const crypto = require("node:crypto");
+    return crypto
+      .createHash("sha256")
+      .update(token)
+      .digest("hex")
+      .substring(0, 16);
   },
 };

@@ -13,3 +13,24 @@ export const authClient = createAuthClient({
 });
 
 export type { Session, User } from "@zephyr/auth/core";
+
+export function getAuthToken(): string | null {
+  if (typeof window !== "undefined") {
+    return localStorage.getItem("auth_token");
+  }
+  return null;
+}
+
+export function authenticatedFetch(url: string, options: RequestInit = {}) {
+  const token = getAuthToken();
+  const headers = new Headers(options.headers);
+
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+
+  return fetch(url, {
+    ...options,
+    headers,
+  });
+}
