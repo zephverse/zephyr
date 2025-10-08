@@ -138,7 +138,7 @@ bun.lockb
 *.db
 *.sqlite
 
-# Assets that might be large
+# Assets that might be large (but allow specific ones we need)
 **/*.jpg
 **/*.jpeg
 **/*.png
@@ -149,6 +149,15 @@ bun.lockb
 **/*.woff2
 **/*.ttf
 **/*.eot
+
+# Allow specific assets that the app needs
+!packages/ui/fonts/*.woff2
+!apps/web/assets/**/*.jpg
+!apps/web/assets/**/*.png
+!apps/web/public/**/*.png
+!apps/web/public/**/*.jpg
+!apps/web/public/**/*.svg
+!apps/web/public/**/*.ico
 
 # Keep only necessary package files
 !package.json

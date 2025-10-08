@@ -18,7 +18,7 @@ RUN apk add --no-cache \
     && adduser -S nextjs -u 1001
 WORKDIR /app/apps/auth
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./../node_modules
-COPY --from=builder --chown=nextjs:nodejs /app/packages ./packages
+COPY --from=builder --chown=nextjs:nodejs /app/packages ./../packages
 COPY --from=builder --chown=nextjs:nodejs /app/apps/auth ./
 USER nextjs
 EXPOSE 3001
