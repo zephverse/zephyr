@@ -138,49 +138,31 @@ bun.lockb
 *.db
 *.sqlite
 
-# Assets that might be large (but allow specific ones we need)
-**/*.jpg
-**/*.jpeg
-**/*.png
-**/*.gif
-**/*.svg
-**/*.ico
-**/*.woff
-**/*.woff2
-**/*.ttf
-**/*.eot
+# Docker-specific exclusions
+**/.git
+**/node_modules
+**/*.log
+**/.DS_Store
+**/coverage
+**/.nyc_output
+**/.next
+**/out
+**/build
+**/dist
 
-# Allow specific assets that the app needs
-!packages/ui/fonts/*.woff2
-!apps/web/assets/**/*.jpg
-!apps/web/assets/**/*.png
-!apps/web/public/**/*.png
-!apps/web/public/**/*.jpg
-!apps/web/public/**/*.svg
-!apps/web/public/**/*.ico
+# Development files
+**/.env*
+**/README.md
+**/CHANGELOG.md
+**/*.test.*
+**/*.spec.*
+**/jest.config.*
+**/vitest.config.*
+**/playwright.config.*
+**/cypress.config.*
 
-# Keep only necessary package files
-!package.json
-!bun.lock
-
-# Keep only necessary config files
-!next.config.ts
-!postcss.config.mjs
-!tailwind.config.ts
-!tsconfig.json
-!components.json
-
-# Keep source code
-!src/
-!app/
-!components/
-!lib/
-!hooks/
-!helpers/
-!posts/
-
-# Keep public assets (but exclude large ones above)
-!public/
-
-# Keep packages directory
-!packages/
+# CI/CD
+.github
+.gitlab-ci.yml
+.travis.yml
+.circleci

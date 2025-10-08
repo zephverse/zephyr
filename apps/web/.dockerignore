@@ -1,0 +1,43 @@
+# Web-specific exclusions
+# Exclude large asset files but keep necessary ones
+**/*.jpg
+**/*.jpeg
+**/*.png
+**/*.gif
+**/*.ico
+**/*.woff
+**/*.woff2
+**/*.ttf
+**/*.eot
+
+# Allow specific assets that the app needs
+!assets/**/*.jpg
+!assets/**/*.png
+!public/**/*.png
+!public/**/*.jpg
+!public/**/*.svg
+!public/**/*.ico
+
+# Keep only necessary package files
+!package.json
+
+# Keep only necessary config files
+!next.config.ts
+!postcss.config.mjs
+!tsconfig.json
+!components.json
+
+# Keep source code
+!src/
+!app/
+!components/
+!lib/
+!hooks/
+!helpers/
+!posts/
+
+# Keep public assets (but exclude large ones above)
+!public/
+
+# Keep packages directory (relative to app directory)
+!../packages/
