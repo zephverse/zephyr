@@ -1,4 +1,8 @@
-// biome-ignore lint/style/noExportedImports: it's fine
-import { config } from "@zephyr/next";
+import type { NextConfig } from "next";
+
+const config: NextConfig = {
+  transpilePackages: ["@zephyr/auth", "@zephyr/db", "@zephyr/config"],
+  reactStrictMode: true,
+};
 
 export default config;

@@ -23,6 +23,9 @@
     "docker:apps": "docker compose -f docker/docker-compose.dev.yml --profile apps up web auth -d --build",
     "docker:down": "docker compose -f docker/docker-compose.dev.yml down",
     "docker:clean": "docker compose -f docker/docker-compose.dev.yml down -v && docker volume rm zephyr-dev-postgres-data zephyr-dev-redis-data zephyr-dev-minio-data zephyr-dev-redisinsight-data && rm -f .dev-init",
+    "docker:build:auth": "docker buildx bake --file docker-bake.hcl auth-local",
+    "docker:build:web": "docker buildx bake --file docker-bake.hcl web-local",
+    "docker:build:all": "docker buildx bake --file docker-bake.hcl auth-local web-local",
     "prepare": "husky"
   },
   "devDependencies": {
