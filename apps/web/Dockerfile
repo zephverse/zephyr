@@ -4,25 +4,24 @@ FROM oven/bun:slim AS builder
 LABEL org.opencontainers.image.title="Zephyr Web App" \
       org.opencontainers.image.description="Main web application for Zephyr" \
       org.opencontainers.image.vendor="Zephyr"
+RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY package.json bun.lock ./
 COPY packages/ ./packages/
 COPY apps/web/package.json ./apps/web/
 RUN --mount=type=cache,target=/root/.bun \
     bun install
-
 COPY apps/web/ ./apps/web/
 WORKDIR /app/apps/web
-
 RUN --mount=type=cache,target=/root/.bun \
     bun run build
 
 FROM oven/bun:slim AS deps
+RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY package.json ./package.json
 COPY packages/ ./packages/
 COPY apps/web/package.json ./apps/web/package.json
-
 RUN --mount=type=cache,target=/root/.bun \
     bun install --no-cache
 

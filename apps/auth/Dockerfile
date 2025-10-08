@@ -4,6 +4,7 @@ FROM oven/bun:slim AS builder
 LABEL org.opencontainers.image.title="Zephyr Auth Service" \
       org.opencontainers.image.description="Authentication service for Zephyr" \
       org.opencontainers.image.vendor="Zephyr"
+RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY package.json bun.lock ./
 COPY packages/ ./packages/
@@ -16,6 +17,7 @@ RUN --mount=type=cache,target=/root/.bun \
     bun run build
 
 FROM oven/bun:slim AS deps
+RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY package.json ./package.json
 COPY packages/ ./packages/
