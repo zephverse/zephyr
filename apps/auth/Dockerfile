@@ -31,5 +31,5 @@ EXPOSE 3001
 ENV PORT=3001
 ENV NODE_ENV=production
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:3001/api/trpc/security.securityHealth || exit 1
+    CMD curl -f http://localhost:3001/api/trpc/securityHealth || exit 1
 CMD ["npx", "next", "start"]
