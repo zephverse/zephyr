@@ -154,28 +154,12 @@ export default function UserButton({
     }
 
     try {
-      const authUrl =
-        process.env.NEXT_PUBLIC_AUTH_URL || "http://localhost:3001";
-      const logoutUrl = `${authUrl}/api/trpc/logout`;
-
-      const controller = new AbortController();
-      await fetch(logoutUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        signal: controller.signal,
-        body: JSON.stringify({
-          reason: "user-initiated",
-          force: false,
-          clientMetadata: {
-            userAgent: navigator.userAgent,
-          },
-        }),
+      const { authClient } = await import("@/lib/auth");
+      await authClient.signOut({
+        fetchOptions: { credentials: "include" },
       });
-
-      // (success or failure handled silently)
     } catch {
-      // Logout API failed, but client logout still succeeds
+      // Ignore; fall back to server redirect regardless
     }
     window.location.href = "/login";
   };

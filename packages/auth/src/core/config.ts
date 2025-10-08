@@ -1,6 +1,7 @@
 import { prisma } from "@zephyr/db";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
+import { nextCookies } from "better-auth/next-js";
 import { jwt, username } from "better-auth/plugins";
 import { env } from "../../env";
 import { hashPasswordWithScrypt, verifyPasswordWithScrypt } from "./password";
@@ -45,7 +46,7 @@ export function createAuthConfig(config: AuthConfig = {}) {
       },
     },
 
-    plugins: [username(), jwt()],
+    plugins: [username(), jwt(), nextCookies()],
 
     emailAndPassword: {
       enabled: true,
@@ -129,6 +130,7 @@ export function createAuthConfig(config: AuthConfig = {}) {
       cookieCache: {
         enabled: false,
       },
+      // freshAge can protect sensitive actions; keep default or tune as needed
     },
 
     advanced: {
@@ -136,6 +138,7 @@ export function createAuthConfig(config: AuthConfig = {}) {
       database: {
         generateId: crypto.randomUUID,
       },
+      // cookiePrefix can be set if multiple auth stacks coexist
     },
 
     verification: {
