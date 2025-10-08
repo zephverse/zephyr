@@ -1,5 +1,7 @@
-FROM oven/bun:latest AS base
-RUN apt-get update -y && apt-get install -y openssl
+FROM oven/bun:latest AS builder
+RUN apt-get update && apt-get install -y \
+    openssl \
+    && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY package.json bun.lock ./
 COPY packages/ ./packages/
@@ -9,12 +11,19 @@ COPY apps/web/ ./apps/web/
 WORKDIR /app/apps/web
 RUN bun run build
 
-FROM oven/bun:latest AS runtime
-RUN apt-get update -y && apt-get install -y openssl
+FROM node:24-alpine AS runtime
+RUN apk add --no-cache \
+    openssl \
+    && addgroup -g 1001 -S nodejs \
+    && adduser -S nextjs -u 1001
 WORKDIR /app
-COPY --from=base /app/node_modules ./node_modules
-COPY --from=base /app/packages ./packages
-COPY --from=base /app/apps/web ./apps/web
-WORKDIR /app/apps/web
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/public ./public
+USER nextjs
 EXPOSE 3000
-CMD ["bun", "run", "start"]
+ENV PORT=3000
+ENV NODE_ENV=production
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:3000/api/health || exit 1
+CMD ["node", "server.js"]
