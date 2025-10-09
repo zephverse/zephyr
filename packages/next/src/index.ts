@@ -12,6 +12,7 @@ export const config: NextConfig = {
       { protocol: "https", hostname: "avatars.githubusercontent.com" },
       { protocol: "https", hostname: "cdn.discordapp.com" },
       { protocol: "https", hostname: "pbs.twimg.com" },
+      { protocol: "https", hostname: "styles.redditmedia.com" },
     ],
     unoptimized: process.env.NODE_ENV === "development",
   },
