@@ -1,37 +1,63 @@
-export default function Home() {
+"use client";
+
+import { useState } from "react";
+import { EmptyState } from "./components/empty-state";
+import { LoadingState } from "./components/loading-state";
+import { UserManagement } from "./components/user-management";
+import type { ModalAction, User } from "./types/types";
+
+export default function AdminDashboard() {
+  const [users, setUsers] = useState<User[]>([]);
+  const [isLoading, _setIsLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // TODO: Replace with actual API call
+  const handleAction = (user: User, action: ModalAction) => {
+    console.log(`[v0] ${action} user:`, user.id);
+
+    // Mock action handling for now
+    if (action === "suspend" || action === "activate" || action === "ban") {
+      setUsers((prevUsers) =>
+        prevUsers.map((u) =>
+          u.id === user.id
+            ? {
+                ...u,
+                // Note: status field doesn't exist in current User type
+                // This would need to be added to the type definition
+                ...u,
+              }
+            : u
+        )
+      );
+    }
+  };
+
+  const filteredUsers = users.filter(
+    (user) =>
+      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.username.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  if (isLoading) {
+    return <LoadingState />;
+  }
+
+  if (users.length === 0) {
+    return (
+      <EmptyState
+        description="Users will appear here once they register on the platform."
+        title="No users found"
+      />
+    );
+  }
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-24">
-      <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm">
-        <h1 className="mb-4 font-bold text-4xl">Zephyr Auth Service</h1>
-        <p className="mb-8 text-lg">Better Auth with tRPC runtime host</p>
-
-        <div className="rounded-lg bg-gray-100 p-6 dark:bg-gray-800">
-          <h2 className="mb-4 font-semibold text-2xl">Available Endpoints</h2>
-          <ul className="space-y-2">
-            <li>
-              <code className="rounded bg-gray-200 px-2 py-1 dark:bg-gray-700">
-                POST/GET /api/auth/*
-              </code>
-              {" - Better Auth endpoints"}
-            </li>
-            <li>
-              <code className="rounded bg-gray-200 px-2 py-1 dark:bg-gray-700">
-                POST/GET /api/trpc/*
-              </code>
-              {" - tRPC endpoints"}
-            </li>
-          </ul>
-        </div>
-
-        <div className="mt-8 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
-          <h3 className="mb-2 font-semibold text-lg">OAuth Providers</h3>
-          <ul className="list-inside list-disc space-y-1">
-            <li>Google OAuth</li>
-            <li>GitHub OAuth</li>
-            <li>Discord OAuth</li>
-          </ul>
-        </div>
-      </div>
-    </main>
+    <UserManagement
+      onAction={handleAction}
+      onSearchChange={setSearchQuery}
+      searchQuery={searchQuery}
+      users={filteredUsers}
+    />
   );
 }
