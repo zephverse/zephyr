@@ -1,23 +1,47 @@
 import { Button } from "@zephyr/ui/shadui/button";
+import { Loader2 } from "lucide-react";
 import { authClient } from "@/lib/auth";
 
-export default function GoogleSignInButton() {
+type Props = {
+  disabled?: boolean;
+  loading?: boolean;
+  onStart?: () => void;
+  onEnd?: () => void;
+};
+
+export default function GoogleSignInButton({
+  disabled,
+  loading,
+  onStart,
+  onEnd,
+}: Props) {
   const handleGoogleSignIn = async () => {
     const base = process.env.NEXT_PUBLIC_URL || window.location.origin;
-    await authClient.signIn.social({
-      provider: "google",
-      callbackURL: `${base}/`,
-    });
+    try {
+      onStart?.();
+      await authClient.signIn.social({
+        provider: "google",
+        callbackURL: `${base}/`,
+        newUserCallbackURL: `${base}/`,
+      });
+    } finally {
+      onEnd?.();
+    }
   };
 
   return (
     <Button
       className="w-full border-0 bg-white py-5 text-gray-900 backdrop-blur-xs transition-all duration-300 hover:bg-gray-50"
+      disabled={disabled}
       onClick={handleGoogleSignIn}
       variant="outline"
     >
       <div className="flex items-center justify-center gap-3 py-6">
-        <GoogleIcon />
+        {loading ? (
+          <Loader2 className="h-5 w-5 animate-spin" />
+        ) : (
+          <GoogleIcon />
+        )}
         <span className="font-medium">Continue with Google</span>
       </div>
     </Button>
