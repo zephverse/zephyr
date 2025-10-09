@@ -15,26 +15,98 @@ function isTrpc(req: NextRequest) {
   );
 }
 
-export function GET(req: NextRequest) {
-  if (isTrpc(req)) {
-    return fetchRequestHandler({
-      endpoint: "/api/auth",
-      req: req as unknown as Request,
-      router: appRouter,
-      createContext,
-    });
+function addCorsHeaders(response: Response) {
+  const corsHeaders = {
+    "Access-Control-Allow-Origin":
+      process.env.NODE_ENV === "production"
+        ? process.env.NEXT_PUBLIC_URL || "https://zephyyrr.in"
+        : "http://localhost:3000",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers":
+      "Content-Type, Authorization, Cache-Control",
+    "Access-Control-Allow-Credentials": "true",
+  } as const;
+
+  for (const [k, v] of Object.entries(corsHeaders)) {
+    response.headers.set(k, v);
   }
-  return betterAuthHandler.GET(req);
+  return response;
 }
 
-export function POST(req: NextRequest) {
+export async function GET(req: NextRequest) {
+  if (req.method === "OPTIONS") {
+    return new Response(null, {
+      status: 200,
+      headers: {
+        "Access-Control-Allow-Origin":
+          process.env.NODE_ENV === "production"
+            ? process.env.NEXT_PUBLIC_URL || "https://zephyyrr.in"
+            : "http://localhost:3000",
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers":
+          "Content-Type, Authorization, Cache-Control",
+        "Access-Control-Allow-Credentials": "true",
+      },
+    });
+  }
+
   if (isTrpc(req)) {
-    return fetchRequestHandler({
+    const response = await fetchRequestHandler({
       endpoint: "/api/auth",
       req: req as unknown as Request,
       router: appRouter,
       createContext,
     });
+    return addCorsHeaders(response);
   }
-  return betterAuthHandler.POST(req);
+
+  const response = await betterAuthHandler.GET(req);
+  return addCorsHeaders(response);
+}
+
+export async function POST(req: NextRequest) {
+  if (req.method === "OPTIONS") {
+    return new Response(null, {
+      status: 200,
+      headers: {
+        "Access-Control-Allow-Origin":
+          process.env.NODE_ENV === "production"
+            ? process.env.NEXT_PUBLIC_URL || "https://zephyyrr.in"
+            : "http://localhost:3000",
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers":
+          "Content-Type, Authorization, Cache-Control",
+        "Access-Control-Allow-Credentials": "true",
+      },
+    });
+  }
+
+  if (isTrpc(req)) {
+    const response = await fetchRequestHandler({
+      endpoint: "/api/auth",
+      req: req as unknown as Request,
+      router: appRouter,
+      createContext,
+    });
+    return addCorsHeaders(response);
+  }
+
+  const response = await betterAuthHandler.POST(req);
+  return addCorsHeaders(response);
+}
+
+export function OPTIONS() {
+  return new Response(null, {
+    status: 200,
+    headers: {
+      "Access-Control-Allow-Origin":
+        process.env.NODE_ENV === "production"
+          ? process.env.NEXT_PUBLIC_URL || "https://zephyyrr.in"
+          : "http://localhost:3000",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+      "Access-Control-Allow-Headers":
+        "Content-Type, Authorization, Cache-Control",
+      "Access-Control-Allow-Credentials": "true",
+    },
+  });
 }

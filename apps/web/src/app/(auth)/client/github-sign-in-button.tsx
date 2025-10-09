@@ -1,23 +1,48 @@
 import { Button } from "@zephyr/ui/shadui/button";
+import { Loader2 } from "lucide-react";
 import { useId } from "react";
 import { authClient } from "@/lib/auth";
 
-export default function GithubSignInButton() {
+type Props = {
+  disabled?: boolean;
+  loading?: boolean;
+  onStart?: () => void;
+  onEnd?: () => void;
+};
+
+export default function GithubSignInButton({
+  disabled,
+  loading,
+  onStart,
+  onEnd,
+}: Props) {
   const handleGithubSignIn = async () => {
-    await authClient.signIn.social({
-      provider: "github",
-      callbackURL: "/",
-    });
+    const base = process.env.NEXT_PUBLIC_URL || window.location.origin;
+    try {
+      onStart?.();
+      await authClient.signIn.social({
+        provider: "github",
+        callbackURL: `${base}/`,
+        newUserCallbackURL: `${base}/`,
+      });
+    } finally {
+      onEnd?.();
+    }
   };
 
   return (
     <Button
       className="w-full border-0 bg-black py-6 text-white backdrop-blur-xs transition-all duration-300"
+      disabled={disabled}
       onClick={handleGithubSignIn}
       variant="outline"
     >
       <div className="flex items-center justify-center py-6">
-        <GithubIcon />
+        {loading ? (
+          <Loader2 className="h-5 w-5 animate-spin" />
+        ) : (
+          <GithubIcon />
+        )}
       </div>
     </Button>
   );

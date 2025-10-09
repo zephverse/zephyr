@@ -1,71 +1,37 @@
 # Dependencies
-node_modules/
+node_modules
+**/node_modules
 .pnp
 .pnp.js
 
-# Testing
-coverage/
-
-# Next.js
-.next/
-out/
-
-# Production
-build/
-dist/
+# Production builds
+.next
+out
+build
+dist
 
 # Environment variables
 .env
-.env*.local
+.env.local
 .env.development.local
 .env.test.local
 .env.production.local
 
-# Debug logs
+# Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-
-# Vercel
-.vercel
-
-# TypeScript
-*.tsbuildinfo
-
-# IDEs
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Git
-.git/
-.gitignore
-
-# Docker
-Dockerfile*
-docker-compose*
-.dockerignore
-
-# Turbo
-.turbo/
-
-# Logs
-logs/
-*.log
+lerna-debug.log*
+.pnpm-debug.log*
 
 # Runtime data
-pids/
+pids
 *.pid
 *.seed
 *.pid.lock
 
 # Coverage directory used by tools like istanbul
-coverage/
+coverage
 *.lcov
 
 # nyc test coverage
@@ -104,6 +70,7 @@ jspm_packages/
 
 # Nuxt.js build / generate output
 .nuxt
+dist
 
 # Gatsby files
 .cache/
@@ -118,14 +85,11 @@ tmp/
 temp/
 
 # Editor directories and files
-.vscode/*
-!.vscode/extensions.json
+.vscode
 .idea
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+*.swp
+*.swo
+*~
 
 # OS generated files
 .DS_Store
@@ -136,16 +100,69 @@ temp/
 ehthumbs.db
 Thumbs.db
 
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Testing
+coverage/
+.nyc_output/
+
+# Linting
+.eslintcache
+
+# Misc
+*.log
+*.tgz
+*.tar.gz
+
+# Turbo
+.turbo
+
+# Biome
+biome.json
+biome.jsonc
+
+# TypeScript
+*.tsbuildinfo
+
+# Bun
+bun.lockb
+
 # Database
 *.db
 *.sqlite
-*.sqlite3
 
-# Redis
-dump.rdb
+# Docker-specific exclusions
+**/.git
+**/node_modules
+**/*.log
+**/.DS_Store
+**/coverage
+**/.nyc_output
+**/.next
+**/out
+**/build
+**/dist
 
-# MinIO
-minio/
+# Development files
+**/.env*
+**/README.md
+**/CHANGELOG.md
+**/*.test.*
+**/*.spec.*
+**/jest.config.*
+**/vitest.config.*
+**/playwright.config.*
+**/cypress.config.*
 
-# Prisma
-prisma/migrations/*/migration.sql
+# CI/CD
+.github
+.gitlab-ci.yml
+.travis.yml
+.circleci

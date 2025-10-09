@@ -1,3 +1,4 @@
+import { getSessionCookie } from "better-auth/cookies";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
@@ -12,7 +13,7 @@ function isProtectedPath(pathname: string): boolean {
   return pathname === "/";
 }
 
-export async function middleware(request: NextRequest) {
+export function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
 
   if (
@@ -30,20 +31,9 @@ export async function middleware(request: NextRequest) {
   }
 
   try {
-    const authBase =
-      process.env.NEXT_PUBLIC_AUTH_URL || "http://localhost:3001";
-    const cookie = request.headers.get("cookie") || "";
-    const res = await fetch(`${authBase}/api/auth/get-session`, {
-      method: "GET",
-      headers: cookie ? { cookie } : {},
-      credentials: "include",
-      cache: "no-store",
-    });
-    if (res.ok) {
-      const data = (await res.json()) as { user?: unknown; session?: unknown };
-      if (data?.user && data?.session) {
-        return NextResponse.next();
-      }
+    const sessionCookie = getSessionCookie(request);
+    if (sessionCookie) {
+      return NextResponse.next();
     }
   } catch {
     // ignore and fallthrough to redirect

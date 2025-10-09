@@ -128,6 +128,12 @@ export const AnimatedZephyrText = () => {
 
 export default function ClientLoginPage() {
   const [showMoreOptions, setShowMoreOptions] = useState(false);
+  const [activeProvider, setActiveProvider] = useState<
+    "google" | "reddit" | "github" | "discord" | "twitter" | null
+  >(null);
+  const isLoading = activeProvider !== null;
+  const start = (p: NonNullable<typeof activeProvider>) => setActiveProvider(p);
+  const end = () => setActiveProvider(null);
 
   return (
     <AnimatePresence>
@@ -206,13 +212,28 @@ export default function ClientLoginPage() {
                     >
                       <div className="grid grid-cols-3 gap-3">
                         <AuthButtonWrapper className="h-full">
-                          <GithubSignInButton />
+                          <GithubSignInButton
+                            disabled={isLoading && activeProvider !== "github"}
+                            loading={activeProvider === "github"}
+                            onEnd={end}
+                            onStart={() => start("github")}
+                          />
                         </AuthButtonWrapper>
                         <AuthButtonWrapper className="h-full">
-                          <DiscordSignInButton />
+                          <DiscordSignInButton
+                            disabled={isLoading && activeProvider !== "discord"}
+                            loading={activeProvider === "discord"}
+                            onEnd={end}
+                            onStart={() => start("discord")}
+                          />
                         </AuthButtonWrapper>
                         <AuthButtonWrapper className="h-full">
-                          <TwitterSignInButton />
+                          <TwitterSignInButton
+                            disabled={isLoading && activeProvider !== "twitter"}
+                            loading={activeProvider === "twitter"}
+                            onEnd={end}
+                            onStart={() => start("twitter")}
+                          />
                         </AuthButtonWrapper>
                       </div>
 
@@ -235,10 +256,20 @@ export default function ClientLoginPage() {
                     <>
                       <div className="grid grid-cols-1 gap-0 sm:grid-cols-2 md:gap-2">
                         <AuthButtonWrapper className="w-full">
-                          <GoogleSignInButton />
+                          <GoogleSignInButton
+                            disabled={isLoading && activeProvider !== "google"}
+                            loading={activeProvider === "google"}
+                            onEnd={end}
+                            onStart={() => start("google")}
+                          />
                         </AuthButtonWrapper>
                         <AuthButtonWrapper className="w-full">
-                          <RedditSignInButton />
+                          <RedditSignInButton
+                            disabled={isLoading && activeProvider !== "reddit"}
+                            loading={activeProvider === "reddit"}
+                            onEnd={end}
+                            onStart={() => start("reddit")}
+                          />
                         </AuthButtonWrapper>
                       </div>
 
@@ -253,6 +284,7 @@ export default function ClientLoginPage() {
                       >
                         <button
                           className="cursor-pointer text-muted-foreground text-sm transition-colors duration-300 hover:text-primary"
+                          disabled={isLoading}
                           onClick={() => setShowMoreOptions(true)}
                           type="button"
                         >

@@ -37,7 +37,6 @@ import { useTheme } from "next-themes";
 import type React from "react";
 import { useEffect, useState } from "react";
 import { useMediaQuery } from "usehooks-ts";
-import { logout } from "@/app/(auth)/actions";
 import { useSession } from "@/app/(main)/session-provider";
 import UserAvatar from "@/components/Layouts/user-avatar";
 import { cn } from "@/lib/utils";
@@ -155,15 +154,14 @@ export default function UserButton({
     }
 
     try {
-      const result = await logout();
-      if (result.redirect) {
-        window.location.replace(result.redirect);
-      } else {
-        window.location.replace("/login");
-      }
+      const { authClient } = await import("@/lib/auth");
+      await authClient.signOut({
+        fetchOptions: { credentials: "include" },
+      });
     } catch {
-      window.location.replace("/login");
+      // Ignore; fall back to server redirect regardless
     }
+    window.location.href = "/login";
   };
 
   if (isMobile) {

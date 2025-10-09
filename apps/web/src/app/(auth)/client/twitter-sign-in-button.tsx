@@ -1,23 +1,48 @@
 import { Button } from "@zephyr/ui/shadui/button";
+import { Loader2 } from "lucide-react";
 import { useId } from "react";
 import { authClient } from "@/lib/auth";
 
-export default function TwitterSignInButton() {
+type Props = {
+  disabled?: boolean;
+  loading?: boolean;
+  onStart?: () => void;
+  onEnd?: () => void;
+};
+
+export default function TwitterSignInButton({
+  disabled,
+  loading,
+  onStart,
+  onEnd,
+}: Props) {
   const handleTwitterSignIn = async () => {
-    await authClient.signIn.social({
-      provider: "twitter",
-      callbackURL: "/",
-    });
+    const base = process.env.NEXT_PUBLIC_URL || window.location.origin;
+    try {
+      onStart?.();
+      await authClient.signIn.social({
+        provider: "twitter",
+        callbackURL: `${base}/`,
+        newUserCallbackURL: `${base}/`,
+      });
+    } finally {
+      onEnd?.();
+    }
   };
 
   return (
     <Button
       className="w-full border-0 bg-black py-6 text-white backdrop-blur-xs transition-all duration-300"
+      disabled={disabled}
       onClick={handleTwitterSignIn}
       variant="outline"
     >
       <div className="flex items-center justify-center py-6">
-        <TwitterIcon />
+        {loading ? (
+          <Loader2 className="h-5 w-5 animate-spin" />
+        ) : (
+          <TwitterIcon />
+        )}
       </div>
     </Button>
   );

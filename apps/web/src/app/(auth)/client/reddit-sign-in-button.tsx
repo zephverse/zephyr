@@ -1,22 +1,47 @@
 import { Button } from "@zephyr/ui/shadui/button";
+import { Loader2 } from "lucide-react";
 import { authClient } from "@/lib/auth";
 
-export default function RedditSignInButton() {
+type Props = {
+  disabled?: boolean;
+  loading?: boolean;
+  onStart?: () => void;
+  onEnd?: () => void;
+};
+
+export default function RedditSignInButton({
+  disabled,
+  loading,
+  onStart,
+  onEnd,
+}: Props) {
   const handleRedditSignIn = async () => {
-    await authClient.signIn.social({
-      provider: "reddit",
-      callbackURL: "/",
-    });
+    const base = process.env.NEXT_PUBLIC_URL || window.location.origin;
+    try {
+      onStart?.();
+      await authClient.signIn.social({
+        provider: "reddit",
+        callbackURL: `${base}/`,
+        newUserCallbackURL: `${base}/`,
+      });
+    } finally {
+      onEnd?.();
+    }
   };
 
   return (
     <Button
       className="w-full border-0 bg-[#FF4500] py-5 text-white backdrop-blur-xs transition-all duration-300 hover:bg-[#E03D00]"
+      disabled={disabled}
       onClick={handleRedditSignIn}
       variant="outline"
     >
       <div className="flex items-center justify-center gap-3 py-6">
-        <RedditIcon />
+        {loading ? (
+          <Loader2 className="h-5 w-5 animate-spin" />
+        ) : (
+          <RedditIcon />
+        )}
         <span className="font-medium">Continue with Reddit</span>
       </div>
     </Button>

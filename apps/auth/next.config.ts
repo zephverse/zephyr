@@ -1,4 +1,11 @@
-// biome-ignore lint/style/noExportedImports: it's a config file
-import { config } from "@zephyr/next";
+import type { NextConfig } from "next";
+
+const config: NextConfig = {
+  transpilePackages: ["@zephyr/auth", "@zephyr/db", "@zephyr/config"],
+  reactStrictMode: true,
+  experimental: {
+    staleTimes: { dynamic: 30 },
+  },
+};
 
 export default config;
