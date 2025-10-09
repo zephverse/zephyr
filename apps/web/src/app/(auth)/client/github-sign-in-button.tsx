@@ -4,9 +4,10 @@ import { authClient } from "@/lib/auth";
 
 export default function GithubSignInButton() {
   const handleGithubSignIn = async () => {
+    const base = process.env.NEXT_PUBLIC_URL || window.location.origin;
     await authClient.signIn.social({
       provider: "github",
-      callbackURL: "/",
+      callbackURL: `${base}/`,
     });
   };
 

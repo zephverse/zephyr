@@ -3,9 +3,10 @@ import { authClient } from "@/lib/auth";
 
 export default function RedditSignInButton() {
   const handleRedditSignIn = async () => {
+    const base = process.env.NEXT_PUBLIC_URL || window.location.origin;
     await authClient.signIn.social({
       provider: "reddit",
-      callbackURL: "/",
+      callbackURL: `${base}/`,
     });
   };
 

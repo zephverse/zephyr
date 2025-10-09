@@ -4,9 +4,10 @@ import { authClient } from "@/lib/auth";
 
 export default function TwitterSignInButton() {
   const handleTwitterSignIn = async () => {
+    const base = process.env.NEXT_PUBLIC_URL || window.location.origin;
     await authClient.signIn.social({
       provider: "twitter",
-      callbackURL: "/",
+      callbackURL: `${base}/`,
     });
   };
 

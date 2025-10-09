@@ -3,9 +3,10 @@ import { authClient } from "@/lib/auth";
 
 export default function DiscordSignInButton() {
   const handleDiscordSignIn = async () => {
+    const base = process.env.NEXT_PUBLIC_URL || window.location.origin;
     await authClient.signIn.social({
       provider: "discord",
-      callbackURL: "/",
+      callbackURL: `${base}/`,
     });
   };
 

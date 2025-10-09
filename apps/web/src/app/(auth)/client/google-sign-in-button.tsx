@@ -3,9 +3,10 @@ import { authClient } from "@/lib/auth";
 
 export default function GoogleSignInButton() {
   const handleGoogleSignIn = async () => {
+    const base = process.env.NEXT_PUBLIC_URL || window.location.origin;
     await authClient.signIn.social({
       provider: "google",
-      callbackURL: "/",
+      callbackURL: `${base}/`,
     });
   };
 

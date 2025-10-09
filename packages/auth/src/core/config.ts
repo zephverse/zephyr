@@ -135,6 +135,10 @@ export function createAuthConfig(config: AuthConfig = {}) {
 
     advanced: {
       useSecureCookies: environment === "production",
+      crossSubDomainCookies: {
+        enabled: true,
+        domain: ".zephyyrr.in",
+      },
       database: {
         generateId: crypto.randomUUID,
       },
