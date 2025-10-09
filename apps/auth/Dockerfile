@@ -13,6 +13,10 @@ RUN --mount=type=cache,target=/root/.bun \
     bun install
 COPY apps/auth/ ./apps/auth/
 WORKDIR /app/apps/auth
+ARG NEXT_PUBLIC_AUTH_URL
+ARG NEXT_PUBLIC_URL
+ENV NEXT_PUBLIC_AUTH_URL=$NEXT_PUBLIC_AUTH_URL
+ENV NEXT_PUBLIC_URL=$NEXT_PUBLIC_URL
 RUN --mount=type=cache,target=/root/.bun \
     bun run build
 
