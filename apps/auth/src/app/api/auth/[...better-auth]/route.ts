@@ -25,17 +25,12 @@ function addCorsHeaders(response: Response) {
     "Access-Control-Allow-Headers":
       "Content-Type, Authorization, Cache-Control",
     "Access-Control-Allow-Credentials": "true",
-  };
+  } as const;
 
-  // Clone the response and add CORS headers
-  return new Response(response.body, {
-    status: response.status,
-    statusText: response.statusText,
-    headers: {
-      ...Object.fromEntries(response.headers),
-      ...corsHeaders,
-    },
-  });
+  for (const [k, v] of Object.entries(corsHeaders)) {
+    response.headers.set(k, v);
+  }
+  return response;
 }
 
 export async function GET(req: NextRequest) {
