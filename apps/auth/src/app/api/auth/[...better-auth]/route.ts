@@ -22,7 +22,8 @@ function addCorsHeaders(response: Response) {
         ? process.env.NEXT_PUBLIC_URL || "https://zephyyrr.in"
         : "http://localhost:3000",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Headers":
+      "Content-Type, Authorization, Cache-Control",
     "Access-Control-Allow-Credentials": "true",
   };
 
@@ -47,7 +48,8 @@ export async function GET(req: NextRequest) {
             ? process.env.NEXT_PUBLIC_URL || "https://zephyyrr.in"
             : "http://localhost:3000",
         "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        "Access-Control-Allow-Headers":
+          "Content-Type, Authorization, Cache-Control",
         "Access-Control-Allow-Credentials": "true",
       },
     });
@@ -77,7 +79,8 @@ export async function POST(req: NextRequest) {
             ? process.env.NEXT_PUBLIC_URL || "https://zephyyrr.in"
             : "http://localhost:3000",
         "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        "Access-Control-Allow-Headers":
+          "Content-Type, Authorization, Cache-Control",
         "Access-Control-Allow-Credentials": "true",
       },
     });
@@ -106,7 +109,8 @@ export function OPTIONS() {
           ? process.env.NEXT_PUBLIC_URL || "https://zephyyrr.in"
           : "http://localhost:3000",
       "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      "Access-Control-Allow-Headers":
+        "Content-Type, Authorization, Cache-Control",
       "Access-Control-Allow-Credentials": "true",
     },
   });

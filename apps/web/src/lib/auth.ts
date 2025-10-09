@@ -5,9 +5,6 @@ export const authClient = createAuthClient({
   baseURL: process.env.NEXT_PUBLIC_AUTH_URL || "http://localhost:3001",
   fetchOptions: {
     credentials: "include",
-    headers: {
-      "Cache-Control": "no-cache",
-    },
   },
   plugins: [usernameClient()],
 });
