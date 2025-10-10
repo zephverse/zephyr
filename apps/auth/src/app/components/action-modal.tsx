@@ -2,66 +2,67 @@
 
 import { Button } from "@zephyr/ui/shadui/button";
 import { Card } from "@zephyr/ui/shadui/card";
-import { AlertTriangle, Ban, CheckCircle, Info, X } from "lucide-react";
+import { AlertCircle, Edit, Eye, UserCog, X } from "lucide-react";
 import { motion } from "motion/react";
 import type { ModalAction, User } from "../types/types";
 
 type ActionModalProps = {
   user: User;
   action: ModalAction;
-  onConfirm: () => void;
-  onCancel: () => void;
+  onConfirmAction: () => void;
+  onCancelAction: () => void;
 };
 
 export function ActionModal({
   user,
   action,
-  onConfirm,
-  onCancel,
+  onConfirmAction,
+  onCancelAction,
 }: ActionModalProps) {
   const getModalConfig = () => {
     switch (action) {
-      case "suspend":
+      case "view":
         return {
-          title: "Suspend User",
-          description: `Are you sure you want to suspend ${user.name}? They will not be able to access their account until reactivated.`,
-          icon: AlertTriangle,
-          iconColor: "text-chart-3",
-          iconBg: "bg-chart-3/10",
-          confirmText: "Suspend User",
+          title: "User Details",
+          description: `View detailed information for ${user.displayName}.`,
+          icon: Eye,
+          iconColor: "text-blue-600",
+          iconBg: "bg-blue-600/10",
+          confirmText: "Close",
           confirmVariant: "default" as const,
-          confirmClass: "bg-chart-3 hover:bg-chart-3/90 text-background",
+          confirmClass: "",
+          showCancel: false,
         };
-      case "ban":
+      case "edit":
         return {
-          title: "Ban User",
-          description: `Are you sure you want to permanently ban ${user.name}? This action is severe and should only be used for serious violations.`,
-          icon: Ban,
-          iconColor: "text-destructive",
-          iconBg: "bg-destructive/10",
-          confirmText: "Ban User",
-          confirmVariant: "destructive" as const,
+          title: "Edit User",
+          description: `Edit information for ${user.displayName}.`,
+          icon: Edit,
+          iconColor: "text-orange-600",
+          iconBg: "bg-orange-600/10",
+          confirmText: "Save Changes",
+          confirmVariant: "default" as const,
           confirmClass: "",
         };
-      case "activate":
+      case "update":
         return {
-          title: "Activate User",
-          description: `Reactivate ${user.name}'s account? They will regain full access to the platform.`,
-          icon: CheckCircle,
-          iconColor: "text-chart-5",
-          iconBg: "bg-chart-5/10",
-          confirmText: "Activate User",
+          title: "Update User",
+          description: `Update role and verification status for ${user.displayName}.`,
+          icon: UserCog,
+          iconColor: "text-purple-600",
+          iconBg: "bg-purple-600/10",
+          confirmText: "Update User",
           confirmVariant: "default" as const,
-          confirmClass: "bg-chart-5 hover:bg-chart-5/90 text-background",
+          confirmClass: "",
         };
       default:
         return {
-          title: "User Details",
-          description: `Viewing details for ${user.name}`,
-          icon: Info,
-          iconColor: "text-primary",
-          iconBg: "bg-primary/10",
-          confirmText: "Close",
+          title: "Unknown Action",
+          description: "An unknown action was requested.",
+          icon: AlertCircle,
+          iconColor: "text-muted-foreground",
+          iconBg: "bg-muted",
+          confirmText: "Confirm",
           confirmVariant: "default" as const,
           confirmClass: "",
         };
@@ -78,7 +79,7 @@ export function ActionModal({
       className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm"
       exit={{ opacity: 0 }}
       initial={{ opacity: 0 }}
-      onClick={onCancel}
+      onClick={onCancelAction}
       role="dialog"
       transition={{ duration: 0.15 }}
     >
@@ -97,7 +98,7 @@ export function ActionModal({
             <Button
               aria-label="Close modal"
               className="h-8 w-8 text-muted-foreground transition-colors duration-150 hover:bg-accent hover:text-foreground"
-              onClick={onCancel}
+              onClick={onCancelAction}
               size="icon"
               variant="ghost"
             >
@@ -118,16 +119,18 @@ export function ActionModal({
           </div>
 
           <div className="flex justify-end gap-3">
+            {config.showCancel !== false && (
+              <Button
+                className="border-border bg-transparent transition-colors duration-150 hover:bg-accent"
+                onClick={onCancelAction}
+                variant="outline"
+              >
+                Cancel
+              </Button>
+            )}
             <Button
-              className="border-border bg-transparent transition-colors duration-150 hover:bg-accent"
-              onClick={onCancel}
-              variant="outline"
-            >
-              Cancel
-            </Button>
-            <Button
-              className={`transition-all duration-150 hover:scale-105 ${config.confirmClass}`}
-              onClick={onConfirm}
+              className={`transition-all duration-150 hover:scale-105 ${config.confirmClass || ""}`}
+              onClick={onConfirmAction}
               variant={config.confirmVariant}
             >
               {config.confirmText}

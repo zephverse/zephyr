@@ -5,13 +5,13 @@ import { Search } from "lucide-react";
 
 type SearchBarProps = {
   value: string;
-  onChange: (value: string) => void;
+  onChangeAction: (value: string) => void;
   placeholder?: string;
 };
 
 export function SearchBar({
   value,
-  onChange,
+  onChangeAction,
   placeholder = "Search users...",
 }: SearchBarProps) {
   return (
@@ -20,7 +20,7 @@ export function SearchBar({
       <Input
         className="pl-10"
         onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-          onChange(e.target.value)
+          onChangeAction(e.target.value)
         }
         placeholder={placeholder}
         type="text"

@@ -4,6 +4,7 @@ export * from "./cache/followbutton-cache";
 export * from "./cache/search-cache";
 export * from "./cache/share-cache";
 export * from "./cache/tag-cache";
+export * from "./cache/user-cache";
 export * from "./constants/cache-keys";
 export * from "./src/client";
 export { default as prisma } from "./src/prisma";

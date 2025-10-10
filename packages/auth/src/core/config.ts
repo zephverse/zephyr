@@ -80,6 +80,11 @@ export function createAuthConfig(config: AuthConfig = {}) {
           type: "string",
           required: false,
         },
+        role: {
+          type: "string",
+          required: true,
+          defaultValue: "user",
+        },
       },
     },
 

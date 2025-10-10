@@ -4,46 +4,73 @@ import { useState } from "react";
 import { EmptyState } from "./components/empty-state";
 import { LoadingState } from "./components/loading-state";
 import { UserManagement } from "./components/user-management";
-import type { ModalAction, User } from "./types/types";
+import { trpc } from "./trpc/client";
+import type { ModalAction, User, UserFilters } from "./types/types";
 
 export default function AdminDashboard() {
-  const [users, setUsers] = useState<User[]>([]);
-  const [isLoading, _setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [filters, setFilters] = useState<UserFilters>({
+    role: undefined,
+    emailVerified: undefined,
+    hasEmail: undefined,
+  });
+  const [sortBy, setSortBy] = useState<
+    "createdAt" | "aura" | "username" | "displayName"
+  >("createdAt");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [cursor, setCursor] = useState<string | undefined>();
 
-  // TODO: Replace with actual API call
-  const handleAction = (user: User, action: ModalAction) => {
-    console.log(`[v0] ${action} user:`, user.id);
+  const {
+    data: userList,
+    isLoading,
+    refetch,
+  } = trpc.admin.getUsers.useQuery({
+    limit: 20,
+    cursor,
+    filters: {
+      ...filters,
+      search: searchQuery || undefined,
+    },
+    sortBy,
+    sortOrder,
+  });
 
-    // Mock action handling for now
-    if (action === "suspend" || action === "activate" || action === "ban") {
-      setUsers((prevUsers) =>
-        prevUsers.map((u) =>
-          u.id === user.id
-            ? {
-                ...u,
-                // Note: status field doesn't exist in current User type
-                // This would need to be added to the type definition
-                ...u,
-              }
-            : u
-        )
-      );
+  const handleAction = (_user: User, action: ModalAction) => {
+    if (action === "update") {
+      refetch();
     }
   };
 
-  const filteredUsers = users.filter(
-    (user) =>
-      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.username.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const handleLoadMore = () => {
+    if (userList?.hasMore && userList.nextCursor) {
+      setCursor(userList.nextCursor);
+    }
+  };
 
-  if (isLoading) {
+  const handleFiltersChange = (newFilters: UserFilters) => {
+    setFilters(newFilters);
+    setCursor(undefined);
+  };
+
+  const handleSortChange = (
+    newSortBy: typeof sortBy,
+    newSortOrder: typeof sortOrder
+  ) => {
+    setSortBy(newSortBy);
+    setSortOrder(newSortOrder);
+    setCursor(undefined);
+  };
+
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+    setCursor(undefined);
+  };
+
+  if (isLoading && !userList) {
     return <LoadingState />;
   }
 
-  if (users.length === 0) {
+  if (!userList || userList.users.length === 0) {
     return (
       <EmptyState
         description="Users will appear here once they register on the platform."
@@ -54,10 +81,18 @@ export default function AdminDashboard() {
 
   return (
     <UserManagement
+      filters={filters}
+      hasMore={userList.hasMore}
       onAction={handleAction}
-      onSearchChange={setSearchQuery}
+      onFiltersChangeAction={handleFiltersChange}
+      onLoadMoreAction={handleLoadMore}
+      onSearchChangeAction={handleSearchChange}
+      onSortChangeAction={handleSortChange}
       searchQuery={searchQuery}
-      users={filteredUsers}
+      sortBy={sortBy}
+      sortOrder={sortOrder}
+      totalCount={userList.totalCount}
+      users={userList.users as User[]}
     />
   );
 }
