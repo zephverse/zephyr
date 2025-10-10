@@ -21,14 +21,14 @@ import type { User } from "../types/types";
 
 type UserUpdateModalProps = {
   user: User;
-  onClose: () => void;
-  onSuccess: () => void;
+  onCloseAction: () => void;
+  onSuccessAction: () => void;
 };
 
 export function UserUpdateModal({
   user,
-  onClose,
-  onSuccess,
+  onCloseAction,
+  onSuccessAction,
 }: UserUpdateModalProps) {
   const [displayName, setDisplayName] = useState(user.displayName);
   const [bio, setBio] = useState(user.bio || "");
@@ -41,8 +41,8 @@ export function UserUpdateModal({
 
   const updateUserMutation = trpc.admin.updateUser.useMutation({
     onSuccess: () => {
-      onSuccess();
-      onClose();
+      onSuccessAction();
+      onCloseAction();
     },
     onError: (mutationError) => {
       setError(mutationError.message || "Failed to update user");
@@ -82,7 +82,7 @@ export function UserUpdateModal({
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
       exit={{ opacity: 0 }}
       initial={{ opacity: 0 }}
-      onClick={onClose}
+      onClick={onCloseAction}
     >
       <motion.div
         animate={{ scale: 1, opacity: 1 }}
@@ -107,7 +107,7 @@ export function UserUpdateModal({
             </div>
             <Button
               className="h-8 w-8"
-              onClick={onClose}
+              onClick={onCloseAction}
               size="icon"
               variant="ghost"
             >
@@ -176,7 +176,7 @@ export function UserUpdateModal({
             <div className="flex justify-end gap-3 pt-4">
               <Button
                 disabled={isSubmitting}
-                onClick={onClose}
+                onClick={onCloseAction}
                 type="button"
                 variant="outline"
               >

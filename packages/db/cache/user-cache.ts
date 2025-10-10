@@ -19,6 +19,8 @@ const USER_ANALYTICS_CACHE_KEY_PREFIX = "admin:analytics";
 const USER_ANALYTICS_TTL = 600;
 const USER_ACTIVITY_CACHE_KEY_PREFIX = "admin:user:activity";
 const USER_ACTIVITY_TTL = 300;
+const USER_SEARCH_CACHE_KEY_PREFIX = "admin:search";
+const USER_SEARCH_TTL = 600;
 const RATE_LIMIT_PREFIX = "ratelimit:admin";
 const RATE_LIMIT_WINDOW = 60;
 const RATE_LIMIT_MAX_REQUESTS = 100;
@@ -300,6 +302,90 @@ export const userCache = {
         remaining: RATE_LIMIT_MAX_REQUESTS,
         resetTime: Math.floor(Date.now() / 1000) + RATE_LIMIT_WINDOW,
       };
+    }
+  },
+
+  generateSearchCacheKey(options: {
+    searchQuery: string;
+    filters: Record<string, unknown>;
+    sortBy: string;
+    sortOrder: string;
+    limit: number;
+    cursor?: string;
+  }): string {
+    const filterStr = JSON.stringify({
+      ...options.filters,
+      search: options.searchQuery,
+    });
+    const keyData = `${Buffer.from(filterStr).toString("base64")}:${options.sortBy}:${options.sortOrder}:${options.limit}:${options.cursor || "nocursor"}`;
+    return `${USER_SEARCH_CACHE_KEY_PREFIX}:${keyData}`;
+  },
+
+  async setSearchResult(
+    key: string,
+    data: {
+      users: unknown[];
+      totalCount: number;
+      hasMore: boolean;
+      nextCursor?: string;
+    }
+  ): Promise<void> {
+    try {
+      const cacheData = {
+        ...data,
+        cachedAt: Date.now(),
+        type: "search",
+      };
+      await redis.setex(key, USER_SEARCH_TTL, JSON.stringify(cacheData));
+    } catch (error) {
+      console.error("Error caching search result:", error);
+    }
+  },
+
+  async getSearchResult(key: string): Promise<{
+    users: unknown[];
+    totalCount: number;
+    hasMore: boolean;
+    nextCursor?: string;
+    cachedAt: number;
+    type: string;
+  } | null> {
+    try {
+      const cached = await redis.get(key);
+      if (cached) {
+        const data = JSON.parse(cached);
+        if (Date.now() - data.cachedAt < USER_SEARCH_TTL * 1000 - 120 * 1000) {
+          return data;
+        }
+      }
+      return null;
+    } catch (error) {
+      console.error("Error getting search result from cache:", error);
+      return null;
+    }
+  },
+
+  async invalidateSearchCache(searchQuery?: string): Promise<void> {
+    try {
+      if (searchQuery) {
+        const keys = await redis.keys(
+          `${USER_SEARCH_CACHE_KEY_PREFIX}:*${searchQuery}*`
+        );
+        if (keys.length > 0) {
+          await redis.del(...keys);
+        }
+      } else {
+        const keys = await redis.keys(`${USER_SEARCH_CACHE_KEY_PREFIX}:*`);
+        if (keys.length > 0) {
+          const batchSize = 100;
+          for (let i = 0; i < keys.length; i += batchSize) {
+            const batch = keys.slice(i, i + batchSize);
+            await redis.del(...batch);
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error invalidating search cache:", error);
     }
   },
 };

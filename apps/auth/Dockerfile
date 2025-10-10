@@ -12,6 +12,8 @@ COPY apps/auth/package.json ./apps/auth/
 RUN --mount=type=cache,target=/root/.bun \
     bun install
 COPY apps/auth/ ./apps/auth/
+COPY apps/auth/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
 WORKDIR /app/apps/auth
 ARG NEXT_PUBLIC_AUTH_URL
 ARG NEXT_PUBLIC_URL
@@ -25,8 +27,11 @@ RUN apk add --no-cache \
     openssl \
     curl \
     && addgroup -g 1001 -S nodejs \
-    && adduser -S nextjs -u 1001
+    && adduser -S nextjs -u 1001 \
+    && npm install -g tsx
+
 WORKDIR /app/apps/auth
+COPY --from=builder /usr/local/bin/entrypoint.sh /usr/local/bin/entrypoint.sh
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./../node_modules
 COPY --from=builder --chown=nextjs:nodejs /app/packages ./../packages
 COPY --from=builder --chown=nextjs:nodejs /app/apps/auth ./
@@ -36,4 +41,4 @@ ENV PORT=3001
 ENV NODE_ENV=production
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:3001/api/trpc/securityHealth || exit 1
-CMD ["npx", "next", "start"]
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

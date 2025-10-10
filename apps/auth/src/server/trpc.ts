@@ -19,6 +19,7 @@ const t = initTRPC.context<Context>().create({
 });
 export const router = t.router;
 export const procedure = t.procedure;
+export { t };
 
 export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
   if (!(ctx.session && ctx.user)) {

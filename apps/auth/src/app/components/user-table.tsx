@@ -28,6 +28,34 @@ type UserTableProps = {
   ) => void;
 };
 
+function highlightText(text: string, searchQuery: string): React.ReactNode {
+  if (!(searchQuery && text)) {
+    return text;
+  }
+
+  const regex = new RegExp(
+    `(${searchQuery.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`,
+    "gi"
+  );
+  const parts = text.split(regex);
+
+  let highlightCounter = 0;
+  return parts.map((part) => {
+    if (regex.test(part)) {
+      highlightCounter++;
+      return (
+        <mark
+          className="rounded bg-yellow-200 px-1 dark:bg-yellow-600"
+          key={`highlight-${text}-${searchQuery}-${highlightCounter}`}
+        >
+          {part}
+        </mark>
+      );
+    }
+    return part;
+  });
+}
+
 export function UserTable({
   users,
   onAction,
@@ -46,21 +74,15 @@ export function UserTable({
   const [entriesPerPage, setEntriesPerPage] = useState(25);
   const [searchExpanded, setSearchExpanded] = useState(false);
   const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery);
-
-  // Debounce the search query to avoid too many API calls
   const debouncedSearchQuery = useDebounce(localSearchQuery, 300);
 
-  // Sync local search query with prop changes (e.g., when cleared externally)
   useEffect(() => {
     setLocalSearchQuery(searchQuery);
   }, [searchQuery]);
 
-  // Call search action when debounced query changes
   useEffect(() => {
-    if (debouncedSearchQuery !== searchQuery) {
-      onSearchChangeAction(debouncedSearchQuery);
-    }
-  }, [debouncedSearchQuery, onSearchChangeAction, searchQuery]);
+    onSearchChangeAction(debouncedSearchQuery);
+  }, [debouncedSearchQuery, onSearchChangeAction]);
 
   const toggleRow = (userId: string) => {
     setExpandedRow(expandedRow === userId ? null : userId);
@@ -129,13 +151,13 @@ export function UserTable({
                           className="block max-w-32 truncate"
                           title={user.displayName}
                         >
-                          {user.displayName}
+                          {highlightText(user.displayName, localSearchQuery)}
                         </span>
                         <span
                           className="block max-w-32 truncate font-normal text-muted-foreground text-xs"
                           title={`@${user.username}`}
                         >
-                          @{user.username}
+                          @{highlightText(user.username, localSearchQuery)}
                         </span>
                       </div>
                     </td>
@@ -144,7 +166,10 @@ export function UserTable({
                         className="block max-w-48 truncate"
                         title={user.email || "No email"}
                       >
-                        {user.email || "No email"}
+                        {highlightText(
+                          user.email || "No email",
+                          localSearchQuery
+                        )}
                       </span>
                     </td>
                     <td className="whitespace-nowrap px-4 py-2 text-right font-medium text-primary text-sm">
@@ -212,10 +237,17 @@ export function UserTable({
                             <div className="flex-1 space-y-3">
                               <div>
                                 <h3 className="font-semibold text-foreground text-lg">
-                                  {user.displayName}
+                                  {highlightText(
+                                    user.displayName,
+                                    localSearchQuery
+                                  )}
                                 </h3>
                                 <p className="text-muted-foreground text-sm">
-                                  @{user.username}
+                                  @
+                                  {highlightText(
+                                    user.username,
+                                    localSearchQuery
+                                  )}
                                 </p>
                               </div>
                               <div className="grid grid-cols-2 gap-4 text-sm">
@@ -232,7 +264,10 @@ export function UserTable({
                                     Email:
                                   </span>{" "}
                                   <span className="text-foreground">
-                                    {user.email}
+                                    {highlightText(
+                                      user.email || "No email",
+                                      localSearchQuery
+                                    )}
                                   </span>
                                 </div>
                                 <div>

@@ -7,6 +7,7 @@ export * from "./cache/tag-cache";
 export * from "./cache/user-cache";
 export * from "./constants/cache-keys";
 export * from "./src/client";
+export * from "./src/meilisearch";
 export { default as prisma } from "./src/prisma";
 export * from "./src/redis";
 export * from "./src/types";

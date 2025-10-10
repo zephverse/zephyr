@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
-import { prisma, userCache } from "@zephyr/db";
+import { prisma, userCache, userSearchIndex } from "@zephyr/db";
 import { z } from "zod";
-import { adminProcedure, router } from "../../trpc";
+import { adminProcedure, router, t } from "../../trpc";
 
 type User = {
   id: string;
@@ -84,6 +84,7 @@ export type UserListResult = {
   nextCursor?: string;
 };
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: ignore
 async function fetchUsersFromDatabase(input: {
   limit: number;
   cursor?: string;
@@ -97,7 +98,6 @@ async function fetchUsersFromDatabase(input: {
   sortOrder: "asc" | "desc";
 }): Promise<UserListResult> {
   const { limit, cursor, filters, sortBy, sortOrder } = input;
-
   const where: Record<string, unknown> = {};
 
   if (filters?.role) {
@@ -112,14 +112,45 @@ async function fetchUsersFromDatabase(input: {
     where.email = filters.hasEmail ? { not: null } : null;
   }
 
-  // TODO: Search functionality (basic for now, will be enhanced with MeiliSearch later)
-  if (filters?.search) {
-    where.OR = [
-      { username: { contains: filters.search, mode: "insensitive" } },
-      { displayName: { contains: filters.search, mode: "insensitive" } },
-      { displayUsername: { contains: filters.search, mode: "insensitive" } },
-      { email: { contains: filters.search, mode: "insensitive" } },
-    ];
+  let searchResults: string[] | null = null;
+  if (filters?.search?.trim()) {
+    const searchStartTime = Date.now();
+
+    try {
+      const meiliResults = await userSearchIndex.search(filters.search.trim(), {
+        limit: 1000,
+        attributesToRetrieve: ["id"],
+      });
+      searchResults = meiliResults.hits.map((hit) => hit.id);
+    } catch (meiliError) {
+      const errorMessage =
+        meiliError instanceof Error ? meiliError.message : String(meiliError);
+      console.warn(
+        `[Search] MeiliSearch failed in ${Date.now() - searchStartTime}ms, falling back to database search:`,
+        errorMessage
+      );
+
+      where.OR = [
+        { username: { contains: filters.search, mode: "insensitive" } },
+        { displayName: { contains: filters.search, mode: "insensitive" } },
+        { displayUsername: { contains: filters.search, mode: "insensitive" } },
+        { email: { contains: filters.search, mode: "insensitive" } },
+      ];
+    }
+
+    if (searchResults && searchResults.length > 0) {
+      where.id = { in: searchResults };
+    } else if (searchResults && searchResults.length === 0) {
+      console.log("[Search] No results found, returning empty");
+      return {
+        users: [],
+        totalCount: 0,
+        hasMore: false,
+        nextCursor: undefined,
+      };
+    }
+  } else {
+    // No search filter provided
   }
 
   const users = await prisma.user.findMany({
@@ -160,6 +191,7 @@ async function fetchUsersFromDatabase(input: {
   const usersToReturn = hasMore ? users.slice(0, -1) : users;
   const nextCursor = hasMore ? usersToReturn.at(-1)?.id : undefined;
   const totalCount = await prisma.user.count({ where });
+
   const transformedUsers = usersToReturn.map((user) => ({
     id: user.id,
     username: user.username,
@@ -189,8 +221,18 @@ async function fetchUsersFromDatabase(input: {
   } satisfies UserListResult;
 }
 
+const timingMiddleware = t.middleware(async ({ next, path }) => {
+  const startTime = Date.now();
+  const result = await next();
+  const duration = Date.now() - startTime;
+  console.log(`[API Timing] ${path}: ${duration}ms`);
+  return result;
+});
+
+const timedAdminProcedure = rateLimitedAdminProcedure.use(timingMiddleware);
+
 export const adminRouter = router({
-  getUsers: rateLimitedAdminProcedure
+  getUsers: timedAdminProcedure
     .input(
       z.object({
         limit: z.number().min(1).max(100).default(20),
@@ -212,9 +254,35 @@ export const adminRouter = router({
     .query(async ({ input }) => {
       const { limit, cursor, filters, sortBy, sortOrder } = input;
 
-      // For now, skip caching if there's a search query or cursor (complex queries)
-      // TODO: Implement more sophisticated caching strategy for search
-      if (filters?.search || cursor) {
+      if (filters?.search) {
+        const searchCacheKey = userCache.generateSearchCacheKey({
+          searchQuery: filters.search,
+          filters,
+          sortBy,
+          sortOrder,
+          limit,
+          cursor,
+        });
+
+        const cachedSearchResult =
+          await userCache.getSearchResult(searchCacheKey);
+        if (cachedSearchResult) {
+          console.log("[Cache] Search cache HIT - returning cached result");
+          return cachedSearchResult;
+        }
+
+        const result = await fetchUsersFromDatabase(input);
+        await userCache.setSearchResult(searchCacheKey, {
+          users: result.users,
+          totalCount: result.totalCount,
+          hasMore: result.hasMore,
+          nextCursor: result.nextCursor,
+        });
+
+        return result;
+      }
+
+      if (cursor) {
         return await fetchUsersFromDatabase(input);
       }
 
@@ -227,6 +295,7 @@ export const adminRouter = router({
       const cachedResult = await userCache.getUserList(cacheKey);
 
       if (cachedResult) {
+        console.log("[Cache] User list cache HIT - returning cached result");
         return cachedResult;
       }
 
@@ -313,17 +382,41 @@ export const adminRouter = router({
           id: true,
           username: true,
           displayName: true,
+          displayUsername: true,
           email: true,
           emailVerified: true,
           role: true,
+          aura: true,
+          createdAt: true,
           updatedAt: true,
+          bio: true,
+          avatarUrl: true,
         },
       });
+
+      try {
+        await userSearchIndex.updateUser({
+          id: user.id,
+          username: user.username,
+          displayName: user.displayName,
+          displayUsername: user.displayUsername,
+          email: user.email,
+          role: user.role,
+          aura: user.aura,
+          emailVerified: user.emailVerified,
+          createdAt: user.createdAt.toISOString(),
+          updatedAt: user.updatedAt.toISOString(),
+          bio: user.bio,
+          avatarUrl: user.avatarUrl,
+        });
+      } catch (meiliError) {
+        console.warn("Failed to update user in MeiliSearch:", meiliError);
+      }
 
       await userCache.invalidateUserDetail(userId);
       await userCache.invalidateUserList();
       await userCache.invalidateUserStats();
-
+      await userCache.invalidateSearchCache();
       return user;
     }),
 

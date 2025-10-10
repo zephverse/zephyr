@@ -112,8 +112,8 @@ export function UserManagement({
       <AnimatePresence>
         {showUpdateModal && selectedUser && (
           <UserUpdateModal
-            onClose={handleUpdateClose}
-            onSuccess={handleUpdateSuccess}
+            onCloseAction={handleUpdateClose}
+            onSuccessAction={handleUpdateSuccess}
             user={selectedUser}
           />
         )}
