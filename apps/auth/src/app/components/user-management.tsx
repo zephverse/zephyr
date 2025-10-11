@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence } from "motion/react";
 import { useState } from "react";
 import type { ModalAction, User, UserFilters } from "../types/types";
 import { ActionModal } from "./action-modal";

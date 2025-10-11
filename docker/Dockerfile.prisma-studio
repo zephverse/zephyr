@@ -2,12 +2,9 @@ FROM oven/bun:latest AS base
 RUN apt-get update -y && apt-get install -y openssl
 WORKDIR /app
 COPY docker/prisma-package.json ./package.json
-RUN bun install
-COPY packages/db/package.json ./packages/db/package.json
-WORKDIR /app/packages/db
-RUN bun install
-WORKDIR /app
 COPY packages/config ./packages/config
+COPY packages/db/package.json ./packages/db/package.json
+RUN bun install
 COPY packages/db/prisma ./packages/db/prisma
 COPY packages/db/src ./packages/db/src
 COPY packages/db/scripts ./packages/db/scripts
@@ -17,8 +14,7 @@ FROM oven/bun:latest AS runtime
 RUN apt-get update -y && apt-get install -y openssl
 WORKDIR /app
 COPY --from=base /app/node_modules ./node_modules
-COPY --from=base /app/packages/config ./packages/config
-COPY --from=base /app/packages/db ./packages/db
+COPY --from=base /app/packages ./packages
 COPY docker/prisma-package.json ./package.json
 COPY docker/entrypoint.prisma-studio.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
