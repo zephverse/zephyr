@@ -301,6 +301,20 @@ services:
       - dev_network
     restart: unless-stopped
 
+  docs:
+    profiles: [ "apps" ]
+    build:
+      context: ..
+      dockerfile: ./apps/docs/Dockerfile
+    container_name: zephyr-dev-docs
+    ports:
+      - "3002:3002"
+    environment:
+      - NODE_ENV=production
+    networks:
+      - dev_network
+    restart: unless-stopped
+
 networks:
   dev_network:
     driver: bridge
