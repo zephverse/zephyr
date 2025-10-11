@@ -24,7 +24,12 @@ export default function AdminDashboard() {
     data: userList,
     isLoading,
     refetch,
-  } = trpc.admin.getUsers.useQuery({
+  } = trpc.admin.getUsers.useQuery<{
+    users: User[];
+    totalCount: number;
+    hasMore: boolean;
+    nextCursor?: string;
+  }>({
     limit: 20,
     cursor,
     filters: {
@@ -92,7 +97,7 @@ export default function AdminDashboard() {
       sortBy={sortBy}
       sortOrder={sortOrder}
       totalCount={userList.totalCount}
-      users={userList.users as User[]}
+      users={userList.users}
     />
   );
 }

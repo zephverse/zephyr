@@ -67,10 +67,11 @@ export function UserManagement({
   };
 
   const handleUpdateSuccess = () => {
+    const user = selectedUser;
     setShowUpdateModal(false);
     setSelectedUser(null);
-    if (selectedUser) {
-      onAction(selectedUser, "update");
+    if (user) {
+      onAction(user, "update");
     }
   };
 

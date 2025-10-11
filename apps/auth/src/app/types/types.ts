@@ -8,7 +8,7 @@ export type User = {
   avatarUrl: string | null;
   bio: string | null;
   aura: number;
-  role: string;
+  role: "user" | "admin";
   posts: number;
   sessions: number;
   following: number;

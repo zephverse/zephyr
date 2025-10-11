@@ -33,9 +33,7 @@ export function UserUpdateModal({
   const [displayName, setDisplayName] = useState(user.displayName);
   const [bio, setBio] = useState(user.bio || "");
   const [emailVerified, setEmailVerified] = useState(user.emailVerified);
-  const [role, setRole] = useState<"user" | "admin">(
-    user.role as "user" | "admin"
-  );
+  const [role, setRole] = useState(user.role);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -50,24 +48,20 @@ export function UserUpdateModal({
     },
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setError(null);
 
-    try {
-      await updateUserMutation.mutateAsync({
-        userId: user.id,
-        data: {
-          displayName: displayName || undefined,
-          bio: bio || undefined,
-          emailVerified,
-          role: role as "user" | "admin",
-        },
-      });
-    } catch (_err) {
-      // Error is handled by mutation's onError
-    }
+    updateUserMutation.mutate({
+      userId: user.id,
+      data: {
+        displayName: displayName || undefined,
+        bio: bio || undefined,
+        emailVerified,
+        role,
+      },
+    });
   };
 
   const hasChanges =

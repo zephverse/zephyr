@@ -25,6 +25,28 @@ const RATE_LIMIT_PREFIX = "ratelimit:admin";
 const RATE_LIMIT_WINDOW = 60;
 const RATE_LIMIT_MAX_REQUESTS = 100;
 
+function doesKeyContainSearchQuery(key: string, searchQuery: string): boolean {
+  try {
+    const prefix = `${USER_SEARCH_CACHE_KEY_PREFIX}:`;
+    if (!key.startsWith(prefix)) {
+      return false;
+    }
+
+    const keyData = key.slice(prefix.length);
+    const base64Part = keyData.split(":")[0];
+    if (!base64Part) {
+      return false;
+    }
+
+    const decoded = Buffer.from(base64Part, "base64").toString("utf-8");
+    const filters = JSON.parse(decoded);
+
+    return filters.search === searchQuery;
+  } catch (_error) {
+    return false;
+  }
+}
+
 export const userCache = {
   async setUserStats(stats: CachedUserStats): Promise<void> {
     try {
@@ -158,6 +180,31 @@ export const userCache = {
     }
   },
 
+  async scanAndDeleteKeys(pattern: string): Promise<void> {
+    const BATCH_SIZE = 100;
+    let cursor = 0;
+
+    do {
+      const [newCursor, keys] = await redis.scan(
+        cursor,
+        "MATCH",
+        pattern,
+        "COUNT",
+        BATCH_SIZE
+      );
+
+      if (keys.length > 0) {
+        const pipeline = redis.pipeline();
+        for (const key of keys) {
+          pipeline.del(key);
+        }
+        await pipeline.exec();
+      }
+
+      cursor = Number.parseInt(newCursor, 10);
+    } while (cursor !== 0);
+  },
+
   async invalidateAllUserCaches(userId?: string): Promise<void> {
     try {
       const pipeline = redis.pipeline();
@@ -166,7 +213,9 @@ export const userCache = {
 
       if (userId) {
         pipeline.del(`${USER_DETAIL_CACHE_KEY_PREFIX}:${userId}`);
-        pipeline.del(`${USER_ACTIVITY_CACHE_KEY_PREFIX}:${userId}:*`);
+        await this.scanAndDeleteKeys(
+          `${USER_ACTIVITY_CACHE_KEY_PREFIX}:${userId}:*`
+        );
       }
 
       await pipeline.exec();
@@ -367,21 +416,26 @@ export const userCache = {
 
   async invalidateSearchCache(searchQuery?: string): Promise<void> {
     try {
+      const allKeys = await redis.keys(`${USER_SEARCH_CACHE_KEY_PREFIX}:*`);
+      if (allKeys.length === 0) {
+        return;
+      }
+
+      let keysToDelete: string[];
+
       if (searchQuery) {
-        const keys = await redis.keys(
-          `${USER_SEARCH_CACHE_KEY_PREFIX}:*${searchQuery}*`
+        keysToDelete = allKeys.filter((key) =>
+          doesKeyContainSearchQuery(key, searchQuery)
         );
-        if (keys.length > 0) {
-          await redis.del(...keys);
-        }
       } else {
-        const keys = await redis.keys(`${USER_SEARCH_CACHE_KEY_PREFIX}:*`);
-        if (keys.length > 0) {
-          const batchSize = 100;
-          for (let i = 0; i < keys.length; i += batchSize) {
-            const batch = keys.slice(i, i + batchSize);
-            await redis.del(...batch);
-          }
+        keysToDelete = allKeys;
+      }
+
+      if (keysToDelete.length > 0) {
+        const batchSize = 100;
+        for (let i = 0; i < keysToDelete.length; i += batchSize) {
+          const batch = keysToDelete.slice(i, i + batchSize);
+          await redis.del(...batch);
         }
       }
     } catch (error) {

@@ -13,7 +13,7 @@ type User = {
   avatarUrl: string | null;
   bio: string | null;
   aura: number;
-  role: string;
+  role: "user" | "admin";
   posts: number;
   sessions: number;
   following: number;
@@ -83,6 +83,66 @@ export type UserListResult = {
   hasMore: boolean;
   nextCursor?: string;
 };
+
+async function syncUsersWithMeiliSearch(
+  userIds: string[],
+  action: "updateRole" | "updateEmailVerification" | "deleteUsers"
+): Promise<void> {
+  if (action === "deleteUsers") {
+    for (const userId of userIds) {
+      try {
+        await userSearchIndex.deleteUser(userId);
+      } catch (meiliError) {
+        console.warn(
+          `Failed to delete user ${userId} from MeiliSearch:`,
+          meiliError
+        );
+      }
+    }
+  } else {
+    const updatedUsers = await prisma.user.findMany({
+      where: { id: { in: userIds } },
+      select: {
+        id: true,
+        username: true,
+        displayName: true,
+        displayUsername: true,
+        email: true,
+        emailVerified: true,
+        role: true,
+        aura: true,
+        createdAt: true,
+        updatedAt: true,
+        bio: true,
+        avatarUrl: true,
+      },
+    });
+
+    for (const user of updatedUsers) {
+      try {
+        await userSearchIndex.updateUser({
+          id: user.id,
+          username: user.username,
+          displayName: user.displayName,
+          displayUsername: user.displayUsername,
+          email: user.email,
+          role: user.role,
+          aura: user.aura,
+          emailVerified: user.emailVerified,
+          createdAt: user.createdAt.toISOString(),
+          updatedAt: user.updatedAt.toISOString(),
+          bio: user.bio,
+          avatarUrl: user.avatarUrl,
+        });
+      } catch (meiliError) {
+        console.warn(
+          `Failed to update user ${user.id} in MeiliSearch:`,
+          meiliError
+        );
+      }
+    }
+  }
+}
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: ignore
 async function fetchUsersFromDatabase(input: {
@@ -202,7 +262,7 @@ async function fetchUsersFromDatabase(input: {
     avatarUrl: user.avatarUrl,
     bio: user.bio,
     aura: user.aura,
-    role: user.role,
+    role: user.role as "user" | "admin",
     posts: user._count.posts,
     sessions: user._count.sessions,
     following: user._count.following,
@@ -353,7 +413,10 @@ export const adminRouter = router({
       });
 
       if (!user) {
-        throw new Error("User not found");
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "User not found",
+        });
       }
 
       await userCache.setUserDetail(userId, user);
@@ -788,6 +851,8 @@ export const adminRouter = router({
             });
         }
 
+        await syncUsersWithMeiliSearch(userIds, action);
+        await userCache.invalidateSearchCache();
         await userCache.invalidateUserList();
         await userCache.invalidateUserStats();
         for (const userId of userIds) {
