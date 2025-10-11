@@ -89,7 +89,7 @@ type RootLayoutProperties = {
 
 const RootLayout = ({ children }: RootLayoutProperties) => (
   <html
-    className={`${SofiaProSoft.className} ${SofiaProSoft.variable}`}
+    className={`${SofiaProSoft.className} ${SofiaProSoft.variable} antialiased`}
     lang="en"
     suppressHydrationWarning
   >
@@ -140,7 +140,7 @@ const RootLayout = ({ children }: RootLayoutProperties) => (
         src="https://tracking.zephyyrr.in/script.js"
       />
     </head>
-    <body className={"min-h-screen font-sans"}>
+    <body className={"min-h-screen font-sans antialiased"}>
       <DesignSystemProvider>{children}</DesignSystemProvider>
     </body>
   </html>

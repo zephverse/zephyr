@@ -6,6 +6,7 @@
     [
       "@zephyr/auth-app",
       "@zephyr/web",
+      "@zephyr/docs",
       "@zephyr/aggregator",
       "@zephyr/auth",
       "@zephyr/config",
