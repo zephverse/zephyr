@@ -1,0 +1,9 @@
+@import "tailwindcss";
+
+/* button[id^="headlessui-listbox-button"] svg {
+  height: 10px;
+} */
+
+.nextra-sidebar svg:last-child {
+  height: 11px;
+}
