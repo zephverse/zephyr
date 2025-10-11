@@ -22,7 +22,7 @@
     "migrate:apply": "pnpm prisma migrate deploy"
   },
   "dependencies": {
-    "@prisma/client": "^6.16.3",
+    "@prisma/client": "^6.17.1",
     "@t3-oss/env-nextjs": "^0.13.8",
     "@zephyr/config": "workspace:*",
     "date-fns": "^4.1.0",
@@ -32,7 +32,7 @@
     "zod": "^4.1.11"
   },
   "devDependencies": {
-    "prisma": "^6.16.3",
+    "prisma": "^6.17.1",
     "typescript": "^5.9.3"
   }
 }
