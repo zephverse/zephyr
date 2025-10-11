@@ -163,10 +163,7 @@ export const userCache = {
 
   async invalidateUserList(): Promise<void> {
     try {
-      const keys = await redis.keys(`${USER_LIST_CACHE_KEY_PREFIX}:*`);
-      if (keys.length > 0) {
-        await redis.del(keys);
-      }
+      await this.scanAndDeleteKeys(`${USER_LIST_CACHE_KEY_PREFIX}:*`);
     } catch (error) {
       console.error("Error invalidating user list cache:", error);
     }
@@ -293,7 +290,7 @@ export const userCache = {
 
       pipeline.zremrangebyscore(key, 0, now - RATE_LIMIT_WINDOW);
 
-      pipeline.zadd(key, now, `${now}-${Math.random()}`);
+      pipeline.zadd(key, now, `${now}-${Date.now()}-${Math.random()}`);
 
       pipeline.zcard(key);
 

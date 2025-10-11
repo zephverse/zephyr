@@ -1,28 +1,8 @@
 import { TRPCError } from "@trpc/server";
 import { prisma, userCache, userSearchIndex } from "@zephyr/db";
 import { z } from "zod";
+import type { User } from "../../../app/types/types";
 import { adminProcedure, router, t } from "../../trpc";
-
-type User = {
-  id: string;
-  username: string;
-  displayName: string;
-  displayUsername: string | null;
-  email: string | null;
-  emailVerified: boolean;
-  avatarUrl: string | null;
-  bio: string | null;
-  aura: number;
-  role: "user" | "admin";
-  posts: number;
-  sessions: number;
-  following: number;
-  followers: number;
-  bookmarks: number;
-  joinedDate: string;
-  createdAt: string;
-  updatedAt: string;
-};
 
 const rateLimitedAdminProcedure = adminProcedure.use(async ({ ctx, next }) => {
   if (!ctx.user?.id) {
