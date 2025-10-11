@@ -23,11 +23,12 @@ RUN --mount=type=cache,target=/root/.bun \
 FROM oven/bun:slim AS deps
 RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
-COPY package.json ./package.json
+COPY package.json bun.lock ./
 COPY packages/ ./packages/
-COPY apps/auth/package.json ./apps/auth/package.json
+COPY apps/auth/package.json ./apps/auth/
 RUN --mount=type=cache,target=/root/.bun \
-    bun install --no-cache
+    bun install
+RUN cd packages/db && bunx prisma generate
 
 FROM oven/bun:alpine AS runtime
 RUN apk add --no-cache \
@@ -35,7 +36,6 @@ RUN apk add --no-cache \
     curl \
     && addgroup -g 1001 -S nodejs \
     && adduser -S nextjs -u 1001
-
 WORKDIR /app
 COPY --from=deps --chown=nextjs:nodejs /app/node_modules ./node_modules
 COPY --from=deps --chown=nextjs:nodejs /app/packages ./packages

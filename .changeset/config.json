@@ -1,0 +1,22 @@
+{
+  "$schema": "https://unpkg.com/@changesets/config@3.1.1/schema.json",
+  "changelog": ["@changesets/changelog-github", { "repo": "zephverse/zephyr" }],
+  "commit": false,
+  "fixed": [
+    [
+      "@zephyr/auth-app",
+      "@zephyr/web",
+      "@zephyr/aggregator",
+      "@zephyr/auth",
+      "@zephyr/config",
+      "@zephyr/db",
+      "@zephyr/next",
+      "@zephyr/tailwind",
+      "@zephyr/ui"
+    ]
+  ],
+  "access": "restricted",
+  "baseBranch": "development",
+  "updateInternalDependencies": "patch",
+  "ignore": []
+}

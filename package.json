@@ -1,6 +1,6 @@
 {
   "name": "zephyr",
-  "version": "2.1.0",
+  "version": "1.0.1",
   "license": "AGPL-3.0",
   "homepage": "https://zephyyrr.in",
   "private": true,
@@ -27,10 +27,17 @@
     "docker:build:auth": "docker buildx bake --file docker-bake.hcl auth-local",
     "docker:build:web": "docker buildx bake --file docker-bake.hcl web-local",
     "docker:build:all": "docker buildx bake --file docker-bake.hcl auth-local web-local",
-    "prepare": "husky"
+    "prepare": "husky",
+    "changeset": "changeset",
+    "changeset:add": "changeset add",
+    "changeset:version": "changeset version",
+    "changeset:release": "changeset publish",
+    "version:packages": "changeset version && bun install"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.4",
+    "@changesets/changelog-github": "^0.5.1",
+    "@changesets/cli": "^2.29.7",
     "@types/node": "^24.6.2",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",

@@ -25,11 +25,13 @@ RUN --mount=type=cache,target=/root/.bun \
 FROM oven/bun:slim AS deps
 RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
+COPY package.json bun.lock ./
 COPY package.json ./package.json
 COPY packages/ ./packages/
 COPY apps/web/package.json ./apps/web/package.json
 RUN --mount=type=cache,target=/root/.bun \
     bun install --no-cache
+RUN cd packages/db && bunx prisma generate
 
 FROM oven/bun:alpine AS runtime
 RUN apk add --no-cache \
