@@ -163,6 +163,7 @@
         "@zephyr/config": "workspace:*",
         "date-fns": "^4.1.0",
         "ioredis": "^5.8.0",
+        "meilisearch": "^0.53.0",
         "zod": "^4.1.11",
       },
       "devDependencies": {
