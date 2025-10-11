@@ -140,7 +140,7 @@ const RootLayout = ({ children }: RootLayoutProperties) => (
         src="https://tracking.zephyyrr.in/script.js"
       />
     </head>
-    <body className={"min-h-screen font-sans antialiased"}>
+    <body className={"min-h-screen font-sans"}>
       <DesignSystemProvider>{children}</DesignSystemProvider>
     </body>
   </html>

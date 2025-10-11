@@ -25,7 +25,7 @@ services:
     restart: unless-stopped
 
   postgres-init:
-    profiles: ["init"]
+    profiles: [ "init" ]
     container_name: zephyr-dev-postgres-init
     image: postgres:18-alpine
     environment:
@@ -48,7 +48,7 @@ services:
       '
 
   prisma-migrate:
-    profiles: ["init"]
+    profiles: [ "init" ]
     container_name: zephyr-dev-prisma-migrate
     build:
       context: ..
@@ -62,10 +62,10 @@ services:
     depends_on:
       postgres-dev:
         condition: service_healthy
-    command: ["sh", "-c", "bunx prisma generate --schema packages/db/prisma/schema.prisma && bunx prisma db push --accept-data-loss --schema packages/db/prisma/schema.prisma"]
+    command: [ "sh", "-c", "bunx prisma generate --schema packages/db/prisma/schema.prisma && bunx prisma db push --accept-data-loss --schema packages/db/prisma/schema.prisma" ]
 
   prisma-studio:
-    profiles: ["studio", "init"]
+    profiles: [ "studio", "init" ]
     container_name: zephyr-dev-prisma-studio
     build:
       context: ..
@@ -81,7 +81,8 @@ services:
     depends_on:
       postgres-dev:
         condition: service_healthy
-    command: ["sh", "-c", "bunx prisma studio --port 5555 --hostname 0.0.0.0 --schema packages/db/prisma/schema.prisma"]
+    command: [ "sh", "-c", "bunx prisma studio --port 5555 --hostname 0.0.0.0 --schema packages/db/prisma/schema.prisma" ]
+    restart: unless-stopped
 
   redis-dev:
     container_name: zephyr-dev-redis
@@ -102,7 +103,7 @@ services:
     restart: unless-stopped
 
   redis-insight:
-    profiles: ["studio"]
+    profiles: [ "studio" ]
     container_name: zephyr-dev-redis-insight
     image: redislabs/redisinsight:latest
     ports:
@@ -144,7 +145,7 @@ services:
     restart: unless-stopped
 
   minio-init:
-    profiles: ["init"]
+    profiles: [ "init" ]
     container_name: zephyr-dev-minio-init
     image: alpine:latest
     depends_on:
@@ -154,30 +155,95 @@ services:
       MC_HOST_minio: http://minioadmin:minioadmin@minio-dev:9000
     networks:
       - dev_network
-    command: ["/bin/sh", "-c", "
-        apk add --no-cache curl &&
-        curl -O https://dl.min.io/client/mc/release/linux-amd64/mc &&
-        chmod +x mc &&
-        echo 'Creating MinIO buckets...' &&
-        ./mc mb minio/uploads || true &&
-        ./mc mb minio/avatars || true &&
-        ./mc mb minio/temp || true &&
-        ./mc mb minio/backups || true &&
-        echo 'Setting bucket policies...' &&
-        ./mc anonymous set download minio/uploads || true &&
-        ./mc anonymous set download minio/avatars || true &&
-        ./mc anonymous set download minio/temp || true &&
-        ./mc anonymous set download minio/backups || true &&
-        echo 'Enabling versioning...' &&
-        ./mc version enable minio/uploads || true &&
-        ./mc version enable minio/avatars || true &&
-        ./mc version enable minio/temp || true &&
-        ./mc version enable minio/backups || true &&
-        echo 'MinIO initialization complete!'
-      "]
+    command: [ "/bin/sh", "-c", " apk add --no-cache curl && curl -O https://dl.min.io/client/mc/release/linux-amd64/mc && chmod +x mc && echo 'Creating MinIO buckets...' && ./mc mb minio/uploads || true && ./mc mb minio/avatars || true && ./mc mb minio/temp || true && ./mc mb minio/backups || true && echo 'Setting bucket policies...' && ./mc anonymous set download minio/uploads || true && ./mc anonymous set download minio/avatars || true && ./mc anonymous set download minio/temp || true && ./mc anonymous set download minio/backups || true && echo 'Enabling versioning...' && ./mc version enable minio/uploads || true && ./mc version enable minio/avatars || true && ./mc version enable minio/temp || true && ./mc version enable minio/backups || true && echo 'MinIO initialization complete!' " ]
+
+  rabbitmq-dev:
+    container_name: zephyr-dev-rabbitmq
+    image: rabbitmq:4.1-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin123
+    volumes:
+      - rabbitmq_data_dev:/var/lib/rabbitmq
+    networks:
+      - dev_network
+    healthcheck:
+      test: [ "CMD", "rabbitmq-diagnostics", "ping" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  meilisearch-dev:
+    container_name: zephyr-dev-meilisearch
+    image: getmeili/meilisearch:latest
+    ports:
+      - "7700:7700"
+    environment:
+      MEILI_MASTER_KEY: masterKey123
+      MEILI_NO_ANALYTICS: true
+    volumes:
+      - meilisearch_data_dev:/meili_data
+    networks:
+      - dev_network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:7700/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  meilisearch-init:
+    profiles: [ "init" ]
+    container_name: zephyr-dev-meilisearch-init
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.prisma
+    environment:
+      MEILISEARCH_URL: http://zephyr-dev-meilisearch:7700
+      MEILISEARCH_MASTER_KEY: masterKey123
+      DATABASE_URL: postgresql://postgres:postgres@postgres-dev:5432/zephyr?schema=public
+    networks:
+      - dev_network
+    depends_on:
+      meilisearch-dev:
+        condition: service_healthy
+      postgres-dev:
+        condition: service_healthy
+      prisma-migrate:
+        condition: service_completed_successfully
+    command: [ "sh", "-c", "echo 'Initializing MeiliSearch user search index...' && bunx tsx packages/db/scripts/init-meilisearch.ts && echo 'MeiliSearch initialization complete!'" ]
+
+  timescaledb-dev:
+    container_name: zephyr-dev-timescaledb
+    image: timescale/timescaledb:latest-pg17
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: zephyr-logs
+    ports:
+      - "5434:5432"
+    volumes:
+      - timescaledb_data_dev:/var/lib/postgresql/data
+    command: >
+      postgres -c listen_addresses='*' -c max_connections=50 -c shared_buffers=128MB -c work_mem=4MB -c maintenance_work_mem=32MB -c effective_cache_size=256MB -c wal_level=replica -c max_wal_senders=4 -c log_statement=none -c timezone=UTC
+    networks:
+      - dev_network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d zephyr-logs" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
 
   web:
-    profiles: ["apps"]
+    profiles: [ "apps" ]
     build:
       context: ..
       dockerfile: ./apps/web/Dockerfile
@@ -193,6 +259,10 @@ services:
       - MINIO_ENDPOINT=http://zephyr-dev-minio:9000
       - MINIO_ACCESS_KEY=minioadmin
       - MINIO_SECRET_KEY=minioadmin
+      - RABBITMQ_URL=amqp://admin:admin123@zephyr-dev-rabbitmq:5672
+      - MEILISEARCH_URL=http://zephyr-dev-meilisearch:7700
+      - MEILISEARCH_MASTER_KEY=masterKey123
+      - TIMESCALEDB_URL=postgresql://postgres:postgres@zephyr-dev-timescaledb:5432/zephyr-logs?schema=public
     depends_on:
       postgres-dev:
         condition: service_healthy
@@ -205,7 +275,7 @@ services:
     restart: unless-stopped
 
   auth:
-    profiles: ["apps"]
+    profiles: [ "apps" ]
     build:
       context: ..
       dockerfile: ./apps/auth/Dockerfile
@@ -218,6 +288,10 @@ services:
       - NEXT_PUBLIC_AUTH_URL=http://localhost:3001
       - DATABASE_URL=postgresql://postgres:postgres@zephyr-dev-postgres:5432/zephyr?schema=public
       - REDIS_URL=redis://:zephyrredis@zephyr-dev-redis:6379/0
+      - RABBITMQ_URL=amqp://admin:admin123@zephyr-dev-rabbitmq:5672
+      - MEILISEARCH_URL=http://zephyr-dev-meilisearch:7700
+      - MEILISEARCH_MASTER_KEY=masterKey123
+      - TIMESCALEDB_URL=postgresql://postgres:postgres@zephyr-dev-timescaledb:5432/zephyr-logs?schema=public
     depends_on:
       postgres-dev:
         condition: service_healthy
@@ -241,3 +315,9 @@ volumes:
     name: zephyr-dev-minio-data
   redisinsight:
     name: zephyr-dev-redisinsight-data
+  rabbitmq_data_dev:
+    name: zephyr-dev-rabbitmq-data
+  meilisearch_data_dev:
+    name: zephyr-dev-meilisearch-data
+  timescaledb_data_dev:
+    name: zephyr-dev-timescaledb-data

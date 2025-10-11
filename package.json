@@ -1,6 +1,6 @@
 {
   "name": "zephyr",
-  "version": "2.0.37-dev",
+  "version": "1.0.1",
   "license": "AGPL-3.0",
   "homepage": "https://zephyyrr.in",
   "private": true,
@@ -18,6 +18,7 @@
     "env:dev": "bun -e \"const fs=require('fs');const path=require('path');fs.copyFileSync(path.join('apps','web','.env.example'),path.join('apps','web','.env'));fs.copyFileSync(path.join('apps','auth','.env.example'),path.join('apps','auth','.env'));console.log('✅ Environment files copied successfully');\"",
     "clean": "bun -e \"const fs = require('fs'); const path = require('path'); function rm(dir) { if (fs.existsSync(dir)) { console.log('Deleting ' + dir); fs.rmSync(dir, { recursive: true, force: true }); } } function findAndDelete(folder) { const walk = (dir) => { const files = fs.readdirSync(dir); files.forEach(file => { const fullPath = path.join(dir, file); if (fs.statSync(fullPath).isDirectory()) { if (file === folder) { rm(fullPath); } else { walk(fullPath); } } }); }; walk(process.cwd()); } ['node_modules', '.next', '.turbo'].forEach(findAndDelete); console.log('✅ Cleanup completed');\"",
     "db:up": "cd packages/db && bunx prisma generate && bunx prisma db push",
+    "search:init": "cd packages/db && bunx tsx scripts/init-meilisearch.ts",
     "docker:logs": "docker compose -f docker/docker-compose.dev.yml logs -f",
     "docker:dev": "docker compose -f docker/docker-compose.dev.yml --profile init --profile studio up -d",
     "docker:apps": "docker compose -f docker/docker-compose.dev.yml --profile apps up web auth -d --build",
@@ -26,15 +27,24 @@
     "docker:build:auth": "docker buildx bake --file docker-bake.hcl auth-local",
     "docker:build:web": "docker buildx bake --file docker-bake.hcl web-local",
     "docker:build:all": "docker buildx bake --file docker-bake.hcl auth-local web-local",
-    "prepare": "husky"
+    "prepare": "husky",
+    "changeset": "changeset",
+    "changeset:add": "changeset add",
+    "changeset:version": "changeset version",
+    "changeset:release": "changeset publish",
+    "version:packages": "changeset version && bun install"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.4",
+    "@changesets/changelog-github": "^0.5.1",
+    "@changesets/cli": "^2.29.7",
     "@types/node": "^24.6.2",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "dotenv": "^17.2.3",
     "husky": "^9.1.7",
+    "meilisearch": "^0.53.0",
+    "prettier": "^3.6.2",
     "react-markdown": "9.0.3",
     "turbo": "^2.5.8",
     "typescript": "^5.9.3",
@@ -49,5 +59,5 @@
     "prisma",
     "sharp"
   ],
-  "packageManager": "bun@1.2.23"
+  "packageManager": "bun@1.3.0"
 }

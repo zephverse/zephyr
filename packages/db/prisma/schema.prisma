@@ -31,6 +31,7 @@ model User {
   emailVerifiedAt DateTime?
   image           String?
   name            String?
+  role            String    @default("user")
 
   sessions              Session[]
   accounts              Account[]

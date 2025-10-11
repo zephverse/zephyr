@@ -19,6 +19,14 @@ export const keys = createEnv({
     REDDIT_CLIENT_ID: z.string().optional(),
     REDDIT_CLIENT_SECRET: z.string().optional(),
     BETTER_AUTH_SECRET: z.string().min(1),
+    RABBITMQ_URL: z.url().default("amqp://admin:admin123@localhost:5672"),
+    MEILISEARCH_URL: z.url().default("http://localhost:7700"),
+    MEILISEARCH_MASTER_KEY: z.string().default("masterKey123"),
+    TIMESCALEDB_URL: z
+      .url()
+      .default(
+        "postgresql://postgres:postgres@localhost:5434/zephyr-logs?schema=public"
+      ),
     NODE_ENV: z.enum(["development", "production"]).default("development"),
     NEXT_TELEMETRY_DISABLED: z.enum(["0", "1"]).default("1"),
     TURBO_TELEMETRY_DISABLED: z.enum(["0", "1"]).default("1"),
@@ -47,6 +55,10 @@ export const keys = createEnv({
     REDDIT_CLIENT_ID: process.env.REDDIT_CLIENT_ID,
     REDDIT_CLIENT_SECRET: process.env.REDDIT_CLIENT_SECRET,
     BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
+    RABBITMQ_URL: process.env.RABBITMQ_URL,
+    MEILISEARCH_URL: process.env.MEILISEARCH_URL,
+    MEILISEARCH_MASTER_KEY: process.env.MEILISEARCH_MASTER_KEY,
+    TIMESCALEDB_URL: process.env.TIMESCALEDB_URL,
     NODE_ENV: process.env.NODE_ENV,
     NEXT_PUBLIC_URL: process.env.NEXT_PUBLIC_URL,
     NEXT_TELEMETRY_DISABLED: process.env.NEXT_TELEMETRY_DISABLED,

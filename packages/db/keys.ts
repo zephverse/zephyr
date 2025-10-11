@@ -19,6 +19,8 @@ export const keys = createEnv({
         "postgresql://postgres:postgres@localhost:5433/zephyr?schema=public"
       ),
     REDIS_URL: z.string().default("redis://:zephyrredis@localhost:6379/0"),
+    MEILISEARCH_URL: z.url().default("http://localhost:7700"),
+    MEILISEARCH_MASTER_KEY: z.string().default("masterKey123"),
 
     NODE_ENV: z.enum(["development", "production"]).default("development"),
   },
@@ -32,6 +34,8 @@ export const keys = createEnv({
     POSTGRES_PRISMA_URL: process.env.POSTGRES_PRISMA_URL,
     POSTGRES_URL_NON_POOLING: process.env.POSTGRES_URL_NON_POOLING,
     REDIS_URL: process.env.REDIS_URL,
+    MEILISEARCH_URL: process.env.MEILISEARCH_URL,
+    MEILISEARCH_MASTER_KEY: process.env.MEILISEARCH_MASTER_KEY,
     NODE_ENV: process.env.NODE_ENV,
   },
 
