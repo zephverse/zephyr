@@ -1,7 +1,7 @@
 "use client";
 
-import type { ToastActionElement, ToastProps } from "@zephyr/ui/shadui/toast";
 import { useEffect, useState } from "react";
+import type { ToastActionElement, ToastProps } from "../shadui/toast";
 
 const TOAST_LIMIT = 1;
 const TOAST_REMOVE_DELAY = 1_000_000;

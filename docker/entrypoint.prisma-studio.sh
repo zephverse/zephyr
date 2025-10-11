@@ -9,7 +9,7 @@ else
 fi
 
 echo "Initializing MeiliSearch user search index..."
-if bunx tsx packages/db/scripts/init-meilisearch.ts; then
+if node /app/docker/init-meilisearch.js; then
     echo "MeiliSearch initialization complete!"
 else
     echo "Warning: MeiliSearch initialization failed, continuing with Prisma Studio..."

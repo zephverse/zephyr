@@ -16,6 +16,7 @@ WORKDIR /app
 COPY --from=base /app/node_modules ./node_modules
 COPY --from=base /app/packages ./packages
 COPY docker/prisma-package.json ./package.json
+COPY docker/init-meilisearch.js ./docker/init-meilisearch.js
 COPY docker/entrypoint.prisma-studio.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 EXPOSE 5555
