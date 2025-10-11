@@ -29,6 +29,7 @@
     "@zephyr/auth": "workspace:*",
     "@zephyr/config": "workspace:*",
     "@zephyr/db": "workspace:*",
+    "@zephyr/next": "workspace:*",
     "@zephyr/ui": "workspace:*",
     "better-auth": "^1.3.26",
     "clsx": "^2.1.1",
@@ -63,7 +64,6 @@
   "devDependencies": {
     "@types/jsonwebtoken": "^9.0.10",
     "@types/react-syntax-highlighter": "^15.5.13",
-    "@zephyr/next": "workspace:*",
     "tailwindcss": "^4.1.14",
     "typescript": "^5.9.3"
   }

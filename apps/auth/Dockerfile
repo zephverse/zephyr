@@ -20,6 +20,15 @@ ENV NEXT_PUBLIC_URL=$NEXT_PUBLIC_URL
 RUN --mount=type=cache,target=/root/.bun \
     bun run build
 
+FROM oven/bun:slim AS deps
+RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+COPY package.json ./package.json
+COPY packages/ ./packages/
+COPY apps/auth/package.json ./apps/auth/package.json
+RUN --mount=type=cache,target=/root/.bun \
+    bun install --no-cache
+
 FROM node:22-alpine AS runtime
 RUN apk add --no-cache \
     openssl \
@@ -28,8 +37,8 @@ RUN apk add --no-cache \
     && adduser -S nextjs -u 1001
 
 WORKDIR /app/apps/auth
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./../node_modules
-COPY --from=builder --chown=nextjs:nodejs /app/packages ./../packages
+COPY --from=deps --chown=nextjs:nodejs /app/node_modules ./../node_modules
+COPY --from=deps --chown=nextjs:nodejs /app/packages ./../packages
 COPY --from=builder --chown=nextjs:nodejs /app/apps/auth ./
 USER nextjs
 EXPOSE 3001
