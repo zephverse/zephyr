@@ -1,11 +1,11 @@
 :root {
-  /* Base palette */
-  --zephyr-bg: #111111;
-  --zephyr-bg-muted: #0f141a;
-  --zephyr-panel: #111821;
-  --zephyr-border: #1f2b3a;
-  --zephyr-text: #e6edf3;
-  --zephyr-text-muted: #a3b1c2;
+  /* Base palette (light by default) */
+  --zephyr-bg: #ffffff;
+  --zephyr-bg-muted: #f6f8fa;
+  --zephyr-panel: #ffffff;
+  --zephyr-border: #e5e7eb;
+  --zephyr-text: #0f141a;
+  --zephyr-text-muted: #64748b;
 
   /* Accent colors */
   --zephyr-accent: #111111;
@@ -16,6 +16,9 @@
   --zephyr-success: #22c55e;
   --zephyr-warning: #f59e0b;
   --zephyr-danger: #ef4444;
+
+  /* Code blocks */
+  --zephyr-code-bg: #f6f8fa;
 }
 
 .zephyr-theme {
@@ -25,8 +28,9 @@
 
 /* Nextra theme vars mapping */
 :root {
-  --nextra-primary-hue: 262; /* match accent to purple range */
-  --nextra-primary-saturation: 100%;
+  --nextra-primary-hue: 28; /* Orange hue */
+  --nextra-primary-saturation: 95%;
+  --nextra-primary-lightness: 55%;
 }
 
 /* Components overrides */
@@ -40,14 +44,18 @@
 }
 
 .nextra-nav-container,
-.nextra-sidebar-container,
-.nextra-toc {
+.nextra-sidebar-container {
   background-color: var(--zephyr-panel);
   border-color: var(--zephyr-border);
 }
 
+/* .nextra-toc {
+  background-color: var(--zephyr-panel);
+  border-color: var(--zephyr-border);
+} */
+
 .nextra-code-block pre {
-  background-color: #0d1117;
+  background-color: var(--zephyr-code-bg);
 }
 
 /* Buttons / inputs */
@@ -67,4 +75,64 @@ button[type="submit"] {
 button[type="button"]:hover,
 button[type="submit"]:hover {
   background-color: var(--zephyr-accent-muted);
+}
+
+/* Dark theme overrides */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --zephyr-bg: #111111;
+    --zephyr-bg-muted: #0f141a;
+    --zephyr-panel: #0e0e0e;
+    --zephyr-border: #1f2b3a;
+    --zephyr-text: #e6edf3;
+    --zephyr-text-muted: #a3b1c2;
+    --zephyr-accent: #111111;
+    --zephyr-accent-foreground: #ffffff;
+    --zephyr-accent-muted: #141414;
+    --zephyr-code-bg: #0d1117;
+
+    /* Orange primary for dark mode */
+    --nextra-primary-hue: 28;
+    --nextra-primary-saturation: 95%;
+    --nextra-primary-lightness: 60%;
+  }
+}
+
+/* Explicit theme class/data overrides */
+html.dark,
+html[data-theme="dark"] {
+  --zephyr-bg: #111111;
+  --zephyr-bg-muted: #0f141a;
+  --zephyr-panel: #0e0e0e;
+  --zephyr-border: #1f2b3a;
+  --zephyr-text: #e6edf3;
+  --zephyr-text-muted: #a3b1c2;
+  --zephyr-accent: #111111;
+  --zephyr-accent-foreground: #ffffff;
+  --zephyr-accent-muted: #141414;
+  --zephyr-code-bg: #0d1117;
+
+  /* Orange primary for dark mode */
+  --nextra-primary-hue: 28;
+  --nextra-primary-saturation: 95%;
+  --nextra-primary-lightness: 60%;
+}
+
+html.light,
+html[data-theme="light"] {
+  --zephyr-bg: #ffffff;
+  --zephyr-bg-muted: #f6f8fa;
+  --zephyr-panel: #ffffff;
+  --zephyr-border: #e5e7eb;
+  --zephyr-text: #0f141a;
+  --zephyr-text-muted: #64748b;
+  --zephyr-accent: #ffffff;
+  --zephyr-accent-foreground: #161616;
+  --zephyr-accent-muted: #f6f8fa;
+  --zephyr-code-bg: #f6f8fa;
+
+  /* Orange primary for light mode */
+  --nextra-primary-hue: 28;
+  --nextra-primary-saturation: 95%;
+  --nextra-primary-lightness: 55%;
 }
