@@ -1,55 +1,388 @@
 ---
 title: Architecture
-description: Monorepo layout, core services, data stores, and build/runtime flow.
+description: Deep dive into Zephyr's monorepo structure, data layer, API design, and runtime architecture.
 ---
 
 import { Callout } from "nextra/components";
 
-## Monorepo layout
+## Monorepo Structure
 
-The repository is organized as a Turborepo with `apps/` and `packages/`:
+Zephyr uses Turborepo to manage a monorepo with multiple apps and shared packages:
 
-- `apps/web`: Main web application (Next.js app router)
-- `apps/auth`: Authentication app/service (Next.js)
-- `apps/docs`: This documentation site (Next.js + Nextra)
-- `packages/db`: Prisma schema, database client, Redis & Meilisearch clients
-- `packages/ui`: Shared UI components, providers, styles
-- `packages/aggregator`: External feeds aggregation (e.g., Hacker News)
-- `packages/auth`, `packages/next`, `packages/tailwind`, `packages/config`: Shared libraries/config
+### Applications (`apps/`)
 
-## Runtime components
+- **`apps/web`**: Main user-facing application (Next.js 15 App Router)
+  - Authentication and authorization flows
+  - Post creation, commenting, and voting
+  - User profiles and social features
+  - HackerNews aggregation and sharing
+  - Media upload and management
+  - Search and discovery features
 
-- Next.js (15) with app router for `web`, `auth`, and docs
-- PostgreSQL (via Prisma), Redis, and Meilisearch in development via Docker
-- Pagefind used for static search on this docs site
+- **`apps/auth`**: Dedicated authentication service (Next.js)
+  - OAuth providers (Google, GitHub, Discord, Twitter, Reddit)
+  - Email verification and password reset
+  - Session management with Better Auth
+  - tRPC API for auth operations
 
-## Build & dev flow
+- **`apps/docs`**: Documentation site (Next.js + Nextra)
+  - Developer documentation
+  - API reference
+  - Setup and contribution guides
 
-- Package manager: Bun
-- Orchestration: Turborepo
-- Linting/formatting: Biome & Ultracite
-- Type checking: TypeScript strict
+### Packages (`packages/`)
 
-```bash
-# from repo root
-bun install
-bun run env:dev      # copy example envs for apps
-bun run db:up        # generate prisma + push schema
-bun run dev          # run all apps in parallel
+- **`packages/db`**: Database and data access layer
+  - Prisma schema and client
+  - Redis client for caching
+  - Meilisearch client for full-text search
+  - Type-safe query helpers and cache utilities
+  - Migration scripts
+
+- **`packages/ui`**: Shared UI component library
+  - shadcn/ui components (buttons, dialogs, forms, etc.)
+  - HackerNews-specific components
+  - Custom hooks (debounce, infinite scroll, mobile detection)
+  - Theme provider and design system
+  - Shared styles and fonts
+
+- **`packages/aggregator`**: External content aggregation
+  - HackerNews API client with rate limiting
+  - Redis-based caching for HN stories
+  - Type-safe story data structures
+
+- **`packages/auth`**: Authentication utilities
+  - Better Auth configuration
+  - Validation schemas (Zod)
+  - Session helpers
+
+- **`packages/tailwind`**: Tailwind CSS configuration
+  - Shared theme and design tokens
+  - Typography configuration
+
+- **`packages/config`**: Shared configuration
+  - TypeScript configs (base, library, React, Next.js)
+  - Debug logging utilities
+
+- **`packages/next`**: Next.js utilities
+  - Shared Next.js configuration helpers
+
+## Data Layer Architecture
+
+### Database Schema (PostgreSQL + Prisma)
+
+**Core Models:**
+
+- **User**: User accounts with OAuth support, Aura scores, and profile data
+- **Post**: User-generated posts with rich media attachments
+- **Comment**: Threaded comments on posts
+- **Vote**: Upvote/downvote system for posts
+- **Follow**: User following relationships
+- **Bookmark**: Saved posts
+- **Notification**: Real-time notifications (follows, comments, mentions, votes)
+
+**Content & Tagging:**
+
+- **Tag**: Hashtag-style post categorization
+- **Mention**: User mentions in posts
+- **Media**: Uploaded files (images, videos, audio, code, documents)
+
+**Aggregation:**
+
+- **HNStoryShare**: HackerNews story metadata linked to posts
+- **HNBookmark**: Bookmarked HackerNews stories
+- **ShareStats**: Share tracking across platforms (Twitter, Facebook, LinkedIn, etc.)
+
+**Reputation:**
+
+- **AuraLog**: Comprehensive audit log of all Aura changes with type, amount, issuer, and context
+
+**Authentication:**
+
+- **Session**: User sessions with tokens and metadata
+- **Account**: OAuth account linkages
+- **Verification**: Email verification tokens
+- **PasswordResetToken**: Password reset flow
+
+### Caching Strategy (Redis)
+
+Zephyr uses Redis extensively for performance:
+
+- **User data**: Avatar URLs, follower counts, profile information
+- **Social graphs**: Follow button state, follower information
+- **Search results**: Cached search queries with TTL
+- **HackerNews stories**: Rate-limited API responses
+- **Share statistics**: Aggregated share counts per platform
+- **Suggested users**: Personalized user recommendations with recently-shown tracking
+
+**Cache Keys Pattern:**
+```
+avatar-cache:{userId}
+follower-info:{userId}:{loggedInUserId}
+search-cache:{userId}:{query}
+hn:story:{storyId}
+share-cache:{postId}:{platform}
+suggested-users:{userId}
+recently-shown-users:{userId}
 ```
 
-<Callout type="warning">
-If you use Docker, run `bun run docker:dev` (infra) and `bun run docker:apps` (apps).
+### Full-Text Search (Meilisearch)
+
+- Indexed collections: users, posts, tags
+- Fast autocomplete and fuzzy search
+- Initialization scripts in `packages/db/scripts/init-meilisearch.ts`
+
+### Object Storage (MinIO)
+
+- User avatars
+- Post attachments (images, videos, audio, code files)
+- Presigned URLs for secure uploads
+- S3-compatible API using AWS SDK
+
+## API Architecture
+
+### Route Structure (`apps/web/src/app/api/`)
+
+**Authentication:**
+- `/api/auth/*` - Session management and OAuth callbacks
+
+**Posts:**
+- `/api/posts` - Create posts, list feed
+- `/api/posts/[postId]` - Get, update, delete specific post
+- `/api/posts/[postId]/votes` - Upvote/downvote posts
+- `/api/posts/[postId]/tags` - Manage post tags
+- `/api/posts/[postId]/mentions` - Manage user mentions
+- `/api/posts/for-you` - Personalized feed algorithm
+
+**Users:**
+- `/api/users/[userId]` - User profile data
+- `/api/users/[userId]/followers` - Follow/unfollow users
+- `/api/users/[userId]/posts` - User's post history
+- `/api/users/suggested` - Suggested users to follow
+- `/api/users/search` - User search
+
+**HackerNews:**
+- `/api/hackernews/stories` - Fetch HN stories
+- `/api/hackernews/bookmarks` - HN bookmark management
+
+**Media:**
+- `/api/upload` - Generate presigned upload URLs
+- `/api/media/[id]` - Serve media files
+
+**Notifications:**
+- `/api/notifications` - List notifications
+- `/api/notifications/mark-read` - Mark as read
+- `/api/notifications/unread-count` - Unread count
+
+**Search:**
+- `/api/search/users` - Search users with Meilisearch
+- `/api/tags/[tag]` - Posts by tag
+
+**Cron Jobs:**
+- `/api/cron/sync-share-stats` - Aggregate share statistics
+- `/api/cron/sync-view-aura` - Award Aura for view milestones
+- `/api/cron/*` - Various maintenance tasks
+
+### API Patterns
+
+**Type Safety:**
+- Zod schemas for input validation
+- Prisma-generated types for outputs
+- Shared type definitions from `@zephyr/db`
+
+**Authentication:**
+```typescript
+const session = await getSessionFromApi();
+if (!session?.user) {
+  return Response.json({ error: "Unauthorized" }, { status: 401 });
+}
+```
+
+**Pagination:**
+- Cursor-based pagination using Prisma
+- `nextCursor` returned for infinite scroll
+
+**Error Handling:**
+- Structured error responses
+- Debug logging with `@zephyr/config/debug`
+
+## Component Architecture
+
+### Route Groups (`apps/web/src/app/`)
+
+**`(main)/`**: Authenticated main app
+- `/` - Home feed
+- `/compose` - Create post
+- `/users/[username]` - User profiles
+- `/posts/[id]` - Individual post view
+- `/bookmarks` - Saved posts
+- `/notifications` - Notification center
+- `/search` - Search interface
+- `/discover` - User discovery
+- `/settings` - User settings
+- `/hackernews` - HN story browser
+
+**`(auth)/`**: Authentication flows
+- `/login` - Login page
+- `/signup` - Registration
+- `/reset-password` - Password reset
+- `/verify-email` - Email verification
+
+**`(docs)/`**: Public pages
+- `/privacy` - Privacy policy
+- `/support` - Support center
+- `/toc` - Terms of service
+
+### Component Organization (`apps/web/src/components/`)
+
+**By Feature:**
+- `Auth/` - Authentication forms and inputs
+- `Posts/` - Post editor, voting, bookmarks
+- `Comments/` - Comment input and display
+- `Profile/` - Profile views and feeds
+- `Home/` - Feed views and sidebars
+- `Discover/` - User discovery widgets
+- `Search/` - Search command palette
+- `Settings/` - Settings forms
+- `Tags/` - Tag and mention editors
+- `Layouts/` - Headers, navigation, tooltips
+- `Animations/` - Motion components
+- `Styles/` - Styled components
+
+**Shared Components:**
+- Infinite scroll containers
+- Loading skeletons
+- User avatars with caching
+- Follow buttons with optimistic updates
+- User tooltips on hover
+
+### State Management
+
+**React Query (TanStack Query):**
+- Server state caching and synchronization
+- Optimistic updates for votes and follows
+- Infinite queries for feeds and notifications
+- Query invalidation on mutations
+
+**Jotai:**
+- Global client state (e.g., HN share modal state)
+
+**React Hook Form:**
+- Form state with Zod validation
+- Type-safe form inputs
+
+## Build & Development Flow
+
+### Package Manager: Bun
+
+Bun provides fast package installation and script execution:
+
+```bash
+bun install          # Install all dependencies
+bun run dev          # Start all apps in dev mode
+bun run build        # Build all apps for production
+bun run check        # Lint and format check (Biome)
+```
+
+### Turborepo Pipeline
+
+```json
+{
+  "dev": {
+    "dependsOn": ["^build"],
+    "cache": false,
+    "persistent": true
+  },
+  "build": {
+    "dependsOn": ["^build"],
+    "outputs": [".next/**", "dist/**"]
+  }
+}
+```
+
+### Docker Compose Setup
+
+**Development Infrastructure:**
+```bash
+bun run docker:dev   # Start PostgreSQL, Redis, Meilisearch, MinIO
+```
+
+**Services:**
+- PostgreSQL (port 5433) - Primary database
+- Redis (port 6379) - Caching layer
+- RedisInsight (port 5540) - Redis GUI
+- Meilisearch (port 7700) - Search engine
+- MinIO (port 9000/9001) - Object storage
+- Prisma Studio (port 5555) - Database GUI
+
+### Linting & Formatting
+
+**Biome + Ultracite:**
+- Subsecond linting and formatting
+- Strict TypeScript rules
+- Accessibility checks
+- React best practices
+- Configuration in `biome.jsonc` and `apps/biome.json`
+
+### Environment Variables
+
+Type-safe environment validation with `@t3-oss/env-nextjs`:
+
+**Server-side:**
+- Database URLs (Postgres, Redis, Meilisearch)
+- MinIO configuration
+- OAuth credentials
+- CRON secrets
+
+**Client-side:**
+- Public API URLs
+- Public endpoints
+
+## Runtime Architecture
+
+### Request Flow
+
+1. **Client Request** → Next.js App Router
+2. **Middleware** → Session validation (`src/middleware.ts`)
+3. **Route Handler** → API route or Server Component
+4. **Data Fetching** → Prisma query with Redis cache check
+5. **Response** → JSON API or rendered RSC
+
+### Caching Layers
+
+1. **Next.js Cache**: Server Component and Route Handler caching
+2. **Redis**: User data, social graphs, HN stories
+3. **React Query**: Client-side query cache with SWR behavior
+
+### Real-time Features
+
+- **Notifications**: Polling with React Query (refetch intervals)
+- **Feed updates**: Optimistic updates on mutations
+- **Vote counts**: Real-time updates via query invalidation
+
+### Performance Optimizations
+
+- **Turbopack**: Fast HMR in development
+- **Incremental Static Regeneration**: For public pages
+- **Image optimization**: Next.js Image component with MinIO CDN
+- **Route prefetching**: Automatic link prefetching
+- **Code splitting**: Automatic per-route code splitting
+- **React Suspense**: Loading states with Suspense boundaries
+
+<Callout type="info">
+The architecture prioritizes type safety, caching, and developer experience while maintaining production-grade performance and scalability.
 </Callout>
-
-## Data & services
-
-- Prisma models live in `packages/db/prisma/schema.prisma`
-- Redis and Meilisearch clients exposed from `packages/db`
-- Application code in `apps/web` and `apps/auth` consumes `@zephyr/db` and other packages
 
 ## Extensibility
 
-The monorepo encourages shared utilities and components. Prefer adding cross‑cutting logic to `packages/` where appropriate, keeping `apps/` thin and focused on composition.
+The monorepo structure makes it easy to:
+
+1. **Add new aggregation sources**: Extend `packages/aggregator` with new platform clients
+2. **Share components**: Build reusable UI in `packages/ui`
+3. **Extend the data model**: Add Prisma models in `packages/db`
+4. **Create new apps**: Add to `apps/` and leverage shared packages
+5. **Custom hooks**: Add to `packages/ui/hooks` or app-specific hooks folders
+
+Keep cross-cutting concerns in `packages/` and app-specific logic in `apps/` for maximum reusability.
 
 
