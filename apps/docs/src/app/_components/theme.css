@@ -1,0 +1,70 @@
+:root {
+  /* Base palette */
+  --zephyr-bg: #111111;
+  --zephyr-bg-muted: #0f141a;
+  --zephyr-panel: #111821;
+  --zephyr-border: #1f2b3a;
+  --zephyr-text: #e6edf3;
+  --zephyr-text-muted: #a3b1c2;
+
+  /* Accent colors */
+  --zephyr-accent: #111111;
+  --zephyr-accent-foreground: #ffffff;
+  --zephyr-accent-muted: #5846bd;
+
+  /* Info/States */
+  --zephyr-success: #22c55e;
+  --zephyr-warning: #f59e0b;
+  --zephyr-danger: #ef4444;
+}
+
+.zephyr-theme {
+  background-color: var(--zephyr-bg);
+  color: var(--zephyr-text);
+}
+
+/* Nextra theme vars mapping */
+:root {
+  --nextra-primary-hue: 262; /* match accent to purple range */
+  --nextra-primary-saturation: 100%;
+}
+
+/* Components overrides */
+.nextra-content a {
+  color: var(--zephyr-accent);
+}
+
+.nextra-content a:hover {
+  color: var(--zephyr-accent-foreground);
+  background: color-mix(in oklab, var(--zephyr-accent) 15%, transparent);
+}
+
+.nextra-nav-container,
+.nextra-sidebar-container,
+.nextra-toc {
+  background-color: var(--zephyr-panel);
+  border-color: var(--zephyr-border);
+}
+
+.nextra-code-block pre {
+  background-color: #0d1117;
+}
+
+/* Buttons / inputs */
+button,
+input,
+select,
+textarea {
+  color: var(--zephyr-text);
+}
+
+button[type="button"],
+button[type="submit"] {
+  background-color: var(--zephyr-accent);
+  color: var(--zephyr-accent-foreground);
+}
+
+button[type="button"]:hover,
+button[type="submit"]:hover {
+  background-color: var(--zephyr-accent-muted);
+}
