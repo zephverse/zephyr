@@ -1,0 +1,38 @@
+---
+title: Development
+description: Local dev workflow, commands, and contribution tips.
+---
+
+import { Callout } from "nextra/components";
+
+## Run everything
+
+```bash
+# from repo root
+bun install
+bun run env:dev
+bun run db:up
+bun run dev
+```
+
+This starts `web`, `auth`, and `docs` concurrently.
+
+## Useful scripts
+
+- Lint/format: `npx ultracite check` or `npx ultracite fix`
+- Type check & build: `bun run build`
+- Clean artifacts: `bun run clean`
+- Docker (infra): `bun run docker:dev`
+- Docker (apps): `bun run docker:apps`
+
+## Making changes
+
+- Follow the Code style and A11y rules in the Contribution section
+- Prefer shared logic in `packages/` and compose in `apps/`
+- Keep components small, strongly typed, and accessible
+
+<Callout type="info">
+When adding new dependencies in packages, ensure consumers list them as peer or workspace deps appropriately.
+</Callout>
+
+

@@ -1,0 +1,55 @@
+---
+title: Architecture
+description: Monorepo layout, core services, data stores, and build/runtime flow.
+---
+
+import { Callout } from "nextra/components";
+
+## Monorepo layout
+
+The repository is organized as a Turborepo with `apps/` and `packages/`:
+
+- `apps/web`: Main web application (Next.js app router)
+- `apps/auth`: Authentication app/service (Next.js)
+- `apps/docs`: This documentation site (Next.js + Nextra)
+- `packages/db`: Prisma schema, database client, Redis & Meilisearch clients
+- `packages/ui`: Shared UI components, providers, styles
+- `packages/aggregator`: External feeds aggregation (e.g., Hacker News)
+- `packages/auth`, `packages/next`, `packages/tailwind`, `packages/config`: Shared libraries/config
+
+## Runtime components
+
+- Next.js (15) with app router for `web`, `auth`, and docs
+- PostgreSQL (via Prisma), Redis, and Meilisearch in development via Docker
+- Pagefind used for static search on this docs site
+
+## Build & dev flow
+
+- Package manager: Bun
+- Orchestration: Turborepo
+- Linting/formatting: Biome & Ultracite
+- Type checking: TypeScript strict
+
+```bash
+# from repo root
+bun install
+bun run env:dev      # copy example envs for apps
+bun run db:up        # generate prisma + push schema
+bun run dev          # run all apps in parallel
+```
+
+<Callout type="warning">
+If you use Docker, run `bun run docker:dev` (infra) and `bun run docker:apps` (apps).
+</Callout>
+
+## Data & services
+
+- Prisma models live in `packages/db/prisma/schema.prisma`
+- Redis and Meilisearch clients exposed from `packages/db`
+- Application code in `apps/web` and `apps/auth` consumes `@zephyr/db` and other packages
+
+## Extensibility
+
+The monorepo encourages shared utilities and components. Prefer adding cross‑cutting logic to `packages/` where appropriate, keeping `apps/` thin and focused on composition.
+
+

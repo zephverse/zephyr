@@ -1,0 +1,22 @@
+---
+title: Troubleshooting
+description: Common setup issues and fixes.
+---
+
+## Ports in use
+
+Stop local services or adjust ports for apps if 3000/3001/3002 are busy.
+
+## Prisma client not generated
+
+Run `bun run db:up` from repo root. Ensure Bun and Prisma are installed.
+
+## Docker not starting
+
+Run `bun run docker:clean` then `bun run docker:dev`. Check Docker Desktop logs.
+
+## Type errors or lint failures
+
+Run `bun run build` to surface issues, or `npx ultracite check` to lint.
+
+

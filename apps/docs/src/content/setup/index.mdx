@@ -1,0 +1,34 @@
+---
+title: Setup
+description: Choose between a native Bun-based setup or a Docker-based setup.
+---
+
+## Two ways to run locally
+
+- Native (recommended): Bun + local tooling
+- Docker: Containers for Postgres, Redis, Meilisearch, and apps
+
+## Quick start (native)
+
+```bash
+git clone https://github.com/zephverse/zephyr.git
+cd zephyr
+bun install
+bun run env:dev
+bun run db:up
+bun run dev
+```
+
+## Quick start (Docker)
+
+```bash
+# infra
+bun run docker:dev
+
+# apps (web, auth, docs)
+bun run docker:apps
+```
+
+If ports are busy, stop local services or change ports in app scripts.
+
+

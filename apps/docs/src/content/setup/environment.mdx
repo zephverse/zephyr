@@ -1,0 +1,21 @@
+---
+title: Environment
+description: Project environment variables and local configuration.
+---
+
+## App env files
+
+- `apps/web/.env` — web app configuration (auth, storage, db URLs)
+- `apps/auth/.env` — auth service configuration
+
+Use `bun run env:dev` to copy example files, then fill sensitive values locally.
+
+## Database & services
+
+Postgres, Redis, and Meilisearch are used. For Docker, `bun run docker:dev` provisions containers; for native, ensure your local services match the example configuration.
+
+## Secrets
+
+Never commit secrets. Follow least privilege and rotate frequently.
+
+

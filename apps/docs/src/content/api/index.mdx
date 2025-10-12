@@ -1,0 +1,18 @@
+---
+title: API
+description: Where to find server APIs, types, and generated clients.
+---
+
+## Overview
+
+Server logic lives primarily in `apps/web` and `apps/auth`, with shared types and clients in `packages/` (notably `@zephyr/db` and `@zephyr/auth`).
+
+## Database access
+
+Use Prisma clients exported from `@zephyr/db` for data access. Keep queries and mutations type‑safe and colocated with features.
+
+## Validation
+
+Use `zod` schemas and shared validators to ensure input safety across boundaries.
+
+

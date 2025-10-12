@@ -1,0 +1,38 @@
+---
+title: Installation
+description: Clone, install dependencies, and bootstrap local services.
+---
+
+## Clone and install
+
+```bash
+git clone https://github.com/zephverse/zephyr.git
+cd zephyr
+bun install
+```
+
+## Environment files
+
+```bash
+bun run env:dev
+```
+
+This copies example env files for `apps/web` and `apps/auth`.
+
+## Database and search
+
+```bash
+bun run db:up
+```
+
+This generates Prisma client and pushes the schema.
+
+## Run apps
+
+```bash
+bun run dev
+```
+
+Starts all apps in parallel.
+
+
