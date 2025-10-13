@@ -1,34 +1,108 @@
 ---
-title: Setup
-description: Choose between a native Bun-based setup or a Docker-based setup.
+title: Getting Started
+description: Quick guide to set up Zephyr locally for development.
 ---
 
-## Two ways to run locally
+import { Callout } from "nextra/components";
 
-- Native (recommended): Bun + local tooling
-- Docker: Containers for Postgres, Redis, Meilisearch, and apps
+## Welcome to Zephyr Development
 
-## Quick start (native)
+Zephyr is a monorepo built with **Turborepo** and **Bun**. You can run it natively on your machine or use Docker for infrastructure services.
+
+<Callout type="info">
+**Recommended approach**: Use Docker for infrastructure (PostgreSQL, Redis, etc.) and run apps natively with Bun for fast HMR and debugging.
+</Callout>
+
+## Two Setup Paths
+
+### Path 1: Docker + Native Apps (Recommended)
+
+Best for most developers - uses Docker for infrastructure, runs apps natively.
 
 ```bash
+# 1. Clone and install
 git clone https://github.com/zephverse/zephyr.git
 cd zephyr
 bun install
+
+# 2. Configure environment
 bun run env:dev
+
+# 3. Start infrastructure (PostgreSQL, Redis, MinIO, etc.)
+bun run docker:dev
+
+# 4. Initialize database
 bun run db:up
+
+# 5. Run apps natively
 bun run dev
 ```
 
-## Quick start (Docker)
+**Access your apps**:
+- Web: http://localhost:3000
+- Auth: http://localhost:3001
+- Docs: http://localhost:3002
+
+**GUI Tools**:
+- Prisma Studio: http://localhost:5555
+- RedisInsight: http://localhost:5540
+- MinIO Console: http://localhost:9001
+
+### Path 2: Full Docker
+
+Run everything in containers (useful for production-like testing).
 
 ```bash
-# infra
+# 1. Clone repository
+git clone https://github.com/zephverse/zephyr.git
+cd zephyr
+
+# 2. Start infrastructure
 bun run docker:dev
 
-# apps (web, auth, docs)
+# 3. Build and run apps
 bun run docker:apps
 ```
 
-If ports are busy, stop local services or change ports in app scripts.
+Apps will be available at the same URLs but running inside Docker containers.
+
+## Quick Reference
+
+| Command | Purpose |
+|---------|---------|
+| `bun install` | Install all dependencies |
+| `bun run docker:dev` | Start infrastructure services |
+| `bun run docker:apps` | Run apps in Docker |
+| `bun run dev` | Run apps natively |
+| `bun run build` | Build all apps |
+| `bun run check` | Lint and format code |
+| `bun run search:init` | Initialize Meilisearch indexes |
+
+## What Gets Installed
+
+When you run `bun run docker:dev`, these services start:
+
+- **PostgreSQL** (5433) - Primary database
+- **Redis** (6379) - Caching layer
+- **MinIO** (9000/9001) - Object storage
+- **Meilisearch** (7700) - Search engine
+- **RabbitMQ** (5672/15672) - Message queue
+- **TimescaleDB** (5434) - Time-series analytics
+- **Prisma Studio** (5555) - Database GUI
+- **RedisInsight** (5540) - Redis GUI
+
+All services are configured and ready to use. No manual setup required!
+
+## Next Steps
+
+1. **[Prerequisites](/setup/prerequisites)** - Install required tools
+2. **[Installation](/setup/installation)** - Detailed installation steps
+3. **[Environment](/setup/environment)** - Configure environment variables
+4. **[Verification](/setup/verification)** - Verify your setup works
+5. **[Troubleshooting](/setup/troubleshooting)** - Fix common issues
+
+<Callout type="warning">
+First time setup takes 5-10 minutes for Docker images to download and build. Subsequent starts are much faster (~30 seconds).
+</Callout>
 
 

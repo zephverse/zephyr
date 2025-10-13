@@ -1,38 +1,292 @@
 ---
 title: Installation
-description: Clone, install dependencies, and bootstrap local services.
+description: Step-by-step guide to install and run Zephyr locally.
 ---
 
-## Clone and install
+import { Callout } from "nextra/components";
+
+## Step 1: Clone Repository
 
 ```bash
 git clone https://github.com/zephverse/zephyr.git
 cd zephyr
+```
+
+This clones the repository and changes into the project directory.
+
+<Callout type="info">
+**Repository size**: ~50 MB (code only). After `bun install`, total size will be ~500 MB with dependencies.
+</Callout>
+
+## Step 2: Install Dependencies
+
+```bash
 bun install
 ```
 
-## Environment files
+This installs all dependencies for apps and packages in the monorepo. 
+
+**What happens**:
+1. Bun reads workspaces from `package.json`
+2. Installs dependencies for all `apps/*` and `packages/*`
+3. Runs `postinstall` script → Generates Prisma client
+
+**Duration**: 1-3 minutes on first install
+
+<Callout type="warning">
+If `postinstall` fails, you can manually run: `cd packages/db && bunx prisma generate`
+</Callout>
+
+## Step 3: Configure Environment
+
+Copy example environment files:
 
 ```bash
 bun run env:dev
 ```
 
-This copies example env files for `apps/web` and `apps/auth`.
+**What this does**:
+- Copies `apps/web/.env.example` → `apps/web/.env`
+- Copies `apps/auth/.env.example` → `apps/auth/.env`
 
-## Database and search
+**These files contain**:
+- Database connection strings
+- Redis URL
+- MinIO credentials and endpoint
+- Resend API key (email service)
+- Better Auth secret
+- Other required configuration
+
+<Callout type="info">
+**Default values work with Docker setup!** The .env.example files are pre-configured to work with `bun run docker:dev`.
+</Callout>
+
+### Required Environment Variables
+
+The `.env.example` files include required variables that have no defaults:
+
+**apps/web/.env**:
+- `DATABASE_URL` - PostgreSQL connection
+- `POSTGRES_PRISMA_URL` - Pooled connection
+- `POSTGRES_URL_NON_POOLING` - Direct connection
+- `REDIS_URL` - Redis connection
+- `MINIO_ENDPOINT` - MinIO S3 endpoint
+
+**apps/auth/.env**:
+- Same database URLs
+- `RESEND_API_KEY` - Email service API key
+- `BETTER_AUTH_SECRET` - Auth encryption secret
+
+### Optional: Add OAuth Credentials
+
+If you want social login, edit the `.env` files to add:
+
+```bash
+# In apps/auth/.env
+GOOGLE_CLIENT_ID="your-google-client-id"
+GOOGLE_CLIENT_SECRET="your-google-client-secret"
+GITHUB_CLIENT_ID="your-github-client-id"
+GITHUB_CLIENT_SECRET="your-github-client-secret"
+# ... etc
+```
+
+See [Environment Configuration](/setup/environment) for complete details.
+
+## Step 4: Start Infrastructure
+
+### Docker (Recommended)
+
+Start all infrastructure services with one command:
+
+```bash
+bun run docker:dev
+```
+
+**What this starts**:
+- PostgreSQL database
+- Redis cache
+- MinIO object storage
+- Meilisearch search engine
+- RabbitMQ message queue
+- TimescaleDB analytics database
+- Prisma Studio (database GUI)
+- RedisInsight (Redis GUI)
+
+**Duration**: 
+- First time: 5-10 minutes (downloads images)
+- Subsequent: 30 seconds
+
+**Verify services are running**:
+```bash
+docker ps
+
+# You should see 8 containers running
+```
+
+<Callout type="info">
+The .env files from Step 3 are pre-configured to connect to these Docker services.
+</Callout>
+
+## Step 5: Initialize Database
+
+Push the Prisma schema to your database:
 
 ```bash
 bun run db:up
 ```
 
-This generates Prisma client and pushes the schema.
+**What this does**:
+1. Generates Prisma client (`bunx prisma generate`)
+2. Pushes schema to PostgreSQL (`bunx prisma db push`)
+3. Creates all tables, relations, and indexes
 
-## Run apps
+**Output should show**:
+```
+✔ Generated Prisma Client
+🚀 Your database is now in sync with your Prisma schema.
+```
+
+<Callout type="info">
+This uses `db push` which is perfect for development. For production, use migrations: `bunx prisma migrate deploy`
+</Callout>
+
+## Step 6: Run Applications
+
+Start all apps in development mode:
 
 ```bash
 bun run dev
 ```
 
-Starts all apps in parallel.
+**What this does**:
+- Starts all apps using Turbo (`turbo dev`)
+- Runs `apps/web`, `apps/auth`, and `apps/docs` in parallel
+- Enables hot module replacement (HMR) with Turbopack
+- Watches for file changes
+
+**Output**:
+```
+• Packages in scope: @zephyr/web, @zephyr/auth, @zephyr/docs
+• Running dev in 3 packages
+• Remote caching disabled
+
+@zephyr/web:dev: ready - started server on 0.0.0.0:3000
+@zephyr/auth:dev: ready - started server on 0.0.0.0:3001
+@zephyr/docs:dev: ready - started server on 0.0.0.0:3002
+```
+
+<Callout type="info">
+Apps are ready when you see "ready" for all three. Initial compilation takes 10-30 seconds.
+</Callout>
+
+## Step 7: Verify Installation
+
+### Check Web App
+
+Open http://localhost:3000 - you should see the Zephyr login page.
+
+### Check Auth Service
+
+Open http://localhost:3001 - you should see the authentication admin panel.
+
+### Check Docs
+
+Open http://localhost:3002 - you should see this documentation site.
+
+### Check Database (Prisma Studio)
+
+Open http://localhost:5555 - browse your PostgreSQL data.
+
+### Check Redis (RedisInsight)
+
+Open http://localhost:5540 - inspect Redis keys and data.
+
+### Check MinIO Console
+
+Open http://localhost:9001 - manage uploaded files.
+- Username: `minioadmin`
+- Password: `minioadmin`
+
+## Installation Complete! 🎉
+
+Your development environment is ready. All services are running and properly configured.
+
+### Next: Create Your First Account
+
+1. Open http://localhost:3000/signup
+2. Create a test account (requires valid email for verification)
+3. Check your email for the verification link (sent via Resend)
+4. Log in and start using Zephyr
+
+<Callout type="info">
+**Email Verification**: The `.env.example` includes a `RESEND_API_KEY`. For local development, you need a [free Resend account](https://resend.com) to receive verification emails. Without it, account creation won't work.
+</Callout>
+
+### Optional: Initialize Search
+
+After creating an account, populate the Meilisearch index:
+
+```bash
+bun run search:init
+```
+
+This imports all users into the search engine for the user discovery features.
+
+### Start Developing
+
+- Explore the codebase in your editor
+- Make changes and see them hot-reload instantly
+- Check out the [Development](/development) section for workflow guides
+- Browse the [Architecture](/overview/architecture) to understand the codebase
+
+## Alternative: Full Docker Setup
+
+If you want to run apps in Docker too (not recommended for development):
+
+```bash
+# Start infrastructure
+bun run docker:dev
+
+# Build and start apps
+bun run docker:apps
+```
+
+This builds Docker images for web, auth, and docs apps, which takes longer and doesn't support HMR.
+
+## Post-Installation Tips
+
+### VS Code Integration
+
+If using VS Code, install recommended extensions:
+1. Open VS Code in the project: `code .`
+2. Click "Install" when prompted for workspace recommendations
+3. Extensions: Biome, Prisma, MDX, Tailwind CSS
+
+### Git Hooks
+
+Husky git hooks are automatically set up to:
+- Run linting before commits
+- Check types before push
+
+### Scripts Reference
+
+| Command | Description |
+|---------|-------------|
+| `bun run dev` | Start all apps (development) |
+| `bun run build` | Build all apps (production) |
+| `bun run check` | Lint and format code |
+| `bun run docker:dev` | Start infrastructure |
+| `bun run docker:apps` | Start apps in Docker |
+| `bun run docker:logs` | View Docker logs |
+| `bun run docker:down` | Stop all Docker services |
+| `bun run docker:clean` | Remove all Docker data |
+| `bun run db:up` | Initialize database |
+| `bun run search:init` | Initialize Meilisearch |
+
+## Next Steps
+
+- [Environment Configuration](/setup/environment) - Configure environment variables
+- [Verification Guide](/setup/verification) - Test all features work
+- [Troubleshooting](/setup/troubleshooting) - Fix common issues
 
 

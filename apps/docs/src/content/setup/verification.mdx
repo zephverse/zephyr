@@ -1,0 +1,403 @@
+---
+title: Verification
+description: Verify your Zephyr installation is working correctly.
+---
+
+import { Callout } from "nextra/components";
+
+## Overview
+
+After installation, run through these checks to ensure everything is working properly.
+
+## 1. Verify Docker Services
+
+Check all infrastructure services are running:
+
+```bash
+docker ps
+```
+
+**Expected output**: 8 containers running
+
+| Container Name | Status | Ports |
+|----------------|--------|-------|
+| `zephyr-dev-postgres` | Up | 5433→5432 |
+| `zephyr-dev-redis` | Up | 6379→6379 |
+| `zephyr-dev-minio` | Up | 9000→9000, 9001→9001 |
+| `zephyr-dev-meilisearch` | Up | 7700→7700 |
+| `zephyr-dev-rabbitmq` | Up | 5672→5672, 15672→15672 |
+| `zephyr-dev-timescaledb` | Up | 5434→5432 |
+| `zephyr-dev-prisma-studio` | Up | 5555→5555 |
+| `zephyr-dev-redis-insight` | Up | 5540→5540 |
+
+All containers should show `Up` status. If any show `Restarting` or `Exit`, check logs:
+
+```bash
+docker compose -f docker/docker-compose.dev.yml logs [container-name]
+```
+
+## 2. Test Database Connection
+
+### Via Prisma Studio
+
+Open http://localhost:5555
+
+**What to verify**:
+- ✅ Studio loads without errors
+- ✅ You see all tables in the left sidebar
+- ✅ Can browse `User`, `Post`, `Comment` tables
+- ✅ Tables are empty (fresh install)
+
+### Via Command Line
+
+```bash
+cd packages/db
+bunx prisma studio
+```
+
+Should open Prisma Studio on port 5555.
+
+### Test with psql (Optional)
+
+```bash
+docker exec -it zephyr-dev-postgres psql -U postgres -d zephyr
+```
+
+```sql
+-- List all tables
+\dt
+
+-- Should see:
+-- users, posts, comments, votes, follows, bookmarks, etc.
+
+-- Exit
+\q
+```
+
+## 3. Test Redis Connection
+
+### Via RedisInsight
+
+Open http://localhost:5540
+
+**What to verify**:
+- ✅ RedisInsight loads
+- ✅ Can connect to Redis instance
+- ✅ Database shows 0 keys (fresh install)
+
+### Via redis-cli
+
+```bash
+docker exec -it zephyr-dev-redis redis-cli -a zephyrredis
+
+# Test
+127.0.0.1:6379> PING
+PONG
+127.0.0.1:6379> SET test "hello"
+OK
+127.0.0.1:6379> GET test
+"hello"
+127.0.0.1:6379> DEL test
+(integer) 1
+127.0.0.1:6379> EXIT
+```
+
+## 4. Test MinIO
+
+### Via Web Console
+
+Open http://localhost:9001  
+Login: `minioadmin` / `minioadmin`
+
+**What to verify**:
+- ✅ Console loads
+- ✅ See 4 buckets: `uploads`, `avatars`, `temp`, `backups`
+- ✅ All buckets have "Public" access policy
+- ✅ Versioning is enabled
+
+### Test File Upload
+
+```bash
+# Create a test file
+echo "test content" > test.txt
+
+# Upload using mc (MinIO Client)
+docker run --rm -it --network zephyr-dev-network \
+  -v $(pwd):/data \
+  minio/mc:latest \
+  /bin/sh -c "
+    mc alias set minio http://minio-dev:9000 minioadmin minioadmin
+    mc cp /data/test.txt minio/uploads/test.txt
+    mc ls minio/uploads/
+  "
+
+# Clean up
+rm test.txt
+```
+
+Should see `test.txt` in output.
+
+## 5. Test Meilisearch
+
+### Via HTTP
+
+```bash
+curl http://localhost:7700/health
+```
+
+**Expected**: `{"status":"available"}`
+
+### Check Indexes
+
+```bash
+curl -H "Authorization: Bearer masterKey123" \
+  http://localhost:7700/indexes
+```
+
+**Expected**: JSON with `users` index (if you ran `bun run search:init`)
+
+```json
+{
+  "results": [
+    {
+      "uid": "users",
+      "primaryKey": "id",
+      "createdAt": "...",
+      "updatedAt": "..."
+    }
+  ]
+}
+```
+
+## 6. Test Applications
+
+### Web App (localhost:3000)
+
+**Start apps** (if not running):
+```bash
+bun run dev
+```
+
+**Verify**:
+1. Open http://localhost:3000
+2. ✅ Login page loads
+3. ✅ No console errors in browser DevTools
+4. ✅ Click "Sign up" → Signup page loads
+5. ✅ Click "Forgot password?" → Reset page loads
+
+### Auth Service (localhost:3001)
+
+1. Open http://localhost:3001
+2. ✅ Auth admin panel loads
+3. ✅ See empty user table
+4. ✅ No errors in terminal or browser
+
+### Docs (localhost:3002)
+
+1. Open http://localhost:3002
+2. ✅ Documentation site loads
+3. ✅ Navigation works
+4. ✅ This page is visible!
+
+## 7. Test User Registration
+
+### Create a Test Account
+
+1. Go to http://localhost:3000/signup
+2. Fill in:
+   - **Username**: testuser
+   - **Display Name**: Test User
+   - **Email**: test@example.com
+   - **Password**: testpassword123
+3. Click "Sign up"
+
+**Expected**:
+- ✅ Account created successfully
+- ✅ Redirected to login or home page
+- ✅ No errors in console
+
+### Verify in Database
+
+Open http://localhost:5555 (Prisma Studio):
+
+1. Navigate to `User` table
+2. ✅ See your test user
+3. ✅ User has default Aura (0)
+4. ✅ `emailVerified` is `false`
+5. ✅ `createdAt` shows current timestamp
+
+## 8. Test Authentication
+
+### Login
+
+1. Go to http://localhost:3000/login
+2. Enter credentials:
+   - **Email**: test@example.com
+   - **Password**: testpassword123
+3. Click "Log in"
+
+**Expected**:
+- ✅ Logged in successfully
+- ✅ Redirected to home feed
+- ✅ See empty feed state (no posts yet)
+
+### Check Session
+
+In browser DevTools (Application/Storage):
+- ✅ Session cookie exists
+- ✅ Cookie domain is `localhost`
+- ✅ Cookie has `HttpOnly` and `Secure` flags
+
+## 9. Test Post Creation
+
+1. Click "Create Post" or go to http://localhost:3000/compose
+2. Type a test post: "Hello Zephyr! 🚀"
+3. Click "Post"
+
+**Expected**:
+- ✅ Post created
+- ✅ Redirected to home feed
+- ✅ See your post in the feed
+- ✅ Post shows your username and timestamp
+
+### Verify in Database
+
+Open Prisma Studio:
+
+1. Navigate to `Post` table
+2. ✅ See your post
+3. ✅ `content` matches what you typed
+4. ✅ `userId` matches your user ID
+5. Navigate to `AuraLog` table
+6. ✅ See entry for `POST_CREATION` (+10 Aura)
+
+### Check Redis Cache
+
+```bash
+docker exec -it zephyr-dev-redis redis-cli -a zephyrredis
+
+127.0.0.1:6379> KEYS *
+# Should see various cache keys
+```
+
+## 10. Test File Upload
+
+1. Create a post with an image:
+   - Go to http://localhost:3000/compose
+   - Click image upload button
+   - Select an image file (< 5 MB)
+   - Wait for upload
+   - Add caption and click "Post"
+
+**Expected**:
+- ✅ Upload progress shown
+- ✅ Image preview appears
+- ✅ Post created with image
+- ✅ Image displays in feed
+
+### Verify in MinIO
+
+Open http://localhost:9001:
+- Navigate to `uploads` bucket
+- ✅ See your uploaded image
+- ✅ File size matches original
+
+## 11. Test Search
+
+1. Go to home page
+2. Press `Cmd+K` (Mac) or `Ctrl+K` (Windows/Linux)
+3. Search command palette opens
+4. Type your username
+
+**Expected**:
+- ✅ Command palette opens
+- ✅ Your user appears in results
+- ✅ Click your user → navigate to profile
+
+<Callout type="info">
+If no results appear, run `bun run search:init` to populate Meilisearch.
+</Callout>
+
+## 12. End-to-End Test
+
+Complete user flow:
+
+1. **Signup** → Create account ✅
+2. **Login** → Authenticate ✅
+3. **Create Post** → Post with text ✅
+4. **Upload Image** → Post with media ✅
+5. **Vote** → Upvote your own post ✅
+6. **Comment** → Add comment ✅
+7. **Bookmark** → Save post ✅
+8. **Profile** → View your profile ✅
+9. **Search** → Find yourself ✅
+10. **Logout** → Sign out ✅
+
+All steps should complete without errors.
+
+## Troubleshooting Failed Checks
+
+If any verification fails:
+
+### Docker services not starting
+```bash
+# View logs
+docker compose -f docker/docker-compose.dev.yml logs
+
+# Restart services
+bun run docker:down
+bun run docker:dev
+```
+
+### Database connection fails
+```bash
+# Reinitialize database
+bun run db:up
+
+# Check Prisma client
+cd packages/db && bunx prisma generate
+```
+
+### Apps not loading
+```bash
+# Check for port conflicts
+lsof -i :3000  # macOS/Linux
+netstat -ano | findstr :3000  # Windows
+
+# Restart apps
+# Ctrl+C to stop, then:
+bun run dev
+```
+
+### Search not working
+```bash
+# Initialize Meilisearch
+bun run search:init
+
+# Verify
+curl http://localhost:7700/health
+```
+
+## Success Criteria
+
+✅ **All infrastructure services running**  
+✅ **Database accessible with all tables created**  
+✅ **Redis responding to commands**  
+✅ **MinIO buckets created and accessible**  
+✅ **Meilisearch health check passes**  
+✅ **All three apps (web, auth, docs) loading**  
+✅ **Can create account and login**  
+✅ **Can create posts with text and images**  
+✅ **Can perform social actions (vote, comment, bookmark)**  
+✅ **Search functionality works**  
+
+## Next Steps
+
+If all checks pass, your setup is complete! 
+
+- [Development Guide](/development) - Start building features
+- [Architecture](/overview/architecture) - Understand the codebase
+- [Contribution Guidelines](/contribution) - Contribute to Zephyr
+
+If checks fail, see [Troubleshooting](/setup/troubleshooting) for solutions.
+

@@ -3,24 +3,165 @@ title: Prerequisites
 description: Tools you need installed before running Zephyr locally.
 ---
 
-## Required
+import { Callout } from "nextra/components";
 
-- Git
-- Bun (package manager/runtime)
-- Node.js LTS (some tooling may rely on Node APIs)
-- Docker Desktop (for the Docker workflow)
+## Required Tools
 
-## Optional but useful
+### 1. Git
+Version control system for cloning the repository.
 
-- VS Code with TypeScript and MDX extensions
-- Prisma CLI
-- Redis and Postgres clients
+**Install**:
+- **macOS**: Comes pre-installed or `brew install git`
+- **Windows**: Download from [git-scm.com](https://git-scm.com/download/win)
+- **Linux**: `sudo apt install git` or `sudo yum install git`
 
-Verify versions:
+**Verify**:
+```bash
+git --version
+# Expected: git version 2.x.x or higher
+```
 
+### 2. Bun
+Fast JavaScript runtime and package manager (replaces Node.js + npm).
+
+**Install**:
+```bash
+# macOS/Linux
+curl -fsSL https://bun.sh/install | bash
+
+# Windows (PowerShell)
+powershell -c "irm bun.sh/install.ps1 | iex"
+```
+
+**Verify**:
 ```bash
 bun --version
-docker --version
+# Expected: 1.1.0 or higher
 ```
+
+<Callout type="info">
+Bun is required - it's faster than npm/yarn and used throughout the project for scripts and runtime.
+</Callout>
+
+### 3. Docker Desktop
+Container platform for running infrastructure services.
+
+**Install**:
+- **macOS**: Download from [docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop/)
+- **Windows**: Same link above (requires WSL2)
+- **Linux**: Install Docker Engine + Docker Compose
+
+**Verify**:
+```bash
+docker --version
+docker compose version
+
+# Expected:
+# Docker version 24.x.x or higher
+# Docker Compose version v2.x.x or higher
+```
+
+**Requirements**:
+- At least 4 GB RAM allocated to Docker
+- At least 10 GB free disk space
+- Docker Desktop running before starting services
+
+## Optional but Recommended
+
+### Code Editor
+
+**VS Code** with these extensions:
+- **Biome** (`biomejs.biome`) - Linting and formatting
+- **Prisma** (`Prisma.prisma`) - Database schema support
+- **MDX** (`unifiedjs.vscode-mdx`) - Documentation editing
+- **TypeScript + JavaScript** - Usually pre-installed
+- **Tailwind CSS IntelliSense** - CSS class autocomplete
+
+**Alternative editors**: WebStorm, Cursor, or any editor with TypeScript support.
+
+### Database Clients (Optional)
+
+For manual database inspection beyond Prisma Studio:
+
+- **TablePlus** (macOS/Windows) - Great UI for PostgreSQL
+- **DBeaver** (Cross-platform) - Free, supports all databases
+- **psql** CLI - Command-line PostgreSQL client
+
+### Redis Clients (Optional)
+
+Beyond RedisInsight (included):
+
+- **RedisInsight** (Standalone) - More features than Docker version
+- **Medis** (macOS) - Native Redis GUI
+- **redis-cli** - Command-line client
+
+## System Requirements
+
+### Minimum
+
+- **OS**: macOS 11+, Windows 10/11 with WSL2, or Linux
+- **RAM**: 8 GB (4 GB for Docker, 4 GB for development)
+- **Disk**: 15 GB free space
+- **CPU**: 2 cores
+
+### Recommended
+
+- **OS**: Latest macOS, Windows 11, or Ubuntu 22.04+
+- **RAM**: 16 GB (8 GB for Docker, 8 GB for development)
+- **Disk**: 25 GB free space (includes Docker images and node_modules)
+- **CPU**: 4+ cores
+
+## Port Requirements
+
+These ports must be available:
+
+| Port | Service | Can Change? |
+|------|---------|-------------|
+| 3000 | Web app | Yes (in code) |
+| 3001 | Auth app | Yes (in code) |
+| 3002 | Docs app | Yes (in code) |
+| 5433 | PostgreSQL | Yes (Docker Compose) |
+| 5434 | TimescaleDB | Yes (Docker Compose) |
+| 5540 | RedisInsight | Yes (Docker Compose) |
+| 5555 | Prisma Studio | Yes (Docker Compose) |
+| 5672 | RabbitMQ AMQP | Yes (Docker Compose) |
+| 6379 | Redis | Yes (Docker Compose) |
+| 7700 | Meilisearch | Yes (Docker Compose) |
+| 9000 | MinIO API | Yes (Docker Compose) |
+| 9001 | MinIO Console | Yes (Docker Compose) |
+| 15672 | RabbitMQ Mgmt | Yes (Docker Compose) |
+
+## Pre-Flight Check
+
+Run these commands to verify you're ready:
+
+```bash
+# Check Git
+git --version
+
+# Check Bun
+bun --version
+
+# Check Docker
+docker --version
+docker compose version
+
+# Check Docker is running
+docker ps
+
+# Check available disk space
+df -h .  # macOS/Linux
+# or use GUI on Windows
+```
+
+All commands should complete without errors.
+
+<Callout type="warning">
+**Common issue**: If Docker commands fail, make sure Docker Desktop is running and you've completed the initial setup.
+</Callout>
+
+## Next: Installation
+
+Once all prerequisites are installed and verified, proceed to [Installation](/setup/installation).
 
 

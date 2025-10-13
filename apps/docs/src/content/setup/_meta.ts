@@ -5,6 +5,7 @@ const meta: MetaRecord = {
   prerequisites: "Prerequisites",
   installation: "Installation",
   environment: "Environment",
+  verification: "Verification",
   troubleshooting: "Troubleshooting",
 };
 
