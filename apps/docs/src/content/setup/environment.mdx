@@ -1,21 +1,307 @@
 ---
-title: Environment
-description: Project environment variables and local configuration.
+title: Environment Configuration
+description: Complete guide to environment variables in Zephyr.
 ---
 
-## App env files
+import { Callout } from "nextra/components";
 
-- `apps/web/.env` — web app configuration (auth, storage, db URLs)
-- `apps/auth/.env` — auth service configuration
+## Overview
 
-Use `bun run env:dev` to copy example files, then fill sensitive values locally.
+Zephyr uses **type-safe environment variables** via `@t3-oss/env-nextjs`. Variables are validated at build time, ensuring you never miss required configuration.
 
-## Database & services
+<Callout type="info">
+Environment variables are defined in `apps/web/keys.ts` and `apps/auth/keys.ts` with Zod schemas for validation.
+</Callout>
 
-Postgres, Redis, and Meilisearch are used. For Docker, `bun run docker:dev` provisions containers; for native, ensure your local services match the example configuration.
+## Quick Setup
 
-## Secrets
+The fastest way to configure environment variables:
 
-Never commit secrets. Follow least privilege and rotate frequently.
+```bash
+bun run env:dev
+```
+
+This copies `.env.example` files from both apps into `.env` files with pre-configured values that work with Docker.
+
+<Callout type="warning">
+**Environment files are required!** Several critical variables (database URLs, Redis, MinIO endpoint, Resend API key, Better Auth secret) have no defaults and must be set in `.env` files.
+</Callout>
+
+## Environment Files
+
+Apps look for environment variables in:
+- `apps/web/.env` - Web app configuration
+- `apps/auth/.env` - Auth service configuration
+- `.env.example` files exist as templates (gitignored, so you may not see them)
+
+<Callout type="warning">
+`.env` files are gitignored. Never commit secrets to the repository!
+</Callout>
+
+## Required Environment Variables
+
+These variables **must be set** - they have no defaults in `keys.ts`:
+
+### apps/web/.env (Required)
+
+```bash
+# Database - REQUIRED (no defaults)
+DATABASE_URL="postgresql://postgres:postgres@localhost:5433/zephyr?schema=public"
+POSTGRES_PRISMA_URL="postgresql://postgres:postgres@localhost:5433/zephyr?schema=public"
+POSTGRES_URL_NON_POOLING="postgresql://postgres:postgres@localhost:5433/zephyr?schema=public"
+
+# Caching - REQUIRED (no default)
+REDIS_URL="redis://:zephyrredis@localhost:6379/0"
+
+# Object Storage - REQUIRED (no default for ENDPOINT)
+MINIO_ENDPOINT="http://localhost:9000"
+```
+
+### apps/auth/.env (Required)
+
+```bash
+# Database - REQUIRED (same as web app)
+DATABASE_URL="postgresql://postgres:postgres@localhost:5433/zephyr?schema=public"
+POSTGRES_PRISMA_URL="postgresql://postgres:postgres@localhost:5433/zephyr?schema=public"
+POSTGRES_URL_NON_POOLING="postgresql://postgres:postgres@localhost:5433/zephyr?schema=public"
+
+# Email Service - REQUIRED (no default)
+RESEND_API_KEY="re_your_api_key_here"
+
+# Auth Encryption - REQUIRED (no default)
+BETTER_AUTH_SECRET="your-secret-here-min-32-chars"
+```
+
+<Callout type="info">
+**Get a Resend API key**: Sign up at [resend.com](https://resend.com) for free. Required for email verification during signup.
+</Callout>
+
+## Optional Environment Variables
+
+These have defaults in `keys.ts` but can be overridden:
+
+### Object Storage (MinIO)
+
+```bash
+MINIO_ROOT_USER="minioadmin"                # Default: minioadmin
+MINIO_ROOT_PASSWORD="minioadmin"            # Default: minioadmin
+MINIO_BUCKET_NAME="uploads"                 # Default: uploads
+MINIO_HOST="localhost"                      # Default: localhost
+MINIO_PORT="9000"                          # Default: 9000
+MINIO_CONSOLE_PORT="9001"                  # Default: 9001
+MINIO_ENABLE_OBJECT_LOCKING="on"           # Default: on
+```
+
+### Caching & Search
+
+```bash
+# Meilisearch
+MEILISEARCH_URL="http://localhost:7700"     # Default: http://localhost:7700
+MEILISEARCH_MASTER_KEY="masterKey123"       # Default: masterKey123
+
+# RabbitMQ (not actively used)
+RABBITMQ_URL="amqp://admin:admin123@localhost:5672"  # Default: amqp://admin:admin123@localhost:5672
+
+# TimescaleDB (analytics)
+TIMESCALEDB_URL="postgresql://postgres:postgres@localhost:5434/zephyr-logs?schema=public"  # Has default
+```
+
+### Application
+
+```bash
+NODE_ENV="development"                      # Default: development
+NEXT_TELEMETRY_DISABLED="1"                # Default: 1
+TURBO_TELEMETRY_DISABLED="1"               # Default: 1
+BETTER_AUTH_TELEMETRY="0"                  # Default: 0
+SUPPORT_EMAIL="info@zephyyrr.in"           # Default: info@zephyyrr.in
+```
+
+### Public Variables (Client-Side)
+
+```bash
+NEXT_PUBLIC_URL="http://localhost:3000"         # Default: http://localhost:3000
+NEXT_PUBLIC_AUTH_URL="http://localhost:3001"    # Default: http://localhost:3001
+NEXT_PUBLIC_PORT="3000"                         # Default: 3000
+NEXT_PUBLIC_MINIO_ENDPOINT="http://localhost:9000"  # Default: http://localhost:9000
+```
+
+## Optional: OAuth Providers
+
+To enable social authentication, add provider credentials to `apps/auth/.env`:
+
+### Google OAuth
+
+```bash
+GOOGLE_CLIENT_ID="your-google-client-id"
+GOOGLE_CLIENT_SECRET="your-google-client-secret"
+```
+
+[Get credentials](https://console.cloud.google.com/apis/credentials)
+
+### GitHub OAuth
+
+```bash
+GITHUB_CLIENT_ID="your-github-client-id"
+GITHUB_CLIENT_SECRET="your-github-client-secret"
+```
+
+[Get credentials](https://github.com/settings/developers)
+
+### Discord OAuth
+
+```bash
+DISCORD_CLIENT_ID="your-discord-client-id"
+DISCORD_CLIENT_SECRET="your-discord-client-secret"
+```
+
+[Get credentials](https://discord.com/developers/applications)
+
+### Twitter OAuth
+
+```bash
+TWITTER_CLIENT_ID="your-twitter-client-id"
+TWITTER_CLIENT_SECRET="your-twitter-client-secret"
+```
+
+[Get credentials](https://developer.twitter.com/en/portal/dashboard)
+
+### Reddit OAuth
+
+```bash
+REDDIT_CLIENT_ID="your-reddit-client-id"
+REDDIT_CLIENT_SECRET="your-reddit-client-secret"
+```
+
+[Get credentials](https://www.reddit.com/prefs/apps)
+
+## Optional: Cron Job Security
+
+To secure cron job endpoints:
+
+```bash
+# Set a secret token for cron job authentication
+CRON_SECRET="your-random-secret-string"
+# or
+CRON_SECRET_KEY="your-random-secret-string"
+```
+
+Pass as `Authorization: Bearer {token}` when calling cron endpoints.
+
+## Creating .env Files
+
+### Method 1: Using env:dev Script (Recommended)
+
+The fastest and most reliable way:
+
+```bash
+bun run env:dev
+```
+
+This copies `.env.example` files from both apps, which contain all the required configuration pre-filled with values that work with Docker.
+
+<Callout type="info">
+**Success message**: `✅ Environment files copied successfully`
+</Callout>
+
+After running this, you **must** edit `apps/auth/.env` to add your Resend API key:
+
+```bash
+# In apps/auth/.env
+RESEND_API_KEY="re_your_actual_api_key"
+```
+
+### Method 2: Manual Creation
+
+If you prefer to create files manually or customize values, the `.env.example` files provide the template. The required minimal configuration is shown in the sections above.
+
+## Environment Validation
+
+Zephyr validates environment variables at build time using Zod schemas in `keys.ts` files.
+
+**If you're missing a required variable**, you'll see:
+```
+❌ Invalid environment variables:
+  {
+    "DATABASE_URL": [
+      "Required"
+    ]
+  }
+```
+
+**Type safety**: All environment variables are fully typed in TypeScript!
+
+```typescript
+import { keys } from "./keys";
+
+// TypeScript knows all available keys
+const dbUrl = keys.DATABASE_URL;  // string
+const port = keys.NEXT_PUBLIC_PORT;  // number
+```
+
+## Production Configuration
+
+For production deployments:
+
+1. **Use strong passwords**: Replace all default passwords
+2. **Enable SSL**: Use `postgresql://` with `?sslmode=require`
+3. **Use managed services**: RDS, ElastiCache, S3, etc.
+4. **Set NODE_ENV**: Always `"production"`
+5. **Configure secrets management**: Use AWS Secrets Manager, Vault, etc.
+
+Example production variables:
+
+```bash
+NODE_ENV="production"
+DATABASE_URL="postgresql://user:pass@your-db.region.rds.amazonaws.com:5432/zephyr?sslmode=require"
+REDIS_URL="rediss://your-redis.cache.amazonaws.com:6379"
+MINIO_ENDPOINT="https://your-bucket.s3.amazonaws.com"
+NEXT_PUBLIC_URL="https://zephyyrr.in"
+NEXT_PUBLIC_AUTH_URL="https://auth.zephyyrr.in"
+```
+
+## Troubleshooting
+
+### "Invalid environment variables" error
+
+**Cause**: Missing or incorrectly formatted environment variables.
+
+**Solution**: Check the error message for which variables are invalid, then verify:
+1. Variable exists in `.env` file
+2. Format matches expected type (URL, number, string)
+3. No typos in variable names
+
+### Apps can't connect to services
+
+**Cause**: Connection strings don't match running services.
+
+**Solution for Docker**:
+```bash
+# Verify services are running
+docker ps
+
+# Check service logs
+docker compose -f docker/docker-compose.dev.yml logs postgres-dev
+docker compose -f docker/docker-compose.dev.yml logs redis-dev
+```
+
+**Solution for Native**:
+- Verify services are running: `pg_isready`, `redis-cli ping`
+- Check port numbers match your `.env`
+- Verify credentials are correct
+
+### OAuth not working
+
+**Cause**: Missing OAuth credentials or incorrect redirect URLs.
+
+**Solution**:
+1. Add credentials to `apps/auth/.env`
+2. Configure redirect URLs in OAuth provider dashboard:
+   - Authorized redirect URIs: `http://localhost:3001/api/auth/callback/{provider}`
+   - Replace `{provider}` with: `google`, `github`, `discord`, `twitter`, `reddit`
+
+## Next Steps
+
+- [Verification](/setup/verification) - Test your configuration
+- [Troubleshooting](/setup/troubleshooting) - Fix common issues
 
 
