@@ -1,0 +1,512 @@
+---
+title: Architecture
+description: High-level overview of Zephyr's monorepo structure, tech stack, and system design.
+---
+
+import { Callout } from "nextra/components";
+
+## Overview
+
+Zephyr is built as a **Turborepo monorepo** with multiple applications and shared packages. The architecture prioritizes type safety, performance, and developer experience.
+
+<Callout type="info">
+This page provides a high-level overview. See detailed pages for [Database Schema](/development/database-schema), [API Routes](/development/api-routes), [Cron Jobs](/development/cron-jobs), and [Docker Infrastructure](/development/docker-infrastructure).
+</Callout>
+
+## Monorepo Structure
+
+### Applications (`apps/`)
+
+**Implemented Applications**:
+
+- **`apps/web`**: Main user-facing application (Next.js 15 App Router)
+  - Post creation, commenting, voting
+  - User profiles and social features
+  - HackerNews aggregation and sharing
+  - Media upload and management
+  - Search and discovery
+  - Feed algorithms (for-you, following)
+
+- **`apps/auth`**: Dedicated authentication service (Next.js 15)
+  - OAuth providers: Google, GitHub, Discord, Twitter, Reddit
+  - Email verification and password reset
+  - Session management with Better Auth
+  - tRPC API with `protectedProcedure` and `adminProcedure`
+
+- **`apps/docs`**: This documentation site (Next.js 15 + Nextra)
+  - MDX-based documentation
+  - API reference and guides
+  - Setup and contribution docs
+
+### Shared Packages (`packages/`)
+
+**Core Packages**:
+
+- **`packages/db`**: Database and caching layer
+  - Prisma schema (18 models, 3 enums)
+  - PostgreSQL client with connection pooling
+  - Redis client for caching
+  - Meilisearch client (user search only)
+  - Cache key constants and utilities
+  - Migration scripts
+
+- **`packages/ui`**: Shared UI components
+  - shadcn/ui components (46 components)
+  - HackerNews components (8 components)
+  - Custom hooks: `useDebounce`, `useInfiniteScroll`, `useMobile`, `useToast`
+  - Theme provider (dark/light mode)
+  - Design system providers
+  - Typography and fonts (Sofia Pro Soft)
+
+- **`packages/aggregator`**: HackerNews integration
+  - HN API client with rate limiting (30 req/60s)
+  - Redis-based story caching (15min TTL, 1hr backup)
+  - Type definitions for HN data
+  - Backup/fallback cache strategy
+
+- **`packages/auth`**: Authentication utilities
+  - Better Auth configuration
+  - Zod validation schemas
+  - Session management helpers
+
+- **`packages/tailwind`**: Tailwind configuration
+  - Shared theme configuration
+  - Typography plugin config
+
+- **`packages/config`**: Build and dev configuration
+  - TypeScript configs (base, library, React, Next.js)
+  - Debug logger utilities
+
+- **`packages/next`**: Next.js utilities
+  - Shared Next.js configuration
+
+## Data Layer
+
+### Database Schema
+
+Zephyr uses **PostgreSQL** with **Prisma ORM**. The complete schema includes 18 models and 3 enums.
+
+**See [Database Schema](/overview/database-schema) for detailed documentation.**
+
+**Models**: User, Post, Comment, Vote, Follow, Bookmark, Notification, Tag, Mention, Media, HNStoryShare, HNBookmark, ShareStats, AuraLog, Session, Account, Verification, PasswordResetToken, jwks
+
+**Key Features**:
+- OAuth support (5 providers)
+- Aura reputation system with full audit logging
+- Media attachments (5 types: IMAGE, VIDEO, AUDIO, DOCUMENT, CODE)
+- HackerNews integration
+- Share tracking across 11 platforms
+
+### Redis Caching
+
+Zephyr uses Redis for performance-critical caching. Actual cache keys from `packages/db/constants/cache-keys.ts`:
+
+```typescript
+export const CACHE_KEYS = {
+  followerInfo: (userId: string) => `follower-info:${userId}`,
+  suggestedUsers: (userId: string) => `suggested-users:${userId}`,
+  user: (userId: string) => `user:${userId}`,
+  userProfile: (userId: string) => `user-profile:${userId}`,
+} as const;
+```
+
+**HackerNews Cache** (`packages/aggregator/hackernews/cache.ts`):
+- Primary keys: `hn:stories`, `hn:story:{id}`
+- Backup keys: `hn:stories:backup`, `hn:story:{id}:backup`
+- Metadata: `hn:stories:last_updated`
+- TTL: 15 minutes (primary), 1 hour (backup)
+
+**View Tracking**:
+- `post:views:{postId}` - Sorted sets for view counts
+- `posts:with:views` - Set of posts with views
+- Synced to PostgreSQL via cron every 5 minutes
+
+**Session & Auth**:
+- `session:cache:{sessionId}` - Cached sessions (5min TTL)
+- `jwks:cache` - JWT signing keys (1hr TTL)
+
+**Rate Limiting** (`packages/aggregator/hackernews/rate-limiter.ts`):
+```typescript
+const RATE_LIMIT_PREFIX = "ratelimit:hn:";
+const WINDOW_SIZE = 60; // seconds
+const MAX_REQUESTS = 30;
+```
+
+### Meilisearch (Full-Text Search)
+
+**Currently indexed**: Users only
+
+The script `packages/db/scripts/init-meilisearch.ts` creates and populates the `users` index with:
+- `id`, `username`, `displayName`, `displayUsername`
+- `email`, `role`, `aura`, `emailVerified`
+- `bio`, `avatarUrl`, `createdAt`, `updatedAt`
+
+<Callout type="warning">
+**Posts and Tags are NOT yet indexed in Meilisearch.** This is a planned future enhancement.
+</Callout>
+
+### MinIO (Object Storage)
+
+S3-compatible storage for media files. Implementation in `apps/web/src/app/api/upload/route.ts` and dependencies in `apps/web/package.json` (`@aws-sdk/client-s3`, `@aws-sdk/s3-request-presigner`).
+
+**Buckets**:
+- `uploads` - Post attachments
+- `avatars` - User avatars
+- `temp` - Temporary uploads (24hr cleanup)
+- `backups` - Database backups
+
+**Flow**:
+1. Client requests presigned URL via `/api/upload`
+2. Server creates Media record and generates presigned PUT URL
+3. Client uploads directly to MinIO
+4. Media URL returned for use in Post creation
+
+## API Architecture
+
+Zephyr exposes 60+ Next.js Route Handlers for all application functionality.
+
+**See [API Routes](/overview/api-routes) for complete endpoint reference.**
+
+### Key API Groups
+
+**Posts**: `/api/posts/*`
+- Feed endpoints: `for-you`, `following`, `bookmarked`
+- Post actions: `[postId]/votes`, `[postId]/bookmark`, `[postId]/comments`
+- Content management: `[postId]/tags`, `[postId]/mentions`
+- Analytics: `[postId]/views`, `[postId]/share`, `[postId]/share/stats`
+
+**Users**: `/api/users/*`
+- Profile: `[userId]`, `[userId]/profile`, `[userId]/posts`, `[userId]/mentions`
+- Social: `[userId]/followers`, `[userId]/followers-list`, `[userId]/following-list`
+- Discovery: `suggested`, `trending`, `new`, `browse`, `search`
+- Utilities: `username/[username]`, `username-to-id/[username]`, `avatar/*`, `follow-states`
+
+**HackerNews**: `/api/hackernews/*`
+- Stories: `/` (list), `[storyId]/bookmark`
+- Bookmarks: `bookmarked`
+
+**Notifications**: `/api/notifications/*`
+- List, `unread-count`, `mark-as-read`
+
+**Tags**: `/api/tags/*`
+- `/` (list), `popular`, `counts`, `sync`
+
+**Media**: `/api/upload`, `/api/media/[mediaId]`, `/api/media/download/[mediaId]`
+
+**Cron**: `/api/cron/*` (9 jobs)
+
+<Callout type="warning">
+**Note**: There is NO top-level `POST /api/posts` route. Post creation happens via server actions, not API routes.
+</Callout>
+
+### Authentication & Middleware
+
+Better Auth session gating in `apps/web/src/middleware.ts`:
+
+```typescript
+try {
+  const sessionCookie = getSessionCookie(request);
+  if (sessionCookie) {
+    return NextResponse.next();
+  }
+} catch {
+  // ignore and fallthrough to redirect
+}
+
+const url = request.nextUrl.clone();
+url.pathname = "/login";
+return NextResponse.redirect(url);
+```
+
+**Protected paths**: Only `/` (home) requires auth by default. API routes handle their own auth checks.
+
+### tRPC (Auth Service)
+
+`apps/auth` exposes tRPC API with `superjson` transformer:
+
+```typescript
+// Context includes user session
+export const protectedProcedure = t.procedure.use(async (opts) => {
+  const session = await getSession();
+  if (!session?.user) {
+    throw new TRPCError({ code: "UNAUTHORIZED" });
+  }
+  return opts.next({ ctx: { user: session.user } });
+});
+
+export const adminProcedure = protectedProcedure.use(async (opts) => {
+  if (opts.ctx.user.role !== "admin") {
+    throw new TRPCError({ code: "FORBIDDEN" });
+  }
+  return opts.next();
+});
+```
+
+## Component Architecture
+
+### Route Groups (`apps/web/src/app/`)
+
+**`(main)/`**: Authenticated main app
+- `/` - Home feed
+- `/compose` - Create post
+- `/users/[username]` - User profiles
+- `/posts/[id]` - Individual post view
+- `/bookmarks` - Saved posts
+- `/notifications` - Notification center
+- `/search` - Search interface
+- `/discover` - User discovery
+- `/settings` - User settings
+- `/hackernews` - HN story browser
+
+**`(auth)/`**: Authentication flows
+- `/login` - Login page
+- `/signup` - Registration
+- `/reset-password` - Password reset
+- `/verify-email` - Email verification
+
+**`(docs)/`**: Public pages
+- `/privacy` - Privacy policy
+- `/support` - Support center
+- `/toc` - Terms of service
+
+### Component Organization (`apps/web/src/components/`)
+
+**By Feature:**
+- `Auth/` - Authentication forms and inputs
+- `Posts/` - Post editor, voting, bookmarks
+- `Comments/` - Comment input and display
+- `Profile/` - Profile views and feeds
+- `Home/` - Feed views and sidebars
+- `Discover/` - User discovery widgets
+- `Search/` - Search command palette
+- `Settings/` - Settings forms
+- `Tags/` - Tag and mention editors
+- `Layouts/` - Headers, navigation, tooltips
+- `Animations/` - Motion components
+- `Styles/` - Styled components
+
+**Shared Components:**
+- Infinite scroll containers
+- Loading skeletons
+- User avatars with caching
+- Follow buttons with optimistic updates
+- User tooltips on hover
+
+### State Management
+
+**React Query (TanStack Query)**:
+- Server state caching and synchronization
+- Optimistic updates for votes, follows, and bookmarks
+- Infinite queries for feeds and notifications
+- Query invalidation used for views, votes, bookmarks
+
+**Jotai**:
+- Global client state (e.g., HN share modal state in `packages/ui/store/hn-share-store.ts`)
+
+**React Hook Form**:
+- Form state with Zod validation
+- Type-safe form inputs
+
+<Callout type="info">
+**No WebSocket transport**: Real-time features use polling and query invalidation only.
+</Callout>
+
+## Cron Jobs & Background Tasks
+
+Zephyr has 9 implemented cron jobs for maintenance and analytics:
+
+**See [Cron Jobs](/overview/cron-jobs) for complete documentation.**
+
+- `sync-view-aura` - Award Aura for view milestones (every 15 min)
+- `sync-views` - Sync view counts from Redis to DB (every 5 min)
+- `sync-share-stats` - Aggregate share statistics (hourly)
+- `sync-all-cache` - Refresh all caches (every 30 min)
+- `cleanup-inactive` - Remove inactive sessions (daily)
+- `cleanup-media` - Delete orphaned media (daily)
+- `cleanup-reset-tokens` - Remove expired tokens (every 6 hours)
+- `clear-uploads` - Clean temporary uploads (daily)
+- `aggregate-analytics` - Time-series analytics to TimescaleDB (hourly)
+
+## Build & Development Flow
+
+### Package Manager & Orchestration
+
+**Bun**: Fast package manager and runtime
+
+```bash
+bun install          # Install dependencies
+bun run dev          # Runs `turbo dev`
+bun run build        # Runs `turbo build`
+bun run check        # Runs `turbo check` (Biome lint)
+```
+
+### Turborepo Configuration
+
+Actual `turbo.json` configuration:
+
+```json
+{
+  "$schema": "https://turbo.build/schema.json",
+  "ui": "tui",
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "cache": true,
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": [".next/**", "!.next/cache/**"]
+    },
+    "lint": {
+      "dependsOn": ["^check"]
+    },
+    "check-types": {
+      "dependsOn": ["^check-types"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "clean": {
+      "cache": false
+    }
+  }
+}
+```
+
+**Key features**:
+- Build caching with dependency awareness
+- Environment file tracking in inputs
+- TUI for better dev experience
+- Persistent dev servers
+
+## Docker Infrastructure
+
+Complete development environment with Docker Compose.
+
+**See [Docker Infrastructure](/overview/docker-infrastructure) for complete documentation.**
+
+**Services** (`docker/docker-compose.dev.yml`):
+- **PostgreSQL** (5433) - Primary database
+- **Redis** (6379) - Caching layer
+- **MinIO** (9000/9001) - Object storage
+- **Meilisearch** (7700) - Search engine
+- **RabbitMQ** (5672/15672) - Message queue
+- **TimescaleDB** (5434) - Time-series analytics
+- **Prisma Studio** (5555) - Database GUI
+- **RedisInsight** (5540) - Redis GUI
+
+**Profiles**:
+- `init` - First-time setup with migrations
+- `studio` - GUI tools
+- `apps` - Web/auth/docs containers
+
+### Linting & Formatting
+
+**Biome + Ultracite**:
+- Subsecond linting and formatting
+- 200+ rules for TypeScript, React, and accessibility
+- Configuration in root `biome.jsonc` and `apps/biome.json`
+- Enforces strict TypeScript, React best practices, A11y standards
+
+**See project rules** for complete linting configuration.
+
+## Runtime Architecture
+
+### Request Flow
+
+1. **Client Request** → Next.js App Router
+2. **Middleware** (`apps/web/src/middleware.ts`) → Session validation
+3. **Route Handler or Server Component** → Fetch data
+4. **Data Layer** → Prisma query with Redis cache check
+5. **Response** → JSON API or Server Component render
+
+### Caching Strategy
+
+**Three-layer cache hierarchy**:
+
+1. **Next.js Cache** - Server Component and Route Handler caching (in-memory)
+2. **Redis** - User data, social graphs, HN stories, view counts (persistent)
+3. **React Query** - Client-side query cache (in-memory, SWR behavior)
+
+### Real-Time Updates
+
+**No WebSockets** - All real-time features use:
+- **Polling**: React Query with refetch intervals for notifications
+- **Optimistic updates**: Immediate UI updates on mutations
+- **Query invalidation**: Trigger refetch after votes, bookmarks, follows
+
+### Performance Optimizations
+
+- **Turbopack**: Fast Hot Module Replacement in development (subsecond rebuilds)
+- **ISR**: Incremental Static Regeneration for public pages
+- **Image optimization**: Next.js Image component with MinIO backend
+- **Prefetching**: Automatic link prefetching via Next.js router
+- **Code splitting**: Automatic per-route and component-level splitting
+- **Suspense boundaries**: Loading states with React Suspense
+
+### Data Flow Example: Voting
+
+1. User clicks upvote button
+2. **Optimistic update**: UI shows +1 Aura immediately
+3. **API call**: `POST /api/posts/[postId]/votes`
+4. **Database**: Update Vote record, increment Post.aura
+5. **AuraLog**: Create audit entry with type `POST_VOTE`
+6. **Response**: Server returns updated Aura count
+7. **Query update**: React Query reconciles optimistic with server state
+8. **Cache invalidation**: Invalidate related queries (post detail, user profile)
+
+## Technology Stack Summary
+
+| Layer | Technology | Purpose |
+|-------|-----------|---------|
+| **Frontend** | Next.js 15, React 19, TypeScript | App framework and UI |
+| **Styling** | Tailwind CSS 4, Motion | Styling and animations |
+| **State** | React Query, Jotai, React Hook Form | State management |
+| **Backend** | Next.js Route Handlers, tRPC | API and server logic |
+| **Database** | PostgreSQL 18, Prisma | Data persistence |
+| **Cache** | Redis 7 | Performance layer |
+| **Search** | Meilisearch | Full-text search |
+| **Storage** | MinIO | Object storage (S3-compatible) |
+| **Queue** | RabbitMQ 4 | Message queue (configured, not actively used) |
+| **Analytics** | TimescaleDB | Time-series data |
+| **Build** | Turborepo, Bun | Monorepo orchestration |
+| **Lint** | Biome, Ultracite | Code quality |
+| **Auth** | Better Auth | Authentication |
+| **Deployment** | Docker Compose | Infrastructure |
+
+## Extensibility
+
+The monorepo makes it straightforward to:
+
+1. **Add aggregation sources**: Extend `packages/aggregator` with new platform clients (Twitter, Reddit, etc.)
+2. **Share components**: Build reusable UI in `packages/ui` once, use everywhere
+3. **Extend schema**: Add Prisma models in `packages/db`, generate types automatically
+4. **Create apps**: Add to `apps/`, leverage all shared packages immediately
+5. **Add hooks**: Place in `packages/ui/hooks` for cross-app use
+
+**Best practice**: Keep cross-cutting concerns in `packages/`, app-specific logic in `apps/`.
+
+## Summary
+
+**Architecture type**: Monorepo (Turborepo)  
+**Applications**: 3 (web, auth, docs)  
+**Shared packages**: 7  
+**Database models**: 18  
+**API endpoints**: 60+  
+**Cron jobs**: 9  
+**Docker services**: 8 + 3 apps  
+
+<Callout type="info">
+The architecture emphasizes **type safety** (end-to-end TypeScript), **performance** (aggressive caching), and **developer experience** (fast builds, clear organization).
+</Callout>
+
+## Future Enhancements
+
+**Planned architectural improvements**:
+- WebSocket server for true real-time updates
+- GraphQL API alongside REST
+- Microservices for heavy workloads (image processing, AI)
+- CDN integration for global edge caching
+- Multi-region database replication
+- Event sourcing for critical operations
+
+

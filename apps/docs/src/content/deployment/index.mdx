@@ -1,0 +1,19 @@
+---
+title: Deployment
+description: Notes for deploying apps and packages.
+---
+
+## Overview
+
+Zephyr is split into multiple apps and packages. Typical deployment involves:
+
+- Building `apps/web` and `apps/auth`
+- Applying Prisma migrations and provisioning Redis & Meilisearch
+- Providing production env vars for each app
+
+## Tips
+
+- Use `bun run build` at repo root to build with turborepo
+- Ensure `@zephyr/ui` and other workspace deps are available in your environment
+
+

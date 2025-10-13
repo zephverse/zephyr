@@ -1,0 +1,27 @@
+---
+title: Code style
+description: TypeScript, React, and a11y conventions enforced in the repo.
+---
+
+## TypeScript
+
+- Prefer explicit function signatures and narrow types
+- Avoid `any` and non‑null assertions; use safe refinements
+- Keep modules small and cohesive
+
+## React & JSX
+
+- Use accessible components and proper semantics
+- Avoid index keys and non‑interactive handlers on static elements
+- Keep hooks top‑level and dependencies correct
+
+## Lint & format
+
+Use Ultracite and Biome:
+
+```bash
+npx ultracite check
+npx ultracite fix
+```
+
+

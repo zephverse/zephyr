@@ -1,0 +1,667 @@
+---
+title: Troubleshooting
+description: Solutions to common setup and development issues.
+---
+
+import { Callout } from "nextra/components";
+
+## Installation Issues
+
+### Bun install fails
+
+**Symptoms**:
+```
+error: failed to download dependency
+```
+
+**Solutions**:
+1. Check internet connection
+2. Clear Bun cache:
+   ```bash
+   rm -rf ~/.bun/install/cache
+   bun install
+   ```
+3. Try with verbose logging:
+   ```bash
+   bun install --verbose
+   ```
+4. Check if firewall/proxy is blocking downloads
+
+### Postinstall script fails
+
+**Symptoms**:
+```
+error: postinstall script failed
+Error: Prisma schema not found
+```
+
+**Solutions**:
+1. Navigate to db package and generate manually:
+   ```bash
+   cd packages/db
+   bunx prisma generate
+   cd ../..
+   ```
+2. Verify `packages/db/prisma/schema.prisma` exists
+3. Check Prisma version compatibility:
+   ```bash
+   bunx prisma --version
+   ```
+
+## Docker Issues
+
+### Docker services won't start
+
+**Symptoms**:
+- Containers immediately exit
+- `docker ps` shows no containers
+- Error: "port already allocated"
+
+**Solutions**:
+
+**Port conflicts**:
+```bash
+# Check what's using the ports
+lsof -i :5433  # PostgreSQL
+lsof -i :6379  # Redis
+lsof -i :9000  # MinIO
+
+# Kill conflicting process
+kill -9 [PID]
+
+# Or change ports in docker-compose.dev.yml
+```
+
+**Docker not running**:
+1. Start Docker Desktop
+2. Wait for "Docker Desktop is running" message
+3. Try again:
+   ```bash
+   bun run docker:dev
+   ```
+
+**Insufficient resources**:
+1. Open Docker Desktop settings
+2. Increase resources:
+   - RAM: 6-8 GB minimum
+   - Disk: 20 GB minimum
+3. Apply & restart Docker
+
+**Corrupted volumes**:
+```bash
+# Nuclear option: remove everything
+bun run docker:clean
+
+# Restart fresh
+bun run docker:dev
+```
+
+### Docker containers keep restarting
+
+**Symptoms**:
+```bash
+docker ps
+# Shows "Restarting (1) X seconds ago"
+```
+
+**Solutions**:
+
+**Check logs**:
+```bash
+docker compose -f docker/docker-compose.dev.yml logs [service-name]
+
+# Examples:
+docker compose -f docker/docker-compose.dev.yml logs postgres-dev
+docker compose -f docker/docker-compose.dev.yml logs redis-dev
+```
+
+**PostgreSQL issues**:
+```bash
+# Remove volume and restart
+docker volume rm zephyr-dev-postgres-data
+bun run docker:dev
+```
+
+**Permission issues (Linux)**:
+```bash
+# Fix Docker permissions
+sudo usermod -aG docker $USER
+newgrp docker
+```
+
+### Can't access Docker services from host
+
+**Symptoms**:
+- Can't connect to `localhost:5433` (PostgreSQL)
+- Can't access `localhost:9001` (MinIO Console)
+
+**Solutions**:
+
+**Check port forwarding**:
+```bash
+docker ps
+# Verify PORTS column shows "0.0.0.0:5433->5432"
+```
+
+**Use host networking (Linux only)**:
+```yaml
+# In docker-compose.dev.yml
+network_mode: "host"
+```
+
+**Check firewall**:
+```bash
+# macOS
+sudo /usr/libexec/ApplicationFirewall/socketfilterfw --list
+
+# Linux
+sudo ufw status
+```
+
+## Database Issues
+
+### Prisma client not generated
+
+**Symptoms**:
+```typescript
+Error: Cannot find module '@prisma/client'
+```
+
+**Solutions**:
+```bash
+# Generate Prisma client
+cd packages/db
+bunx prisma generate
+
+# Or use npm script
+cd ../..
+bun run db:up
+```
+
+### Database schema out of sync
+
+**Symptoms**:
+```
+P2021: The table `public.users` does not exist
+```
+
+**Solutions**:
+```bash
+# Push schema to database
+bun run db:up
+
+# Or manually:
+cd packages/db
+bunx prisma db push
+```
+
+### Migration fails
+
+**Symptoms**:
+```
+Error: P1001: Can't reach database server
+```
+
+**Solutions**:
+
+1. **Check database is running**:
+   ```bash
+   docker ps | grep postgres
+   ```
+
+2. **Test connection**:
+   ```bash
+   docker exec -it zephyr-dev-postgres pg_isready -U postgres
+   ```
+
+3. **Check connection string**:
+   - Verify `DATABASE_URL` in `.env`
+   - Default: `postgresql://postgres:postgres@localhost:5433/zephyr`
+
+4. **Reset database**:
+   ```bash
+   # WARNING: Deletes all data
+   docker volume rm zephyr-dev-postgres-data
+   bun run docker:dev
+   bun run db:up
+   ```
+
+### Prisma Studio won't open
+
+**Symptoms**:
+- http://localhost:5555 doesn't load
+- "Connection refused" error
+
+**Solutions**:
+
+1. **Check container is running**:
+   ```bash
+   docker ps | grep prisma-studio
+   ```
+
+2. **Restart Prisma Studio**:
+   ```bash
+   docker compose -f docker/docker-compose.dev.yml restart prisma-studio
+   ```
+
+3. **Check logs**:
+   ```bash
+   docker compose -f docker/docker-compose.dev.yml logs prisma-studio
+   ```
+
+4. **Run locally instead**:
+   ```bash
+   cd packages/db
+   bunx prisma studio
+   ```
+
+## Application Issues
+
+### Apps won't start
+
+**Symptoms**:
+```
+Error: EADDRINUSE: address already in use :::3000
+```
+
+**Solutions**:
+
+**Port already in use**:
+```bash
+# Find process using the port
+lsof -i :3000  # macOS/Linux
+netstat -ano | findstr :3000  # Windows
+
+# Kill the process
+kill -9 [PID]  # macOS/Linux
+taskkill /PID [PID] /F  # Windows
+
+# Or use different ports
+NEXT_PUBLIC_PORT=3010 bun run dev
+```
+
+**Missing dependencies**:
+```bash
+# Reinstall dependencies
+rm -rf node_modules
+bun install
+```
+
+**Stale build cache**:
+```bash
+# Clean all build artifacts
+bun run clean
+
+# Rebuild
+bun install
+bun run dev
+```
+
+### Hot reload not working
+
+**Symptoms**:
+- Make changes but nothing updates
+- Have to manually refresh
+
+**Solutions**:
+
+1. **Check Turbopack is enabled**:
+   - Should see "Turbopack" in startup logs
+   
+2. **Increase file watchers (Linux)**:
+   ```bash
+   echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf
+   sudo sysctl -p
+   ```
+
+3. **Restart dev server**:
+   ```bash
+   # Ctrl+C, then:
+   bun run dev
+   ```
+
+### Environment variables not loading
+
+**Symptoms**:
+```
+❌ Invalid environment variables
+```
+
+**Solutions**:
+
+1. **Create .env files**:
+   ```bash
+   # See environment configuration
+   # Manually create apps/web/.env and apps/auth/.env
+   ```
+
+2. **Check variable format**:
+   - URLs must start with `http://` or `https://`
+   - Ports must be numbers
+   - No spaces around `=`
+
+3. **Verify required variables**:
+   - `DATABASE_URL`
+   - `REDIS_URL`
+   - `MINIO_ENDPOINT`
+   - `MEILISEARCH_URL`
+
+4. **Restart apps** after changing `.env`:
+   ```bash
+   # Ctrl+C, then:
+   bun run dev
+   ```
+
+### TypeScript errors
+
+**Symptoms**:
+```
+Type error: Cannot find module '@zephyr/db'
+```
+
+**Solutions**:
+
+1. **Regenerate types**:
+   ```bash
+   bun install  # Runs postinstall hooks
+   cd packages/db && bunx prisma generate
+   ```
+
+2. **Check TypeScript version**:
+   ```bash
+   bunx tsc --version
+   # Should be 5.x.x
+   ```
+
+3. **Restart TypeScript server** (VS Code):
+   - Cmd/Ctrl + Shift + P
+   - "TypeScript: Restart TS Server"
+
+4. **Clean and rebuild**:
+   ```bash
+   bun run clean
+   bun install
+   bun run build
+   ```
+
+## Build Issues
+
+### Build fails
+
+**Symptoms**:
+```
+error: Build failed
+```
+
+**Solutions**:
+
+1. **Check for linting errors**:
+   ```bash
+   bun run check
+   ```
+
+2. **Fix linting automatically**:
+   ```bash
+   bun run check
+   ```
+
+3. **Check for type errors**:
+   ```bash
+   bunx tsc --noEmit
+   ```
+
+4. **Clear cache and rebuild**:
+   ```bash
+   rm -rf .next .turbo
+   bun run build
+   ```
+
+### Out of memory errors
+
+**Symptoms**:
+```
+FATAL ERROR: Reached heap limit
+```
+
+**Solutions**:
+
+1. **Increase Node memory** (if using Node):
+   ```bash
+   NODE_OPTIONS=--max_old_space_size=4096 bun run build
+   ```
+
+2. **Close other apps** to free RAM
+
+3. **Build apps individually**:
+   ```bash
+   cd apps/web && bun run build
+   cd apps/auth && bun run build
+   cd apps/docs && bun run build
+   ```
+
+## Search Issues
+
+### Meilisearch not working
+
+**Symptoms**:
+- Search returns no results
+- Error: "Connection refused"
+
+**Solutions**:
+
+1. **Check Meilisearch is running**:
+   ```bash
+   curl http://localhost:7700/health
+   # Should return: {"status":"available"}
+   ```
+
+2. **Initialize indexes**:
+   ```bash
+   bun run search:init
+   ```
+
+3. **Check master key**:
+   - Verify `MEILISEARCH_MASTER_KEY` matches Docker setup
+   - Default: `masterKey123`
+
+4. **Restart Meilisearch**:
+   ```bash
+   docker compose -f docker/docker-compose.dev.yml restart meilisearch-dev
+   ```
+
+### Search returns no results
+
+**Symptoms**:
+- Search works but no results appear
+- Empty results array
+
+**Solutions**:
+
+1. **Populate index**:
+   ```bash
+   bun run search:init
+   ```
+
+2. **Check index has documents**:
+   ```bash
+   curl -H "Authorization: Bearer masterKey123" \
+     http://localhost:7700/indexes/users/stats
+   ```
+
+3. **Create test user** and re-index:
+   ```bash
+   # Create user via signup
+   # Then re-run init
+   bun run search:init
+   ```
+
+## Performance Issues
+
+### Slow startup
+
+**Symptoms**:
+- Takes > 60 seconds to start apps
+- High CPU usage
+
+**Solutions**:
+
+1. **Use Turbopack** (should be default):
+   - Check for "Turbopack" in logs
+   
+2. **Disable telemetry**:
+   ```bash
+   export NEXT_TELEMETRY_DISABLED=1
+   export TURBO_TELEMETRY_DISABLED=1
+   ```
+
+3. **Close unused apps**:
+   ```bash
+   # Run only web app
+   cd apps/web && bun run dev
+   ```
+
+4. **Increase system resources**:
+   - Close other applications
+   - Allocate more RAM to Docker
+
+### Slow page loads
+
+**Symptoms**:
+- Pages take > 5 seconds to load
+- API calls timeout
+
+**Solutions**:
+
+1. **Check Redis is running**:
+   ```bash
+   docker exec -it zephyr-dev-redis redis-cli -a zephyrredis PING
+   # Should return: PONG
+   ```
+
+2. **Clear browser cache**:
+   - Hard refresh: Cmd/Ctrl + Shift + R
+
+3. **Check network tab** in DevTools:
+   - Identify slow requests
+   - Check for errors
+
+4. **Restart services**:
+   ```bash
+   bun run docker:down
+   bun run docker:dev
+   ```
+
+## Common Error Messages
+
+### "Module not found"
+
+```
+Error: Cannot find module 'X'
+```
+
+**Solution**:
+```bash
+bun install
+cd packages/db && bunx prisma generate
+```
+
+### "Port already in use"
+
+```
+Error: listen EADDRINUSE: address already in use :::3000
+```
+
+**Solution**: Kill process or use different port (see Apps won't start)
+
+### "Connection refused"
+
+```
+Error: connect ECONNREFUSED 127.0.0.1:5433
+```
+
+**Solution**: Check Docker services are running (see Docker Issues)
+
+### "Invalid hook call"
+
+```
+Error: Invalid hook call. Hooks can only be called inside the body of a function component
+```
+
+**Solution**: 
+1. Check for React version mismatches
+2. Clear node_modules and reinstall:
+   ```bash
+   bun run clean
+   bun install
+   ```
+
+### "Hydration mismatch"
+
+```
+Warning: Text content did not match...
+```
+
+**Solution**:
+1. Check for conditional rendering based on window/document
+2. Use `useEffect` for client-only code
+3. Hard refresh browser
+
+## Getting More Help
+
+If your issue isn't covered here:
+
+1. **Check logs**:
+   ```bash
+   # Docker logs
+   docker compose -f docker/docker-compose.dev.yml logs
+   
+   # App logs
+   # Check terminal where `bun run dev` is running
+   ```
+
+2. **Search GitHub issues**:
+   - https://github.com/zephverse/zephyr/issues
+
+3. **Ask for help**:
+   - Create a new GitHub issue
+   - Include:
+     - Error message
+     - Steps to reproduce
+     - System info (OS, Docker version, Bun version)
+     - Relevant logs
+
+<Callout type="info">
+When asking for help, always include the output of:
+```bash
+bun --version
+docker --version
+docker ps
+```
+</Callout>
+
+## Reset Everything (Last Resort)
+
+If nothing works, nuclear reset:
+
+```bash
+# Stop everything
+bun run docker:down
+
+# Remove all data
+bun run docker:clean
+
+# Clean code
+bun run clean
+
+# Reinstall
+bun install
+
+# Restart
+bun run docker:dev
+bun run db:up
+bun run dev
+```
+
+This deletes **all data** but gives you a fresh start.
+
+

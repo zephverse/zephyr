@@ -1,0 +1,36 @@
+---
+title: Overview
+description: Understanding Zephyr's architecture, current capabilities, and technical foundation.
+---
+
+import { Callout } from "nextra/components";
+
+## What is Zephyr?
+
+Zephyr is a fast, type‑safe social platform and content aggregator. It enables users to share content from external sources (currently HackerNews), create rich posts with media attachments, engage through comments and voting, and build reputation through the Aura system.
+
+## Technical Pillars
+
+| Pillar | Technologies & Approach |
+|--------|------------------------|
+| **Performance** | Bun + Turborepo + Next.js 15 with Turbopack for subsecond build times and optimal runtime performance |
+| **Type Safety** | End‑to‑end TypeScript with strict configuration, Zod validation, and Prisma-generated types |
+| **Accessibility** | A11y rules enforced via Ultracite (Biome-powered) linter and React best practices |
+| **Developer Experience** | Clear npm scripts, Docker Compose for local development, and comprehensive documentation |
+| **Scalability** | Redis caching, Meilisearch for fast search, MinIO for object storage, and PostgreSQL for data persistence |
+
+<Callout type="info">
+This docs site focuses on the contributor experience: how to set up, develop, and make high‑quality changes safely and quickly.
+</Callout>
+
+## What's in this section
+
+- [Architecture](/overview/architecture): How the monorepo is structured and how pieces communicate
+- [Features](/overview/features): A tour of capabilities and WIP areas
+
+## Next steps
+
+- New to the repo? Start with the [Setup](/setup) section.
+- Planning to contribute? Review the [Contribution guidelines](/contribution/guidelines) and [Code style](/contribution/code-style).
+
+
