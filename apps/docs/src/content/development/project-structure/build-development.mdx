@@ -1,0 +1,48 @@
+---
+title: Build & Development
+description: Development workflow and build processes in Zephyr
+---
+
+## Build & Development
+
+### Turborepo Pipeline
+
+`turbo.json` defines task dependencies:
+
+```json
+{
+  "pipeline": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": [".next/**", "dist/**"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    }
+  }
+}
+```
+
+**Commands:**
+
+```bash
+bun dev            # Start all apps in parallel
+bun dev --filter=web  # Only web app
+bun build          # Build all apps
+bun lint           # Lint all packages
+```
+
+### Package Manager
+
+Zephyr uses **Bun** for fast installs and script execution.
+
+**Workspace config** (`package.json`):
+
+```json
+{
+  "workspaces": ["apps/*", "packages/*"]
+}
+```
+
+Dependencies are hoisted to the root `node_modules/`, but each package has its own `package.json`.

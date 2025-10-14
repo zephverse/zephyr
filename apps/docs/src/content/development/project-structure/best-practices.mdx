@@ -1,0 +1,145 @@
+---
+title: Best Practices
+description: Development best practices and guidelines for Zephyr
+---
+
+## Best Practices
+
+- **Colocate components** near consuming routes when possible.
+- **Shared components** go in `packages/ui` if used across apps, else `src/components/`.
+- **Server Actions** stay in `actions.ts` files within routes or features.
+- **API routes** for client-side fetching; Server Actions for form submissions.
+- **Type-safe env** using `env.ts` + Zod in every app.
+- **Monorepo imports** use workspace references (`@zephyr/db`, `@zephyr/ui`).
+
+## Adding New Features
+
+### 1. Determine the scope
+
+**In a package?** Add to existing package or create new one
+**In an app?** Choose the appropriate route group
+
+### 2. Create the necessary files
+
+**Example: Adding a "Tags" feature**
+
+```
+apps/web/src/
+├── app/
+│   ├── (main)/tags/page.tsx       # Tags list page
+│   └── api/tags/route.ts          # Tags API
+├── components/Tags/
+│   ├── tag-list.tsx               # Tag display
+│   ├── tag-input.tsx              # Tag input
+│   └── mutations.ts               # Tag mutations
+└── hooks/
+    └── use-tags.ts                # Tag hook
+```
+
+### 3. Update database schema (if needed)
+
+```prisma
+// packages/db/prisma/schema.prisma
+model Tag {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  posts     Post[]
+  createdAt DateTime @default(now())
+  
+  @@map("tags")
+}
+```
+
+### 4. Run migrations
+
+```bash
+cd packages/db
+bunx prisma db push
+# or
+bunx prisma migrate dev --name add_tags
+```
+
+### 5. Add API routes
+
+```typescript
+// apps/web/src/app/api/tags/route.ts
+export async function GET() {
+  const tags = await prisma.tag.findMany();
+  return NextResponse.json(tags);
+}
+```
+
+### 6. Create UI components
+
+```tsx
+// apps/web/src/components/Tags/tag-list.tsx
+export function TagList() {
+  const { data: tags } = useQuery({
+    queryKey: ["tags"],
+    queryFn: fetchTags,
+  });
+  
+  return (
+    <div>
+      {tags?.map(tag => <TagBadge key={tag.id} tag={tag} />)}
+    </div>
+  );
+}
+```
+
+## Best Practices (Detailed)
+
+### 1. Server Components First
+
+Use Server Components by default, Client Components only when needed:
+
+```tsx
+// ✅ Good: Server Component (default)
+export async function PostList() {
+  const posts = await getPosts();
+  return <div>{/* render posts */}</div>;
+}
+
+// ✅ Good: Client Component (for interactivity)
+"use client";
+export function VoteButton() {
+  const [count, setCount] = useState(0);
+  return <button onClick={() => setCount(c => c + 1)}>{count}</button>;
+}
+```
+
+### 2. Colocate Related Files
+
+Keep related files together:
+
+```
+Comments/
+├── comment.tsx         # Main component
+├── comment-input.tsx   # Related component
+├── mutations.ts        # Mutations
+└── actions.ts          # Server actions
+```
+
+### 3. Use Type-Safe APIs
+
+Import types from `@zephyr/db`:
+
+```typescript
+import type { Post, User, Comment } from "@zephyr/db";
+
+async function getPost(id: string): Promise<Post> {
+  return await prisma.post.findUniqueOrThrow({ where: { id } });
+}
+```
+
+### 4. Centralize Shared Logic
+
+Move reusable logic to packages:
+
+```typescript
+// ❌ Bad: Duplicated in multiple apps
+function formatDate(date: Date) { /* ... */ }
+
+// ✅ Good: Centralized in a package
+import { formatDate } from "@zephyr/db";
+```

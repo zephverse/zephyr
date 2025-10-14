@@ -1,0 +1,35 @@
+---
+title: Environment Variables
+description: Type-safe environment variable management in Zephyr
+---
+
+## Environment Variables
+
+All apps use `env.ts` and `keys.ts` for type-safe environment access.
+
+**Pattern:**
+
+```typescript
+// env.ts – Validation with Zod
+import { z } from "zod";
+
+const envSchema = z.object({
+  DATABASE_URL: z.string().url(),
+  REDIS_URL: z.string().url(),
+});
+
+export const env = envSchema.parse(process.env);
+
+// keys.ts – Re-export for convenience
+export const keys = {
+  DATABASE_URL: env.DATABASE_URL,
+  REDIS_URL: env.REDIS_URL,
+};
+```
+
+**Usage:**
+
+```typescript
+import { keys } from "../keys";
+console.log(keys.DATABASE_URL);
+```

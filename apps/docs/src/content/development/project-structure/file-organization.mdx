@@ -1,0 +1,173 @@
+---
+title: File Organization
+description: How files are organized and named in Zephyr
+---
+
+## File Organization
+
+### Colocation Strategy
+
+Components live near the routes that use them:
+
+```
+app/(main)/posts/[postId]/
+├── page.tsx                    # Server Component (data fetching)
+├── components/                 # Route-specific components
+│   ├── post-detail.tsx
+│   ├── comment-list.tsx
+│   └── related-posts.tsx
+└── actions.ts                  # Server Actions
+```
+
+**Shared components** go in `src/components/`:
+```
+src/components/
+├── Posts/post-card.tsx         # Used everywhere
+├── Layouts/user-avatar.tsx     # Reusable UI
+└── misc/error-boundary.tsx     # Generic utilities
+```
+
+### Action Files
+
+Server Actions are colocated with routes or centralized:
+
+```
+// Route-specific
+app/(main)/users/[username]/actions.ts
+
+// Feature-specific
+src/posts/actions.ts
+```
+
+### Hook Files
+
+Custom hooks are centralized in `src/hooks/`:
+
+```
+src/hooks/
+├── use-follower-info.ts        # React Query hook
+├── use-post-mutations.ts       # Mutations
+└── use-infinite-scroll.ts      # Generic utility
+```
+
+## Component Organization
+
+Components are organized by feature and type:
+
+```
+components/
+├── Auth/              # Authentication components
+│   ├── login-form.tsx
+│   ├── signup-form.tsx
+│   └── password-input.tsx
+├── Posts/             # Post-related components
+│   ├── post-card.tsx
+│   ├── post-editor.tsx
+│   ├── vote-button.tsx
+│   └── editor/        # Complex editor components
+├── Comments/          # Comment system
+│   ├── comment.tsx
+│   ├── comment-input.tsx
+│   └── mutations.ts   # React Query mutations
+├── Profile/           # User profile components
+│   ├── profile-header.tsx
+│   ├── profile-feed.tsx
+│   └── followers-list.tsx
+└── Layouts/           # Shared layout components
+    ├── header.tsx
+    ├── sidebar.tsx
+    └── mobile/        # Mobile-specific layouts
+```
+
+### Component Naming Conventions
+
+- **Server Components**: No prefix (default)
+  ```tsx
+  // PostCard.tsx (server component)
+  export async function PostCard({ postId }: { postId: string }) {
+    const post = await getPost(postId);
+    return <div>{post.title}</div>;
+  }
+  ```
+
+- **Client Components**: `"use client"` directive
+  ```tsx
+  // vote-button.tsx
+  "use client";
+  
+  export function VoteButton({ postId }: { postId: string }) {
+    const [voted, setVoted] = useState(false);
+    // ...
+  }
+  ```
+
+- **Client Pages**: `client-` prefix
+  ```tsx
+  // client-profile.tsx
+  "use client";
+  
+  export function ClientProfile({ user }: { user: User }) {
+    // Client-side interactive profile
+  }
+  ```
+
+## File Naming Conventions
+
+### React Components
+
+- **Pascal Case** for component files: `PostCard.tsx`, `UserAvatar.tsx`
+- **kebab-case** for page files: `page.tsx`, `layout.tsx`, `error.tsx`
+- **kebab-case** for utility files: `use-toast.ts`, `format-date.ts`
+
+### Utilities & Helpers
+
+```
+lib/
+├── utils.ts            # General utilities
+├── auth.ts             # Auth utilities
+├── format-date.ts      # Date formatting
+└── config/
+    └── file-config.ts  # File configuration
+```
+
+### Server Actions
+
+```
+posts/
+├── actions.ts          # Server actions
+├── mutations.ts        # React Query mutations
+└── editor/
+    ├── actions.ts      # Editor-specific actions
+    └── mutations.ts    # Editor mutations
+```
+
+## Import Aliases
+
+All apps use path aliases for cleaner imports:
+
+```typescript
+// Instead of: ../../../../components/Button
+import { Button } from "@/components/Button";
+
+// Instead of: ../../../lib/utils
+import { cn } from "@/lib/utils";
+
+// Package imports
+import { prisma } from "@zephyr/db";
+import { Button } from "@zephyr/ui/shadui";
+```
+
+**Configured in `tsconfig.json`:**
+```json
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@/components/*": ["./src/components/*"],
+      "@/lib/*": ["./src/lib/*"],
+      "@/hooks/*": ["./src/hooks/*"]
+    }
+  }
+}
+```

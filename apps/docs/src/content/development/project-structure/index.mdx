@@ -1,0 +1,101 @@
+---
+title: Project Structure
+description: Understanding Zephyr's monorepo layout, routing patterns, and folder organization.
+---
+
+import { Callout } from "nextra/components";
+
+## Monorepo Overview
+
+<Callout type="info">
+  **What is a Monorepo?** A monorepo is a single repository containing multiple projects, allowing for better code sharing, atomic changes, and unified tooling across all applications and libraries.
+</Callout>
+
+Zephyr is a **Turborepo monorepo** with Bun workspaces—apps are independently deployable; packages are shared libraries.
+
+### Why Turborepo + Bun?
+
+- **Turborepo**: Provides intelligent build caching and task orchestration, ensuring only changed code is rebuilt
+- **Bun**: Ultra-fast JavaScript runtime and package manager, significantly speeding up installs and script execution
+- **Workspaces**: Allows sharing code between apps without publishing to npm, with automatic dependency management
+
+### Directory Structure
+
+```
+zephyr/
+├── apps/                    # Deployable applications
+│   ├── web/                 # Main social platform (Next.js 15)
+│   │   ├── App Router       # Modern Next.js routing with Server Components
+│   │   ├── Route Groups     # Organized layouts without URL pollution
+│   │   └── API Routes       # REST endpoints for client-side data fetching
+│   ├── auth/                # Dedicated auth service (tRPC + Better Auth)
+│   │   ├── tRPC API         # Type-safe API layer
+│   │   ├── Better Auth      # OAuth + password authentication
+│   │   └── Email Templates  # Resend integration for transactional emails
+│   └── docs/                # Documentation site (Nextra)
+│       ├── MDX Content      # Markdown with React components
+│       ├── Auto-generated   # Sidebar navigation from file structure
+│       └── Search           # Built-in Flexsearch integration
+├── packages/                # Shared libraries and configurations
+│   ├── db/                  # Database layer (Prisma + Redis + Meilisearch)
+│   │   ├── Prisma ORM       # Type-safe database access
+│   │   ├── Redis Caching    # High-performance data caching
+│   │   └── Meilisearch      # Full-text search engine
+│   ├── ui/                  # Design system (shadcn/ui + Radix)
+│   │   ├── Component Library # Reusable React components
+│   │   ├── Theme System     # Dark/light mode support
+│   │   └── Custom Hooks     # Shared React logic
+│   ├── auth/                # Authentication utilities
+│   │   ├── Zod Schemas      # Runtime type validation
+│   │   ├── Password Hashing # Scrypt-based security
+│   │   └── Session Mgmt     # Hybrid session stores
+│   ├── aggregator/          # External data integration
+│   │   └── HackerNews API   # Rate-limited content aggregation
+│   ├── tailwind/            # Shared styling configuration
+│   │   └── Design Tokens    # Consistent theming across apps
+│   ├── config/              # TypeScript and tooling configs
+│   │   ├── Base Config      # Common compiler options
+│   │   ├── App-specific     # Tailored configs per project type
+│   │   └── Debug Tools      # Development logging utilities
+│   └── next/                # Next.js presets and utilities
+│       └── Shared Config    # Consistent Next.js setup
+└── docker/                  # Containerization and orchestration
+    ├── Compose Files        # Development environment setup
+    ├── Database Services    # PostgreSQL, Redis, Meilisearch
+    └── Development Tools    # Prisma Studio, Redis Insight
+```
+
+### Key Benefits
+
+**Code Sharing**: Packages like `@zephyr/ui` and `@zephyr/db` eliminate duplication across apps
+
+**Atomic Changes**: Modify database schema and update all dependent code in a single commit
+
+**Unified Tooling**: Single `package.json` for scripts, single `tsconfig.json` for TypeScript rules
+
+**Faster Development**: Turborepo caching means rebuilds only affect changed packages
+
+**Type Safety**: Shared TypeScript interfaces ensure consistency across the entire codebase
+
+### Development Workflow
+
+```bash
+# Install all dependencies (fast with Bun)
+bun install
+
+# Start all apps in development mode
+bun dev
+
+# Build everything for production
+bun build
+
+# Run tests across all packages
+bun test
+
+# Lint the entire codebase
+bun lint
+```
+
+<Callout type="tip">
+  **Workspace Navigation**: Use `bun dev --filter=web` to work on just the web app, or `bun dev --filter=docs` for documentation-only development.
+</Callout>
