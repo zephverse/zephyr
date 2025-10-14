@@ -1,0 +1,253 @@
+---
+title: Authentication
+description: Better Auth integration, session management, and protected routes.
+---
+
+import { Callout } from "nextra/components";
+
+## Overview
+
+Zephyr ships with **Better Auth** for the entire authentication stack—typed APIs, auto-managed sessions, and multi-provider support with minimal glue.
+
+**Highlights**
+- Email/password plus Google, GitHub, Discord, Twitter, and Reddit OAuth
+- JWT sessions stored in cookies with automatic rotation
+- Email verification + password reset via Resend
+- Scrypt password hashing and strict username validation
+
+## Auth flow 🚦
+
+```
+User → Sign up / Sign in → Email verification → Session cookie → Protected content
+```
+
+<Callout>
+Better Auth handles token issuance and cookie wiring for you—focus on your product logic.
+</Callout>
+
+## Config essentials
+
+`packages/auth/src/core/config.ts`
+
+```typescript
+import { betterAuth } from "better-auth";
+import { prismaAdapter } from "better-auth/adapters/prisma";
+import { jwt, username } from "better-auth/plugins";
+
+export function createAuthConfig(config: AuthConfig = {}) {
+  return betterAuth({
+    database: prismaAdapter(prisma),
+    user: {
+      fields: { name: "displayName" },
+      additionalFields: {
+        username: { type: "string", required: true },
+        aura: { type: "number", required: true, defaultValue: 0 },
+      },
+    },
+    socialProviders: {
+      google: {
+        clientId: env.GOOGLE_CLIENT_ID || "",
+        clientSecret: env.GOOGLE_CLIENT_SECRET || "",
+      },
+      github: {
+        clientId: env.GITHUB_CLIENT_ID || "",
+        clientSecret: env.GITHUB_CLIENT_SECRET || "",
+      },
+    },
+    emailAndPassword: {
+      enabled: true,
+      requireEmailVerification: true,
+      sendResetPassword: async ({ user, url }) => {
+        await emailService.sendPasswordResetEmail(user.email, url);
+      },
+    },
+    plugins: [
+      jwt({ expiresIn: 60 * 60 * 24 * 7, issuer: "zephyr-auth" }),
+      username(),
+    ],
+    password: {
+      hash: hashPasswordWithScrypt,
+      verify: verifyPasswordWithScrypt,
+    },
+    ...config,
+  });
+}
+```
+
+Other providers (Discord, Twitter, Reddit) follow the same shape as `google` and `github` above.
+
+## Working with sessions
+
+```typescript
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import { auth } from "@/lib/auth";
+
+// Server component or Route Handler
+const session = await auth.api.getSession({ headers: headers() });
+if (!session) redirect("/login");
+
+return { user: session.user };
+```
+
+```tsx
+"use client";
+
+const { data: session, isPending } = useSession();
+if (isPending) return <Skeleton />;
+if (!session) return <AuthPrompt />;
+
+return <UserCard user={session.user} />;
+```
+
+`Session.user` contains the verified profile (id, email, username, aura, timestamps) and `session` exposes the JWT metadata.
+
+## Route protection
+
+`apps/web/src/middleware.ts`
+
+```typescript
+import { getSessionCookie } from "better-auth/cookies";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
+
+function isProtectedPath(pathname: string) {
+  const publicPaths = [
+    "/login",
+    "/signup",
+    "/reset-password",
+    "/verify-email",
+  ];
+
+  if (publicPaths.some(path => pathname.startsWith(path))) return false;
+  if (pathname.startsWith("/api/") || pathname.startsWith("/_next")) return false;
+  return true;
+}
+
+export function middleware(request: NextRequest) {
+  if (!isProtectedPath(request.nextUrl.pathname)) {
+    return NextResponse.next();
+  }
+
+  try {
+    if (getSessionCookie(request)) return NextResponse.next();
+  } catch {
+    // Fall through to redirect
+  }
+
+  const loginUrl = request.nextUrl.clone();
+  loginUrl.pathname = "/login";
+  loginUrl.search = `?next=${encodeURIComponent(request.nextUrl.pathname)}`;
+  return NextResponse.redirect(loginUrl);
+}
+```
+
+HTTPS redirects remain enforced in production via the same middleware file.
+
+## Server actions that matter
+
+`apps/web/src/app/(auth)/login/actions.ts`
+
+```typescript
+"use server";
+
+export async function signIn(data: LoginInput) {
+  try {
+    const result = await auth.api.signInEmail({
+      body: { email: data.email, password: data.password },
+    });
+
+    if (!result.user) return { error: "Invalid credentials" };
+    if (!result.user.emailVerified) return { error: "Verify your email first" };
+
+    redirect("/");
+  } catch {
+    return { error: "Authentication failed" };
+  }
+}
+
+export async function signOut() {
+  await auth.api.signOut();
+  redirect("/login");
+}
+```
+
+`signUp` mirrors this pattern, creating the user, hashing the password, and triggering the verification email.
+
+## Email + password security
+
+```typescript
+// apps/auth/src/email/service.ts
+const resend = new Resend(env.RESEND_API_KEY);
+
+export async function sendVerificationEmail(email: string, token: string) {
+  const verificationUrl = `${env.NEXT_PUBLIC_URL}/verify-email?token=${token}`;
+  await resend.emails.send({
+    from: "Zephyr <noreply@zephyyrr.in>",
+    to: email,
+    subject: "Verify your email",
+    react: VerificationEmail({ verificationUrl }),
+  });
+}
+```
+
+```typescript
+// packages/auth/src/core/password.ts
+export async function hashPasswordWithScrypt(password: string) {
+  const salt = randomBytes(16).toString("hex");
+  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
+  return `${buf.toString("hex")}.${salt}`;
+}
+
+export async function verifyPasswordWithScrypt(stored: string, supplied: string) {
+  const [hash, salt] = stored.split(".");
+  const hashed = Buffer.from(hash, "hex");
+  const candidate = (await scryptAsync(supplied, salt, 64)) as Buffer;
+  return timingSafeEqual(hashed, candidate);
+}
+```
+
+Passwords must match the `passwordSchema` (`>= 8` chars, mixed case, numeric) before any auth API call runs.
+
+## Guarding downstream APIs
+
+```typescript
+import { NextResponse } from "next/server";
+
+export async function POST(request: Request) {
+  const session = await auth.api.getSession({ headers: request.headers });
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session.user.emailVerified) {
+    return NextResponse.json({ error: "Email not verified" }, { status: 403 });
+  }
+
+  const body = await request.json();
+  const post = await createPost({ ...body, authorId: session.user.id });
+  return NextResponse.json(post);
+}
+```
+
+For tRPC procedures, reuse the same guard via middleware to promote the session onto the context before executing mutations.
+
+## Best practices
+
+- **Validate the session everywhere.** Use `auth.api.getSession` in API routes, server actions, and background jobs.
+- **Keep auth logic on the server.** Client components collect form data and delegate to server actions for mutations.
+- **Enforce ownership and roles.** Compare `session.user.id` (and optionally role) before mutating user-owned data.
+- **Require verified email for side effects.** Block writes until `session.user.emailVerified === true`.
+- **Log and monitor Resend delivery.** Failed transactional emails stop new accounts from activating.
+
+## Debug quick checks
+
+- Inspect the session cookie inside DevTools → Application → Cookies (`better-auth.session_token`).
+- Verify outgoing email events in the [Resend dashboard](https://resend.com/emails).
+- For OAuth callbacks in local development, tunnel port `3001` with ngrok and mirror the callback URL in provider settings.
+
+## Related guides
+
+- **[Components](/development/components)** for UI patterns
+- **[API Routes](/development/api-routes)** for integrating session checks
+- **[State Management](/development/state-management)** for client stores
+- **[Workflows](/development/workflows)** for end-to-end auth recipes
+
+

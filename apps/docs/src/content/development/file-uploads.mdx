@@ -1,0 +1,245 @@
+---
+title: File Uploads
+description: MinIO integration, media handling, and file validation.
+---
+
+import { Callout } from "nextra/components";
+
+## Overview
+
+Zephyr stores media in **MinIO** (S3-compatible object storage) and tracks metadata in PostgreSQL via Prisma.
+
+**Supported types:**
+- **Images**: JPG, PNG, GIF, WEBP
+- **Videos**: MP4, WEBM, MOV
+- **Audio**: MP3, WAV, OGG
+- **Code**: TXT, JS, TS, PY, Java, etc.
+
+## Upload Flow
+
+```
+User picks file → Client validates → POST /api/upload → MinIO storage → DB record created → URL returned
+```
+
+## MinIO Setup
+
+`apps/web/src/lib/minio.ts`:
+
+```typescript
+import { S3Client } from "@aws-sdk/client-s3";
+
+export const minioClient = new S3Client({
+  endpoint: keys.MINIO_ENDPOINT,
+  region: "us-east-1",
+  credentials: {
+    accessKeyId: keys.MINIO_ROOT_USER,
+    secretAccessKey: keys.MINIO_ROOT_PASSWORD,
+  },
+  forcePathStyle: true,  // Required for MinIO
+});
+
+export const BUCKET_NAME = keys.MINIO_BUCKET_NAME;
+```
+
+Environment variables in `apps/web/env.ts` ensure MinIO credentials are validated on app startup.
+
+## Client-Side Upload
+
+```tsx
+"use client";
+import { useState } from "react";
+import { Button } from "@zephyr/ui/shadui/button";
+
+export function FileUploader() {
+  const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const handleUpload = async () => {
+    if (!file) return;
+
+    setUploading(true);
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        console.log("Uploaded:", result.media);
+        // Add result.media to post attachments
+      }
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div>
+      <input
+        type="file"
+        accept="image/*,video/*,audio/*"
+        onChange={(e) => setFile(e.files?.[0] || null)}
+      />
+      <Button onClick={handleUpload} disabled={!file || uploading}>
+        {uploading ? "Uploading..." : "Upload"}
+      </Button>
+    </div>
+  );
+}
+```
+
+## Upload API
+
+`apps/web/src/app/api/upload/route.ts`:
+
+```typescript
+import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { nanoid } from "nanoid";
+import { minioClient, BUCKET_NAME } from "@/lib/minio";
+import { prisma } from "@zephyr/db";
+import { validateFile } from "@/lib/utils/file-validation";
+
+export async function POST(request: Request) {
+  const session = await auth.api.getSession({ headers: request.headers });
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const formData = await request.formData();
+  const file = formData.get("file") as File;
+
+  // Validate file type and size
+  const validation = validateFile(file);
+  if (!validation.valid) {
+    return NextResponse.json({ error: validation.error }, { status: 400 });
+  }
+
+  // Generate unique key
+  const fileExt = file.name.split(".").pop();
+  const key = `uploads/${session.user.id}/${nanoid()}.${fileExt}`;
+
+  // Upload to MinIO
+  const buffer = Buffer.from(await file.arrayBuffer());
+  await minioClient.send(new PutObjectCommand({
+    Bucket: BUCKET_NAME,
+    Key: key,
+    Body: buffer,
+    ContentType: file.type,
+  }));
+
+  // Save metadata to DB
+  const media = await prisma.media.create({
+    data: {
+      id: nanoid(),
+      type: validation.type,  // IMAGE | VIDEO | AUDIO | CODE
+      url: key,
+      filename: file.name,
+      mimeType: file.type,
+      size: file.size,
+      userId: session.user.id,
+    },
+  });
+
+  return NextResponse.json({
+    success: true,
+    media: {
+      id: media.id,
+      type: media.type,
+      url: `${keys.NEXT_PUBLIC_MINIO_ENDPOINT}/${BUCKET_NAME}/${key}`,
+    },
+  });
+}
+```
+
+## File Validation
+
+`apps/web/src/lib/utils/file-validation.ts`:
+
+```typescript
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+
+const ALLOWED_TYPES = {
+  IMAGE: ["image/jpeg", "image/png", "image/gif", "image/webp"],
+  VIDEO: ["video/mp4", "video/webm", "video/quicktime"],
+  AUDIO: ["audio/mpeg", "audio/wav", "audio/ogg"],
+  CODE: ["text/plain", "application/json", "text/javascript", /* ... */],
+};
+
+export function validateFile(file: File): { valid: boolean; type?: string; error?: string } {
+  if (file.size > MAX_FILE_SIZE) {
+    return { valid: false, error: "File too large (max 50MB)" };
+  }
+
+  for (const [type, mimeTypes] of Object.entries(ALLOWED_TYPES)) {
+    if (mimeTypes.includes(file.type)) {
+      return { valid: true, type };
+    }
+  }
+
+  return { valid: false, error: "Unsupported file type" };
+}
+```
+
+## Media Serving
+
+MinIO serves files directly via public URLs when the bucket policy allows. For restricted access, generate presigned URLs:
+
+```typescript
+import { GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+
+export async function getPresignedUrl(key: string, expiresIn = 3600) {
+  const command = new GetObjectCommand({
+    Bucket: BUCKET_NAME,
+    Key: key,
+  });
+
+  return await getSignedUrl(minioClient, command, { expiresIn });
+}
+```
+
+## Displaying Media
+
+```tsx
+export function MediaAttachment({ attachment }: { attachment: Media }) {
+  if (attachment.type === "IMAGE") {
+    return <img src={attachment.url} alt={attachment.filename} className="rounded-lg" />;
+  }
+
+  if (attachment.type === "VIDEO") {
+    return <video src={attachment.url} controls className="rounded-lg w-full" />;
+  }
+
+  if (attachment.type === "AUDIO") {
+    return <audio src={attachment.url} controls className="w-full" />;
+  }
+
+  return <a href={attachment.url} download>{attachment.filename}</a>;
+}
+```
+
+## Best Practices
+
+- **Validate on both client and server** – Client for UX, server for security.
+- **Use unique filenames** – Prevent overwrites with `nanoid()` or UUIDs.
+- **Store metadata in DB** – Track ownership, type, size for queries and cleanup.
+- **Set size limits** – Prevent abuse and storage bloat.
+- **Delete orphaned files** – Run cron jobs to remove unused media from MinIO.
+
+## Cleanup
+
+Delete media from both MinIO and DB when posts/attachments are removed:
+
+```typescript
+import { DeleteObjectCommand } from "@aws-sdk/client-s3";
+
+export async function deleteMedia(mediaId: string) {
+  const media = await prisma.media.findUnique({ where: { id: mediaId } });
+  if (!media) throw new Error("Media not found");
+
+  // Delete from MinIO
+  await minioClient.send(new DeleteObjectCommand({
+    Bucket: BUCKET_NAME,
+    Key: media.url,

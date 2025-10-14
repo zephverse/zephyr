@@ -1,0 +1,320 @@
+---
+title: Project Structure
+description: Understanding Zephyr's monorepo layout, routing patterns, and folder organization.
+---
+
+import { Callout } from "nextra/components";
+
+## Monorepo Overview
+
+Zephyr is a **Turborepo monorepo** with Bun workspaces—apps are independently deployable; packages are shared libraries.
+
+```
+zephyr/
+├── apps/           # Deployable applications
+│   ├── web/        # Main platform (Next.js 15)
+│   ├── auth/       # Auth service (tRPC + Better Auth)
+│   └── docs/       # This site (Nextra)
+├── packages/       # Shared libraries
+│   ├── db/         # Prisma, Redis, Meilisearch
+│   ├── ui/         # shadcn/ui components
+│   ├── auth/       # Auth utilities + Zod schemas
+│   ├── aggregator/ # HackerNews integration
+│   ├── tailwind/   # Shared Tailwind config
+│   ├── config/     # TypeScript configs
+│   └── next/       # Next.js config presets
+└── docker/         # Docker Compose for dev
+```
+
+## Apps
+
+### apps/web
+
+The core social platform with Next.js 15 App Router.
+
+**Route groups:**
+- `(auth)` – Login, signup, reset password, email verification
+- `(main)` – Home feed, posts, profiles, discover, HackerNews, bookmarks, notifications, settings
+- `(docs)` – Privacy, TOS, support
+
+**API routes** (`app/api/*`):  
+`posts/`, `users/`, `notifications/`, `tags/`, `upload/`, `cron/`, `search/`, `auth/`, `hackernews/`
+
+**Components** (`src/components/*`):  
+Organized by feature—`Posts/`, `Profile/`, `Home/`, `Search/`, `Auth/`, `Layouts/`
+
+**Server Actions** (`src/posts/actions.ts`, `src/app/(main)/users/[username]/actions.ts`):  
+Post creation, user updates, bookmark mutations
+
+**Hooks** (`src/hooks/*`):  
+Custom React Query hooks (`use-follower-info.ts`, `use-post-mutations.ts`) and utilities
+
+**Middleware** (`src/middleware.ts`):  
+Session checks, HTTPS redirect, route protection
+
+### apps/auth
+
+Standalone auth service with tRPC API and Better Auth configuration.
+
+**Structure:**
+- `src/auth/config.ts` – Better Auth setup (OAuth providers, email, password hashing)
+- `src/email/` – Resend integration with React Email templates
+- `src/server/routers/` – tRPC procedures for user management
+
+Used by `apps/web` via tRPC client for admin-only operations.
+
+### apps/docs
+
+This documentation site built with Nextra.
+
+**Content:**  
+All MDX files live in `src/content/` with automatic sidebar generation from `_meta.ts` files.
+
+## Packages
+
+### packages/db
+
+Database layer with Prisma ORM, Redis caching, and Meilisearch.
+
+**Key files:**
+- `prisma/schema.prisma` – Full schema (users, posts, comments, votes, etc.)
+- `index.ts` – Prisma client singleton
+- `cache/` – Redis utilities and Upstash client
+- `src/meilisearch/` – Search index setup
+
+**Scripts** (`scripts/`):  
+`seed.ts`, `reset-db.ts`, `init-meilisearch.ts`
+
+### packages/ui
+
+Shared React components powered by shadcn/ui and Radix.
+
+**Components** (`components/`):  
+Abstracted primitives like `post-card.tsx`, `user-avatar.tsx`, `infinite-scroll-container.tsx`
+
+**Providers** (`providers/`):  
+`query.tsx` (React Query), `theme.tsx` (next-themes)
+
+**Hooks** (`hooks/`):  
+`use-infinite-scroll.ts`, `use-debounce.ts`
+
+**Styles** (`styles/globals.css`):  
+Global CSS with Tailwind layers and theme variables
+
+### packages/auth
+
+Authentication utilities and validation schemas.
+
+**Exports:**
+- `auth.ts` – Better Auth instance creation
+- `validation/` – Zod schemas for forms (`loginSchema`, `signUpSchema`, `createPostSchema`)
+- `src/core/password.ts` – Scrypt hashing and verification
+
+### packages/aggregator
+
+HackerNews API aggregation with caching and rate limiting.
+
+**Modules:**
+- `hackernews/api.ts` – Fetch top stories, item details
+- `hackernews/cache.ts` – Redis caching layer
+- `hackernews/rate-limiter.ts` – Token bucket limiter
+
+### packages/tailwind
+
+Shared Tailwind configuration for all apps.
+
+**Exports:**
+- `configs/config.ts` – Tailwind base config with theme tokens
+- `index.ts` – Re-exports for consumption
+
+### packages/config
+
+TypeScript configurations for different project types.
+
+**Files:**
+- `base.tsconfig.json` – Base compiler options
+- `library.tsconfig.json` – For packages
+- `nextjs.config.json` – For Next.js apps
+- `react.tsconfig.json` – For React libraries
+
+## Routing Patterns
+
+### App Router (Next.js 15)
+
+Zephyr uses the App Router with file-based routing and RSC (React Server Components).
+
+**Route groups** organize pages without affecting URLs:
+
+```
+app/
+├── (auth)/         # Layout: Minimal, centered forms
+│   ├── login/
+│   └── signup/
+├── (main)/         # Layout: Sidebar + header
+│   ├── page.tsx    # → /
+│   ├── posts/[postId]/  # → /posts/:postId
+│   └── users/[username]/  # → /users/:username
+```
+
+**Dynamic routes** use square brackets:
+- `/posts/[postId]` – Post detail
+- `/users/[username]` – User profile
+
+**Parallel routes** (not heavily used yet):
+- Could add `@modal` for dialogs without URL changes
+
+### Server Components vs Client Components
+
+**Server Components** (default):
+- Fetch data directly with `async/await`
+- No JavaScript sent to client
+- Examples: `ProfileFeed`, `PostList`
+
+**Client Components** (`"use client"`):
+- Interactive state (`useState`, React Query)
+- Event handlers
+- Examples: `VoteButton`, `PostEditor`
+
+**Pattern:**  
+Fetch data in Server Components, pass to Client Components as props.
+
+## File Organization
+
+### Colocation Strategy
+
+Components live near the routes that use them:
+
+```
+app/(main)/posts/[postId]/
+├── page.tsx                    # Server Component (data fetching)
+├── components/                 # Route-specific components
+│   ├── post-detail.tsx
+│   ├── comment-list.tsx
+│   └── related-posts.tsx
+└── actions.ts                  # Server Actions
+```
+
+**Shared components** go in `src/components/`:
+```
+src/components/
+├── Posts/post-card.tsx         # Used everywhere
+├── Layouts/user-avatar.tsx     # Reusable UI
+└── misc/error-boundary.tsx     # Generic utilities
+```
+
+### Action Files
+
+Server Actions are colocated with routes or centralized:
+
+```
+// Route-specific
+app/(main)/users/[username]/actions.ts
+
+// Feature-specific
+src/posts/actions.ts
+```
+
+### Hook Files
+
+Custom hooks are centralized in `src/hooks/`:
+
+```
+src/hooks/
+├── use-follower-info.ts        # React Query hook
+├── use-post-mutations.ts       # Mutations
+└── use-infinite-scroll.ts      # Generic utility
+```
+
+## Environment Variables
+
+All apps use `env.ts` and `keys.ts` for type-safe environment access.
+
+**Pattern:**
+
+```typescript
+// env.ts – Validation with Zod
+import { z } from "zod";
+
+const envSchema = z.object({
+  DATABASE_URL: z.string().url(),
+  REDIS_URL: z.string().url(),
+});
+
+export const env = envSchema.parse(process.env);
+
+// keys.ts – Re-export for convenience
+export const keys = {
+  DATABASE_URL: env.DATABASE_URL,
+  REDIS_URL: env.REDIS_URL,
+};
+```
+
+**Usage:**
+
+```typescript
+import { keys } from "../keys";
+console.log(keys.DATABASE_URL);
+```
+
+## Build & Development
+
+### Turborepo Pipeline
+
+`turbo.json` defines task dependencies:
+
+```json
+{
+  "pipeline": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": [".next/**", "dist/**"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    }
+  }
+}
+```
+
+**Commands:**
+
+```bash
+bun dev            # Start all apps in parallel
+bun dev --filter=web  # Only web app
+bun build          # Build all apps
+bun lint           # Lint all packages
+```
+
+### Package Manager
+
+Zephyr uses **Bun** for fast installs and script execution.
+
+**Workspace config** (`package.json`):
+
+```json
+{
+  "workspaces": ["apps/*", "packages/*"]
+}
+```
+
+Dependencies are hoisted to the root `node_modules/`, but each package has its own `package.json`.
+
+## Best Practices
+
+- **Colocate components** near consuming routes when possible.
+- **Shared components** go in `packages/ui` if used across apps, else `src/components/`.
+- **Server Actions** stay in `actions.ts` files within routes or features.
+- **API routes** for client-side fetching; Server Actions for form submissions.
+- **Type-safe env** using `env.ts` + Zod in every app.
+- **Monorepo imports** use workspace references (`@zephyr/db`, `@zephyr/ui`).
+
+## Next Steps
+
+- **[Components](/development/components)** – Component patterns and architecture
+- **[API Routes](/development/api-routes)** – REST API reference
+- **[State Management](/development/state-management)** – React Query + Jotai + React Hook Form
+
+- **Search** built-in with Flexsearch
+
+## Packages

@@ -1,0 +1,495 @@
+---
+title: Docker Infrastructure
+description: Complete guide to Zephyr's Docker Compose development environment.
+---
+
+import { Callout } from "nextra/components";
+
+## Overview
+
+Zephyr uses Docker Compose for local development infrastructure. All services are defined in `docker/docker-compose.dev.yml`.
+
+## Quick Start
+
+```bash
+# Start all infrastructure services
+bun run docker:dev
+
+# Start infrastructure + apps in containers
+bun run docker:dev && bun run docker:apps
+
+# Clean everything and start fresh
+bun run docker:clean && bun run docker:dev
+```
+
+## Services
+
+### PostgreSQL (Primary Database)
+
+**Container:** `zephyr-dev-postgres`  
+**Image:** `postgres:18-alpine`  
+**Port:** 5433 → 5432
+
+Primary application database with optimized configuration:
+
+```yaml
+postgres-dev:
+  image: postgres:18-alpine
+  environment:
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD: postgres
+    POSTGRES_DB: zephyr
+  ports:
+    - "5433:5432"
+  command: >
+    postgres 
+    -c max_connections=50
+    -c shared_buffers=128MB
+    -c work_mem=4MB
+    -c maintenance_work_mem=32MB
+    -c effective_cache_size=256MB
+    -c wal_level=replica
+    -c max_wal_senders=4
+```
+
+**Connection string:**
+```
+postgresql://postgres:postgres@localhost:5433/zephyr?schema=public
+```
+
+**Extensions installed:**
+- `uuid-ossp` - UUID generation
+- `pgcrypto` - Cryptographic functions
+- `pg_stat_statements` - Query statistics
+
+### TimescaleDB (Analytics Database)
+
+**Container:** `zephyr-dev-timescaledb`  
+**Image:** `timescale/timescaledb:latest-pg17`  
+**Port:** 5434 → 5432
+
+Dedicated database for logs, analytics, and time-series data:
+
+```yaml
+timescaledb-dev:
+  image: timescale/timescaledb:latest-pg17
+  environment:
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD: postgres
+    POSTGRES_DB: zephyr-logs
+  ports:
+    - "5434:5432"
+```
+
+**Connection string:**
+```
+postgresql://postgres:postgres@localhost:5434/zephyr-logs?schema=public
+```
+
+**Use cases:**
+- Application logs
+- User activity tracking
+- Performance metrics
+- Analytics aggregation
+
+### Redis (Cache & Session Store)
+
+**Container:** `zephyr-dev-redis`  
+**Image:** `redis:latest`  
+**Port:** 6379
+
+In-memory data store for caching and session management:
+
+```yaml
+redis-dev:
+  image: redis:latest
+  ports:
+    - "6379:6379"
+  command: >
+    redis-server 
+    --requirepass zephyrredis
+    --maxmemory 256mb
+    --maxmemory-policy allkeys-lru
+    --appendonly yes
+    --appendfsync everysec
+```
+
+**Connection string:**
+```
+redis://:zephyrredis@localhost:6379/0
+```
+
+**Configuration:**
+- **Max memory:** 256MB with LRU eviction
+- **Persistence:** AOF (Append-Only File) with everysec fsync
+- **Auth:** Password `zephyrredis`
+
+### RedisInsight (Redis GUI)
+
+**Container:** `zephyr-dev-redis-insight`  
+**Image:** `redislabs/redisinsight:latest`  
+**Port:** 5540  
+**Profile:** `studio` (optional)
+
+Visual Redis browser and management tool:
+
+```bash
+# Start with RedisInsight
+docker compose --profile studio up -d
+```
+
+Access at: http://localhost:5540
+
+### MinIO (Object Storage)
+
+**Container:** `zephyr-dev-minio`  
+**Image:** `minio/minio:RELEASE.2025-04-22T22-12-26Z`  
+**Ports:** 9000 (API), 9001 (Console)
+
+S3-compatible object storage for media files:
+
+```yaml
+minio-dev:
+  image: minio/minio:latest
+  ports:
+    - "9000:9000"  # API
+    - "9001:9001"  # Console
+  environment:
+    MINIO_ROOT_USER: minioadmin
+    MINIO_ROOT_PASSWORD: minioadmin
+  command: minio server /data --console-address ":9001"
+```
+
+**Buckets created:**
+- `uploads` - Post attachments and media
+- `avatars` - User profile pictures
+- `temp` - Temporary upload staging
+- `backups` - Database backups
+
+**Access:**
+- API: http://localhost:9000
+- Console: http://localhost:9001 (minioadmin/minioadmin)
+
+**Features:**
+- Versioning enabled on all buckets
+- Public download policy for uploads/avatars
+- Presigned URLs for secure uploads
+
+### RabbitMQ (Message Queue)
+
+**Container:** `zephyr-dev-rabbitmq`  
+**Image:** `rabbitmq:4.1-management`  
+**Ports:** 5672 (AMQP), 15672 (Management UI)
+
+Message broker for background job processing:
+
+```yaml
+rabbitmq-dev:
+  image: rabbitmq:4.1-management
+  ports:
+    - "5672:5672"   # AMQP
+    - "15672:15672" # Management UI
+  environment:
+    RABBITMQ_DEFAULT_USER: admin
+    RABBITMQ_DEFAULT_PASS: admin123
+```
+
+**Connection string:**
+```
+amqp://admin:admin123@localhost:5672
+```
+
+**Management UI:** http://localhost:15672 (admin/admin123)
+
+<Callout type="info">
+RabbitMQ is available for future features like email queues, notification workers, and async processing.
+</Callout>
+
+### Meilisearch (Search Engine)
+
+**Container:** `zephyr-dev-meilisearch`  
+**Image:** `getmeili/meilisearch:latest`  
+**Port:** 7700
+
+Fast, typo-tolerant search engine:
+
+```yaml
+meilisearch-dev:
+  image: getmeili/meilisearch:latest
+  ports:
+    - "7700:7700"
+  environment:
+    MEILI_MASTER_KEY: masterKey123
+    MEILI_NO_ANALYTICS: true
+```
+
+**Connection:**
+```
+URL: http://localhost:7700
+Master Key: masterKey123
+```
+
+**Indexed collections:**
+- `users` - User profiles (username, displayName, bio)
+
+**Initialization:**
+The `meilisearch-init` service runs automatically on first setup:
+
+```bash
+bunx tsx packages/db/scripts/init-meilisearch.ts
+```
+
+### Prisma Studio (Database GUI)
+
+**Container:** `zephyr-dev-prisma-studio`  
+**Port:** 5555  
+**Profile:** `studio` (optional)
+
+Visual database editor:
+
+```bash
+# Start with Prisma Studio
+docker compose --profile studio up -d
+```
+
+Access at: http://localhost:5555
+
+**Features:**
+- Browse and edit database records
+- Run custom queries
+- View relationships
+- Data filtering and sorting
+
+## Docker Profiles
+
+Services are organized into profiles for selective启动:
+
+### Default Profile (Core Infrastructure)
+
+Runs automatically with `docker compose up`:
+
+- PostgreSQL
+- TimescaleDB
+- Redis
+- MinIO
+- RabbitMQ
+- Meilisearch
+
+### Init Profile (First-Time Setup)
+
+Runs initialization tasks:
+
+```bash
+docker compose --profile init up
+```
+
+**Services:**
+- `postgres-init` - Install PostgreSQL extensions
+- `prisma-migrate` - Run Prisma migrations
+- `minio-init` - Create buckets and set policies
+- `meilisearch-init` - Initialize search indexes
+
+### Studio Profile (Development Tools)
+
+Optional GUI tools:
+
+```bash
+docker compose --profile studio up -d
+```
+
+**Services:**
+- RedisInsight
+- Prisma Studio
+
+### Apps Profile (Containerized Apps)
+
+Run apps in containers:
+
+```bash
+docker compose --profile apps up
+```
+
+**Services:**
+- `web` - Main web app (port 3000)
+- `auth` - Auth service (port 3001)
+- `docs` - Documentation (port 3002)
+
+<Callout type="warning">
+Most developers run apps locally (`bun run dev`) for faster HMR. Use the apps profile for production-like testing.
+</Callout>
+
+## Networking
+
+All services run on the `zephyr-dev-network` bridge network:
+
+```yaml
+networks:
+  dev_network:
+    driver: bridge
+    name: zephyr-dev-network
+```
+
+**Benefits:**
+- Services can communicate by container name
+- Isolated from host network
+- Port mapping to localhost
+
+## Volumes
+
+Persistent data is stored in named Docker volumes:
+
+| Volume | Data |
+|--------|------|
+| `zephyr-dev-postgres-data` | PostgreSQL database files |
+| `zephyr-dev-timescaledb-data` | TimescaleDB database files |
+| `zephyr-dev-redis-data` | Redis RDB/AOF files |
+| `zephyr-dev-minio-data` | MinIO object storage |
+| `zephyr-dev-rabbitmq-data` | RabbitMQ queues and config |
+| `zephyr-dev-meilisearch-data` | Meilisearch indexes |
+| `zephyr-dev-redisinsight-data` | RedisInsight configuration |
+
+**Backup volumes:**
+
+```bash
+# List volumes
+docker volume ls
+
+# Backup a volume
+docker run --rm -v zephyr-dev-postgres-data:/data -v $(pwd):/backup \
+  alpine tar czf /backup/postgres-backup.tar.gz /data
+
+# Restore a volume
+docker run --rm -v zephyr-dev-postgres-data:/data -v $(pwd):/backup \
+  alpine tar xzf /backup/postgres-backup.tar.gz -C /
+```
+
+## Health Checks
+
+All services have health checks for reliable startup:
+
+```yaml
+healthcheck:
+  test: ["CMD-SHELL", "pg_isready -U postgres -d zephyr"]
+  interval: 10s
+  timeout: 5s
+  retries: 5
+  start_period: 10s
+```
+
+**Check service health:**
+
+```bash
+docker compose ps
+```
+
+## Cleanup
+
+### Stop Services
+
+```bash
+# Stop all services
+docker compose down
+
+# Stop and remove volumes
+docker compose down -v
+```
+
+### Reset Everything
+
+```bash
+# Complete cleanup (destructive!)
+bun run docker:clean
+
+# Or manually:
+docker compose down -v --remove-orphans
+docker volume prune -f
+docker network prune -f
+```
+
+## Troubleshooting
+
+### Port Conflicts
+
+If ports are already in use:
+
+```bash
+# Check what's using a port
+lsof -i :5433  # macOS/Linux
+netstat -ano | findstr :5433  # Windows
+
+# Change ports in docker-compose.dev.yml
+```
+
+### Service Won't Start
+
+```bash
+# View logs
+docker compose logs postgres-dev
+
+# Follow logs in real-time
+docker compose logs -f redis-dev
+
+# Restart specific service
+docker compose restart minio-dev
+```
+
+### Database Connection Issues
+
+```bash
+# Check if PostgreSQL is ready
+docker compose exec postgres-dev pg_isready
+
+# Connect to database
+docker compose exec postgres-dev psql -U postgres -d zephyr
+```
+
+### Reset Single Service
+
+```bash
+# Stop and remove service + volume
+docker compose rm -sf postgres-dev
+docker volume rm zephyr-dev-postgres-data
+
+# Recreate
+docker compose up -d postgres-dev
+```
+
+## Production Considerations
+
+<Callout type="warning">
+This Docker setup is optimized for local development. For production:
+- Use managed database services (Neon, Supabase, AWS RDS)
+- Deploy apps to platforms like Vercel, Railway, or Fly.io
+- Use cloud object storage (AWS S3, Cloudflare R2)
+- Implement proper secrets management
+- Set up monitoring and alerting
+</Callout>
+
+## Environment Variables
+
+Set these in your `.env.local`:
+
+```bash
+# Database
+DATABASE_URL=postgresql://postgres:postgres@localhost:5433/zephyr?schema=public
+TIMESCALEDB_URL=postgresql://postgres:postgres@localhost:5434/zephyr-logs?schema=public
+
+# Redis
+REDIS_URL=redis://:zephyrredis@localhost:6379/0
+
+# MinIO
+MINIO_ENDPOINT=http://localhost:9000
+MINIO_ROOT_USER=minioadmin
+MINIO_ROOT_PASSWORD=minioadmin
+NEXT_PUBLIC_MINIO_ENDPOINT=http://localhost:9000
+
+# RabbitMQ
+RABBITMQ_URL=amqp://admin:admin123@localhost:5672
+
+# Meilisearch
+MEILISEARCH_URL=http://localhost:7700
+MEILISEARCH_MASTER_KEY=masterKey123
+```
+
+Run `bun run env:dev` to automatically generate these from examples.
+
