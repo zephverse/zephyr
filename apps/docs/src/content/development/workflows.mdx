@@ -47,7 +47,7 @@ export async function GET() {
     where: {
       OR: [
         { isDraft: false },  // Public
-        session?.user?.id ? { isDraft: true, authorId: session.user.id } : {},
+        ...(session?.user?.id ? [{ isDraft: true, authorId: session.user.id }] : []),
       ],
     },
   });
@@ -61,6 +61,8 @@ export async function GET() {
 ```typescript
 // apps/web/src/app/(protected)/posts/actions.ts
 "use server";
+
+import { revalidatePath } from "next/cache";
 
 export async function createPost(content: string, isDraft = false) {
   const session = await auth();
@@ -169,10 +171,28 @@ const mutation = useMutation({
 
 ### Bundle Size
 
-```bash
-cd apps/web && bunx @next/bundle-analyzer
+Configure bundle analyzer in `next.config.js`:
 
-# Lazy load heavy components
+```javascript
+// apps/web/next.config.js
+const withBundleAnalyzer = require("@next/bundle-analyzer")({
+  enabled: process.env.ANALYZE === "true",
+});
+
+module.exports = withBundleAnalyzer({
+  // your config
+});
+```
+
+Run analysis:
+
+```bash
+cd apps/web && ANALYZE=true bunx next build
+```
+
+Lazy load heavy components:
+
+```typescript
 const Editor = dynamic(() => import("./Editor"), {
   loading: () => <Skeleton />,
   ssr: false,

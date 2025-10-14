@@ -54,9 +54,11 @@ model Tag {
 
 ```bash
 cd packages/db
-bunx prisma db push
-# or
+# For local development
 bunx prisma migrate dev --name add_tags
+# For CI/production
+bunx prisma migrate deploy
+# Note: prisma db push is for quick prototyping only
 ```
 
 ### 5. Add API routes
@@ -122,6 +124,23 @@ Comments/
 
 ### 3. Use Type-Safe APIs
 
+Use a Prisma client singleton to avoid connection storms in development:
+
+```typescript
+// packages/db/src/prisma.ts
+import { PrismaClient } from "@prisma/client";
+
+const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
+
+export const prisma =
+  globalForPrisma.prisma ??
+  new PrismaClient({
+    log: process.env.NODE_ENV === "development" ? ["warn", "error"] : ["error"],
+  });
+
+if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+```
+
 Import types from `@zephyr/db`:
 
 ```typescript
@@ -140,6 +159,6 @@ Move reusable logic to packages:
 // ❌ Bad: Duplicated in multiple apps
 function formatDate(date: Date) { /* ... */ }
 
-// ✅ Good: Centralized in a package
-import { formatDate } from "@zephyr/db";
+// ✅ Good: Centralized in a shared utils package
+import { formatDate } from "@zephyr/utils";
 ```

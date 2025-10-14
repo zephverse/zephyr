@@ -17,8 +17,10 @@ description: Development workflow and build processes in Zephyr
       "outputs": [".next/**", "dist/**"]
     },
     "dev": {
+      "dependsOn": ["^dev"],
       "cache": false,
-      "persistent": true
+      "persistent": true,
+      "env": ["NODE_ENV"]
     }
   }
 }

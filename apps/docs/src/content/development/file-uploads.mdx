@@ -134,11 +134,10 @@ export async function POST(request: Request) {
     data: {
       id: nanoid(),
       type: validation.type,  // IMAGE | VIDEO | AUDIO | CODE
-      url: key,
-      filename: file.name,
+      url: `${keys.NEXT_PUBLIC_MINIO_ENDPOINT}/${BUCKET_NAME}/${key}`,
+      key: key,
       mimeType: file.type,
       size: file.size,
-      userId: session.user.id,
     },
   });
 
@@ -237,9 +236,30 @@ import { DeleteObjectCommand } from "@aws-sdk/client-s3";
 
 export async function deleteMedia(mediaId: string) {
   const media = await prisma.media.findUnique({ where: { id: mediaId } });
-  if (!media) throw new Error("Media not found");
+  if (!media) {
+    console.error("Media not found");
+    return { success: false, error: "Media not found" };
+  }
 
   // Delete from MinIO
-  await minioClient.send(new DeleteObjectCommand({
-    Bucket: BUCKET_NAME,
-    Key: media.url,
+  try {
+    await minioClient.send(new DeleteObjectCommand({
+      Bucket: BUCKET_NAME,
+      Key: media.key,
+    }));
+  } catch (error) {
+    console.error("Failed to delete from MinIO:", error);
+    return { success: false, error: "Failed to delete from storage" };
+  }
+
+  // Delete from DB
+  try {
+    await prisma.media.delete({ where: { id: mediaId } });
+  } catch (error) {
+    console.error("Failed to delete from DB:", error);
+    return { success: false, error: "Failed to delete from database" };
+  }
+
+  return { success: true };
+}
+```

@@ -5,31 +5,66 @@ description: Type-safe environment variable management in Zephyr
 
 ## Environment Variables
 
-All apps use `env.ts` and `keys.ts` for type-safe environment access.
+All apps use `env.server.ts` and `env.client.ts` for type-safe environment access, separating server-side and client-side variables to prevent secret leaks.
 
 **Pattern:**
 
 ```typescript
-// env.ts – Validation with Zod
+// env.server.ts – Server-side validation
 import { z } from "zod";
 
-const envSchema = z.object({
+const serverEnvSchema = z.object({
   DATABASE_URL: z.string().url(),
   REDIS_URL: z.string().url(),
 });
 
-export const env = envSchema.parse(process.env);
+export const env = serverEnvSchema.parse(process.env);
 
-// keys.ts – Re-export for convenience
-export const keys = {
-  DATABASE_URL: env.DATABASE_URL,
-  REDIS_URL: env.REDIS_URL,
-};
+// env.client.ts – Client-side validation
+import { z } from "zod";
+
+const clientEnvSchema = z.object({
+  NEXT_PUBLIC_API_URL: z.string().url(),
+});
+
+export const clientEnv = clientEnvSchema.parse(process.env);
 ```
 
 **Usage:**
 
+Server-side (API routes, server components):
+
 ```typescript
-import { keys } from "../keys";
-console.log(keys.DATABASE_URL);
+import { env } from "../env.server";
+console.log(env.DATABASE_URL);
+```
+
+Client-side (client components):
+
+```typescript
+import { clientEnv } from "../env.client";
+console.log(clientEnv.NEXT_PUBLIC_API_URL);
+```
+
+**Lint Rule:**
+
+Configure ESLint to forbid importing `env.server` in files marked with `"use client"` to prevent accidental bundling of server secrets:
+
+```json
+// .eslintrc.json
+{
+  "rules": {
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          {
+            "group": ["**/env.server"],
+            "message": "Server environment variables cannot be imported in client components"
+          }
+        ]
+      }
+    ]
+  }
+}
 ```
