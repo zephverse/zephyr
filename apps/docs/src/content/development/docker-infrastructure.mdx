@@ -27,14 +27,14 @@ bun run docker:clean && bun run docker:dev
 ### PostgreSQL (Primary Database)
 
 **Container:** `zephyr-dev-postgres`  
-**Image:** `postgres:18-alpine`  
+**Image:** `postgres:17-alpine`  
 **Port:** 5433 → 5432
 
 Primary application database with optimized configuration:
 
 ```yaml
 postgres-dev:
-  image: postgres:18-alpine
+  image: postgres:17-alpine
   environment:
     POSTGRES_USER: postgres
     POSTGRES_PASSWORD: postgres

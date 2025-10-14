@@ -22,7 +22,7 @@ bun run check
 npx ultracite check
 
 # Fix issues automatically
-bun run check
+bun x ultracite fix
 # or
 npx ultracite fix
 ```
@@ -265,7 +265,7 @@ export const UserCard: FC<UserCardProps> = ({ userId, onSelect }) => {
    ```tsx
    // ✅ Good - memoize expensive calculations
    const sortedItems = useMemo(
-     () => items.sort((a, b) => a.name.localeCompare(b.name)),
+     () => [...items].sort((a, b) => a.name.localeCompare(b.name)),
      [items]
    );
 

@@ -24,6 +24,26 @@ if (!session?.user) {
 
 ## Posts
 
+### `/api/posts`
+**POST** - Create a new post
+
+Creates a new post with content, optional media attachments, tags, and mentions.
+
+```typescript
+// Request body
+{
+  content: string,
+  mediaIds?: string[],  // Optional array of media IDs
+  tags: string[],       // Array of tag names
+  mentions: string[]    // Array of mentioned user IDs
+}
+
+// Response
+{
+  post: Post  // The created post object
+}
+```
+
 ### `/api/posts/for-you`
 **GET** - Personalized feed algorithm
 
@@ -287,12 +307,25 @@ Uses fuzzy search and returns ranked results.
 ## Cache Management
 
 ### `/api/cache/revalidate`
-**POST** - Revalidate specific cache keys
+**POST** - Revalidate specific cache keys (admin only)
+
+⚠️ **Restricted Endpoint**: This endpoint is not publicly accessible and requires special authorization.
+
+**Authorization Requirements:**
+- Must include `Authorization` header with valid bearer token
+- Requires `admin` role or `cache:revalidate` permission
+- Limited to authenticated admin users or server-to-server calls
+- CSRF protection not applicable (server-to-server only)
 
 ```typescript
 // Request body
 {
   keys: string[];  // Cache keys to invalidate
+}
+
+// Headers required
+{
+  "Authorization": "Bearer <admin-token>"
 }
 ```
 

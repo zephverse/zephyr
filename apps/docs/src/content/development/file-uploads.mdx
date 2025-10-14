@@ -82,7 +82,7 @@ export function FileUploader() {
       <input
         type="file"
         accept="image/*,video/*,audio/*"
-        onChange={(e) => setFile(e.files?.[0] || null)}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFile(e.target.files?.[0] || null)}
       />
       <Button onClick={handleUpload} disabled={!file || uploading}>
         {uploading ? "Uploading..." : "Upload"}
@@ -203,8 +203,11 @@ export async function getPresignedUrl(key: string, expiresIn = 3600) {
 
 ```tsx
 export function MediaAttachment({ attachment }: { attachment: Media }) {
+  // Derive display name from storage key (basename)
+  const displayName = attachment.key.split('/').pop() || 'file';
+
   if (attachment.type === "IMAGE") {
-    return <img src={attachment.url} alt={attachment.filename} className="rounded-lg" />;
+    return <img src={attachment.url} alt={displayName} className="rounded-lg" />;
   }
 
   if (attachment.type === "VIDEO") {
@@ -215,7 +218,7 @@ export function MediaAttachment({ attachment }: { attachment: Media }) {
     return <audio src={attachment.url} controls className="w-full" />;
   }
 
-  return <a href={attachment.url} download>{attachment.filename}</a>;
+  return <a href={attachment.url} download>{displayName}</a>;
 }
 ```
 

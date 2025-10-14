@@ -125,8 +125,12 @@ export async function GET(request: Request) {
 **Prisma Queries:**
 ```typescript
 // packages/db/src/prisma.ts
+// ⚠️ Security: Query logging is disabled in production to prevent
+// exposure of sensitive data (PII, secrets) in logs. Only errors are logged.
 export const prisma = new PrismaClient({
-  log: ["query", "info", "warn", "error"],  // Enable query logging
+  log: process.env.NODE_ENV === "development"
+    ? ["query", "info", "warn", "error"]
+    : ["error"],
 });
 ```
 
