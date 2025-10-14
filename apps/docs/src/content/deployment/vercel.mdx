@@ -1,0 +1,716 @@
+---
+title: Vercel Deployment
+description: Deploy Zephyr Next.js apps to Vercel's edge network.
+---
+
+import { Callout } from "nextra/components";
+
+## Overview
+
+Vercel provides the fastest deployment experience for Next.js applications with automatic scaling, edge caching, and preview deployments.
+
+<Callout type="info">
+**Best for**: Serverless deployments with managed infrastructure for databases and Redis.
+</Callout>
+
+## Prerequisites
+
+Before deploying to Vercel, set up external services:
+
+- **PostgreSQL**: [Neon](https://neon.tech), [Supabase](https://supabase.com), or [Railway](https://railway.app)
+- **Redis**: [Upstash](https://upstash.com) or [Railway](https://railway.app)
+- **Object Storage**: [Cloudflare R2](https://cloudflare.com/products/r2), [AWS S3](https://aws.amazon.com/s3), or [DigitalOcean Spaces](https://www.digitalocean.com/products/spaces)
+- **Search**: [Meilisearch Cloud](https://www.meilisearch.com/cloud) or self-hosted
+
+## Quick Start
+
+### 1. Install Vercel CLI
+
+```bash
+npm i -g vercel
+```
+
+### 2. Link Project
+
+```bash
+# Navigate to app directory
+cd apps/web
+
+# Link to Vercel
+vercel link
+```
+
+### 3. Configure Environment Variables
+
+```bash
+# Set production variables
+vercel env add DATABASE_URL production
+vercel env add REDIS_URL production
+vercel env add BETTER_AUTH_SECRET production
+
+# Set preview variables
+vercel env add DATABASE_URL preview
+vercel env add REDIS_URL preview
+```
+
+### 4. Deploy
+
+```bash
+# Preview deployment
+vercel
+
+# Production deployment
+vercel --prod
+```
+
+## Project Configuration
+
+### vercel.json
+
+Create `vercel.json` in app root:
+
+```json
+{
+  "buildCommand": "cd ../.. && bun run build --filter=web",
+  "installCommand": "cd ../.. && bun install",
+  "framework": "nextjs",
+  "regions": ["iad1"],
+  "functions": {
+    "app/api/**/*.ts": {
+      "memory": 1024,
+      "maxDuration": 10
+    }
+  },
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/auth/:path*",
+      "destination": "https://auth.yourdomain.com/api/auth/:path*"
+    }
+  ]
+}
+```
+
+### Monorepo Configuration
+
+For workspace support, configure build settings:
+
+```json
+{
+  "installCommand": "cd ../.. && bun install",
+  "buildCommand": "cd ../.. && bunx turbo build --filter=web",
+  "devCommand": "cd ../.. && bunx turbo dev --filter=web",
+  "outputDirectory": ".next"
+}
+```
+
+## Environment Variables
+
+### Required Variables
+
+Set these in Vercel project settings:
+
+```bash
+# Database
+DATABASE_URL=postgresql://user:pass@host/db?sslmode=require
+DIRECT_URL=postgresql://user:pass@host/db?sslmode=require
+
+# Redis
+REDIS_URL=redis://default:password@host:6379
+
+# Authentication
+BETTER_AUTH_SECRET=your-secret-min-32-chars
+BETTER_AUTH_URL=https://auth.yourdomain.com
+
+# Public URLs
+NEXT_PUBLIC_URL=https://yourdomain.com
+NEXT_PUBLIC_AUTH_URL=https://auth.yourdomain.com
+NEXT_PUBLIC_MINIO_ENDPOINT=https://cdn.yourdomain.com
+
+# OAuth Providers
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
+GITHUB_CLIENT_ID=...
+GITHUB_CLIENT_SECRET=...
+DISCORD_CLIENT_ID=...
+DISCORD_CLIENT_SECRET=...
+
+# Object Storage
+MINIO_ENDPOINT=cdn.yourdomain.com
+MINIO_PORT=443
+MINIO_USE_SSL=true
+MINIO_ACCESS_KEY=...
+MINIO_SECRET_KEY=...
+MINIO_BUCKET=uploads
+
+# Search
+MEILISEARCH_HOST=https://search.yourdomain.com
+MEILISEARCH_KEY=...
+
+# Email
+RESEND_API_KEY=...
+RESEND_FROM=noreply@yourdomain.com
+```
+
+### Environment Scopes
+
+Vercel supports three environment scopes:
+
+```bash
+# Production only
+vercel env add SECRET production
+
+# Preview only (PR deployments)
+vercel env add SECRET preview
+
+# Development only
+vercel env add SECRET development
+
+# All environments
+vercel env add SECRET production preview development
+```
+
+### Bulk Import
+
+Import from `.env` file:
+
+```bash
+# Create .env.production
+cat > .env.production <<EOF
+DATABASE_URL=...
+REDIS_URL=...
+EOF
+
+# Import to Vercel
+vercel env pull .env.vercel.local
+```
+
+## Database Setup
+
+### Using Neon (Recommended)
+
+Neon provides serverless PostgreSQL with automatic scaling:
+
+```bash
+# 1. Sign up at https://neon.tech
+# 2. Create a new project
+# 3. Copy connection string
+
+# Connection string format
+DATABASE_URL=postgresql://user:pass@ep-xxx.us-east-2.aws.neon.tech/neondb?sslmode=require
+
+# For Prisma migrations, use pooled connection
+DIRECT_URL=postgresql://user:pass@ep-xxx.us-east-2.aws.neon.tech/neondb?sslmode=require
+```
+
+### Using Supabase
+
+Supabase provides PostgreSQL with additional features:
+
+```bash
+# 1. Create project at https://supabase.com
+# 2. Get connection strings from Settings > Database
+
+# Transaction mode (for Prisma)
+DATABASE_URL=postgresql://postgres:[password]@db.[ref].supabase.co:5432/postgres
+
+# Direct connection
+DIRECT_URL=postgresql://postgres:[password]@db.[ref].supabase.co:5432/postgres?pgbouncer=true
+```
+
+### Connection Pooling
+
+For serverless environments, use connection pooling:
+
+```typescript
+// packages/db/index.ts
+import { PrismaClient } from "@prisma/client";
+
+const globalForPrisma = globalThis as unknown as {
+  prisma: PrismaClient | undefined;
+};
+
+export const prisma =
+  globalForPrisma.prisma ??
+  new PrismaClient({
+    log: ["error"],
+    datasources: {
+      db: {
+        url: process.env.DATABASE_URL,
+      },
+    },
+  });
+
+if (process.env.NODE_ENV !== "production") {
+  globalForPrisma.prisma = prisma;
+}
+```
+
+## Redis Setup
+
+### Using Upstash (Recommended)
+
+Upstash provides serverless Redis with per-request pricing:
+
+```bash
+# 1. Sign up at https://upstash.com
+# 2. Create a new database
+# 3. Copy connection string
+
+# REST API (recommended for serverless)
+UPSTASH_REDIS_REST_URL=https://xxx.upstash.io
+UPSTASH_REDIS_REST_TOKEN=...
+
+# Redis URL (for ioredis)
+REDIS_URL=rediss://default:xxx@xxx.upstash.io:6379
+```
+
+Update Redis configuration:
+
+```typescript
+// For Upstash REST
+import { Redis } from "@upstash/redis";
+
+export const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL!,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+});
+
+// Or use Redis URL
+import { Redis } from "ioredis";
+
+export const redis = new Redis(process.env.REDIS_URL!);
+```
+
+## Object Storage
+
+### Using Cloudflare R2 (Recommended)
+
+R2 provides S3-compatible storage with zero egress fees:
+
+```bash
+# 1. Create R2 bucket in Cloudflare dashboard
+# 2. Generate API token
+# 3. Configure environment
+
+MINIO_ENDPOINT=<account-id>.r2.cloudflarestorage.com
+MINIO_ACCESS_KEY=...
+MINIO_SECRET_KEY=...
+MINIO_BUCKET=uploads
+MINIO_USE_SSL=true
+MINIO_PORT=443
+```
+
+### Using AWS S3
+
+Traditional S3 setup:
+
+```bash
+MINIO_ENDPOINT=s3.amazonaws.com
+MINIO_ACCESS_KEY=AKIA...
+MINIO_SECRET_KEY=...
+MINIO_BUCKET=zephyr-uploads
+MINIO_REGION=us-east-1
+MINIO_USE_SSL=true
+```
+
+### Public URL Configuration
+
+Configure public URLs for uploaded files:
+
+```typescript
+// env.ts
+NEXT_PUBLIC_MINIO_ENDPOINT: z.string().url().default("https://cdn.yourdomain.com"),
+```
+
+Set up CDN or public access:
+
+```bash
+# Cloudflare R2 - Create custom domain
+# AWS S3 - Configure CloudFront distribution
+# DigitalOcean Spaces - Use built-in CDN
+```
+
+## Domain Configuration
+
+### Add Custom Domain
+
+```bash
+# Add domain via CLI
+vercel domains add yourdomain.com
+
+# Or in Vercel dashboard:
+# Project Settings > Domains > Add Domain
+```
+
+### Configure DNS
+
+Add DNS records:
+
+```
+# A Records (if using Vercel DNS)
+yourdomain.com        A       76.76.21.21
+
+# CNAME (for subdomains)
+www.yourdomain.com    CNAME   cname.vercel-dns.com
+auth.yourdomain.com   CNAME   cname.vercel-dns.com
+```
+
+### SSL Certificate
+
+Vercel automatically provisions SSL certificates for all domains.
+
+## Multiple Apps Deployment
+
+Deploy each app separately:
+
+### Web App
+
+```bash
+cd apps/web
+vercel --prod
+# Configure domain: yourdomain.com
+```
+
+### Auth Service
+
+```bash
+cd apps/auth
+vercel --prod
+# Configure domain: auth.yourdomain.com
+```
+
+### Docs
+
+```bash
+cd apps/docs
+vercel --prod
+# Configure domain: docs.yourdomain.com
+```
+
+## Build Configuration
+
+### Next.js Config
+
+Optimize for Vercel:
+
+```typescript
+// next.config.ts
+import type { NextConfig } from "next";
+
+const config: NextConfig = {
+  // Standalone output for Docker/Vercel
+  output: "standalone",
+  
+  // Experimental features
+  experimental: {
+    optimizePackageImports: ["@zephyr/ui"],
+  },
+  
+  // Image optimization
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "cdn.yourdomain.com",
+      },
+    ],
+  },
+  
+  // Transpile workspace packages
+  transpilePackages: ["@zephyr/ui", "@zephyr/db"],
+};
+
+export default config;
+```
+
+### Build Performance
+
+Optimize build times:
+
+```json
+{
+  "functions": {
+    "app/**/*.ts": {
+      "memory": 1024,
+      "maxDuration": 10
+    }
+  },
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/next",
+      "config": {
+        "maxLambdaSize": "50mb"
+      }
+    }
+  ]
+}
+```
+
+## Preview Deployments
+
+Vercel automatically creates preview deployments for:
+
+- Pull requests
+- Branch commits
+- Manual deployments
+
+### Configure Preview Environment
+
+```bash
+# Set preview-specific variables
+vercel env add DATABASE_URL preview
+vercel env add REDIS_URL preview
+
+# Use separate database for previews
+DATABASE_URL=postgresql://preview-user:pass@host/preview-db
+```
+
+### Preview URLs
+
+Access preview deployments:
+
+```
+# PR deployment
+https://zephyr-web-git-feature-branch-yourorg.vercel.app
+
+# Branch deployment
+https://zephyr-web-branch-name.vercel.app
+
+# Unique deployment URL
+https://zephyr-web-xyz123.vercel.app
+```
+
+## CI/CD Integration
+
+### GitHub Integration
+
+Vercel automatically deploys from GitHub:
+
+1. Connect GitHub repository
+2. Configure build settings
+3. Set environment variables
+4. Push to main for production
+5. Create PR for preview
+
+### Manual Deployment
+
+Deploy from CLI:
+
+```bash
+# Deploy current directory
+vercel
+
+# Deploy with specific configuration
+vercel --prod --env-file .env.production
+
+# Deploy from CI/CD
+echo $VERCEL_TOKEN | vercel --token - --prod
+```
+
+## Performance Optimization
+
+### Edge Functions
+
+Use Edge Runtime for faster responses:
+
+```typescript
+// app/api/route.ts
+export const runtime = "edge";
+
+export async function GET() {
+  return Response.json({ status: "ok" });
+}
+```
+
+### Caching
+
+Configure ISR and cache headers:
+
+```typescript
+// app/page.tsx
+export const revalidate = 3600; // Revalidate every hour
+
+// app/posts/[id]/page.tsx
+export async function generateStaticParams() {
+  const posts = await getPosts();
+  return posts.map((post) => ({ id: post.id }));
+}
+```
+
+### Image Optimization
+
+Use Next.js Image component:
+
+```tsx
+import Image from "next/image";
+
+<Image
+  src="https://cdn.yourdomain.com/image.jpg"
+  alt="..."
+  width={800}
+  height={600}
+  priority // For above-the-fold images
+/>
+```
+
+## Monitoring
+
+### Vercel Analytics
+
+Enable analytics in project settings:
+
+```bash
+# Install Vercel Analytics
+bun add @vercel/analytics
+
+# Add to layout
+import { Analytics } from "@vercel/analytics/react";
+
+export default function RootLayout({ children }) {
+  return (
+    <html>
+      <body>
+        {children}
+        <Analytics />
+      </body>
+    </html>
+  );
+}
+```
+
+### Speed Insights
+
+Track performance metrics:
+
+```bash
+# Install Speed Insights
+bun add @vercel/speed-insights
+
+# Add to layout
+import { SpeedInsights } from "@vercel/speed-insights/next";
+
+export default function RootLayout({ children }) {
+  return (
+    <html>
+      <body>
+        {children}
+        <SpeedInsights />
+      </body>
+    </html>
+  );
+}
+```
+
+## Troubleshooting
+
+### Build Failures
+
+```bash
+# Check build logs
+vercel logs <deployment-url>
+
+# Local build test
+vercel build
+
+# Clear cache
+rm -rf .next .vercel
+```
+
+### Environment Variable Issues
+
+```bash
+# List all environment variables
+vercel env ls
+
+# Pull environment variables
+vercel env pull .env.local
+
+# Check variable in build
+vercel logs <deployment-url> | grep "ENV_VAR_NAME"
+```
+
+### Database Connection Issues
+
+```bash
+# Test connection locally
+bunx prisma db pull
+
+# Check Vercel logs
+vercel logs --follow
+
+# Verify SSL mode
+DATABASE_URL=postgresql://...?sslmode=require
+```
+
+## Best Practices
+
+1. **Separate Environments**: Use different databases for production and preview
+2. **Connection Pooling**: Use Prisma Accelerate or PgBouncer for serverless
+3. **Edge Functions**: Use for geographically distributed users
+4. **ISR**: Implement Incremental Static Regeneration for dynamic content
+5. **Monitoring**: Enable Vercel Analytics and Speed Insights
+6. **Secrets**: Use Vercel environment variables, never commit secrets
+7. **Preview Testing**: Test PRs in preview deployments before merging
+8. **Custom Domains**: Use custom domains for production deployments
+
+## Cost Optimization
+
+### Free Tier Limits
+
+Vercel Free tier includes:
+- 100 GB bandwidth per month
+- Unlimited deployments
+- Automatic HTTPS
+- Edge Functions (100 GB-hours)
+
+### Pro Tier Benefits
+
+Upgrade to Pro for:
+- 1 TB bandwidth per month
+- Advanced analytics
+- Commercial usage
+- Priority support
+- Deployment protection
+
+### Reduce Costs
+
+```typescript
+// Use ISR instead of SSR
+export const revalidate = 3600;
+
+// Optimize images
+import Image from "next/image";
+
+// Use edge functions sparingly
+export const runtime = "edge"; // Only when needed
+```
+
+## Next Steps
+
+- **[Environment Variables](/deployment/environment-variables)** - Complete configuration reference
+- **[Database Migration](/deployment/database-migration)** - Migration strategies
+- **[Monitoring](/deployment/monitoring)** - Production monitoring
+
+<Callout type="warning">
+**Serverless Limits**: Vercel functions have a 10-second execution limit on Hobby tier, 60 seconds on Pro. Design accordingly.
+</Callout>

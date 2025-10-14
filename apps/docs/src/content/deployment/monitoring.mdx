@@ -1,0 +1,784 @@
+---
+title: Monitoring & Logging
+description: Set up production monitoring, logging, and observability for Zephyr.
+---
+
+import { Callout } from "nextra/components";
+
+## Overview
+
+Production monitoring and logging are essential for maintaining application health, debugging issues, and understanding user behavior.
+
+<Callout type="info">
+**Proactive Monitoring**: Catch issues before users report them with proper monitoring and alerting.
+</Callout>
+
+## Monitoring Stack
+
+### Recommended Tools
+
+| Tool | Purpose | Pricing |
+|------|---------|---------|
+| [Sentry](https://sentry.io) | Error tracking | Free tier available |
+| [Vercel Analytics](https://vercel.com/analytics) | Web analytics | Free on Vercel |
+| [Upstash QStash](https://upstash.com/qstash) | Background jobs monitoring | Free tier available |
+| [Better Stack](https://betterstack.com) | Uptime monitoring | Free tier available |
+| [Grafana](https://grafana.com) | Metrics visualization | Self-hosted or cloud |
+| [Prometheus](https://prometheus.io) | Metrics collection | Self-hosted |
+
+## Error Tracking
+
+### Sentry Integration
+
+#### Installation
+
+```bash
+# Install Sentry SDK
+bun add @sentry/nextjs
+```
+
+#### Configuration
+
+```typescript
+// sentry.client.config.ts
+import * as Sentry from "@sentry/nextjs";
+
+Sentry.init({
+  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+  
+  // Performance monitoring
+  tracesSampleRate: 1.0,
+  
+  // Session replay
+  replaysSessionSampleRate: 0.1,
+  replaysOnErrorSampleRate: 1.0,
+  
+  // Environment
+  environment: process.env.NODE_ENV,
+  
+  // Release tracking
+  release: process.env.VERCEL_GIT_COMMIT_SHA,
+  
+  // Filter out noise
+  ignoreErrors: [
+    "ResizeObserver loop limit exceeded",
+    "Non-Error promise rejection captured",
+  ],
+  
+  beforeSend(event, hint) {
+    // Filter out development errors
+    if (process.env.NODE_ENV === "development") {
+      return null;
+    }
+    return event;
+  },
+});
+```
+
+```typescript
+// sentry.server.config.ts
+import * as Sentry from "@sentry/nextjs";
+
+Sentry.init({
+  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+  tracesSampleRate: 1.0,
+  environment: process.env.NODE_ENV,
+  
+  // Server-specific options
+  integrations: [
+    new Sentry.Integrations.Http({ tracing: true }),
+    new Sentry.Integrations.Prisma({ client: prisma }),
+  ],
+});
+```
+
+```javascript
+// sentry.edge.config.ts
+import * as Sentry from "@sentry/nextjs";
+
+Sentry.init({
+  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+  tracesSampleRate: 1.0,
+});
+```
+
+#### Next.js Configuration
+
+```typescript
+// next.config.ts
+import { withSentryConfig } from "@sentry/nextjs";
+
+const config = {
+  // Your Next.js config
+};
+
+export default withSentryConfig(
+  config,
+  {
+    org: "your-org",
+    project: "zephyr-web",
+    silent: true,
+  },
+  {
+    widenClientFileUpload: true,
+    transpileClientSDK: true,
+    tunnelRoute: "/monitoring",
+    hideSourceMaps: true,
+    disableLogger: true,
+  }
+);
+```
+
+#### Environment Variables
+
+```bash
+# .env
+NEXT_PUBLIC_SENTRY_DSN=https://xxx@xxx.ingest.sentry.io/xxx
+SENTRY_AUTH_TOKEN=xxx  # For sourcemaps upload
+```
+
+#### Error Capture
+
+```typescript
+// Automatic error capture
+try {
+  await riskyOperation();
+} catch (error) {
+  Sentry.captureException(error);
+  throw error;
+}
+
+// Custom error with context
+Sentry.captureException(error, {
+  tags: {
+    feature: "post-creation",
+  },
+  user: {
+    id: userId,
+    email: userEmail,
+  },
+  extra: {
+    postId,
+    attemptCount,
+  },
+});
+
+// Capture messages
+Sentry.captureMessage("Payment processing started", {
+  level: "info",
+  tags: { orderId },
+});
+```
+
+## Application Metrics
+
+### Vercel Analytics
+
+#### Installation
+
+```bash
+bun add @vercel/analytics
+```
+
+#### Setup
+
+```typescript
+// app/layout.tsx
+import { Analytics } from "@vercel/analytics/react";
+
+export default function RootLayout({ children }) {
+  return (
+    <html>
+      <body>
+        {children}
+        <Analytics />
+      </body>
+    </html>
+  );
+}
+```
+
+### Vercel Speed Insights
+
+```bash
+bun add @vercel/speed-insights
+```
+
+```typescript
+import { SpeedInsights } from "@vercel/speed-insights/next";
+
+export default function RootLayout({ children }) {
+  return (
+    <html>
+      <body>
+        {children}
+        <SpeedInsights />
+      </body>
+    </html>
+  );
+}
+```
+
+### Custom Metrics
+
+```typescript
+// lib/metrics.ts
+import { track } from "@vercel/analytics";
+
+export function trackEvent(name: string, properties?: Record<string, any>) {
+  track(name, properties);
+}
+
+// Usage
+trackEvent("post_created", {
+  postId: post.id,
+  userId: user.id,
+  category: "content",
+});
+
+trackEvent("payment_completed", {
+  amount: 99.99,
+  currency: "USD",
+});
+```
+
+## Application Logging
+
+### Structured Logging
+
+#### Logger Setup
+
+```typescript
+// lib/logger.ts
+import { createLogger, format, transports } from "winston";
+
+const logger = createLogger({
+  level: process.env.NODE_ENV === "production" ? "info" : "debug",
+  format: format.combine(
+    format.timestamp(),
+    format.errors({ stack: true }),
+    format.json()
+  ),
+  defaultMeta: {
+    service: "zephyr-web",
+    environment: process.env.NODE_ENV,
+  },
+  transports: [
+    // Console output
+    new transports.Console({
+      format: format.combine(
+        format.colorize(),
+        format.simple()
+      ),
+    }),
+    
+    // File output
+    new transports.File({
+      filename: "logs/error.log",
+      level: "error",
+    }),
+    new transports.File({
+      filename: "logs/combined.log",
+    }),
+  ],
+});
+
+export default logger;
+```
+
+#### Usage
+
+```typescript
+import logger from "@/lib/logger";
+
+// Info logging
+logger.info("User logged in", {
+  userId: user.id,
+  email: user.email,
+});
+
+// Error logging
+logger.error("Payment failed", {
+  userId,
+  orderId,
+  error: error.message,
+  stack: error.stack,
+});
+
+// Debug logging
+logger.debug("Cache hit", {
+  key: cacheKey,
+  ttl: 3600,
+});
+
+// Warning logging
+logger.warn("Rate limit approaching", {
+  userId,
+  requestCount: 90,
+  limit: 100,
+});
+```
+
+### TimescaleDB Logging
+
+Store logs in TimescaleDB for analysis:
+
+```typescript
+// lib/db-logger.ts
+import { PrismaClient } from "@prisma/client";
+
+const timescaleDB = new PrismaClient({
+  datasources: {
+    db: {
+      url: process.env.TIMESCALEDB_URL,
+    },
+  },
+});
+
+export async function logEvent(event: {
+  level: "info" | "warn" | "error";
+  message: string;
+  userId?: string;
+  metadata?: Record<string, any>;
+}) {
+  await timescaleDB.log.create({
+    data: {
+      level: event.level,
+      message: event.message,
+      userId: event.userId,
+      metadata: event.metadata,
+      timestamp: new Date(),
+    },
+  });
+}
+```
+
+Schema for TimescaleDB:
+
+```prisma
+// packages/db/prisma/schema.prisma
+model Log {
+  id        String   @id @default(cuid())
+  level     String
+  message   String
+  userId    String?
+  metadata  Json?
+  timestamp DateTime @default(now())
+  
+  @@index([timestamp])
+  @@index([userId])
+  @@map("logs")
+}
+```
+
+Convert to hypertable:
+
+```sql
+-- In TimescaleDB
+SELECT create_hypertable('logs', 'timestamp');
+```
+
+## Uptime Monitoring
+
+### Better Stack (formerly Better Uptime)
+
+1. Sign up at [Better Stack](https://betterstack.com)
+2. Add monitor for each endpoint:
+
+```
+https://yourdomain.com/api/health
+https://auth.yourdomain.com/api/health
+https://docs.yourdomain.com/
+```
+
+3. Configure alerts via email, SMS, or Slack
+
+### Health Check Endpoints
+
+```typescript
+// app/api/health/route.ts
+import { prisma } from "@zephyr/db";
+import { redis } from "@/lib/redis";
+
+export async function GET() {
+  const checks = {
+    status: "healthy",
+    timestamp: new Date().toISOString(),
+    checks: {
+      database: false,
+      redis: false,
+      meilisearch: false,
+    },
+  };
+  
+  try {
+    // Database check
+    await prisma.$queryRaw`SELECT 1`;
+    checks.checks.database = true;
+  } catch (error) {
+    checks.status = "unhealthy";
+  }
+  
+  try {
+    // Redis check
+    await redis.ping();
+    checks.checks.redis = true;
+  } catch (error) {
+    checks.status = "unhealthy";
+  }
+  
+  try {
+    // Meilisearch check
+    const response = await fetch(`${process.env.MEILISEARCH_URL}/health`);
+    checks.checks.meilisearch = response.ok;
+  } catch (error) {
+    checks.status = "unhealthy";
+  }
+  
+  const statusCode = checks.status === "healthy" ? 200 : 503;
+  
+  return Response.json(checks, { status: statusCode });
+}
+```
+
+## Performance Monitoring
+
+### Web Vitals Tracking
+
+```typescript
+// app/layout.tsx
+"use client";
+
+import { useReportWebVitals } from "next/web-vitals";
+
+export function WebVitals() {
+  useReportWebVitals((metric) => {
+    // Send to analytics
+    window.gtag?.("event", metric.name, {
+      value: Math.round(metric.value),
+      metric_id: metric.id,
+      metric_label: metric.label,
+    });
+    
+    // Log slow metrics
+    if (metric.value > 2000) {
+      console.warn("Slow metric:", metric);
+    }
+  });
+  
+  return null;
+}
+```
+
+### API Response Time Monitoring
+
+```typescript
+// middleware.ts
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+
+export function middleware(request: NextRequest) {
+  const start = Date.now();
+  const response = NextResponse.next();
+  
+  response.headers.set("X-Response-Time", `${Date.now() - start}ms`);
+  
+  // Log slow requests
+  const duration = Date.now() - start;
+  if (duration > 1000) {
+    console.warn("Slow request:", {
+      path: request.nextUrl.pathname,
+      duration,
+    });
+  }
+  
+  return response;
+}
+```
+
+## Database Monitoring
+
+### Query Performance
+
+```typescript
+// packages/db/index.ts
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient({
+  log: [
+    {
+      emit: "event",
+      level: "query",
+    },
+  ],
+});
+
+prisma.$on("query", (e) => {
+  if (e.duration > 1000) {
+    console.warn("Slow query detected:", {
+      query: e.query,
+      duration: e.duration,
+      params: e.params,
+    });
+  }
+});
+
+export { prisma };
+```
+
+### Connection Pool Monitoring
+
+```typescript
+// Monitor connection pool
+setInterval(async () => {
+  const metrics = await prisma.$metrics.json();
+  console.log("Database metrics:", metrics);
+}, 60000); // Every minute
+```
+
+## Alerting
+
+### Slack Notifications
+
+```typescript
+// lib/alerts.ts
+export async function sendSlackAlert(message: string, severity: "info" | "warning" | "error") {
+  const color = {
+    info: "#36a64f",
+    warning: "#ff9900",
+    error: "#ff0000",
+  }[severity];
+  
+  await fetch(process.env.SLACK_WEBHOOK_URL!, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      attachments: [
+        {
+          color,
+          title: `[${severity.toUpperCase()}] Zephyr Alert`,
+          text: message,
+          footer: "Zephyr Monitoring",
+          ts: Math.floor(Date.now() / 1000),
+        },
+      ],
+    }),
+  });
+}
+
+// Usage
+await sendSlackAlert("Database connection pool exhausted", "error");
+```
+
+### Email Alerts
+
+```typescript
+// lib/alerts.ts
+import { Resend } from "resend";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+export async function sendEmailAlert(subject: string, message: string) {
+  await resend.emails.send({
+    from: "alerts@yourdomain.com",
+    to: "team@yourdomain.com",
+    subject: `[ALERT] ${subject}`,
+    html: `
+      <h2>${subject}</h2>
+      <p>${message}</p>
+      <p><small>Sent at ${new Date().toISOString()}</small></p>
+    `,
+  });
+}
+```
+
+## Log Aggregation
+
+### Self-Hosted (Grafana Loki)
+
+```yaml
+# docker-compose.yml
+services:
+  loki:
+    image: grafana/loki:latest
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./loki-config.yaml:/etc/loki/config.yaml
+      - loki-data:/loki
+    command: -config.file=/etc/loki/config.yaml
+  
+  promtail:
+    image: grafana/promtail:latest
+    volumes:
+      - ./logs:/logs
+      - ./promtail-config.yaml:/etc/promtail/config.yaml
+    command: -config.file=/etc/promtail/config.yaml
+  
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3030:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+```
+
+### Cloud (Better Stack Logs)
+
+```typescript
+// Configure Better Stack logger
+import { createLogger, transports } from "winston";
+import { Logtail } from "@logtail/node";
+import { LogtailTransport } from "@logtail/winston";
+
+const logtail = new Logtail(process.env.LOGTAIL_TOKEN!);
+
+const logger = createLogger({
+  transports: [
+    new LogtailTransport(logtail),
+  ],
+});
+```
+
+## Dashboards
+
+### Custom Dashboard
+
+```typescript
+// app/admin/dashboard/page.tsx
+export default async function DashboardPage() {
+  const metrics = await getSystemMetrics();
+  
+  return (
+    <div>
+      <MetricCard
+        title="Active Users"
+        value={metrics.activeUsers}
+        change="+12%"
+      />
+      <MetricCard
+        title="Error Rate"
+        value={`${metrics.errorRate}%`}
+        change="-5%"
+      />
+      <MetricCard
+        title="Avg Response Time"
+        value={`${metrics.avgResponseTime}ms`}
+        change="+2%"
+      />
+    </div>
+  );
+}
+
+async function getSystemMetrics() {
+  // Query TimescaleDB for metrics
+  const errorRate = await timescaleDB.$queryRaw`
+    SELECT COUNT(*) * 100.0 / TOTAL.count as error_rate
+    FROM logs
+    CROSS JOIN (SELECT COUNT(*) as count FROM logs) TOTAL
+    WHERE level = 'error'
+    AND timestamp > NOW() - INTERVAL '1 hour'
+  `;
+  
+  return {
+    activeUsers: 1234,
+    errorRate: 0.5,
+    avgResponseTime: 245,
+  };
+}
+```
+
+## Best Practices
+
+### 1. Log Levels
+
+Use appropriate log levels:
+
+```typescript
+logger.debug("Detailed debugging info");      // Development only
+logger.info("Normal operations");              // General info
+logger.warn("Warning condition");              // Needs attention
+logger.error("Error occurred");                // Immediate attention
+logger.fatal("System is unusable");            // Critical
+```
+
+### 2. Structured Logging
+
+Always use structured logs:
+
+```typescript
+// ❌ Bad
+logger.info(`User ${userId} created post ${postId}`);
+
+// ✅ Good
+logger.info("Post created", { userId, postId });
+```
+
+### 3. PII Protection
+
+Never log sensitive data:
+
+```typescript
+// ❌ Bad
+logger.info("User login", { 
+  email, 
+  password,  // Never log passwords!
+});
+
+// ✅ Good
+logger.info("User login", { 
+  userId,
+  email: email.replace(/(.{3}).*(@.*)/, "$1***$2"),
+});
+```
+
+### 4. Rate Limiting Logs
+
+Prevent log spam:
+
+```typescript
+const logRateLimiter = new Map<string, number>();
+
+function rateLimitedLog(key: string, message: string) {
+  const lastLog = logRateLimiter.get(key) || 0;
+  const now = Date.now();
+  
+  if (now - lastLog > 60000) { // 1 minute
+    logger.warn(message);
+    logRateLimiter.set(key, now);
+  }
+}
+```
+
+### 5. Correlation IDs
+
+Track requests across services:
+
+```typescript
+// middleware.ts
+import { v4 as uuidv4 } from "uuid";
+
+export function middleware(request: NextRequest) {
+  const requestId = request.headers.get("x-request-id") || uuidv4();
+  
+  const response = NextResponse.next();
+  response.headers.set("x-request-id", requestId);
+  
+  // Add to all logs
+  logger.child({ requestId });
+  
+  return response;
+}
+```
+
+## Next Steps
+
+- **[Troubleshooting](/deployment/troubleshooting)** - Debug common issues
+- **[Environment Variables](/deployment/environment-variables)** - Configure monitoring
+- **[Docker Deployment](/deployment/docker)** - Deploy with monitoring
+
+<Callout type="warning">
+**Data Retention**: Configure log retention policies to manage storage costs and comply with data regulations.
+</Callout>
