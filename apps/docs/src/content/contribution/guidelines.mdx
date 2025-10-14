@@ -1,21 +1,252 @@
 ---
-title: Guidelines
-description: Principles for proposing and implementing changes.
+title: Contribution Guidelines
+description: Core principles, commit conventions, and best practices for contributing to Zephyr.
 ---
 
-## Principles
+# Contribution Guidelines
 
-- Accessibility first — comply with a11y rules across UI and interactions
-- Type safety — prefer explicit types and exhaustive checks
-- Small PRs — easier to review, test, and roll back
-- Tests and docs — keep behavior and usage clear
+This document outlines the core principles and practices that guide contributions to Zephyr. Following these guidelines ensures consistency, quality, and maintainability across the codebase.
 
-## Commit messages
+> **Hey there!** 👋 These guidelines might look like a lot, but don't let that intimidate you! Think of them as helpful guardrails, not obstacles. We all learn as we go, and code reviews are here to help, not judge. Ready to dive in?
 
-Follow conventional commits where possible. Use Changesets for versioning when publishing packages.
+## Core Principles
 
-## Security
+### 1. **Accessibility First**
+- **WCAG 2.1 AA compliance** is mandatory for all UI components
+- Use semantic HTML elements (`<nav>`, `<main>`, `<article>`, etc.)
+- Ensure proper ARIA labels and roles where needed
+- Maintain proper color contrast ratios (4.5:1 for normal text)
+- Support keyboard navigation for all interactive elements
+- Test with screen readers when adding new UI features
 
-Never commit secrets. Avoid introducing unsafe APIs or broad permissions.
+### 2. **Type Safety**
+- Prefer **explicit types** over implicit ones
+- Avoid `any` type - use `unknown` with type guards instead
+- No non-null assertions (`!`) without documented justification
+- Use exhaustive checks with discriminated unions
+- Leverage TypeScript's strict mode features
+- Document complex types with JSDoc comments
+
+### 3. **Small, Focused Changes**
+- Keep PRs small and focused on a single concern
+- Easier to review, test, and potentially roll back
+- Aim for &lt;500 lines of changes per PR when possible
+- Split large features into multiple PRs with clear dependencies
+- Each commit should represent a logical unit of work
+
+### 4. **Tests and Documentation**
+- Add tests for new features and bug fixes
+- Update existing tests when changing behavior
+- Document public APIs with JSDoc comments
+- Update relevant docs when changing user-facing features
+- Include examples for complex functionality
+
+### 5. **Performance Consciousness**
+- Consider performance implications of changes
+- Avoid unnecessary re-renders in React components
+- Use proper memoization (`useMemo`, `useCallback`) when appropriate
+- Optimize database queries and indexes
+- Lazy load components and routes where beneficial
+
+### 6. **Open Source Spirit**
+- Be respectful and inclusive in all interactions
+- Help newcomers get started
+- Share knowledge through code reviews and discussions
+- Credit others' work and ideas appropriately
+- Remember: we're all learning together
+
+> **The secret sauce of open source?** It's the community! Some of the best learning happens in code reviews and discussions. Don't be afraid to ask questions, share ideas, or help others. We're building something cool together! 🎉
+
+## Commit Conventions
+
+### Conventional Commits
+
+We follow the [Conventional Commits](https://www.conventionalcommits.org/) specification:
+
+```
+<type>[optional scope]: <description>
+
+[optional body]
+
+[optional footer(s)]
+```
+
+*Don't worry if this feels unfamiliar at first - there's a handy pre-commit hook that'll help you format your commits correctly. Plus, you'll get the hang of it after a few commits!*
+
+#### Types
+- `feat`: New feature for the user
+- `fix`: Bug fix for the user
+- `docs`: Documentation only changes
+- `style`: Code style changes (formatting, no code change)
+- `refactor`: Code change that neither fixes a bug nor adds a feature
+- `perf`: Performance improvement
+- `test`: Adding or updating tests
+- `build`: Changes to build system or dependencies
+- `ci`: Changes to CI configuration files and scripts
+- `chore`: Maintenance tasks, no production code change
+- `revert`: Revert a previous commit
+
+#### Scope (Optional)
+Indicates the package or area affected:
+- `web`: Changes in `apps/web`
+- `auth`: Changes in `apps/auth` or `packages/auth`
+- `docs`: Changes in `apps/docs`
+- `db`: Changes in `packages/db`
+- `ui`: Changes in `packages/ui`
+- `aggregator`: Changes in `packages/aggregator`
+
+#### Examples
+```bash
+feat(web): add dark mode toggle to user settings
+fix(auth): resolve session expiration bug
+docs(contribution): update code style guidelines
+refactor(db): optimize post query performance
+test(ui): add unit tests for Button component
+```
+
+### Changesets for Versioning
+
+For changes to packages that will be published:
+
+```bash
+# Add a changeset
+bun changeset add
+
+# Follow the interactive prompts to:
+# 1. Select which packages changed
+# 2. Choose the version bump type (major/minor/patch)
+# 3. Provide a summary of changes
+```
+
+**When to add a changeset:**
+- When changing code in `packages/*` that affects the public API
+- When fixing bugs in published packages
+- When adding new features to packages
+- Not needed for internal changes or `apps/*` only
+
+## Security Practices
+
+### Never Commit Secrets
+- **Never** commit API keys, passwords, or tokens
+- Use environment variables for sensitive data
+- Check `.env.example` for required variables
+- Use `.env` (gitignored) for local development
+- Validate env vars at startup with `@t3-oss/env-nextjs`
+
+### Security Guidelines
+- Sanitize user input to prevent XSS attacks
+- Use parameterized queries to prevent SQL injection
+- Validate and sanitize file uploads
+- Implement proper authentication and authorization checks
+- Keep dependencies up-to-date
+- Review security advisories regularly
+
+### Reporting Security Issues
+- **Do not** open public issues for security vulnerabilities
+- Email security concerns to the maintainers privately
+- Include steps to reproduce and potential impact
+- Allow time for a fix before public disclosure
+
+## What to Avoid
+
+*Psst... we've all written code we're not proud of later. These aren't here to make you feel bad - they're lessons learned from collective experience. If you spot any of these in your code during review, it's totally fine! That's what reviews are for.* 😊
+
+### Code Anti-Patterns
+- ❌ Magic numbers - use named constants
+- ❌ Deep nesting - extract functions
+- ❌ Large functions - keep them focused and small
+- ❌ God objects - follow single responsibility principle
+- ❌ Premature optimization - profile first
+
+### React Anti-Patterns
+- ❌ Index as key in mapped lists
+- ❌ Non-interactive handlers on static elements
+- ❌ Incorrect hook dependencies
+- ❌ Direct DOM manipulation (use refs appropriately)
+- ❌ Props drilling (use context or state management)
+
+### Database Anti-Patterns
+- ❌ N+1 queries - use includes/joins
+- ❌ Missing indexes on frequently queried fields
+- ❌ Selecting all columns when only few are needed
+- ❌ Client-side filtering of large datasets
+
+## License Compliance (AGPL-3.0)
+
+Zephyr is licensed under [AGPL-3.0](https://www.gnu.org/licenses/agpl-3.0.en.html). All contributions must comply with this license.
+
+> **Why should you care about licensing?** Because open source licenses protect both you and the community. AGPL-3.0 ensures that improvements to Zephyr stay open and accessible to everyone. It's all about keeping things transparent and collaborative!
+
+### What This Means
+- Your contributions will be licensed under AGPL-3.0
+- Any modifications must remain open source
+- Network use (running on a server) requires source disclosure
+- Derivative works must also be AGPL-3.0
+
+### Contributor License Agreement
+By submitting a pull request, you:
+- Certify you have the right to contribute the code
+- Agree to license your contribution under AGPL-3.0
+- Understand the copyleft implications of this license
+
+### Third-Party Code
+- Ensure compatibility with AGPL-3.0 before adding dependencies
+- Document any third-party code with proper attribution
+- Prefer permissive licenses (MIT, Apache 2.0, BSD) for dependencies
+- Avoid GPL/LGPL dependencies if possible (license compatibility)
+
+## Pull Request Checklist
+
+Before submitting a PR, ensure:
+
+- [ ] Code follows our style guidelines (Ultracite/Biome)
+- [ ] Tests added/updated and passing
+- [ ] Documentation updated (if applicable)
+- [ ] Commit messages follow conventional commits
+- [ ] Changeset added (for package changes)
+- [ ] No merge conflicts with `main`
+- [ ] CI checks passing (build, lint, typecheck)
+- [ ] PR description explains the changes clearly
+- [ ] Related issues linked (e.g., "Closes #123")
+- [ ] Accessibility tested (for UI changes)
+- [ ] Performance impact considered
+- [ ] Security implications reviewed
+
+*This checklist looks long, but most items are quick checks! The automated tools (linting, formatting, CI) do a lot of the heavy lifting for you. Just tick them off as you go!* ✅
+
+## Code of Conduct
+
+### Be Respectful
+- Treat everyone with respect and kindness
+- Welcome newcomers and help them learn
+- Be patient with questions and mistakes
+- Assume good intentions
+
+### Stay Professional
+- Use inclusive language
+- Keep discussions focused and constructive
+- Disagree on ideas, not people
+- Accept constructive criticism gracefully
+
+### Collaborate Effectively
+- Communicate clearly and concisely
+- Respond to feedback in a timely manner
+- Be open to different perspectives
+- Give credit where credit is due
+
+> **Remember:** Behind every GitHub username is a real person who cares about this project. A little kindness and understanding goes a long way in making open source a great place to be! 💚
+
+## Additional Resources
+
+- [Code Style Guidelines](/contribution/code-style)
+- [Branching Strategy](/contribution/branching-strategy)
+- [Review Process](/contribution/review-process)
+- [Issue Templates](/contribution/issue-template)
+- [Testing Guidelines](/contribution/testing)
+- [First Contribution Guide](/contribution/first-contribution)
+
+---
+
+Thank you for following these guidelines and helping make Zephyr better!
 
 

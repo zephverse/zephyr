@@ -1,27 +1,489 @@
 ---
-title: Issue template
-description: A lightweight template to propose changes or report issues.
+title: Issue Templates
+description: Guidelines for creating well-structured issues and bug reports in Zephyr.
 ---
 
-## Template
+# Issue Templates
 
-```md
-### Summary
+Good issues help maintainers understand problems quickly and provide effective solutions. This guide explains how to create helpful issues.
 
-Describe the problem or proposal.
+> **Friendly reminder:** A well-written issue is like a gift to the maintainers! The more context you provide, the faster we can help you. Plus, you might discover the solution yourself while writing it up - happens more often than you'd think! 🎁
 
-### Context
+## Before Creating an Issue
 
-Relevant links, logs, or screenshots.
+### 1. **Search Existing Issues**
+- Check if your issue already exists
+- Look through [open issues](https://github.com/zephverse/zephyr/issues)
+- Check [closed issues](https://github.com/zephverse/zephyr/issues?q=is%3Aissue+is%3Aclosed) too
+- Search for similar problems or features
 
-### Approach (optional)
+*We know, searching isn't the most exciting part. But finding an existing issue (with maybe even a solution!) is way faster than starting from scratch!*
 
-Outline a possible solution or alternatives.
+### 2. **Verify It's Actually a Bug**
+- Check the documentation
+- Verify your setup matches requirements
+- Try with a clean installation
+- Test in a different environment
 
-### Checklist
+### 3. **Gather Information**
+- Steps to reproduce
+- Screenshots or recordings
+- Error messages and logs
+- System information
+- Version numbers
 
-- [ ] I searched for existing issues
-- [ ] I can help implement this
+## Issue Types
+
+Zephyr uses GitHub issue templates. Choose the appropriate one:
+
+### Bug Report
+
+Use when something doesn't work as expected.
+
+**Required Information:**
+- Clear description of the bug
+- Steps to reproduce
+- Expected behavior
+- Actual behavior
+- Environment details
+- Screenshots (if applicable)
+
+### Feature Request
+
+Use when proposing new functionality.
+
+**Required Information:**
+- Problem statement (what need does this address?)
+- Proposed solution
+- Alternative solutions considered
+- Additional context
+
+### Improvement Request
+
+Use for enhancements to existing features.
+
+**Required Information:**
+- Current behavior
+- Proposed improvement
+- Benefits and use cases
+- Potential drawbacks
+
+## Bug Report Template
+
+When reporting a bug, include:
+
+### Description
+
+Provide a clear, concise description of the bug:
+
+```markdown
+**Describe the bug**
+When I try to upload an avatar image larger than 5MB, the upload fails 
+silently without showing an error message.
 ```
+
+### Steps to Reproduce
+
+List **exact** steps to trigger the bug:
+
+```markdown
+**To Reproduce**
+1. Go to 'User Settings'
+2. Click on 'Change Avatar'
+3. Select an image larger than 8MB
+4. Click 'Upload'
+5. See no error message, upload appears to succeed but avatar doesn't change
+```
+
+### Expected Behavior
+
+What should happen:
+
+```markdown
+**Expected behavior**
+Should show an error message: "Avatar size must be less than 8MB"
+```
+
+### Actual Behavior
+
+What actually happens:
+
+```markdown
+**Actual behavior**
+- No error message appears
+- Upload button shows loading state
+- Avatar doesn't update
+- Console shows no errors
+```
+
+### Screenshots
+
+If applicable, add screenshots:
+
+```markdown
+**Screenshots**
+![Upload Dialog](screenshot.png)
+![Console Output](console.png)
+```
+
+### Environment
+
+Provide system details:
+
+```markdown
+**Environment:**
+- OS: macOS 14.2
+- Browser: Chrome 120.0
+- Zephyr Version: v1.0.1
+- Node Version: 20.10.0
+- Bun Version: 1.3.0
+```
+
+### Additional Context
+
+Any other relevant information:
+
+```markdown
+**Additional context**
+- Only happens with PNG files, JPG works fine
+- Started after upgrading to v1.0.1
+- Local development environment
+```
+
+### Logs
+
+Include relevant logs:
+
+```markdown
+**Console Logs**
+\`\`\`
+[Error] Failed to upload avatar: RequestEntityTooLarge
+at uploadAvatar (avatar-service.ts:45)
+\`\`\`
+
+**Server Logs**
+\`\`\`
+POST /api/upload/avatar 413 Payload Too Large
+\`\`\`
+```
+
+## Feature Request Template
+
+When requesting a feature:
+
+### Problem Statement
+
+What problem does this solve?
+
+```markdown
+**Is your feature request related to a problem?**
+I'm always frustrated when I have to manually check multiple social platforms 
+for new content. I want to receive notifications when new posts matching my 
+interests are published.
+```
+
+### Proposed Solution
+
+How would you solve it?
+
+```markdown
+**Describe the solution you'd like**
+Add a notification system that:
+- Allows users to set up custom content filters
+- Sends browser/email notifications for matching posts
+- Provides a centralized notification center
+- Supports notification preferences (frequency, channels)
+```
+
+### Alternatives Considered
+
+What other solutions did you think about?
+
+```markdown
+**Describe alternatives you've considered**
+1. RSS feed integration - but requires external RSS reader
+2. Email digest - but less real-time
+3. Third-party notification services - but adds complexity
+```
+
+### Use Cases
+
+Who benefits and how?
+
+```markdown
+**Use Cases**
+- Power users who follow many topics
+- Content creators monitoring their niche
+- Community managers tracking discussions
+- Users who want passive content discovery
+```
+
+### Additional Context
+
+Mockups, examples, etc:
+
+```markdown
+**Additional context**
+Here's a rough mockup of the notification center:
+[Insert mockup]
+
+Similar feature in Platform X:
+[Insert screenshot]
+```
+
+## Improvement Request Template
+
+When suggesting improvements:
+
+### Current Behavior
+
+How does it work now?
+
+```markdown
+**Current behavior**
+The search function only searches post content and hashtags. 
+Results are displayed in chronological order.
+```
+
+### Proposed Improvement
+
+What should change?
+
+```markdown
+**Proposed improvement**
+Enhance search to:
+- Search usernames, post content, hashtags, and comments
+- Rank results by relevance (not just chronological)
+- Add filters (date range, author, content type)
+- Show search suggestions while typing
+```
+
+### Benefits
+
+Why is this better?
+
+```markdown
+**Benefits**
+- Users find relevant content faster
+- Reduces frustration with current search limitations
+- Improves content discoverability
+- Better matches user expectations from other platforms
+```
+
+### Potential Drawbacks
+
+Any concerns?
+
+```markdown
+**Potential drawbacks**
+- Search indexing may increase database load
+- Relevance ranking algorithm adds complexity
+- May need to implement search service (Meilisearch)
+```
+
+## Good Issue Checklist
+
+Before submitting, ensure:
+
+- [ ] **Descriptive title** (specific, not vague)
+  - ✅ "Avatar upload fails for files &gt;5MB without error message"
+  - ❌ "Upload doesn't work"
+
+- [ ] **Clear description** (anyone can understand the issue)
+
+- [ ] **Reproducible** (provide exact steps)
+
+- [ ] **Specific** (one issue per ticket)
+
+- [ ] **Searched** (not a duplicate)
+
+- [ ] **Environment details** (for bugs)
+
+- [ ] **Screenshots/logs** (when applicable)
+
+- [ ] **Labels added** (bug, enhancement, etc.)
+
+- [ ] **Respectful tone** (be professional)
+
+## Issue Labels
+
+Common labels used:
+
+- `bug`: Something isn't working
+- `enhancement`: New feature or request
+- `documentation`: Improvements to docs
+- `good first issue`: Good for newcomers
+- `help wanted`: Extra attention needed
+- `question`: Further information requested
+- `wontfix`: Will not be worked on
+- `duplicate`: Already exists
+- `invalid`: Not valid issue
+- `priority: high`: Urgent issue
+- `priority: low`: Can wait
+
+## Tips for Great Issues
+
+### Be Specific
+
+```markdown
+❌ Bad: "Search is broken"
+✅ Good: "Search returns no results when query contains special characters like '@' or '#'"
+```
+
+### Provide Context
+
+```markdown
+❌ Bad: "Error when uploading"
+✅ Good: "When uploading a 10MB video file, receive '413 Payload Too Large' error. 
+Expected max size is 250MB according to docs."
+```
+
+### Include Steps
+
+```markdown
+❌ Bad: "Login doesn't work"
+✅ Good:
+1. Go to https://zephyyrr.in/login
+2. Enter valid email and password
+3. Click 'Sign In'
+4. Observe: Page refreshes but user not logged in
+```
+
+### Add Visuals
+
+- Screenshots for UI issues
+- Screen recordings for interactions
+- Diagrams for architecture proposals
+- Code snippets for bugs
+
+### Be Respectful
+
+```markdown
+❌ Bad: "This is terrible. Who designed this?"
+✅ Good: "The current search UX could be improved. Here are some suggestions..."
+```
+
+## GitHub Issue Templates
+
+Zephyr provides issue templates at:
+- [Bug Report](.github/ISSUE_TEMPLATE/bug_report.md)
+- [Feature Request](.github/ISSUE_TEMPLATE/feature_request.md)
+- [Improvement Request](.github/ISSUE_TEMPLATE/improvement-request.md)
+
+When creating an issue on GitHub, select the appropriate template and fill it out completely.
+
+## Examples of Great Issues
+
+### Example Bug Report
+
+**Title:** Avatar upload fails for files &gt;5MB without error message
+
+```markdown
+**Describe the bug**
+Avatar uploads silently fail for files larger than 5MB without showing 
+an error message to the user.
+
+**To Reproduce**
+1. Navigate to User Settings > Profile
+2. Click "Change Avatar"
+3. Select a PNG file larger than 5MB
+4. Click "Upload"
+5. Upload indicator shows loading state
+6. After completion, avatar remains unchanged
+7. No error message displayed
+
+**Expected behavior**
+Should display error message: "Avatar must be less than 8MB"
+
+**Actual behavior**
+- Upload appears to complete successfully
+- Avatar doesn't update
+- No error message shown
+- Console shows 413 Payload Too Large error
+
+**Environment:**
+- OS: Windows 11
+- Browser: Firefox 120.0
+- Zephyr Version: v1.0.1
+
+**Screenshots**
+[Attach screenshot of upload dialog]
+
+**Console Error**
+\`\`\`
+POST /api/upload/avatar 413 (Payload Too Large)
+\`\`\`
+
+**Additional context**
+Only affects PNG files > 5MB. JPG files up to 8MB work correctly.
+```
+
+### Example Feature Request
+
+**Title:** Add customizable content filters and notifications
+
+```markdown
+**Is your feature request related to a problem?**
+Users currently have to manually check multiple platforms and Zephyr 
+to see new content matching their interests.
+
+**Describe the solution you'd like**
+Implement a notification system with:
+- Custom content filters (keywords, topics, users)
+- Browser push notifications
+- Email digests (daily/weekly)
+- In-app notification center
+- Notification preferences panel
+
+**Describe alternatives considered**
+1. RSS feeds - requires external reader
+2. Email-only - less timely
+3. Third-party integrations - adds complexity
+
+**Use cases**
+- Power users following many topics
+- Content creators monitoring their niche
+- Community managers tracking discussions
+
+**Additional context**
+Similar to Twitter's custom notifications and Reddit's topic alerts.
+```
+
+## What Not to Do
+
+*Look, we get it - when something's broken or you really want a feature, it's tempting to cut corners. But trust us, these anti-patterns make things harder for everyone (including you!). Let's keep things friendly and productive!* 😊
+
+### Don't
+
+- ❌ Open duplicate issues (search first!)
+- ❌ Hijack existing issues with unrelated topics
+- ❌ Demand immediate fixes
+- ❌ Use issues for support questions (use Discussions)
+- ❌ Post vague issues without details
+- ❌ Include sensitive information (passwords, keys)
+- ❌ Be rude or disrespectful
+
+### Do
+
+- ✅ Search before creating
+- ✅ Provide complete information
+- ✅ Be patient and respectful
+- ✅ Update issue with new findings
+- ✅ Close issue if resolved
+- ✅ Thank maintainers for their time
+
+## After Creating an Issue
+
+1. **Monitor for responses** - check back for questions
+2. **Provide additional info** - if requested
+3. **Test proposed fixes** - help verify solutions
+4. **Close if resolved** - don't leave stale issues open
+5. **Consider contributing** - maybe you can fix it!
+
+> **Plot twist:** Sometimes writing a detailed issue helps you understand the problem well enough to fix it yourself! If you feel inspired to turn your issue into a PR, we'd absolutely love that. Every contributor started somewhere! 🌟
+
+---
+
+Well-written issues help maintainers help you faster. Thank you for taking the time to create detailed, helpful issues! 🙏
 
 

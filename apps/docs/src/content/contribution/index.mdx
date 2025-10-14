@@ -1,16 +1,129 @@
 ---
-title: Contribution
-description: How to propose, implement, and ship changes to Zephyr.
+title: Contributing to Zephyr
+description: How to propose, implement, and ship changes to Zephyr - a comprehensive guide for contributors.
 ---
 
-## Contribution flow
+# Contributing to Zephyr
 
-1. Discuss in an issue (or draft PR) if scope is non‑trivial
-2. Fork and create a feature branch
-3. Implement with tests and docs updates
-4. Run lint, type check, and build
-5. Open a PR and request review
+Thank you for your interest in contributing to **Zephyr**! We're excited to have you join our community. Zephyr is an open-source social platform built with modern web technologies, and we welcome contributions from developers of all skill levels.
 
-See detailed policies in the subpages: Guidelines, Branching strategy, Code style, Review process, and Issue template.
+> **First time contributing to open source?** Don't worry! Everyone starts somewhere. We're here to help you learn and grow. Check out our [First Contribution](/contribution/first-contribution) guide - it's like having a friendly mentor walk you through everything step-by-step.
+
+## Quick Start
+
+New to Zephyr? Start here:
+
+1. **Read this guide** to understand our contribution workflow
+2. **Check out [First Contribution](/contribution/first-contribution)** for a beginner-friendly setup guide
+3. **Browse [open issues](https://github.com/zephverse/zephyr/issues)** to find something to work on
+4. **Join the discussion** in issues or draft PRs before starting major work
+
+## Contribution Workflow
+
+Here's the standard flow for contributing to Zephyr:
+
+### 1. **Discuss First** (for non-trivial changes)
+   - Open an issue or comment on an existing one
+   - Describe the problem you're solving or feature you're adding
+   - Wait for feedback from maintainers before investing significant time
+   - For small fixes (typos, bugs), you can skip straight to a PR
+
+### 2. **Fork & Branch**
+   - Fork the repository to your GitHub account
+   - Clone your fork locally: `git clone https://github.com/YOUR_USERNAME/zephyr`
+   - Create a feature branch: `git checkout -b feature/your-feature-name`
+   - See [Branching Strategy](/contribution/branching-strategy) for naming conventions
+
+### 3. **Develop & Test**
+   - Follow our [Code Style](/contribution/code-style) guidelines
+   - Write or update tests for your changes
+   - Update documentation if you're changing functionality
+   - Run the development server: `bun run dev`
+
+### 4. **Quality Checks**
+   - Format and lint your code: `bun run check`
+   - Ensure all tests pass
+   - Build the project to verify: `bun run build`
+   - The pre-commit hook will automatically format staged files
+
+### 5. **Commit Changes**
+   - Follow [Conventional Commits](https://www.conventionalcommits.org/)
+   - Use [Changesets](https://github.com/changesets/changesets) for package versioning: `bun changeset add`
+   - Write clear, descriptive commit messages
+   - See [Guidelines](/contribution/guidelines) for commit conventions
+
+### 6. **Submit Pull Request**
+   - Push your branch: `git push origin feature/your-feature-name`
+   - Open a PR against the `main` branch
+   - Fill out the PR template completely
+   - Link related issues using keywords (e.g., "Closes #123")
+   - Request review from maintainers
+
+### 7. **Review & Iterate**
+   - Respond to reviewer feedback promptly
+   - Make requested changes and push updates
+   - Keep your PR up-to-date with `main` via rebase
+   - See [Review Process](/contribution/review-process) for details
+
+> **Pro tip:** Code reviews aren't about finding fault - they're about making great code even better! Every piece of feedback is a chance to learn something new. We've all been on both sides of this process, and we're all here to help each other improve. 🚀
+
+## Contribution Resources
+
+| Resource | Description |
+|----------|-------------|
+| [Guidelines](/contribution/guidelines) | Core principles, commit conventions, and security practices |
+| [Code Style](/contribution/code-style) | TypeScript, React, and a11y standards with Ultracite/Biome |
+| [Branching Strategy](/contribution/branching-strategy) | Git workflow and branch naming conventions |
+| [Review Process](/contribution/review-process) | PR quality expectations and reviewer checklist |
+| [Issue Template](/contribution/issue-template) | How to create well-structured issues |
+| [Testing](/contribution/testing) | Testing guidelines and best practices |
+| [Documentation](/contribution/documentation) | How to contribute to docs |
+| [First Contribution](/contribution/first-contribution) | Beginner's guide to your first PR |
+
+**🎯 Not sure where to start?** Browse our [good first issue](https://github.com/zephyrproject/zephyr/labels/good%20first%20issue) label on GitHub - these are carefully selected tasks perfect for getting your feet wet!
+
+## What Can You Contribute?
+
+Wondering how you can help? There are so many ways to make Zephyr better - and yes, that includes you! Here's the fun part: you don't need to be a coding wizard to contribute. 
+
+- **Bug fixes**: Found a bug? Fix it and submit a PR *(Bug hunting is basically detective work, and who doesn't love solving mysteries?)*
+- **Features**: Add new features (discuss first via issues) *(Got a cool idea? We'd love to hear it!)*
+- **Documentation**: Improve docs, add examples, fix typos *(Found a typo? You're already helping! Documentation is SO important)*
+- **UI/UX**: Enhance the user interface and experience *(Make things prettier and easier to use - design lovers welcome!)*
+- **Accessibility**: Improve a11y compliance *(Help make Zephyr accessible to everyone - this is super meaningful work)*
+- **Tests**: Add or improve test coverage *(Tests = confidence. Plus, writing good tests is oddly satisfying)*
+- **Refactoring**: Improve code quality and maintainability *(Love clean code? Come join the cleanup crew!)*
+- **Translations**: Help translate Zephyr (coming soon) *(Speak multiple languages? You're going to be invaluable when we launch this!)*
+
+## License
+
+Zephyr is licensed under [AGPL-3.0](https://github.com/zephverse/zephyr/blob/main/LICENSE). By contributing, you agree that your contributions will be licensed under the same license.
+
+**Key implications of AGPL-3.0:**
+- Any modifications must be open-sourced
+- If you run a modified version on a server, you must make the source available to users
+- All derivative works must also be AGPL-3.0
+
+> **Why AGPL-3.0?** We chose this license because we believe in keeping social platforms truly open. If someone builds on Zephyr, their improvements should benefit everyone in the community. It's about building together! 🤝
+
+## Getting Help
+
+Stuck? Confused? Have questions? **That's totally normal!** We've all been there, and we're here to help:
+
+- **Questions?** Open a [discussion](https://github.com/zephverse/zephyr/discussions) or [issue](https://github.com/zephverse/zephyr/issues) - no question is too small!
+- **Stuck?** Check our [troubleshooting guide](https://github.com/zephverse/zephyr#-troubleshooting) - we've documented the most common hiccups
+- **Need setup help?** See our [development setup guide](https://github.com/zephverse/zephyr#-local-development-setup) - step-by-step instructions included
+
+*Remember: Every expert was once a beginner who refused to give up. You've got this!*
+
+## Thank You
+
+Every contribution, no matter how small, makes Zephyr better. We appreciate your time and effort in helping us build an amazing open-source social platform!
+
+**Seriously though** - whether you're fixing a typo, submitting your first PR, or architecting a major feature, you're helping build something meaningful. The open-source community thrives because of people like you who choose to contribute their time and skills. Thank you for being awesome! 💙
+
+---
+
+Ready to contribute? Check out the [First Contribution](/contribution/first-contribution) guide or browse [open issues](https://github.com/zephverse/zephyr/issues) to get started!
 
 
