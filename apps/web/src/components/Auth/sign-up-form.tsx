@@ -168,11 +168,12 @@ export default function SignUpForm() {
               "Check your inbox for the verification email, it's in there somewhere!",
           });
         } else if (result.error) {
-          setError(result.error);
+          const msg = String(result.error);
+          setError(msg);
           toast({
             variant: "destructive",
             title: "Signup Failed!",
-            description: result.error,
+            description: msg,
           });
         }
       } catch (signupError) {

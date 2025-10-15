@@ -20,7 +20,10 @@ export async function GET(req: NextRequest) {
           "user-agent": req.headers.get("user-agent") ?? "",
         },
         credentials: "include",
-        body: JSON.stringify({ token }),
+        body: JSON.stringify({
+          id: 1,
+          json: { token },
+        }),
       });
       const data = (await res.json().catch(() => ({}) as unknown)) as
         | { result?: { data?: unknown } }

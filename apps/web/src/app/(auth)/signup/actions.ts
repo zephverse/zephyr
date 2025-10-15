@@ -24,17 +24,32 @@ export async function signUp(credentials: {
       headers: { "content-type": "application/json" },
       credentials: "include",
       body: JSON.stringify({
-        email: credentials.email,
-        username: credentials.username,
-        password: credentials.password,
-        displayName: credentials.username,
+        id: 1,
+        json: {
+          email: credentials.email,
+          username: credentials.username,
+          password: credentials.password,
+          displayName: credentials.username,
+        },
       }),
     });
     const data = await res.json().catch(() => ({}) as unknown);
-    const ok = data?.result?.data?.success === true || data?.success === true;
+
+    if (!res.ok) {
+      const err = data?.message || data?.error || "HTTP request failed";
+      return { success: false, error: String(err) };
+    }
+
+    const ok = data?.result?.data?.json?.success === true;
     if (!ok) {
-      const err = data?.result?.data?.error || data?.error || "Signup failed";
-      return { success: false, error: err };
+      const err =
+        data?.result?.error?.message ||
+        data?.error?.message ||
+        data?.result?.data?.json?.error ||
+        data?.result?.data?.error ||
+        data?.error ||
+        "Signup failed";
+      return { success: false, error: String(err) };
     }
 
     return {
@@ -68,16 +83,18 @@ export async function resendVerificationEmail(email: string): Promise<{
       method: "POST",
       headers: { "content-type": "application/json" },
       credentials: "include",
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ id: 1, json: { email } }),
     });
     const data = await res.json().catch(() => ({}) as unknown);
     const ok = data?.result?.data?.success === true || data?.success === true;
     if (!ok) {
       const err =
+        data?.error?.message ||
+        data?.result?.error?.message ||
         data?.result?.data?.error ||
         data?.error ||
         "Failed to resend verification email";
-      return { success: false, error: err };
+      return { success: false, error: String(err) };
     }
     return { success: true };
   } catch (error) {

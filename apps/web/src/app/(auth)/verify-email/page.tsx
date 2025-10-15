@@ -216,22 +216,23 @@ export default function VerifyEmailPage() {
 
             if (email && password) {
               try {
-                await authClient.signIn.email({
+                const result = await authClient.signIn.email({
                   email,
                   password,
-                  fetchOptions: {
-                    onError: () => {
-                      throw new Error("auto-signin-failed");
-                    },
-                  },
                 });
-                verificationChannel.postMessage("verification-success");
-                setStatus("success");
-                router.replace("/verify-email?verified=1");
-                setTimeout(() => router.push("/"), 100);
-                return;
-              } catch {
-                console.warn("Auto sign-in failed, redirecting to login");
+
+                if (result?.data?.user) {
+                  verificationChannel.postMessage("verification-success");
+                  setStatus("success");
+                  router.replace("/verify-email?verified=1");
+                  setTimeout(() => router.push("/"), 100);
+                  return;
+                }
+              } catch (signError) {
+                console.warn(
+                  "Auto sign-in failed, redirecting to login",
+                  signError
+                );
               }
             }
 

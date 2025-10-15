@@ -3,7 +3,7 @@ import { prisma } from "@zephyr/db";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
-import { jwt, username } from "better-auth/plugins";
+import { admin as adminPlugin, jwt, username } from "better-auth/plugins";
 import type {
   DiscordProfile,
   GithubProfile,
@@ -88,7 +88,7 @@ export function createAuthConfig(config: AuthConfig = {}) {
       },
     },
 
-    plugins: [username(), jwt(), nextCookies()],
+    plugins: [username(), jwt(), nextCookies(), adminPlugin()],
 
     emailAndPassword: {
       enabled: true,

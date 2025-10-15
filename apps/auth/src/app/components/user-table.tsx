@@ -5,9 +5,19 @@ import { useDebounce } from "@zephyr/ui/hooks/use-debounce";
 import { cn } from "@zephyr/ui/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@zephyr/ui/shadui/avatar";
 import { Button } from "@zephyr/ui/shadui/button";
-import { ChevronDown, FileText, Search, X } from "lucide-react";
+import {
+  Ban,
+  Check,
+  ChevronDown,
+  FileText,
+  Search,
+  Shield,
+  ShieldOff,
+  X,
+} from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import React, { useEffect, useState } from "react";
+import { trpc } from "../trpc/client";
 import type { ModalAction, User, UserFilters } from "../types/types";
 
 type UserTableProps = {
@@ -56,7 +66,7 @@ function highlightText(text: string, searchQuery: string): React.ReactNode {
   });
 }
 
-export function UserTable({
+export default function UserTable({
   users,
   onAction,
   searchQuery,
@@ -75,6 +85,11 @@ export function UserTable({
   const [searchExpanded, setSearchExpanded] = useState(false);
   const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery);
   const debouncedSearchQuery = useDebounce(localSearchQuery, 300);
+
+  const banUser = trpc.admin.banUser.useMutation();
+  const unbanUser = trpc.admin.unbanUser.useMutation();
+  const revokeAll = trpc.admin.revokeUserSessions.useMutation();
+  const setRole = trpc.admin.setRole.useMutation();
 
   useEffect(() => {
     setLocalSearchQuery(searchQuery);
@@ -327,6 +342,79 @@ export function UserTable({
                                   variant="outline"
                                 >
                                   Update
+                                </Button>
+                                <Button
+                                  className="border-border hover:bg-accent"
+                                  onClick={async () => {
+                                    if (user.role === "admin") {
+                                      await setRole.mutateAsync({
+                                        userId: user.id,
+                                        role: "user",
+                                      });
+                                    } else {
+                                      await setRole.mutateAsync({
+                                        userId: user.id,
+                                        role: "admin",
+                                      });
+                                    }
+                                  }}
+                                  size="sm"
+                                  variant="outline"
+                                >
+                                  {user.role === "admin" ? (
+                                    <span className="inline-flex items-center gap-1">
+                                      <ShieldOff className="h-4 w-4" /> Remove
+                                      Admin
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center gap-1">
+                                      <Shield className="h-4 w-4" /> Make Admin
+                                    </span>
+                                  )}
+                                </Button>
+                                <Button
+                                  className="border-border hover:bg-accent"
+                                  disabled
+                                  size="sm"
+                                  variant="outline"
+                                >
+                                  <span className="inline-flex items-center gap-1">
+                                    <Check className="h-4 w-4" /> Verified
+                                  </span>
+                                </Button>
+                                <Button
+                                  className="border-border hover:bg-accent"
+                                  onClick={async () => {
+                                    await revokeAll.mutateAsync({
+                                      userId: user.id,
+                                    });
+                                  }}
+                                  size="sm"
+                                  variant="outline"
+                                >
+                                  Revoke Sessions
+                                </Button>
+                                <Button
+                                  className="border-border hover:bg-destructive/10 hover:text-destructive"
+                                  onClick={async () => {
+                                    if (user.banned ?? false) {
+                                      await unbanUser.mutateAsync({
+                                        userId: user.id,
+                                      });
+                                    } else {
+                                      await banUser.mutateAsync({
+                                        userId: user.id,
+                                        banReason: "Admin action",
+                                      });
+                                    }
+                                  }}
+                                  size="sm"
+                                  variant="outline"
+                                >
+                                  <span className="inline-flex items-center gap-1">
+                                    <Ban className="h-4 w-4" />{" "}
+                                    {(user.banned ?? false) ? "Unban" : "Ban"}
+                                  </span>
                                 </Button>
                               </div>
                             </div>

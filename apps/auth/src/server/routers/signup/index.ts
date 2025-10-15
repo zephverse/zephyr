@@ -300,6 +300,7 @@ export const signupRouter = router({
           passwordHash: data.passwordHash,
           emailVerified: true,
           emailVerifiedAt: new Date(),
+          role: "user",
         },
         select: { id: true },
       });

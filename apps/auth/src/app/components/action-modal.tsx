@@ -13,7 +13,7 @@ type ActionModalProps = {
   onCancelAction: () => void;
 };
 
-export function ActionModal({
+export default function ActionModal({
   user,
   action,
   onConfirmAction,
