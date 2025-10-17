@@ -138,13 +138,13 @@ export default function ClientSignupPage() {
           </div>
         </motion.div>
 
-        <div className="relative z-10 flex flex-1 items-center justify-center p-4 sm:p-8">
+        <div className="relative z-[1] flex flex-1 items-center justify-center p-4 sm:p-8">
           <motion.div
             className="relative flex w-full max-w-5xl flex-col items-stretch rounded-2xl border border-white/10 bg-card/40 shadow-2xl backdrop-blur-xl lg:flex-row"
             variants={scaleUp}
             whileHover={{ boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)" }}
           >
-            <div className="relative z-10 flex w-full flex-col justify-center px-6 py-12 sm:px-8 lg:w-1/2">
+            <div className="relative flex w-full flex-col justify-center px-6 py-12 sm:px-8 lg:w-1/2">
               <div className="mx-auto w-full max-w-sm">
                 <motion.h2
                   className="mb-6 text-center font-bold text-3xl text-primary sm:text-4xl"

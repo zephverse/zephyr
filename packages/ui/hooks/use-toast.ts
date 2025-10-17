@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import type { ToastActionElement, ToastProps } from "../shadui/toast";
 
-const TOAST_LIMIT = 1;
-const TOAST_REMOVE_DELAY = 1_000_000;
+const TOAST_LIMIT = 3;
+const TOAST_REMOVE_DELAY = 350;
 
 type ToasterToast = ToastProps & {
   id: string;
@@ -88,8 +88,6 @@ export const reducer = (state: State, action: Action): State => {
     case "DISMISS_TOAST": {
       const { toastId } = action;
 
-      // ! Side effects ! - This could be extracted into a dismissToast() action,
-      // but I'll keep it here for simplicity
       if (toastId) {
         addToRemoveQueue(toastId);
       } else {
@@ -162,6 +160,13 @@ function toast({ ...props }: Toast) {
       },
     },
   });
+
+  const duration = props.duration ?? 5000;
+  if (duration > 0) {
+    setTimeout(() => {
+      dismiss();
+    }, duration);
+  }
 
   return {
     id,

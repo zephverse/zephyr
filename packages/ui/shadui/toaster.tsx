@@ -1,5 +1,6 @@
 "use client";
 
+import { AnimatePresence } from "motion/react";
 // biome-ignore lint/performance/noNamespaceImport: ignore
 import * as React from "react";
 import { useToast } from "../hooks/use-toast";
@@ -87,19 +88,25 @@ export function Toaster({
   };
 
   return (
-    <ToastProvider>
-      {toasts.map(({ id, title, description, action, ...props }) => (
-        <Toast key={id} {...props} className="w-auto min-w-[200px] max-w-md">
-          <div className="relative pr-6">
-            {title && <ToastTitle>{renderNode(title)}</ToastTitle>}
-            {description && (
-              <ToastDescription>{renderNode(description)}</ToastDescription>
-            )}
-            {action}
-            <ToastClose className="absolute top-0 right-0" />
-          </div>
-        </Toast>
-      ))}
+    <ToastProvider swipeDirection="right" swipeThreshold={50}>
+      <AnimatePresence initial={false} mode="popLayout">
+        {toasts
+          .filter((toast) => toast.open !== false)
+          .map(({ id, title, description, action, ...props }) => (
+            <Toast
+              key={id}
+              {...props}
+              className="w-auto min-w-[280px] max-w-md"
+            >
+              {title && <ToastTitle>{renderNode(title)}</ToastTitle>}
+              {description && (
+                <ToastDescription>{renderNode(description)}</ToastDescription>
+              )}
+              {action}
+              <ToastClose />
+            </Toast>
+          ))}
+      </AnimatePresence>
       <ToastViewport
         className={`${getViewportClassName()} ${containerClassName || ""}`}
       />

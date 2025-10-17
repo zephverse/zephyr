@@ -387,6 +387,23 @@ export const signupRouter = router({
           return { success: false, error: "user-exists" } as const;
         }
 
+        const creationRateCheck = await checkAccountCreationRateLimit(
+          ip,
+          input.email.toLowerCase()
+        );
+        if (!creationRateCheck.allowed) {
+          debugLog.api("pendingSignupStart:creation-rate-limited", {
+            email: input.email,
+            ip,
+          });
+          return {
+            success: false,
+            error: "rate-limited",
+            remaining: creationRateCheck.remaining,
+            resetTime: creationRateCheck.resetTime,
+          } as const;
+        }
+
         const hashedPassword = await hashPasswordWithScrypt(input.password);
         debugLog.api("pendingSignupStart:hash-done");
 
@@ -551,7 +568,7 @@ export const signupRouter = router({
     // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: ignore
     .mutation(async ({ input, ctx }) => {
       debugLog.api("pendingSignupVerify:begin");
-      const ip = getClientIpFromHeaders(
+      const _ip = getClientIpFromHeaders(
         ctx?.req?.headers as Headers | undefined
       );
 
@@ -642,24 +659,6 @@ export const signupRouter = router({
             });
           }
 
-          const creationRateCheck = await checkAccountCreationRateLimit(
-            ip,
-            pendingData.email.toLowerCase()
-          );
-          if (!creationRateCheck.allowed) {
-            debugLog.api("pendingSignupVerify:creation-rate-limited", {
-              email: pendingData.email,
-              ip,
-            });
-            await redis.del(pendingKey);
-            return {
-              success: false,
-              error: "rate-limited",
-              remaining: creationRateCheck.remaining,
-              resetTime: creationRateCheck.resetTime,
-            } as const;
-          }
-
           const user = await prisma.user.create({
             data: {
               email: pendingData.email,
@@ -745,24 +744,6 @@ export const signupRouter = router({
       if (existing) {
         await redis.del(key);
         return { success: false, error: "user-exists" } as const;
-      }
-
-      const creationRateCheck = await checkAccountCreationRateLimit(
-        ip,
-        data.email.toLowerCase()
-      );
-      if (!creationRateCheck.allowed) {
-        debugLog.api("pendingSignupVerify:creation-rate-limited", {
-          email: data.email,
-          ip,
-        });
-        await redis.del(key);
-        return {
-          success: false,
-          error: "rate-limited",
-          remaining: creationRateCheck.remaining,
-          resetTime: creationRateCheck.resetTime,
-        } as const;
       }
 
       const user = await prisma.user.create({

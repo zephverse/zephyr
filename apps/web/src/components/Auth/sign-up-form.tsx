@@ -278,12 +278,24 @@ export default function SignUpForm() {
             resetTime: result.rateLimitInfo.resetTime,
             isLimited: true,
           });
-          const msg = String(result.error);
-          setError(msg);
+
+          const resetTime = result.rateLimitInfo.resetTime;
+          const now = Math.floor(Date.now() / 1000);
+          const waitTime = resetTime
+            ? Math.max(0, Math.ceil((resetTime - now) / 60))
+            : 60;
+
+          const rateLimitMessage =
+            waitTime > 0
+              ? `You've been creating accounts too quickly. Please take a ${waitTime}-minute break and try again.`
+              : "Too many signup attempts. Please wait a moment and try again.";
+
+          setError(rateLimitMessage);
           toast({
             variant: "destructive",
-            title: "Rate Limited!",
-            description: msg,
+            title: "Rate Limited",
+            description: rateLimitMessage,
+            duration: 8000,
           });
         } else if (result.error) {
           const msg = String(result.error);
@@ -342,15 +354,21 @@ export default function SignUpForm() {
           data?.result?.data?.json?.error ||
           "Signup completion failed";
 
+        const rateLimitInfo = data?.result?.data?.json;
+
         let userFriendlyError = "Something went wrong. Please try again.";
+        let errorTitle = "Verification Failed";
+
         if (serverError === "invalid-otp") {
           userFriendlyError =
             "The verification code is incorrect or has expired. Please check and try again.";
+          errorTitle = "Wrong Code";
           setOtpError(true);
           setOtp("");
         } else if (serverError === "user-exists") {
           userFriendlyError =
             "An account with this email or username already exists.";
+          errorTitle = "Account Already Exists";
           clearSignupState();
           setTimeout(() => {
             window.location.href = "/login";
@@ -358,20 +376,33 @@ export default function SignUpForm() {
         } else if (serverError === "no-pending-signup") {
           userFriendlyError =
             "Your verification session has expired. Please start the signup process again.";
+          errorTitle = "Session Expired";
           clearSignupState();
           setTimeout(() => {
             window.location.reload();
           }, 2000);
         } else if (serverError === "rate-limited") {
+          const resetTime = rateLimitInfo?.resetTime;
+          const now = Math.floor(Date.now() / 1000);
+          const waitTime = resetTime
+            ? Math.max(0, Math.ceil((resetTime - now) / 60))
+            : 60;
+
           userFriendlyError =
-            "Too many attempts. Please wait a moment before trying again.";
+            waitTime > 0
+              ? `You've been creating accounts too quickly. Please take a ${waitTime}-minute break and try again.`
+              : "Too many signup attempts. Please wait a moment and try again.";
+          errorTitle = "Rate Limited";
+          setOtpError(true);
+          setOtp("");
         }
 
         console.error("OTP verification error:", serverError);
         toast({
           variant: "destructive",
-          title: "Verification Failed",
+          title: errorTitle,
           description: userFriendlyError,
+          duration: serverError === "rate-limited" ? 8000 : 5000,
         });
         throw new Error(serverError);
       }
@@ -484,7 +515,7 @@ export default function SignUpForm() {
                   {error && (
                     <div className="rounded-lg bg-destructive/15 p-3 text-center text-destructive text-sm">
                       <p className="flex items-center justify-center gap-2">
-                        <AlertCircle className="h-4 w-4" />
+                        <AlertCircle className="h-5 w-5 shrink-0" />
                         {error}
                       </p>
                     </div>
@@ -950,57 +981,99 @@ export default function SignUpForm() {
                       </div>
                     </div>
 
-                    <motion.div
-                      animate={otpError ? { x: [-10, 10, -10, 10, 0] } : {}}
-                      className="flex justify-center"
-                      transition={{ duration: 0.4 }}
-                    >
-                      <InputOTP
-                        containerClassName="w-full"
-                        disabled={isVerifyingOTP || count === 0}
-                        maxLength={6}
-                        onChange={(val) => {
-                          if (DIGITS_ONLY_REGEX.test(val)) {
-                            setOtp(val);
-                            setOtpError(false);
-                            if (val.length === 6) {
-                              handleOTPVerification(val);
-                            }
-                          } else {
-                            setOtpError(true);
-                            toast({
-                              variant: "destructive",
-                              title: "Numbers only, please!",
-                              description:
-                                "We're looking for digits, not your life story!",
-                              duration: 2000,
-                            });
-                          }
-                        }}
-                        pattern="[0-9]*"
-                        value={otp}
+                    <div className="space-y-2">
+                      <motion.div
+                        animate={otpError ? { x: [-10, 10, -10, 10, 0] } : {}}
+                        className="flex justify-center"
+                        transition={{ duration: 0.4 }}
                       >
-                        <InputOTPGroup className="w-full justify-between">
-                          {OTP_SLOT_IDS.map((slotId, index) => (
-                            <motion.div
-                              animate={
-                                otp[index]
-                                  ? {
-                                      scale: [1, 1.1, 1],
-                                      rotate: [0, 5, -5, 0],
-                                    }
-                                  : {}
+                        <InputOTP
+                          containerClassName="w-full"
+                          disabled={isVerifyingOTP || count === 0}
+                          maxLength={6}
+                          onChange={(val) => {
+                            if (DIGITS_ONLY_REGEX.test(val)) {
+                              setOtp(val);
+                              setOtpError(false);
+                              if (val.length === 6) {
+                                handleOTPVerification(val);
                               }
-                              className="flex-1"
-                              key={slotId}
-                              transition={{ duration: 0.3 }}
-                            >
-                              <InputOTPSlot className="w-full" index={index} />
-                            </motion.div>
-                          ))}
-                        </InputOTPGroup>
-                      </InputOTP>
-                    </motion.div>
+                            } else {
+                              setOtpError(true);
+                              toast({
+                                variant: "destructive",
+                                title: "Numbers only, please!",
+                                description:
+                                  "We're looking for digits, not your life story!",
+                                duration: 2000,
+                              });
+                            }
+                          }}
+                          pattern="[0-9]*"
+                          value={otp}
+                        >
+                          <InputOTPGroup className="w-full justify-between">
+                            {OTP_SLOT_IDS.map((slotId, index) => (
+                              <motion.div
+                                animate={
+                                  otp[index]
+                                    ? {
+                                        scale: [1, 1.1, 1],
+                                        rotate: [0, 5, -5, 0],
+                                      }
+                                    : {}
+                                }
+                                className="flex-1"
+                                key={slotId}
+                                transition={{ duration: 0.3 }}
+                              >
+                                <InputOTPSlot
+                                  className={`w-full ${otpError ? "border-destructive" : ""}`}
+                                  index={index}
+                                />
+                              </motion.div>
+                            ))}
+                          </InputOTPGroup>
+                        </InputOTP>
+                      </motion.div>
+
+                      <AnimatePresence mode="wait">
+                        {isVerifyingOTP && (
+                          <motion.div
+                            animate={{ opacity: 1, y: 0 }}
+                            className="flex items-center justify-center gap-2 text-primary text-sm"
+                            exit={{ opacity: 0, y: -10 }}
+                            initial={{ opacity: 0, y: -10 }}
+                            transition={{ duration: 0.2 }}
+                          >
+                            <motion.div
+                              animate={{ rotate: 360 }}
+                              className="h-4 w-4 shrink-0 rounded-full border-2 border-primary/20 border-t-primary"
+                              transition={{
+                                duration: 1,
+                                repeat: Number.POSITIVE_INFINITY,
+                                ease: "linear",
+                              }}
+                            />
+                            <span>Verifying your code...</span>
+                          </motion.div>
+                        )}
+                        {!isVerifyingOTP && otpError && (
+                          <motion.div
+                            animate={{ opacity: 1, y: 0 }}
+                            className="flex items-center justify-center gap-2 text-destructive text-sm"
+                            exit={{ opacity: 0, y: -10 }}
+                            initial={{ opacity: 0, y: -10 }}
+                            transition={{ duration: 0.2 }}
+                          >
+                            <AlertCircle className="h-5 w-5 shrink-0" />
+                            <span>
+                              That code didn't work. Please try again.
+                            </span>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
 
                     <div className="space-y-2">
                       <AnimatePresence>
