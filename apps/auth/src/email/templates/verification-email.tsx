@@ -85,6 +85,73 @@ export const VerificationEmail = ({
 export const getVerificationEmailHtml = (verificationUrl: string) =>
   render(<VerificationEmail verificationUrl={verificationUrl} />);
 
+type OTPVerificationEmailProps = {
+  otp: string;
+};
+
+export const OTPVerificationEmail = ({ otp }: OTPVerificationEmailProps) => (
+  <Html>
+    <Head />
+    <Preview>Your verification code for Zephyr - {otp}</Preview>
+    <Body style={main}>
+      <Container style={container}>
+        <Section style={outerCard}>
+          <Section style={header}>
+            <Img
+              alt={`${emailConfig.company.name} logo`}
+              src="https://storage-r2.zephyyrr.in/Assets/zephyr-logo.png"
+              style={logo}
+              width={120}
+            />
+          </Section>
+
+          <Section style={innerCard}>
+            <Text style={heading}>Your verification code</Text>
+            <Text style={paragraph}>
+              Use this code to verify your email address and complete your
+              registration.
+            </Text>
+
+            <Section style={otpContainer}>
+              <Text style={otpCode}>{otp}</Text>
+            </Section>
+
+            <Text style={otpNote}>
+              This code will expire in 5 minutes. If you didn't request this
+              code, please ignore this email.
+            </Text>
+
+            <Hr style={divider} />
+
+            <Text style={note}>
+              For security reasons, never share this code with anyone.
+            </Text>
+          </Section>
+
+          <Text style={footerLinks}>
+            <Link href={emailConfig.legal.privacy.url} style={footerLink}>
+              {emailConfig.legal.privacy.text}
+            </Link>{" "}
+            <Link href={emailConfig.legal.terms.url} style={footerLink}>
+              {emailConfig.legal.terms.text}
+            </Link>{" "}
+            <Link href={emailConfig.legal.unsubscribe.url} style={footerLink}>
+              {emailConfig.legal.unsubscribe.text}
+            </Link>
+          </Text>
+          <Text style={footer}>
+            © {new Date().getFullYear()} {emailConfig.company.name}. All rights
+            reserved.
+          </Text>
+        </Section>
+      </Container>
+    </Body>
+  </Html>
+);
+
+export const getOTPVerificationEmailHtml = (otp: string) =>
+  render(<OTPVerificationEmail otp={otp} />);
+
 const brandPrimary = "#F85522";
 
 const main = {
@@ -190,5 +257,31 @@ const footer = {
   color: emailConfig.assets.colors.textLight,
   fontSize: "12px",
   margin: "0 0 8px",
+  textAlign: "center" as const,
+};
+
+const otpContainer = {
+  backgroundColor: "#f8fafc",
+  border: `2px solid ${brandPrimary}20`,
+  borderRadius: "12px",
+  margin: "24px 0",
+  padding: "32px 24px",
+  textAlign: "center" as const,
+};
+
+const otpCode = {
+  color: brandPrimary,
+  fontSize: "32px",
+  fontWeight: 700,
+  letterSpacing: "8px",
+  margin: "0",
+  fontFamily: "monospace",
+};
+
+const otpNote = {
+  color: emailConfig.assets.colors.text,
+  fontSize: "14px",
+  lineHeight: "20px",
+  margin: "16px 0 0",
   textAlign: "center" as const,
 };

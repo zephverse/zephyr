@@ -3,6 +3,7 @@ import { env } from "../../env";
 import {
   sendPasswordResetEmail,
   sendVerificationEmail,
+  sendVerificationOTP,
 } from "../email/service";
 
 const emailService: EmailService = {
@@ -27,4 +28,9 @@ const emailService: EmailService = {
 export const auth = createAuthConfig({
   emailService,
   environment: env.NODE_ENV as "development" | "production",
+  sendVerificationOTP: async ({ email, otp, type }) => {
+    if (type === "email-verification") {
+      await sendVerificationOTP(email, otp);
+    }
+  },
 });

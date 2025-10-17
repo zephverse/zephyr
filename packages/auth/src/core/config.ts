@@ -3,7 +3,12 @@ import { prisma } from "@zephyr/db";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
-import { admin as adminPlugin, jwt, username } from "better-auth/plugins";
+import {
+  admin as adminPlugin,
+  emailOTP,
+  jwt,
+  username,
+} from "better-auth/plugins";
 import type {
   DiscordProfile,
   GithubProfile,
@@ -57,10 +62,19 @@ export type EmailService = {
 export type AuthConfig = {
   emailService?: EmailService;
   environment?: "development" | "production";
+  sendVerificationOTP?: (params: {
+    email: string;
+    otp: string;
+    type: string;
+  }) => Promise<void>;
 };
 
 export function createAuthConfig(config: AuthConfig = {}) {
-  const { emailService, environment = env.NODE_ENV || "development" } = config;
+  const {
+    emailService,
+    environment = env.NODE_ENV || "development",
+    sendVerificationOTP,
+  } = config;
 
   return betterAuth({
     database: prismaAdapter(prisma, {
@@ -88,7 +102,23 @@ export function createAuthConfig(config: AuthConfig = {}) {
       },
     },
 
-    plugins: [username(), jwt(), nextCookies(), adminPlugin()],
+    plugins: [
+      username(),
+      jwt(),
+      nextCookies(),
+      adminPlugin(),
+      ...(sendVerificationOTP
+        ? [
+            emailOTP({
+              overrideDefaultEmailVerification: true,
+              otpLength: 6,
+              expiresIn: 300,
+              allowedAttempts: 3,
+              sendVerificationOTP,
+            }),
+          ]
+        : []),
+    ],
 
     emailAndPassword: {
       enabled: true,

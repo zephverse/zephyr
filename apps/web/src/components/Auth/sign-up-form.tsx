@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { env } from "@root/env";
 import { type SignUpValues, signUpSchema } from "@zephyr/auth/validation";
 import { FlipWords } from "@zephyr/ui/components/ui/flip-words";
 import { useToast } from "@zephyr/ui/hooks/use-toast";
@@ -16,28 +17,39 @@ import {
   FormMessage,
 } from "@zephyr/ui/shadui/form";
 import { Input } from "@zephyr/ui/shadui/input";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+} from "@zephyr/ui/shadui/input-otp";
 import { AlertCircle, Mail, User } from "lucide-react";
-import { motion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
-import { useCallback, useEffect, useId, useState, useTransition } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import {
   type FieldValues,
   type SubmitErrorHandler,
   useForm,
 } from "react-hook-form";
 import { useCountdown } from "usehooks-ts";
-import { resendVerificationEmail, signUp } from "@/app/(auth)/signup/actions";
+import { signUp } from "@/app/(auth)/signup/actions";
 import { LoadingButton } from "@/components/Auth/loading-button";
 import { PasswordInput } from "@/components/Auth/password-input";
 import { PasswordStrengthChecker } from "./password-strength-checker";
 
 const texts = [
-  "Elevate your ideas, accelerate your impact.",
-  "Transform thoughts into action.",
-  "Your journey to greatness starts here.",
-  "Start Your Adventure",
-  "Let parazeeknova cook",
-  "Dive In!",
+  "All your worlds, one feed.",
+  "The pulse of your digital life.",
+  "Stream everything that matters.",
+  "Unify your social universe.",
+  "Where every post finds you.",
 ];
 
 type ErrorWithMessage = {
@@ -73,18 +85,18 @@ export default function SignUpForm() {
   const [password, setPassword] = useState("");
   const [isPending, startTransition] = useTransition();
   const [isLoading, setIsLoading] = useState(false);
-  const [isResending, setIsResending] = useState(false);
-  const [isVerificationEmailSent, setIsVerificationEmailSent] = useState(false);
   const [hoveredField, setHoveredField] = useState<string | null>(null);
-  const verificationChannel = new BroadcastChannel("email-verification");
-  const [isAgeVerified, setIsAgeVerified] = useState(false);
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
-
+  const [showOTPPanel, setShowOTPPanel] = useState(false);
+  const [isVerifyingOTP, setIsVerifyingOTP] = useState(false);
+  const [otp, setOtp] = useState("");
   const [count, { startCountdown, stopCountdown, resetCountdown }] =
     useCountdown({
-      countStart: 60,
+      countStart: 300,
       intervalMs: 1000,
     });
+  const verificationChannel = useRef<BroadcastChannel | null>(null);
+  const [isAgeVerified, setIsAgeVerified] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const form = useForm<SignUpValues>({
     resolver: zodResolver(signUpSchema),
@@ -97,28 +109,35 @@ export default function SignUpForm() {
   });
 
   useEffect(() => {
-    if (count === 0) {
-      stopCountdown();
-      resetCountdown();
-    }
-  }, [count, stopCountdown, resetCountdown]);
+    verificationChannel.current = new BroadcastChannel("email-verification");
 
-  useEffect(() => {
     const handleVerificationSuccess = () => {
       setIsVerifying(false);
       window.location.reload();
     };
 
-    verificationChannel.addEventListener("message", (event) => {
+    verificationChannel.current.addEventListener("message", (event) => {
       if (event.data === "verification-success") {
         handleVerificationSuccess();
       }
     });
 
     return () => {
-      verificationChannel.close();
+      if (verificationChannel.current) {
+        verificationChannel.current.close();
+      }
     };
-  }, [setIsVerifying, verificationChannel]);
+  }, [setIsVerifying]);
+
+  useEffect(() => {
+    if (showOTPPanel) {
+      startCountdown();
+    } else {
+      stopCountdown();
+      resetCountdown();
+      setOtp("");
+    }
+  }, [showOTPPanel, startCountdown, stopCountdown, resetCountdown]);
 
   const handleInvalidSubmit: SubmitErrorHandler<FieldValues> = useCallback(
     (errors) => {
@@ -159,13 +178,10 @@ export default function SignUpForm() {
         const result = await signUp(values);
 
         if (result.success) {
-          setIsVerifying(true);
-          setIsVerificationEmailSent(true);
-          startCountdown();
+          setShowOTPPanel(true);
           toast({
-            title: "Verify Your Email!",
-            description:
-              "Check your inbox for the verification email, it's in there somewhere!",
+            title: "Check Your Email!",
+            description: "We've sent a verification code to your email.",
           });
         } else if (result.error) {
           const msg = String(result.error);
@@ -194,41 +210,120 @@ export default function SignUpForm() {
     });
   };
 
-  const onResendVerificationEmail = async () => {
-    if (count > 0 && count < 60) {
-      return;
-    }
-
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: it's fine
+  const handleOTPVerification = async (otpValue: string) => {
     try {
-      setIsResending(true);
+      setIsVerifyingOTP(true);
       const email = form.getValues("email");
-      const result = await resendVerificationEmail(email);
+      const authBase = env.NEXT_PUBLIC_AUTH_URL;
+      const res = await fetch(`${authBase}/api/trpc/pendingSignupVerify`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          id: 1,
+          json: {
+            email,
+            otp: otpValue,
+            otpVerified: true,
+          },
+        }),
+      });
 
-      if (result.success) {
-        startCountdown();
-        toast({
-          title: "Email Sent!",
-          description: "A new verification email has been sent to your inbox!",
-          duration: 3000,
-        });
-      } else {
+      const data = await res.json().catch(() => ({}) as unknown);
+
+      if (!(res.ok && data?.result?.data?.json?.success)) {
+        const serverError =
+          data?.result?.error?.message ||
+          data?.result?.data?.json?.error ||
+          "Signup completion failed";
+
+        let userFriendlyError = "Something went wrong. Please try again.";
+        if (serverError === "invalid-otp") {
+          userFriendlyError =
+            "The verification code is incorrect. Please check and try again.";
+        } else if (serverError === "user-exists") {
+          userFriendlyError =
+            "An account with this email or username already exists.";
+        } else if (serverError === "no-pending-signup") {
+          userFriendlyError =
+            "Your verification session has expired. Please start over.";
+        }
+
         toast({
           variant: "destructive",
-          title: "Failed to Resend",
-          description:
-            result.error || "Failed to resend verification email, try again?",
-          duration: 5000,
+          title: "Verification Failed",
+          description: userFriendlyError,
         });
+        throw new Error(serverError);
       }
-    } catch (resendError) {
-      console.error("Error resending verification email:", resendError);
+
+      const responseData = data?.result?.data?.json;
+      const responseEmail = responseData?.email;
+      const responsePassword = responseData?.password;
+
+      if (responseEmail && responsePassword) {
+        try {
+          console.log("Attempting auto-login with:", { email: responseEmail });
+          const { authClient } = await import("@/lib/auth");
+          await authClient.signIn.email({
+            email: responseEmail,
+            password: responsePassword,
+            fetchOptions: {
+              onError: () => {
+                throw new Error("Auto-login failed");
+              },
+            },
+          });
+
+          console.log("Auto-login API call completed successfully");
+          verificationChannel.current?.postMessage("verification-success");
+          setShowOTPPanel(false);
+          setIsVerifying(true);
+          toast({
+            title: "Welcome to Zephyr! 🎉",
+            description:
+              "Your account has been created and you're now logged in.",
+          });
+          setTimeout(() => {
+            console.log("Reloading page after successful login");
+            window.location.reload();
+          }, 500);
+          return;
+        } catch (signError) {
+          console.error("Auto sign-in failed:", signError);
+          toast({
+            variant: "destructive",
+            title: "Login Failed",
+            description:
+              "Account created but automatic login failed. Please log in manually.",
+          });
+        }
+      } else {
+        console.log("No email/password returned for auto-login");
+      }
+
+      setShowOTPPanel(false);
+      setIsVerifying(true);
+      toast({
+        title: "Welcome to Zephyr! 🎉",
+        description: "Your account has been created successfully.",
+      });
+      verificationChannel.current?.postMessage("verification-success");
+      setTimeout(() => window.location.reload(), 100);
+    } catch (otpError) {
+      const message =
+        otpError instanceof Error
+          ? otpError.message
+          : "OTP verification failed";
       toast({
         variant: "destructive",
-        title: "Something went wrong!",
-        description: "Failed to resend verification email, try again? Our bad!",
+        title: "Verification Failed",
+        description: message,
       });
+      throw otpError;
     } finally {
-      setIsResending(false);
+      setIsVerifyingOTP(false);
     }
   };
 
@@ -240,302 +335,351 @@ export default function SignUpForm() {
           words={texts}
         />
       </div>
-
       <div className="relative">
-        <div
-          className={`transition-all duration-500 ease-in-out ${
-            isVerificationEmailSent
-              ? "pointer-events-none translate-y-[-20px] transform opacity-0"
-              : "translate-y-0 transform opacity-100"
-          }`}
-        >
-          <Form {...form}>
-            <form
-              autoComplete="on"
-              className="space-y-3"
-              noValidate
-              onSubmit={form.handleSubmit(onSubmit, handleInvalidSubmit)}
+        <AnimatePresence initial={false} mode="wait">
+          {!showOTPPanel && (
+            <motion.div
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              initial={{ opacity: 0, y: 8 }}
+              key="signup-form"
+              transition={{ duration: 0.25 }}
             >
-              {error && (
-                <div className="rounded-lg bg-destructive/15 p-3 text-center text-destructive text-sm">
-                  <p className="flex items-center justify-center gap-2">
-                    <AlertCircle className="h-4 w-4" />
-                    {error}
-                  </p>
-                </div>
-              )}
-              <FormField
-                control={form.control}
-                name="username"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Username</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Input
-                          placeholder="cooluser"
-                          {...field}
-                          autoComplete="username"
-                          className={`transition-all duration-500 ease-in-out ${
-                            hoveredField === "username"
-                              ? "border-primary shadow-lg shadow-primary/20"
-                              : ""
-                          }`}
-                          name="username"
-                          onMouseEnter={() => setHoveredField("username")}
-                          onMouseLeave={() => setHoveredField(null)}
+              <Form {...form}>
+                <form
+                  autoComplete="on"
+                  className="space-y-3"
+                  noValidate
+                  onSubmit={form.handleSubmit(onSubmit, handleInvalidSubmit)}
+                >
+                  {error && (
+                    <div className="rounded-lg bg-destructive/15 p-3 text-center text-destructive text-sm">
+                      <p className="flex items-center justify-center gap-2">
+                        <AlertCircle className="h-4 w-4" />
+                        {error}
+                      </p>
+                    </div>
+                  )}
+                  <FormField
+                    control={form.control}
+                    name="username"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Username</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Input
+                              placeholder="cooluser"
+                              {...field}
+                              autoComplete="username"
+                              className={`transition-all duration-500 ease-in-out ${
+                                hoveredField === "username"
+                                  ? "border-primary shadow-lg shadow-primary/20"
+                                  : ""
+                              }`}
+                              name="username"
+                              onMouseEnter={() => setHoveredField("username")}
+                              onMouseLeave={() => setHoveredField(null)}
+                            />
+                            <User className="-translate-y-1/2 absolute top-1/2 right-3 h-4 w-4 text-muted-foreground" />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Input
+                              placeholder="you@example.com"
+                              type="email"
+                              {...field}
+                              autoComplete="email"
+                              className={`transition-all duration-500 ease-in-out ${
+                                hoveredField === "email"
+                                  ? "border-primary shadow-lg shadow-primary/20"
+                                  : ""
+                              }`}
+                              name="email"
+                              onMouseEnter={() => setHoveredField("email")}
+                              onMouseLeave={() => setHoveredField(null)}
+                            />
+                            <Mail className="-translate-y-1/2 absolute top-1/2 right-3 h-4 w-4 text-muted-foreground" />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Password</FormLabel>
+                        <FormControl>
+                          <PasswordInput
+                            placeholder="••••••••"
+                            {...field}
+                            autoComplete="new-password"
+                            className={`transition-all duration-500 ease-in-out ${
+                              hoveredField === "password"
+                                ? "border-primary shadow-lg shadow-primary/20"
+                                : ""
+                            }`}
+                            name="password"
+                            onChange={(e) => {
+                              field.onChange(e);
+                              setPassword(e.target.value);
+                            }}
+                            onMouseEnter={() => setHoveredField("password")}
+                            onMouseLeave={() => setHoveredField(null)}
+                          />
+                        </FormControl>
+                        <PasswordStrengthChecker
+                          password={password}
+                          setPassword={setPassword}
+                          setValue={form.setValue}
                         />
-                        <User className="-translate-y-1/2 absolute top-1/2 right-3 h-4 w-4 text-muted-foreground" />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Input
-                          placeholder="you@example.com"
-                          type="email"
-                          {...field}
-                          autoComplete="email"
-                          className={`transition-all duration-500 ease-in-out ${
-                            hoveredField === "email"
-                              ? "border-primary shadow-lg shadow-primary/20"
-                              : ""
-                          }`}
-                          name="email"
-                          onMouseEnter={() => setHoveredField("email")}
-                          onMouseLeave={() => setHoveredField(null)}
-                        />
-                        <Mail className="-translate-y-1/2 absolute top-1/2 right-3 h-4 w-4 text-muted-foreground" />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Password</FormLabel>
-                    <FormControl>
-                      <PasswordInput
-                        placeholder="••••••••"
-                        {...field}
-                        autoComplete="new-password"
-                        className={`transition-all duration-500 ease-in-out ${
-                          hoveredField === "password"
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="space-y-3 pt-2">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        checked={isAgeVerified}
+                        className={`border-primary/20 transition-all duration-500 ease-in-out data-[state=checked]:border-primary/80 data-[state=checked]:bg-primary/80 ${
+                          hoveredField === "ageVerify"
                             ? "border-primary shadow-lg shadow-primary/20"
                             : ""
                         }`}
-                        name="password"
-                        onChange={(e) => {
-                          field.onChange(e);
-                          setPassword(e.target.value);
-                        }}
-                        onMouseEnter={() => setHoveredField("password")}
+                        id={ageVerifyId}
+                        onCheckedChange={(checked) =>
+                          setIsAgeVerified(checked as boolean)
+                        }
+                        onMouseEnter={() => setHoveredField("ageVerify")}
                         onMouseLeave={() => setHoveredField(null)}
                       />
-                    </FormControl>
-                    <PasswordStrengthChecker
-                      password={password}
-                      setPassword={setPassword}
-                      setValue={form.setValue}
-                    />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      <label
+                        className="text-muted-foreground text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        htmlFor={ageVerifyId}
+                      >
+                        Yes, I've survived enough birthdays to be here
+                      </label>
+                    </div>
 
-              <div className="space-y-3 pt-2">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    checked={isAgeVerified}
-                    className={`border-primary/20 transition-all duration-500 ease-in-out data-[state=checked]:border-primary/80 data-[state=checked]:bg-primary/80 ${
-                      hoveredField === "ageVerify"
-                        ? "border-primary shadow-lg shadow-primary/20"
-                        : ""
-                    }`}
-                    id={ageVerifyId}
-                    onCheckedChange={(checked) =>
-                      setIsAgeVerified(checked as boolean)
-                    }
-                    onMouseEnter={() => setHoveredField("ageVerify")}
-                    onMouseLeave={() => setHoveredField(null)}
-                  />
-                  <label
-                    className="text-muted-foreground text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    htmlFor={ageVerifyId}
-                  >
-                    Yes, I've survived enough birthdays to be here
-                  </label>
-                </div>
+                    <div className="flex items-start space-x-2">
+                      <Checkbox
+                        checked={acceptedTerms}
+                        className={`mt-1 border-primary/20 transition-all duration-500 ease-in-out data-[state=checked]:border-primary/80 data-[state=checked]:bg-primary/80 ${
+                          hoveredField === "terms"
+                            ? "border-primary shadow-lg shadow-primary/20"
+                            : ""
+                        }`}
+                        id={termsId}
+                        onCheckedChange={(checked) =>
+                          setAcceptedTerms(checked as boolean)
+                        }
+                        onMouseEnter={() => setHoveredField("terms")}
+                        onMouseLeave={() => setHoveredField(null)}
+                      />
+                      <label
+                        className="text-muted-foreground text-sm leading-tight peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        htmlFor={termsId}
+                      >
+                        I agree to the{" "}
+                        <Link
+                          className="font-medium text-primary underline-offset-4 hover:underline"
+                          href="/toc"
+                        >
+                          Terms of Service
+                        </Link>{" "}
+                        and{" "}
+                        <Link
+                          className="font-medium text-primary underline-offset-4 hover:underline"
+                          href="/privacy"
+                        >
+                          Privacy Policy
+                        </Link>
+                      </label>
+                    </div>
 
-                <div className="flex items-start space-x-2">
-                  <Checkbox
-                    checked={acceptedTerms}
-                    className={`mt-1 border-primary/20 transition-all duration-500 ease-in-out data-[state=checked]:border-primary/80 data-[state=checked]:bg-primary/80 ${
-                      hoveredField === "terms"
-                        ? "border-primary shadow-lg shadow-primary/20"
-                        : ""
-                    }`}
-                    id={termsId}
-                    onCheckedChange={(checked) =>
-                      setAcceptedTerms(checked as boolean)
-                    }
-                    onMouseEnter={() => setHoveredField("terms")}
-                    onMouseLeave={() => setHoveredField(null)}
-                  />
-                  <label
-                    className="text-muted-foreground text-sm leading-tight peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    htmlFor={termsId}
-                  >
-                    I agree to the{" "}
-                    <Link
-                      className="font-medium text-primary underline-offset-4 hover:underline"
-                      href="/toc"
+                    <LoadingButton
+                      className="my-4 w-full"
+                      loading={isPending || isLoading}
+                      type="submit"
                     >
-                      Terms of Service
-                    </Link>{" "}
-                    and{" "}
-                    <Link
-                      className="font-medium text-primary underline-offset-4 hover:underline"
-                      href="/privacy"
-                    >
-                      Privacy Policy
-                    </Link>
-                  </label>
-                </div>
+                      Create account
+                    </LoadingButton>
+                  </div>
 
-                <LoadingButton
-                  className="my-4 w-full"
-                  loading={isPending || isLoading}
-                  type="submit"
-                >
-                  Create account
-                </LoadingButton>
-              </div>
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="mt-2 w-full border-border/30 border-t" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="mt-2 px-2 text-muted-foreground">
+                        or continue with
+                      </span>
+                    </div>
+                  </div>
+                </form>
+              </Form>
+            </motion.div>
+          )}
 
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="mt-2 w-full border-border/30 border-t" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="mt-2 px-2 text-muted-foreground">
-                    or continue with
-                  </span>
-                </div>
-              </div>
-            </form>
-          </Form>
-        </div>
-
-        <div
-          className={`absolute top-0 left-0 w-full transition-all duration-500 ease-in-out ${
-            isVerificationEmailSent
-              ? "translate-y-0 transform opacity-100"
-              : "pointer-events-none translate-y-[20px] transform opacity-0"
-          }`}
-        >
-          <div className="relative overflow-hidden rounded-xl border border-border/50 bg-background/60 p-8 shadow-lg backdrop-blur-xl">
-            <div className="-z-10 absolute inset-0 overflow-hidden">
-              <div className="-left-4 absolute top-0 h-[200px] w-[200px] rounded-full bg-primary/10 blur-[50px]" />
-              <div className="absolute top-1/2 right-0 h-[150px] w-[150px] rounded-full bg-purple-500/10 blur-[50px]" />
-            </div>
-
-            <div className="flex flex-col items-center space-y-6 text-center">
-              <div className="relative">
-                <div className="absolute inset-0 animate-pulse rounded-full bg-primary/20 blur-md" />
-                <div className="relative rounded-full border border-primary/20 bg-background/80 p-4 backdrop-blur-sm">
-                  <Mail className="h-8 w-8 text-primary" />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <h3 className="bg-gradient-to-r from-primary via-primary/80 to-primary bg-clip-text font-bold text-2xl text-transparent">
-                  Check Your Email
-                </h3>
-                <div className="mx-auto h-1 w-12 rounded-full bg-gradient-to-r from-primary/5 via-primary/60 to-primary/5" />
-              </div>
-
-              <div className="space-y-3">
-                <p className="text-muted-foreground text-sm">
-                  We've sent a verification link to
+          {showOTPPanel && (
+            <motion.div
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-6"
+              exit={{ opacity: 0, y: -8 }}
+              initial={{ opacity: 0, y: 8 }}
+              key="otp-panel"
+              transition={{ duration: 0.25 }}
+            >
+              <div className="space-y-2 text-center">
+                <p className="bg-gradient-to-r from-primary via-primary/80 to-primary bg-clip-text font-semibold text-2xl text-transparent">
+                  Verify Your Email
+                </p>
+                <p className="text-muted-foreground">
+                  We've sent a 6-digit code to
                 </p>
                 <p className="rounded-lg border border-border/50 bg-muted/50 px-4 py-2 font-medium text-foreground">
                   {form.getValues("email")}
                 </p>
-                <p className="text-muted-foreground text-sm">
-                  Please check your inbox to complete your registration
-                </p>
               </div>
 
-              <div className="w-full space-y-4 pt-2">
+              <div className="flex justify-center">
+                <InputOTP
+                  disabled={isVerifyingOTP || count === 0}
+                  maxLength={6}
+                  onChange={(val) => setOtp(val)}
+                  value={otp}
+                >
+                  <InputOTPGroup>
+                    <InputOTPSlot index={0} key="otp-slot-0" />
+                    <InputOTPSlot index={1} key="otp-slot-1" />
+                    <InputOTPSlot index={2} key="otp-slot-2" />
+                    <InputOTPSlot index={3} key="otp-slot-3" />
+                    <InputOTPSlot index={4} key="otp-slot-4" />
+                    <InputOTPSlot index={5} key="otp-slot-5" />
+                  </InputOTPGroup>
+                </InputOTP>
+              </div>
+
+              <div className="space-y-2 text-center text-sm">
+                <div className="flex items-center justify-center gap-2">
+                  <span className="text-muted-foreground">Code expires in</span>
+                  <span
+                    className={`font-bold font-mono ${count < 60 ? "text-destructive" : "text-muted-foreground"}`}
+                  >
+                    {`${Math.floor(count / 60)}:${String(count % 60).padStart(2, "0")}`}
+                  </span>
+                </div>
+                <div className="relative h-1 w-full overflow-hidden rounded-full bg-muted">
+                  <div
+                    className="absolute top-0 left-0 h-full bg-gradient-to-r from-primary to-primary/60"
+                    style={{ width: `${(count / 300) * 100}%` }}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <Button
+                  className="w-full"
+                  disabled={isVerifyingOTP || otp.length !== 6 || count === 0}
+                  onClick={() => handleOTPVerification(otp)}
+                  type="button"
+                >
+                  {isVerifyingOTP ? "Verifying..." : "Verify Code"}
+                </Button>
+
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-border/30 border-t" />
+                    <span className="w-full border-border/30 border-t" />
                   </div>
                   <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-background/60 px-2 text-muted-foreground backdrop-blur-sm">
-                      Didn't receive the email?
+                    <span className="bg-background px-2 text-muted-foreground">
+                      Having trouble?
                     </span>
                   </div>
                 </div>
 
-                <Button
-                  className="group relative w-full overflow-hidden rounded-lg border border-border/50 bg-background/50 transition-all hover:bg-background/80"
-                  disabled={isResending || (count > 0 && count < 60)}
-                  onClick={onResendVerificationEmail}
-                  variant="ghost"
-                >
-                  {(() => {
-                    if (isResending) {
-                      return (
-                        <span className="relative text-muted-foreground">
-                          Sending...
-                        </span>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    onClick={async () => {
+                      if (count > 0 && count < 300) {
+                        return;
+                      }
+                      const { resendVerificationEmail } = await import(
+                        "@/app/(auth)/signup/actions"
                       );
-                    }
-                    if (count > 0 && count < 60) {
-                      return (
-                        <>
-                          <motion.div
-                            animate={{ width: "0%" }}
-                            className="absolute top-0 left-0 h-full bg-primary/10"
-                            initial={{ width: "100%" }}
-                            transition={{ duration: count, ease: "linear" }}
-                          />
-                          <span className="relative text-muted-foreground">
-                            Resend available in {count}s
-                          </span>
-                        </>
+                      const result = await resendVerificationEmail(
+                        form.getValues("email")
                       );
-                    }
-                    return (
-                      <span className="relative text-primary">
-                        Resend verification email
-                      </span>
-                    );
-                  })()}
-                </Button>
-
-                <p className="text-center text-muted-foreground text-xs">
-                  Check your spam folder if you don't see the email in your
-                  inbox
-                </p>
+                      if (result.success) {
+                        startCountdown();
+                        toast({
+                          title: "Code Sent!",
+                          description:
+                            "A new verification code has been sent to your email.",
+                        });
+                      } else {
+                        toast({
+                          variant: "destructive",
+                          title: "Failed to Resend",
+                          description:
+                            result.error ||
+                            "Failed to resend verification code.",
+                        });
+                      }
+                    }}
+                    type="button"
+                    variant="outline"
+                  >
+                    Resend Code
+                  </Button>
+                  <Button
+                    onClick={async () => {
+                      const { sendVerificationLink } = await import(
+                        "@/app/(auth)/signup/actions"
+                      );
+                      const res = await sendVerificationLink(
+                        form.getValues("email")
+                      );
+                      if (res.success) {
+                        toast({
+                          title: "Email Link Sent!",
+                          description:
+                            "A verification link has been sent to your email.",
+                        });
+                      } else {
+                        toast({
+                          variant: "destructive",
+                          title: "Failed to Send",
+                          description:
+                            res.error || "Failed to send verification link.",
+                        });
+                      }
+                    }}
+                    type="button"
+                    variant="ghost"
+                  >
+                    Use Email Link
+                  </Button>
+                </div>
               </div>
-            </div>
-          </div>
-        </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

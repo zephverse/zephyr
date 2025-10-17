@@ -330,6 +330,7 @@ export default function ClientLoginPage() {
                     text="Don't have an account? Sign Up"
                   />
                 </motion.div>
+
                 <motion.div
                   className="mt-8"
                   custom={5}

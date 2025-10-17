@@ -108,3 +108,74 @@ export async function resendVerificationEmail(email: string): Promise<{
     };
   }
 }
+
+export async function verifyOTP(
+  email: string,
+  otp: string
+): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  try {
+    const authBase = env.NEXT_PUBLIC_AUTH_URL;
+    const res = await fetch(`${authBase}/api/auth/email-otp/verify-email`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ email, otp }),
+    });
+    const data = await res.json().catch(() => ({}) as unknown);
+
+    if (!res.ok) {
+      const err = data?.message || data?.error || "OTP verification failed";
+      return { success: false, error: String(err) };
+    }
+
+    const ok = data?.success === true;
+    if (!ok) {
+      const err = data?.message || data?.error || "Invalid OTP code";
+      return { success: false, error: String(err) };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("OTP verification error:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to verify OTP",
+    };
+  }
+}
+
+export async function sendVerificationLink(email: string): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  try {
+    const authBase = env.NEXT_PUBLIC_AUTH_URL;
+    const res = await fetch(`${authBase}/api/trpc/pendingSignupSendLink`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ id: 1, json: { email } }),
+    });
+    const data = await res.json().catch(() => ({}) as unknown);
+    const ok =
+      data?.result?.data?.json?.success === true || data?.success === true;
+    if (!ok) {
+      const err =
+        data?.result?.error?.message ||
+        data?.result?.data?.json?.error ||
+        data?.error ||
+        "Failed to send verification link";
+      return { success: false, error: String(err) };
+    }
+    return { success: true };
+  } catch (error) {
+    console.error("Send verification link error:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to send link",
+    };
+  }
+}

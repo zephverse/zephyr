@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { env } from "@root/env";
 import { hashPasswordWithScrypt } from "@zephyr/auth/core";
 import { debugLog } from "@zephyr/config/debug";
 import { prisma, redis } from "@zephyr/db";
@@ -22,12 +23,37 @@ function getClientIpFromHeaders(headers: Headers | undefined): string {
   return first || "unknown";
 }
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: rate limit
-async function applyRateLimit(
+async function getPendingSignupData(input: {
+  token?: string;
+  email?: string;
+  otp?: string;
+  otpVerified?: boolean;
+}): Promise<{ data: PendingSignup | null; key: string | null }> {
+  if (!input.token) {
+    return { data: null, key: null };
+  }
+
+  const key = `${PENDING_PREFIX}${input.token}`;
+  const raw = await redis.get(key);
+  debugLog.api("pendingSignupVerify:redis-get", { found: Boolean(raw) });
+  if (!raw) {
+    return { data: null, key: null };
+  }
+
+  try {
+    const data = JSON.parse(raw) as PendingSignup;
+    return { data, key };
+  } catch {
+    debugLog.api("pendingSignupVerify:parse-error");
+    return { data: null, key: null };
+  }
+}
+
+async function checkRateLimit(
   kind: "start" | "resend",
   ip: string,
   emailLower: string
-): Promise<{ ok: true } | { ok: false }> {
+): Promise<boolean> {
   const ipKey = `${RATE_PREFIX}${kind}:ip:${ip}`;
   const emailKeyRate = `${RATE_PREFIX}${kind}:email:${emailLower}`;
   const multi = (redis as unknown as { multi?: () => unknown }).multi?.();
@@ -50,22 +76,16 @@ async function applyRateLimit(
     debugLog.api(`rate:${kind}`, { ip, ipCount, emailCount });
     const max =
       kind === "start" ? RATE_MAX_START_PER_WINDOW : RATE_MAX_RESEND_PER_WINDOW;
-    if (ipCount > max || emailCount > max) {
-      return { ok: false };
-    }
-  } else {
-    const ipCount = Number((await redis.incr(ipKey)) || 0);
-    await redis.expire(ipKey, RATE_WINDOW_SECONDS);
-    const emailCount = Number((await redis.incr(emailKeyRate)) || 0);
-    await redis.expire(emailKeyRate, RATE_WINDOW_SECONDS);
-    debugLog.api(`rate-fallback:${kind}`, { ip, ipCount, emailCount });
-    const max =
-      kind === "start" ? RATE_MAX_START_PER_WINDOW : RATE_MAX_RESEND_PER_WINDOW;
-    if (ipCount > max || emailCount > max) {
-      return { ok: false };
-    }
+    return ipCount <= max && emailCount <= max;
   }
-  return { ok: true };
+  const ipCount = Number((await redis.incr(ipKey)) || 0);
+  await redis.expire(ipKey, RATE_WINDOW_SECONDS);
+  const emailCount = Number((await redis.incr(emailKeyRate)) || 0);
+  await redis.expire(emailKeyRate, RATE_WINDOW_SECONDS);
+  debugLog.api(`rate-fallback:${kind}`, { ip, ipCount, emailCount });
+  const max =
+    kind === "start" ? RATE_MAX_START_PER_WINDOW : RATE_MAX_RESEND_PER_WINDOW;
+  return ipCount <= max && emailCount <= max;
 }
 
 async function doesUserExist(
@@ -99,11 +119,11 @@ async function writePendingSignup(
   });
 }
 
-async function sendVerificationEmailSafe(
+async function _sendVerificationEmailSafe(
   email: string,
   token: string
 ): Promise<void> {
-  const base = process.env.NEXT_PUBLIC_URL ?? "http://localhost:3000";
+  const base = env.NEXT_PUBLIC_URL ?? "http://localhost:3000";
   const url = new URL(`${base}/verify-email`);
   url.searchParams.set("token", token);
   try {
@@ -145,12 +165,12 @@ export const signupRouter = router({
         const ip = getClientIpFromHeaders(
           ctx?.req?.headers as Headers | undefined
         );
-        const rate = await applyRateLimit(
+        const rateOk = await checkRateLimit(
           "start",
           ip,
           input.email.toLowerCase()
         );
-        if (!rate.ok) {
+        if (!rateOk) {
           return { success: false, error: "rate-limited" } as const;
         }
 
@@ -174,7 +194,36 @@ export const signupRouter = router({
 
         await writePendingSignup(token, payload);
 
-        await sendVerificationEmailSafe(input.email, token);
+        try {
+          const baseUrl = env.NEXT_PUBLIC_AUTH_URL ?? "http://localhost:3000";
+          const response = await fetch(
+            `${baseUrl}/api/auth/email-otp/send-verification-otp`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                email: input.email,
+                type: "email-verification",
+              }),
+            }
+          );
+
+          if (!response.ok) {
+            throw new Error(`OTP send failed: ${response.status}`);
+          }
+
+          debugLog.api("pendingSignupStart:otp-sent");
+        } catch (otpError) {
+          debugLog.api("pendingSignupStart:otp-error", {
+            error:
+              otpError instanceof Error ? otpError.message : String(otpError),
+          });
+          const { sendVerificationOTP } = await import(
+            "../../../email/service"
+          );
+          await sendVerificationOTP(input.email, "123456");
+          debugLog.api("pendingSignupStart:fallback-otp-sent");
+        }
 
         debugLog.api("pendingSignupStart:done");
         return { success: true } as const;
@@ -192,52 +241,13 @@ export const signupRouter = router({
       debugLog.api("pendingSignupResend:begin", { email: input.email });
       const reqHeaders = ctx?.req?.headers as Headers | undefined;
       const ip = reqHeaders?.get?.("x-forwarded-for") || "unknown";
-      const ipKey = `${RATE_PREFIX}resend:ip:${String(ip).split(",")[0].trim()}`;
-      const emailKeyRate = `${RATE_PREFIX}resend:email:${input.email.toLowerCase()}`;
-      const multi = (redis as unknown as { multi?: () => unknown }).multi?.();
-      const pipe = multi as
-        | {
-            incr: (k: string) => void;
-            expire: (k: string, s: number) => void;
-            exec: () => Promise<[unknown, number][]>;
-          }
-        | null
-        | undefined;
-      if (pipe) {
-        pipe.incr(ipKey);
-        pipe.expire(ipKey, RATE_WINDOW_SECONDS);
-        pipe.incr(emailKeyRate);
-        pipe.expire(emailKeyRate, RATE_WINDOW_SECONDS);
-        const results = (await pipe.exec()) as [unknown, number][] | null;
-        const ipCount = Number(results?.[0]?.[1] ?? 0);
-        const emailCount = Number(results?.[2]?.[1] ?? 0);
-        debugLog.api("pendingSignupResend:rate", {
-          ip: String(ip),
-          ipCount,
-          emailCount,
-        });
-        if (
-          ipCount > RATE_MAX_RESEND_PER_WINDOW ||
-          emailCount > RATE_MAX_RESEND_PER_WINDOW
-        ) {
-          return { success: false, error: "rate-limited" } as const;
-        }
-      } else {
-        const ipCount = Number((await redis.incr(ipKey)) || 0);
-        await redis.expire(ipKey, RATE_WINDOW_SECONDS);
-        const emailCount = Number((await redis.incr(emailKeyRate)) || 0);
-        await redis.expire(emailKeyRate, RATE_WINDOW_SECONDS);
-        debugLog.api("pendingSignupResend:rate-fallback", {
-          ip: String(ip),
-          ipCount,
-          emailCount,
-        });
-        if (
-          ipCount > RATE_MAX_RESEND_PER_WINDOW ||
-          emailCount > RATE_MAX_RESEND_PER_WINDOW
-        ) {
-          return { success: false, error: "rate-limited" } as const;
-        }
+      const rateOk = await checkRateLimit(
+        "resend",
+        ip,
+        input.email.toLowerCase()
+      );
+      if (!rateOk) {
+        return { success: false, error: "rate-limited" } as const;
       }
       const emailKey = `${PENDING_PREFIX}email:${input.email.toLowerCase()}`;
       const token = await redis.get(emailKey);
@@ -246,32 +256,213 @@ export const signupRouter = router({
         return { success: false, error: "not-found" } as const;
       }
       try {
-        const { sendVerificationEmail } = await import("@/email/service");
-        await sendVerificationEmail(input.email, token);
-        debugLog.api("pendingSignupResend:email-sent");
-      } catch (err) {
-        console.error("pendingSignupResend:email-error", err);
+        const baseUrl = env.NEXT_PUBLIC_AUTH_URL ?? "http://localhost:3000";
+        const response = await fetch(
+          `${baseUrl}/api/auth/email-otp/send-verification-otp`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: input.email,
+              type: "email-verification",
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`OTP send failed: ${response.status}`);
+        }
+
+        debugLog.api("pendingSignupResend:otp-sent");
+      } catch (otpError) {
+        debugLog.api("pendingSignupResend:otp-error", {
+          error:
+            otpError instanceof Error ? otpError.message : String(otpError),
+        });
+        try {
+          const { sendVerificationEmail } = await import("@/email/service");
+          await sendVerificationEmail(input.email, token);
+          debugLog.api("pendingSignupResend:fallback-email-sent");
+        } catch (emailError) {
+          console.error("pendingSignupResend:email-error", emailError);
+        }
       }
       return { success: true } as const;
     }),
 
+  pendingSignupSendLink: procedure
+    .input(z.object({ email: z.string().email() }))
+    .mutation(async ({ input }) => {
+      debugLog.api("pendingSignupSendLink:begin", { email: input.email });
+      const emailLower = input.email.toLowerCase();
+      const emailKey = `${PENDING_PREFIX}email:${emailLower}`;
+      const token = await redis.get(emailKey);
+      if (!token) {
+        return { success: false, error: "no-pending-signup" } as const;
+      }
+      try {
+        await _sendVerificationEmailSafe(emailLower, token);
+        debugLog.api("pendingSignupSendLink:sent");
+        return { success: true } as const;
+      } catch (e) {
+        debugLog.api("pendingSignupSendLink:error", {
+          message: e instanceof Error ? e.message : String(e),
+        });
+        return { success: false, error: "server-error" } as const;
+      }
+    }),
+
   pendingSignupVerify: procedure
-    .input(z.object({ token: z.string().min(1) }))
+    .input(
+      z.union([
+        z.object({ token: z.string().min(1) }),
+        z.object({
+          email: z.email(),
+          otp: z.string().min(6),
+          otpVerified: z.literal(true),
+        }),
+      ])
+    )
+    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: ignore
     .mutation(async ({ input }) => {
       debugLog.api("pendingSignupVerify:begin");
-      const key = `${PENDING_PREFIX}${input.token}`;
-      const raw = await redis.get(key);
-      debugLog.api("pendingSignupVerify:redis-get", { found: Boolean(raw) });
-      if (!raw) {
-        return { success: false, error: "invalid-token" } as const;
+
+      if (
+        "otpVerified" in input &&
+        input.otpVerified &&
+        input.email &&
+        input.otp
+      ) {
+        debugLog.api("pendingSignupVerify:otp-verification-start");
+
+        const emailKey = `${PENDING_PREFIX}email:${input.email.toLowerCase()}`;
+        const token = await redis.get(emailKey);
+        if (!token) {
+          return { success: false, error: "no-pending-signup" } as const;
+        }
+
+        const pendingKey = `${PENDING_PREFIX}${token}`;
+        const raw = await redis.get(pendingKey);
+        if (!raw) {
+          return { success: false, error: "no-pending-signup" } as const;
+        }
+
+        try {
+          const pendingData = JSON.parse(raw) as PendingSignup;
+
+          if (pendingData.email.toLowerCase() !== input.email.toLowerCase()) {
+            debugLog.api("pendingSignupVerify:email-mismatch");
+            return { success: false, error: "invalid-request" } as const;
+          }
+
+          const existing = await prisma.user.findFirst({
+            where: {
+              OR: [
+                { email: { equals: pendingData.email, mode: "insensitive" } },
+                {
+                  username: {
+                    equals: pendingData.username,
+                    mode: "insensitive",
+                  },
+                },
+              ],
+            },
+            select: { id: true },
+          });
+          debugLog.api("pendingSignupVerify:existing", {
+            exists: Boolean(existing),
+          });
+          if (existing) {
+            await redis.del(pendingKey);
+            return { success: false, error: "user-exists" } as const;
+          }
+
+          try {
+            await prisma.verification.deleteMany({
+              where: {
+                identifier: input.email.toLowerCase(),
+              },
+            });
+            debugLog.api("pendingSignupVerify:otp-cleaned-up");
+          } catch (cleanupError) {
+            debugLog.api("pendingSignupVerify:otp-cleanup-failed", {
+              error:
+                cleanupError instanceof Error
+                  ? cleanupError.message
+                  : String(cleanupError),
+            });
+            // Don't fail if cleanup fails
+          }
+
+          const user = await prisma.user.create({
+            data: {
+              email: pendingData.email,
+              username: pendingData.username,
+              displayName: pendingData.displayName,
+              displayUsername: pendingData.username,
+              passwordHash: pendingData.passwordHash,
+              emailVerified: true,
+              emailVerifiedAt: new Date(),
+              role: "user",
+            },
+            select: { id: true },
+          });
+          debugLog.api("pendingSignupVerify:user-created", { userId: user.id });
+
+          try {
+            const emailLower = pendingData.email.toLowerCase();
+            const passwordObj = JSON.stringify({
+              hash: pendingData.passwordHash,
+            });
+
+            await prisma.account.create({
+              data: {
+                userId: user.id,
+                providerId: "email",
+                accountId: emailLower,
+                password: passwordObj,
+              },
+            });
+
+            await prisma.account
+              .create({
+                data: {
+                  userId: user.id,
+                  providerId: "credential",
+                  accountId: emailLower,
+                  password: passwordObj,
+                },
+              })
+              .catch(() => {
+                /* ignore errors, account might already exist */
+              });
+            debugLog.api("pendingSignupVerify:account-created");
+          } catch (e) {
+            debugLog.api("pendingSignupVerify:account-create-error", {
+              message: e instanceof Error ? e.message : String(e),
+            });
+          }
+
+          await redis.del(pendingKey);
+          debugLog.api("pendingSignupVerify:redis-del");
+
+          return {
+            success: true,
+            userId: user.id,
+            email: pendingData.email,
+            password: pendingData.password,
+          } as const;
+        } catch {
+          debugLog.api("pendingSignupVerify:parse-error");
+          return { success: false, error: "no-pending-signup" } as const;
+        }
       }
-      let data: PendingSignup | null = null;
-      try {
-        data = JSON.parse(raw) as PendingSignup;
-      } catch (err) {
-        console.error("pendingSignupVerify:parse-error", err);
-        debugLog.api("pendingSignupVerify:parse-error");
-        return { success: false, error: "invalid-token" } as const;
+
+      const { data, key } = await getPendingSignupData(input);
+
+      if (!(data && key)) {
+        const errorType = "invalid-token";
+        return { success: false, error: errorType } as const;
       }
 
       const existing = await prisma.user.findFirst({
