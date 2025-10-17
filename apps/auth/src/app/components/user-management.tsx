@@ -3,9 +3,9 @@
 import { AnimatePresence } from "motion/react";
 import { useState } from "react";
 import type { ModalAction, User, UserFilters } from "../types/types";
-import { ActionModal } from "./action-modal";
-import { UserTable } from "./user-table";
-import { UserUpdateModal } from "./user-update-modal";
+import ActionModal from "./action-modal";
+import UserTable from "./user-table";
+import UserUpdateModal from "./user-update-modal";
 
 type UserManagementProps = {
   users: User[];
@@ -25,7 +25,7 @@ type UserManagementProps = {
   ) => void;
 };
 
-export function UserManagement({
+export default function UserManagement({
   users,
   onAction,
   onSearchChangeAction,

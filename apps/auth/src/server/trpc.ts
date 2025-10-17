@@ -46,7 +46,9 @@ export const adminProcedure = t.procedure.use(({ ctx, next }) => {
     });
   }
 
-  if (ctx.user.role !== "admin") {
+  const isAdminByRole = ctx.user.role === "admin";
+
+  if (!isAdminByRole) {
     throw new TRPCError({
       code: "FORBIDDEN",
       message: "You must be an admin to perform this action",

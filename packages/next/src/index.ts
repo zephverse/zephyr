@@ -5,6 +5,7 @@ export const config: NextConfig = {
   reactStrictMode: true,
   experimental: {
     staleTimes: { dynamic: 30 },
+    reactCompiler: true,
   },
   images: {
     remotePatterns: [

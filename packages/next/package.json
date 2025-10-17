@@ -16,7 +16,7 @@
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {
-    "next": "^15.5.4"
+    "next": "^15.5.5"
   },
   "devDependencies": {
     "@zephyr/config": "workspace:*"

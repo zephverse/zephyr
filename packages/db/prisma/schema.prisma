@@ -32,6 +32,9 @@ model User {
   image           String?
   name            String?
   role            String    @default("user")
+  banned          Boolean   @default(false)
+  banReason       String?
+  banExpires      DateTime?
 
   sessions              Session[]
   accounts              Account[]
@@ -48,10 +51,13 @@ model User {
   hnbookmark            HNBookmark[]
   auraReceived          AuraLog[]            @relation("AuraReceived")
   auraIssued            AuraLog[]            @relation("AuraIssued")
+  impersonatedSessions  Session[]            @relation("ImpersonatedSessions")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([banned])
+  @@index([banExpires])
   @@map("users")
 }
 
@@ -100,13 +106,15 @@ model PasswordResetToken {
 }
 
 model Session {
-  id        String   @id @default(cuid())
-  userId    String
-  token     String   @unique
-  expiresAt DateTime
-  ipAddress String?
-  userAgent String?
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id             String   @id @default(cuid())
+  userId         String
+  token          String   @unique
+  expiresAt      DateTime
+  ipAddress      String?
+  userAgent      String?
+  impersonatedBy String?
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  admin          User?    @relation("ImpersonatedSessions", fields: [impersonatedBy], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

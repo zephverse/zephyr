@@ -3,7 +3,12 @@ import { prisma } from "@zephyr/db";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
-import { jwt, username } from "better-auth/plugins";
+import {
+  admin as adminPlugin,
+  emailOTP,
+  jwt,
+  username,
+} from "better-auth/plugins";
 import type {
   DiscordProfile,
   GithubProfile,
@@ -57,10 +62,24 @@ export type EmailService = {
 export type AuthConfig = {
   emailService?: EmailService;
   environment?: "development" | "production";
+  /**
+   * Function to send verification OTP. Returns void to match better-auth's expectations.
+   * The underlying email service returns EmailResult, but this function handles
+   * the conversion and error propagation internally.
+   */
+  sendVerificationOTP?: (params: {
+    email: string;
+    otp: string;
+    type: string;
+  }) => Promise<void>;
 };
 
 export function createAuthConfig(config: AuthConfig = {}) {
-  const { emailService, environment = env.NODE_ENV || "development" } = config;
+  const {
+    emailService,
+    environment = env.NODE_ENV || "development",
+    sendVerificationOTP,
+  } = config;
 
   return betterAuth({
     database: prismaAdapter(prisma, {
@@ -88,7 +107,23 @@ export function createAuthConfig(config: AuthConfig = {}) {
       },
     },
 
-    plugins: [username(), jwt(), nextCookies()],
+    plugins: [
+      username(),
+      jwt(),
+      nextCookies(),
+      adminPlugin(),
+      ...(sendVerificationOTP
+        ? [
+            emailOTP({
+              overrideDefaultEmailVerification: true,
+              otpLength: 6,
+              expiresIn: 300,
+              allowedAttempts: 3,
+              sendVerificationOTP,
+            }),
+          ]
+        : []),
+    ],
 
     emailAndPassword: {
       enabled: true,
@@ -282,25 +317,59 @@ export function createAuthConfig(config: AuthConfig = {}) {
       enabled: false,
     },
 
-    ...(emailService?.sendVerificationEmail && {
-      emailVerification: {
-        sendVerificationEmail: async ({ user, url }) => {
-          let token = "";
-          try {
-            const parsed = new URL(url);
-            token =
-              parsed.searchParams.get("token") ||
-              parsed.pathname.split("/").filter(Boolean).pop() ||
-              "";
-          } catch {
-            token = url.split("/").pop() || "";
-          }
-          await emailService.sendVerificationEmail?.(user.email, token);
+    databaseHooks: {
+      session: {
+        create: {
+          before: async (session) => {
+            const user = await prisma.user.findUnique({
+              where: { id: session.userId },
+              select: { banned: true, banReason: true, banExpires: true },
+            });
+
+            if (user?.banned) {
+              const now = new Date();
+              const isExpired = user.banExpires && user.banExpires <= now;
+
+              if (isExpired) {
+                await prisma.user.update({
+                  where: { id: session.userId },
+                  data: { banned: false, banReason: null, banExpires: null },
+                });
+              } else {
+                throw new Error(
+                  JSON.stringify({
+                    code: "USER_BANNED",
+                    banReason: user.banReason || "Account suspended",
+                    banExpires: user.banExpires?.toISOString(),
+                  })
+                );
+              }
+            }
+          },
         },
-        sendOnSignUp: true,
-        autoSignInAfterVerification: true,
       },
-    }),
+    },
+
+    ...(!sendVerificationOTP &&
+      emailService?.sendVerificationEmail && {
+        emailVerification: {
+          sendVerificationEmail: async ({ user, url }) => {
+            let token = "";
+            try {
+              const parsed = new URL(url);
+              token =
+                parsed.searchParams.get("token") ||
+                parsed.pathname.split("/").filter(Boolean).pop() ||
+                "";
+            } catch {
+              token = url.split("/").pop() || "";
+            }
+            await emailService.sendVerificationEmail?.(user.email, token);
+          },
+          sendOnSignUp: true,
+          autoSignInAfterVerification: true,
+        },
+      }),
   });
 }
 

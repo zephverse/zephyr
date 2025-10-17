@@ -2,12 +2,23 @@
 "use client";
 
 import { useDebounce } from "@zephyr/ui/hooks/use-debounce";
+import { useToast } from "@zephyr/ui/hooks/use-toast";
 import { cn } from "@zephyr/ui/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@zephyr/ui/shadui/avatar";
 import { Button } from "@zephyr/ui/shadui/button";
-import { ChevronDown, FileText, Search, X } from "lucide-react";
+import {
+  Ban,
+  Check,
+  ChevronDown,
+  FileText,
+  Search,
+  Shield,
+  ShieldOff,
+  X,
+} from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import React, { useEffect, useState } from "react";
+import { trpc } from "../trpc/client";
 import type { ModalAction, User, UserFilters } from "../types/types";
 
 type UserTableProps = {
@@ -56,7 +67,7 @@ function highlightText(text: string, searchQuery: string): React.ReactNode {
   });
 }
 
-export function UserTable({
+export default function UserTable({
   users,
   onAction,
   searchQuery,
@@ -75,6 +86,18 @@ export function UserTable({
   const [searchExpanded, setSearchExpanded] = useState(false);
   const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery);
   const debouncedSearchQuery = useDebounce(localSearchQuery, 300);
+
+  const { toast } = useToast();
+  const utils = trpc.useUtils();
+  const banUser = trpc.admin.banUser.useMutation();
+  const unbanUser = trpc.admin.unbanUser.useMutation();
+  const revokeAll = trpc.admin.revokeUserSessions.useMutation();
+  const setRole = trpc.admin.setRole.useMutation();
+  const [roleToggleLoading, setRoleToggleLoading] = useState<string | null>(
+    null
+  );
+  const [revokeLoading, setRevokeLoading] = useState<string | null>(null);
+  const [banLoading, setBanLoading] = useState<string | null>(null);
 
   useEffect(() => {
     setLocalSearchQuery(searchQuery);
@@ -327,6 +350,133 @@ export function UserTable({
                                   variant="outline"
                                 >
                                   Update
+                                </Button>
+                                <Button
+                                  className="border-border hover:bg-accent"
+                                  disabled={roleToggleLoading === user.id}
+                                  onClick={async () => {
+                                    try {
+                                      setRoleToggleLoading(user.id);
+                                      const newRole =
+                                        user.role === "admin"
+                                          ? "user"
+                                          : "admin";
+                                      await setRole.mutateAsync({
+                                        userId: user.id,
+                                        role: newRole,
+                                      });
+                                      await utils.admin.getUsers.invalidate();
+                                      toast({
+                                        title: "Success",
+                                        description: `Successfully updated ${user.username}'s role to ${newRole}`,
+                                      });
+                                    } catch (error) {
+                                      toast({
+                                        variant: "destructive",
+                                        title: "Error",
+                                        description: `Failed to update user role: ${error instanceof Error ? error.message : "Unknown error"}`,
+                                      });
+                                    } finally {
+                                      setRoleToggleLoading(null);
+                                    }
+                                  }}
+                                  size="sm"
+                                  variant="outline"
+                                >
+                                  {user.role === "admin" ? (
+                                    <span className="inline-flex items-center gap-1">
+                                      <ShieldOff className="h-4 w-4" /> Remove
+                                      Admin
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center gap-1">
+                                      <Shield className="h-4 w-4" /> Make Admin
+                                    </span>
+                                  )}
+                                </Button>
+                                <Button
+                                  className="border-border hover:bg-accent"
+                                  disabled
+                                  size="sm"
+                                  variant="outline"
+                                >
+                                  <span className="inline-flex items-center gap-1">
+                                    <Check className="h-4 w-4" /> Verified
+                                  </span>
+                                </Button>
+                                <Button
+                                  className="border-border hover:bg-accent"
+                                  disabled={revokeLoading === user.id}
+                                  onClick={async () => {
+                                    try {
+                                      setRevokeLoading(user.id);
+                                      await revokeAll.mutateAsync({
+                                        userId: user.id,
+                                      });
+                                      await utils.admin.getUsers.invalidate();
+                                      toast({
+                                        title: "Success",
+                                        description: `Successfully revoked all sessions for ${user.username}`,
+                                      });
+                                    } catch (error) {
+                                      toast({
+                                        variant: "destructive",
+                                        title: "Error",
+                                        description: `Failed to revoke sessions for ${user.username}: ${error instanceof Error ? error.message : "Unknown error"}`,
+                                      });
+                                    } finally {
+                                      setRevokeLoading(null);
+                                    }
+                                  }}
+                                  size="sm"
+                                  variant="outline"
+                                >
+                                  Revoke Sessions
+                                </Button>
+                                <Button
+                                  className="border-border hover:bg-destructive/10 hover:text-destructive"
+                                  disabled={banLoading === user.id}
+                                  onClick={async () => {
+                                    try {
+                                      setBanLoading(user.id);
+                                      const isBanned = user.banned ?? false;
+                                      if (isBanned) {
+                                        await unbanUser.mutateAsync({
+                                          userId: user.id,
+                                        });
+                                        await utils.admin.getUsers.invalidate();
+                                        toast({
+                                          title: "Success",
+                                          description: `Successfully unbanned user ${user.username}`,
+                                        });
+                                      } else {
+                                        await banUser.mutateAsync({
+                                          userId: user.id,
+                                          banReason: "Admin action",
+                                        });
+                                        await utils.admin.getUsers.invalidate();
+                                        toast({
+                                          title: "Success",
+                                          description: `Successfully banned user ${user.username}`,
+                                        });
+                                      }
+                                    } catch (error) {
+                                      toast({
+                                        variant: "destructive",
+                                        title: "Error",
+                                        description: `Failed to ${user.banned ? "unban" : "ban"} user ${user.username}: ${error instanceof Error ? error.message : "Unknown error"}`,
+                                      });
+                                    } finally {
+                                      setBanLoading(null);
+                                    }
+                                  }}
+                                  size="sm"
+                                  variant="outline"
+                                >
+                                  <span className="inline-flex items-center gap-1">
+                                    <Ban className="h-4 w-4" />{" "}
+                                    {(user.banned ?? false) ? "Unban" : "Ban"}
+                                  </span>
                                 </Button>
                               </div>
                             </div>

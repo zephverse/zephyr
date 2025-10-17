@@ -1,4 +1,5 @@
 import { TRPCError } from "@trpc/server";
+import { debugLog } from "@zephyr/config/debug";
 import { prisma, userCache, userSearchIndex } from "@zephyr/db";
 import { z } from "zod";
 import type { User } from "../../../app/types/types";
@@ -211,6 +212,7 @@ async function fetchUsersFromDatabase(input: {
       bio: true,
       aura: true,
       role: true,
+      banned: true,
       createdAt: true,
       updatedAt: true,
       _count: {
@@ -248,6 +250,7 @@ async function fetchUsersFromDatabase(input: {
     following: user._count.following,
     followers: user._count.followers,
     bookmarks: user._count.bookmarks,
+    banned: user.banned ?? false,
     joinedDate: user.createdAt.toISOString(),
     createdAt: user.createdAt.toISOString(),
     updatedAt: user.updatedAt.toISOString(),
@@ -272,6 +275,123 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
 const timedAdminProcedure = rateLimitedAdminProcedure.use(timingMiddleware);
 
 export const adminRouter = router({
+  setRole: rateLimitedAdminProcedure
+    .input(
+      z.object({
+        userId: z.string(),
+        role: z.enum(["user", "admin"]),
+      })
+    )
+    .mutation(async ({ input }) => {
+      try {
+        await prisma.user.update({
+          where: { id: input.userId },
+          data: { role: input.role },
+        });
+
+        await syncUsersWithMeiliSearch([input.userId], "updateRole");
+        await userCache.invalidateUserDetail(input.userId);
+        await userCache.invalidateUserList();
+        await userCache.invalidateUserStats();
+
+        return { success: true };
+      } catch (error) {
+        console.error("Failed to update user role:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to update user role",
+        });
+      }
+    }),
+
+  banUser: rateLimitedAdminProcedure
+    .input(
+      z.object({
+        userId: z.string(),
+        banReason: z.string().min(1),
+        banExpiresIn: z.number().int().positive().optional(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const banExpires = input.banExpiresIn
+        ? new Date(Date.now() + input.banExpiresIn * 1000)
+        : null;
+
+      await prisma.$transaction(async (tx) => {
+        await tx.user.update({
+          where: { id: input.userId },
+          data: { banned: true, banReason: input.banReason, banExpires },
+        });
+        await tx.session.deleteMany({ where: { userId: input.userId } });
+      });
+
+      await userCache.invalidateUserDetail(input.userId);
+      await userCache.invalidateUserList();
+      return { success: true };
+    }),
+
+  unbanUser: rateLimitedAdminProcedure
+    .input(z.object({ userId: z.string() }))
+    .mutation(async ({ input }) => {
+      await prisma.$transaction(async (tx) => {
+        await tx.user.update({
+          where: { id: input.userId },
+          data: { banned: false, banReason: null, banExpires: null },
+        });
+      });
+
+      await userCache.invalidateUserDetail(input.userId);
+      await userCache.invalidateUserList();
+      return { success: true };
+    }),
+
+  listUserSessions: rateLimitedAdminProcedure
+    .input(z.object({ userId: z.string() }))
+    .query(
+      async ({ input }) =>
+        await prisma.session.findMany({
+          where: { userId: input.userId },
+          orderBy: { createdAt: "desc" },
+        })
+    ),
+
+  revokeUserSession: rateLimitedAdminProcedure
+    .input(z.object({ sessionToken: z.string().min(1) }))
+    .mutation(async ({ input }) => {
+      await prisma.session.deleteMany({ where: { token: input.sessionToken } });
+      await userCache.invalidateUserStats();
+      return { success: true };
+    }),
+
+  revokeUserSessions: rateLimitedAdminProcedure
+    .input(z.object({ userId: z.string() }))
+    .mutation(async ({ input }) => {
+      await prisma.$transaction(async (tx) => {
+        await tx.session.deleteMany({ where: { userId: input.userId } });
+      });
+
+      await userCache.invalidateUserStats();
+      return { success: true };
+    }),
+
+  removeUser: rateLimitedAdminProcedure
+    .input(z.object({ userId: z.string() }))
+    .mutation(async ({ input }) => {
+      await prisma.user.delete({ where: { id: input.userId } });
+      try {
+        await syncUsersWithMeiliSearch([input.userId], "deleteUsers");
+      } catch (error) {
+        debugLog.api("removeUser:meili-sync-failed", {
+          userId: input.userId,
+          operation: "deleteUsers",
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+      await userCache.invalidateUserDetail(input.userId);
+      await userCache.invalidateUserList();
+      await userCache.invalidateUserStats();
+      return { success: true };
+    }),
   getUsers: timedAdminProcedure
     .input(
       z.object({

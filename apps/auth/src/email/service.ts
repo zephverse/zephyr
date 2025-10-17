@@ -3,7 +3,10 @@ import { Resend } from "resend";
 import { env } from "../../env";
 import { emailConfig } from "./config";
 import { getPasswordResetEmailHtml } from "./templates/password-reset-email";
-import { getVerificationEmailHtml } from "./templates/verification-email";
+import {
+  getOTPVerificationEmailHtml,
+  getVerificationEmailHtml,
+} from "./templates/verification-email";
 
 let resend: Resend | null = null;
 
@@ -157,6 +160,90 @@ export async function sendVerificationEmail(
     return getVerificationResult({
       success: false,
       verificationUrl,
+      error: errorMessage,
+    });
+  }
+}
+
+export async function sendVerificationOTP(
+  email: string,
+  otp: string
+): Promise<EmailResult> {
+  const validationOptions = {
+    skipSmtpCheck: true,
+    skipMxCheck: false,
+    timeout: 5000,
+  };
+
+  const validation = await validateEmailAdvanced(email, validationOptions);
+
+  if (!validation.isValid) {
+    console.warn(`Email validation failed for ${email}:`, {
+      score: validation.score,
+      confidence: validation.confidence,
+      reasons: validation.reasons,
+      disposable: validation.disposable,
+    });
+
+    return getVerificationResult({
+      success: false,
+      error: `Email validation failed: ${validation.reasons.join(", ")}`,
+    });
+  }
+
+  if (isDevelopmentMode()) {
+    console.log(`Email validation passed for ${email}:`, {
+      score: validation.score,
+      confidence: validation.confidence,
+      reasons: validation.reasons,
+    });
+  }
+
+  const initResult = initializeEmailService();
+  if (initResult) {
+    return initResult;
+  }
+
+  if (!resend) {
+    return getVerificationResult({
+      success: false,
+      error: "Email service not initialized",
+    });
+  }
+
+  if (isDevelopmentMode()) {
+    console.log(`Development Mode - OTP for ${email}: ${otp}`);
+  }
+
+  try {
+    const { error } = await resend.emails.send({
+      from: `🪁 Zephyr <no-reply@${SENDER}>`,
+      to: email,
+      subject: "Your Verification Code - Zephyr",
+      html: await getOTPVerificationEmailHtml(otp),
+    });
+
+    if (error) {
+      console.error("Resend error:", error);
+      return getVerificationResult({
+        success: false,
+        error: error.message || "Failed to send verification OTP",
+      });
+    }
+
+    return getVerificationResult({
+      success: true,
+    });
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error
+        ? error.message
+        : "Unknown error occurred while sending verification OTP";
+
+    console.error("Error sending verification OTP:", error);
+
+    return getVerificationResult({
+      success: false,
       error: errorMessage,
     });
   }

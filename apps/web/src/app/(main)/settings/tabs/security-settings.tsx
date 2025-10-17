@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { USERNAME_REGEX } from "@zephyr/auth/validation";
 import type { UserData } from "@zephyr/db";
 import { useToast } from "@zephyr/ui/hooks/use-toast";
 import {
@@ -20,11 +21,19 @@ import { z } from "zod";
 import { requestPasswordReset } from "@/app/(auth)/reset-password/server-actions";
 import { LoadingButton } from "@/components/Auth/loading-button";
 
-const emailSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
+const identifierSchema = z.object({
+  identifier: z.union([
+    z.email("Please enter a valid email address"),
+    z
+      .string()
+      .regex(
+        USERNAME_REGEX,
+        "Username can only contain letters, numbers, and underscores"
+      ),
+  ]),
 });
 
-type FormValues = z.infer<typeof emailSchema>;
+type FormValues = z.infer<typeof identifierSchema>;
 
 type SecuritySettingsProps = {
   user: UserData;
@@ -36,9 +45,9 @@ export default function SecuritySettings({ user }: SecuritySettingsProps) {
   const { toast } = useToast();
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(emailSchema),
+    resolver: zodResolver(identifierSchema),
     defaultValues: {
-      email: user.email || "",
+      identifier: user.email || user.username || "",
     },
   });
 
@@ -104,17 +113,17 @@ export default function SecuritySettings({ user }: SecuritySettingsProps) {
               >
                 <FormField
                   control={form.control}
-                  name="email"
+                  name="identifier"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email</FormLabel>
+                      <FormLabel>Username or Email</FormLabel>
                       <FormControl>
                         <Input
                           {...field}
                           className="bg-background/50 backdrop-blur-xs transition-all duration-200 hover:bg-background/70 focus:bg-background/70"
                           disabled={isEmailSent}
-                          placeholder="Enter your email to reset password"
-                          type="email"
+                          placeholder="Enter your username or email to reset password"
+                          type="text"
                         />
                       </FormControl>
                       <FormMessage />

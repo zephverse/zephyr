@@ -1,103 +1,36 @@
-"use client";
+import { prisma } from "@zephyr/db";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import { auth } from "@/auth/config";
+import AdminDashboardClient from "./admin-dashboard.client";
 
-import { useState } from "react";
-import { EmptyState } from "./components/empty-state";
-import { LoadingState } from "./components/loading-state";
-import { UserManagement } from "./components/user-management";
-import { trpc } from "./trpc/client";
-import type { ModalAction, User, UserFilters } from "./types/types";
-
-export default function AdminDashboard() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filters, setFilters] = useState<UserFilters>({
-    role: undefined,
-    emailVerified: undefined,
-    hasEmail: undefined,
-  });
-  const [sortBy, setSortBy] = useState<
-    "createdAt" | "aura" | "username" | "displayName"
-  >("createdAt");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
-  const [cursor, setCursor] = useState<string | undefined>();
-
-  const {
-    data: userList,
-    isLoading,
-    refetch,
-  } = trpc.admin.getUsers.useQuery<{
-    users: User[];
-    totalCount: number;
-    hasMore: boolean;
-    nextCursor?: string;
-  }>({
-    limit: 20,
-    cursor,
-    filters: {
-      ...filters,
-      search: searchQuery || undefined,
-    },
-    sortBy,
-    sortOrder,
+export default async function AdminDashboard() {
+  const hdrs = await headers();
+  const serverHeaders = new Headers();
+  const cookie = hdrs.get("cookie");
+  const userAgent = hdrs.get("user-agent");
+  if (cookie) {
+    serverHeaders.set("cookie", cookie);
+  }
+  if (userAgent) {
+    serverHeaders.set("user-agent", userAgent);
+  }
+  const session = await auth.api.getSession({
+    headers: serverHeaders,
   });
 
-  const handleAction = (_user: User, action: ModalAction) => {
-    if (action === "update") {
-      refetch();
-    }
-  };
-
-  const handleLoadMore = () => {
-    if (userList?.hasMore && userList.nextCursor) {
-      setCursor(userList.nextCursor);
-    }
-  };
-
-  const handleFiltersChange = (newFilters: UserFilters) => {
-    setFilters(newFilters);
-    setCursor(undefined);
-  };
-
-  const handleSortChange = (
-    newSortBy: typeof sortBy,
-    newSortOrder: typeof sortOrder
-  ) => {
-    setSortBy(newSortBy);
-    setSortOrder(newSortOrder);
-    setCursor(undefined);
-  };
-
-  const handleSearchChange = (query: string) => {
-    setSearchQuery(query);
-    setCursor(undefined);
-  };
-
-  if (isLoading && !userList) {
-    return <LoadingState />;
+  let isAdmin = false;
+  if (session?.user?.id) {
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { role: true },
+    });
+    isAdmin = user?.role === "admin";
   }
 
-  if (!userList || userList.users.length === 0) {
-    return (
-      <EmptyState
-        description="Users will appear here once they register on the platform."
-        title="No users found"
-      />
-    );
+  if (!isAdmin) {
+    redirect(process.env.NEXT_PUBLIC_URL || "http://localhost:3000");
   }
 
-  return (
-    <UserManagement
-      filters={filters}
-      hasMore={userList.hasMore}
-      onAction={handleAction}
-      onFiltersChangeAction={handleFiltersChange}
-      onLoadMoreAction={handleLoadMore}
-      onSearchChangeAction={handleSearchChange}
-      onSortChangeAction={handleSortChange}
-      searchQuery={searchQuery}
-      sortBy={sortBy}
-      sortOrder={sortOrder}
-      totalCount={userList.totalCount}
-      users={userList.users}
-    />
-  );
+  return <AdminDashboardClient />;
 }

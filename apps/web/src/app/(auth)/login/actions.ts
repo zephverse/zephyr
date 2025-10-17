@@ -30,7 +30,27 @@ export async function login(values: LoginValues) {
       });
     }
     return { success: true } as const;
-  } catch {
+  } catch (error) {
+    if (error instanceof Error) {
+      try {
+        const parsedError = JSON.parse(error.message);
+        if (parsedError.code === "USER_BANNED") {
+          const banExpires = parsedError.banExpires
+            ? new Date(parsedError.banExpires).toLocaleDateString()
+            : "indefinitely";
+          return {
+            success: false,
+            error: `Account suspended: ${parsedError.banReason}. Ban expires: ${banExpires}`,
+            banned: true,
+            banReason: parsedError.banReason,
+            banExpires: parsedError.banExpires,
+          } as const;
+        }
+      } catch {
+        // Not a JSON error, fall through to generic error
+      }
+    }
+
     return {
       success: false,
       error: "Invalid username/email or password",

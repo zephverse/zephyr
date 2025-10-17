@@ -1,8 +1,10 @@
 import { z } from "zod";
+import {
+  commonsequencesRegex,
+  threerepeatRegex,
+  whitespaceRegex,
+} from "./constants";
 
-const threerepeatRegex = /(.)\1{2,}/;
-const commonsequencesRegex = /(?:abc|123|qwe|xyz)/i;
-const wordRegex = /\s+/;
 const requiredUsername = z
   .string()
   .trim()
@@ -61,7 +63,8 @@ export const updateUserProfileSchema = z.object({
     .string()
     .max(2000, "Bio must be at most 2000 characters")
     .refine(
-      (text) => text.trim().split(wordRegex).filter(Boolean).length <= 400,
+      (text) =>
+        text.trim().split(whitespaceRegex).filter(Boolean).length <= 400,
       "Bio must not exceed 400 words"
     ),
 });

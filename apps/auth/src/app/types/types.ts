@@ -5,6 +5,7 @@ export type User = {
   displayUsername: string | null;
   email: string | null;
   emailVerified: boolean;
+  banned: boolean;
   avatarUrl: string | null;
   bio: string | null;
   aura: number;

@@ -28,15 +28,15 @@
     "@prisma/client": "^6.17.1",
     "@t3-oss/env-nextjs": "^0.13.8",
     "@zephyr/db": "workspace:*",
-    "better-auth": "^1.3.26",
+    "better-auth": "^1.3.27",
     "disposable-email-domains": "^1.0.62",
     "email-validator": "^2.0.4",
     "jose": "^6.1.0",
-    "next": "^15.5.4",
+    "next": "^15.5.5",
     "node-email-verifier": "^3.4.1",
     "pg": "^8.16.3",
     "react": "^19.2.0",
-    "zod": "^4.1.11"
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@types/disposable-email-domains": "^1.0.6",

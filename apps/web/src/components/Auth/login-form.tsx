@@ -78,7 +78,7 @@ export default function LoginForm() {
       if (result.error) {
         handleLoginError(result.error);
       } else if (result.success) {
-        handleLoginSuccess();
+        handleLoginSuccess(values.username);
       }
     } catch (loginError) {
       console.error("Login error:", loginError);
@@ -110,12 +110,17 @@ export default function LoginForm() {
     });
   }
 
-  function handleLoginSuccess() {
+  function handleLoginSuccess(username: string) {
+    const displayName = username.includes("@")
+      ? username.split("@")[0]
+      : username;
+
     toast({
-      title: "Welcome back, queen!",
+      title: `Welcome back, ${displayName}!`,
       description: "You're in! Let's get this bread!",
       duration: 3000,
     });
+
     router.refresh();
     router.push("/");
   }

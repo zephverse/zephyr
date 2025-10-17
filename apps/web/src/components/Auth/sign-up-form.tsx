@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { env } from "@root/env";
 import { type SignUpValues, signUpSchema } from "@zephyr/auth/validation";
 import { FlipWords } from "@zephyr/ui/components/ui/flip-words";
 import { useToast } from "@zephyr/ui/hooks/use-toast";
@@ -16,28 +17,54 @@ import {
   FormMessage,
 } from "@zephyr/ui/shadui/form";
 import { Input } from "@zephyr/ui/shadui/input";
-import { AlertCircle, Mail, User } from "lucide-react";
-import { motion } from "motion/react";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+} from "@zephyr/ui/shadui/input-otp";
+import {
+  useRateLimitCountdown,
+  useSignupStore,
+} from "@zephyr/ui/store/signup-store";
+import { AlertCircle, ArrowLeft, Mail, User } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
-import { useCallback, useEffect, useId, useState, useTransition } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import {
   type FieldValues,
   type SubmitErrorHandler,
   useForm,
 } from "react-hook-form";
 import { useCountdown } from "usehooks-ts";
-import { resendVerificationEmail, signUp } from "@/app/(auth)/signup/actions";
+import { signUp } from "@/app/(auth)/signup/actions";
 import { LoadingButton } from "@/components/Auth/loading-button";
 import { PasswordInput } from "@/components/Auth/password-input";
+import { useSignupUrlState } from "@/hooks/use-signup-url-state";
 import { PasswordStrengthChecker } from "./password-strength-checker";
 
 const texts = [
-  "Elevate your ideas, accelerate your impact.",
-  "Transform thoughts into action.",
-  "Your journey to greatness starts here.",
-  "Start Your Adventure",
-  "Let parazeeknova cook",
-  "Dive In!",
+  "All your worlds, one feed.",
+  "The pulse of your digital life.",
+  "Stream everything that matters.",
+  "Unify your social universe.",
+  "Where every post finds you.",
+];
+
+const DIGITS_ONLY_REGEX = /^\d*$/;
+const OTP_SLOT_IDS = [
+  "slot-0",
+  "slot-1",
+  "slot-2",
+  "slot-3",
+  "slot-4",
+  "slot-5",
 ];
 
 type ErrorWithMessage = {
@@ -64,6 +91,7 @@ function toErrorWithMessage(maybeError: unknown): ErrorWithMessage {
   }
 }
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: ignore
 export default function SignUpForm() {
   const { toast } = useToast();
   const { setIsVerifying } = useVerification();
@@ -73,18 +101,66 @@ export default function SignUpForm() {
   const [password, setPassword] = useState("");
   const [isPending, startTransition] = useTransition();
   const [isLoading, setIsLoading] = useState(false);
-  const [isResending, setIsResending] = useState(false);
-  const [isVerificationEmailSent, setIsVerificationEmailSent] = useState(false);
   const [hoveredField, setHoveredField] = useState<string | null>(null);
-  const verificationChannel = new BroadcastChannel("email-verification");
+  const [otp, setOtp] = useState("");
+  const [otpError, setOtpError] = useState(false);
+  const [tooltipDismissed, setTooltipDismissed] = useState(false);
   const [isAgeVerified, setIsAgeVerified] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
 
+  // URL-based state for UI panels (persisted across refreshes)
+  const {
+    showOTPPanel,
+    showEmailVerification,
+    currentEmail,
+    clearSignupState,
+    setOTPState,
+    setEmailVerificationState,
+  } = useSignupUrlState();
+
+  // Zustand store for loading states and rate limiting
+  const {
+    isStarting,
+    isResending,
+    isVerifying: isVerifyingOTP,
+    setStarting,
+    setResending,
+    setVerifying,
+    setRateLimit,
+    canStartSignup,
+    canResend,
+    reset: resetStore,
+  } = useSignupStore();
+
+  const startCountdownInfo = useRateLimitCountdown("start");
+  const resendCountdownInfo = useRateLimitCountdown("resend");
+
   const [count, { startCountdown, stopCountdown, resetCountdown }] =
     useCountdown({
-      countStart: 60,
+      countStart: 300,
       intervalMs: 1000,
     });
+  const [
+    _resendCount,
+    {
+      startCountdown: startResendCountdown,
+      resetCountdown: resetResendCountdown,
+    },
+  ] = useCountdown({
+    countStart: 60,
+    intervalMs: 1000,
+  });
+  const [
+    otpResendCount,
+    {
+      startCountdown: startOtpResendCountdown,
+      resetCountdown: resetOtpResendCountdown,
+    },
+  ] = useCountdown({
+    countStart: 30,
+    intervalMs: 1000,
+  });
+  const verificationChannel = useRef<BroadcastChannel | null>(null);
 
   const form = useForm<SignUpValues>({
     resolver: zodResolver(signUpSchema),
@@ -97,28 +173,46 @@ export default function SignUpForm() {
   });
 
   useEffect(() => {
-    if (count === 0) {
-      stopCountdown();
-      resetCountdown();
-    }
-  }, [count, stopCountdown, resetCountdown]);
+    verificationChannel.current = new BroadcastChannel("email-verification");
 
-  useEffect(() => {
     const handleVerificationSuccess = () => {
       setIsVerifying(false);
       window.location.reload();
     };
 
-    verificationChannel.addEventListener("message", (event) => {
+    verificationChannel.current.addEventListener("message", (event) => {
       if (event.data === "verification-success") {
         handleVerificationSuccess();
       }
     });
 
     return () => {
-      verificationChannel.close();
+      if (verificationChannel.current) {
+        verificationChannel.current.close();
+      }
+      resetStore();
     };
-  }, [setIsVerifying, verificationChannel]);
+  }, [setIsVerifying, resetStore]);
+
+  useEffect(() => {
+    if (showOTPPanel && !showEmailVerification) {
+      startCountdown();
+      startOtpResendCountdown();
+    } else if (!showOTPPanel) {
+      stopCountdown();
+      resetCountdown();
+      resetOtpResendCountdown();
+      setOtp("");
+    }
+  }, [
+    showOTPPanel,
+    showEmailVerification,
+    startCountdown,
+    stopCountdown,
+    resetCountdown,
+    startOtpResendCountdown,
+    resetOtpResendCountdown,
+  ]);
 
   const handleInvalidSubmit: SubmitErrorHandler<FieldValues> = useCallback(
     (errors) => {
@@ -128,7 +222,7 @@ export default function SignUpForm() {
 
       toast({
         variant: "destructive",
-        title: "Oopsie daisy! 🤭",
+        title: "Oopsie daisy!",
         description: errorMessage,
         duration: 3000,
       });
@@ -153,26 +247,63 @@ export default function SignUpForm() {
       });
       return;
     }
+
+    if (!canStartSignup()) {
+      toast({
+        variant: "destructive",
+        title: "Too Fast!",
+        description: `You've reached the signup limit. Try again in ${startCountdownInfo.timeLeft} seconds.`,
+        duration: 3000,
+      });
+      return;
+    }
+
+    setStarting(true);
+    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: signup flow requires comprehensive error handling
     startTransition(async () => {
       try {
         setIsLoading(true);
         const result = await signUp(values);
 
         if (result.success) {
-          setIsVerifying(true);
-          setIsVerificationEmailSent(true);
-          startCountdown();
+          setOTPState(values.email);
+          setRateLimit("start", { isLimited: false });
           toast({
-            title: "Verify Your Email!",
-            description:
-              "Check your inbox for the verification email, it's in there somewhere!",
+            title: "Check Your Email!",
+            description: "We've sent a verification code to your email.",
+          });
+        } else if (result.rateLimited && result.rateLimitInfo) {
+          setRateLimit("start", {
+            remaining: result.rateLimitInfo.remaining,
+            resetTime: result.rateLimitInfo.resetTime,
+            isLimited: true,
+          });
+
+          const resetTime = result.rateLimitInfo.resetTime;
+          const now = Math.floor(Date.now() / 1000);
+          const waitTime = resetTime
+            ? Math.max(0, Math.ceil((resetTime - now) / 60))
+            : 60;
+
+          const rateLimitMessage =
+            waitTime > 0
+              ? `You've been creating accounts too quickly. Please take a ${waitTime}-minute break and try again.`
+              : "Too many signup attempts. Please wait a moment and try again.";
+
+          setError(rateLimitMessage);
+          toast({
+            variant: "destructive",
+            title: "Rate Limited",
+            description: rateLimitMessage,
+            duration: 8000,
           });
         } else if (result.error) {
-          setError(result.error);
+          const msg = String(result.error);
+          setError(msg);
           toast({
             variant: "destructive",
             title: "Signup Failed!",
-            description: result.error,
+            description: msg,
           });
         }
       } catch (signupError) {
@@ -189,45 +320,170 @@ export default function SignUpForm() {
         });
       } finally {
         setIsLoading(false);
+        setStarting(false);
       }
     });
   };
 
-  const onResendVerificationEmail = async () => {
-    if (count > 0 && count < 60) {
-      return;
-    }
-
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: it's fine
+  const handleOTPVerification = async (otpValue: string) => {
     try {
-      setIsResending(true);
-      const email = form.getValues("email");
-      const result = await resendVerificationEmail(email);
+      setVerifying(true);
+      setOtpError(false);
+      const email = currentEmail || form.getValues("email");
+      const authBase = env.NEXT_PUBLIC_AUTH_URL;
+      const res = await fetch(`${authBase}/api/trpc/pendingSignupVerify`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          id: 1,
+          json: {
+            email,
+            otp: otpValue,
+            otpVerified: true,
+          },
+        }),
+      });
 
-      if (result.success) {
-        startCountdown();
-        toast({
-          title: "Email Sent!",
-          description: "A new verification email has been sent to your inbox!",
-          duration: 3000,
-        });
-      } else {
+      const data = await res.json().catch(() => ({}) as unknown);
+
+      if (!(res.ok && data?.result?.data?.json?.success)) {
+        const serverError =
+          data?.result?.error?.message ||
+          data?.result?.data?.json?.error ||
+          "Signup completion failed";
+
+        const rateLimitInfo = data?.result?.data?.json;
+
+        let userFriendlyError = "Something went wrong. Please try again.";
+        let errorTitle = "Verification Failed";
+
+        if (serverError === "invalid-otp") {
+          userFriendlyError =
+            "The verification code is incorrect or has expired. Please check and try again.";
+          errorTitle = "Wrong Code";
+          setOtpError(true);
+          setOtp("");
+        } else if (serverError === "user-exists") {
+          userFriendlyError =
+            "An account with this email or username already exists.";
+          errorTitle = "Account Already Exists";
+          clearSignupState();
+          setTimeout(() => {
+            window.location.href = "/login";
+          }, 2000);
+        } else if (serverError === "no-pending-signup") {
+          userFriendlyError =
+            "Your verification session has expired. Please start the signup process again.";
+          errorTitle = "Session Expired";
+          clearSignupState();
+          setTimeout(() => {
+            window.location.reload();
+          }, 2000);
+        } else if (serverError === "rate-limited") {
+          const resetTime = rateLimitInfo?.resetTime;
+          const now = Math.floor(Date.now() / 1000);
+          const waitTime = resetTime
+            ? Math.max(0, Math.ceil((resetTime - now) / 60))
+            : 60;
+
+          userFriendlyError =
+            waitTime > 0
+              ? `You've been creating accounts too quickly. Please take a ${waitTime}-minute break and try again.`
+              : "Too many signup attempts. Please wait a moment and try again.";
+          errorTitle = "Rate Limited";
+          setOtpError(true);
+          setOtp("");
+        }
+
+        console.error("OTP verification error:", serverError);
         toast({
           variant: "destructive",
-          title: "Failed to Resend",
-          description:
-            result.error || "Failed to resend verification email, try again?",
-          duration: 5000,
+          title: errorTitle,
+          description: userFriendlyError,
+          duration: serverError === "rate-limited" ? 8000 : 5000,
         });
+        return;
       }
-    } catch (resendError) {
-      console.error("Error resending verification email:", resendError);
+
+      const responseData = data?.result?.data?.json;
+      const responseEmail = responseData?.email;
+      const responsePassword = form.getValues("password");
+
+      if (responseEmail && responsePassword) {
+        try {
+          console.log("Attempting auto-login after OTP verification");
+          const { authClient } = await import("@/lib/auth");
+
+          const loginResult = await authClient.signIn.email({
+            email: responseEmail,
+            password: responsePassword,
+            fetchOptions: {
+              onSuccess: () => {
+                console.log("Auto-login successful");
+              },
+              onError: (ctx) => {
+                console.error("Auto-login error:", ctx.error);
+                throw new Error(ctx.error.message || "Auto-login failed");
+              },
+            },
+          });
+
+          if (loginResult?.data) {
+            console.log("Auto-login completed successfully");
+            verificationChannel.current?.postMessage("verification-success");
+            setIsVerifying(true);
+            clearSignupState();
+            toast({
+              title: "Welcome to Zephyr! 🎉",
+              description:
+                "Your account has been created and you're now logged in.",
+            });
+
+            await new Promise((resolve) => setTimeout(resolve, 500));
+            window.location.href = "/";
+            return;
+          }
+        } catch (signError) {
+          console.error("Auto sign-in failed:", signError);
+          toast({
+            title: "Account Created! 🎉",
+            description:
+              "Your account has been created. Please log in to continue.",
+          });
+          clearSignupState();
+          setTimeout(() => {
+            window.location.href = "/login";
+          }, 1000);
+          return;
+        }
+      }
+
+      setIsVerifying(true);
+      clearSignupState();
+      toast({
+        title: "Welcome to Zephyr! 🎉",
+        description:
+          "Your account has been created successfully. Please log in.",
+      });
+      verificationChannel.current?.postMessage("verification-success");
+      setTimeout(() => {
+        window.location.href = "/login";
+      }, 1000);
+    } catch (verificationError) {
+      const message =
+        verificationError instanceof Error
+          ? verificationError.message
+          : "OTP verification failed";
       toast({
         variant: "destructive",
-        title: "Something went wrong!",
-        description: "Failed to resend verification email, try again? Our bad!",
+        title: "Verification Failed",
+        description: message,
       });
+      throw verificationError;
     } finally {
-      setIsResending(false);
+      setVerifying(false);
     }
   };
 
@@ -239,302 +495,708 @@ export default function SignUpForm() {
           words={texts}
         />
       </div>
-
       <div className="relative">
-        <div
-          className={`transition-all duration-500 ease-in-out ${
-            isVerificationEmailSent
-              ? "pointer-events-none translate-y-[-20px] transform opacity-0"
-              : "translate-y-0 transform opacity-100"
-          }`}
-        >
-          <Form {...form}>
-            <form
-              autoComplete="on"
-              className="space-y-3"
-              noValidate
-              onSubmit={form.handleSubmit(onSubmit, handleInvalidSubmit)}
+        <AnimatePresence initial={false} mode="wait">
+          {!showOTPPanel && (
+            <motion.div
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              initial={{ opacity: 0, y: 8 }}
+              key="signup-form"
+              transition={{ duration: 0.25 }}
             >
-              {error && (
-                <div className="rounded-lg bg-destructive/15 p-3 text-center text-destructive text-sm">
-                  <p className="flex items-center justify-center gap-2">
-                    <AlertCircle className="h-4 w-4" />
-                    {error}
-                  </p>
-                </div>
-              )}
-              <FormField
-                control={form.control}
-                name="username"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Username</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Input
-                          placeholder="cooluser"
-                          {...field}
-                          autoComplete="username"
-                          className={`transition-all duration-500 ease-in-out ${
-                            hoveredField === "username"
-                              ? "border-primary shadow-lg shadow-primary/20"
-                              : ""
-                          }`}
-                          name="username"
-                          onMouseEnter={() => setHoveredField("username")}
-                          onMouseLeave={() => setHoveredField(null)}
+              <Form {...form}>
+                <form
+                  autoComplete="on"
+                  className="space-y-3"
+                  noValidate
+                  onSubmit={form.handleSubmit(onSubmit, handleInvalidSubmit)}
+                >
+                  {error && (
+                    <div className="rounded-lg bg-destructive/15 p-3 text-center text-destructive text-sm">
+                      <p className="flex items-center justify-center gap-2">
+                        <AlertCircle className="h-5 w-5 shrink-0" />
+                        {error}
+                      </p>
+                    </div>
+                  )}
+                  <FormField
+                    control={form.control}
+                    name="username"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Username</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Input
+                              placeholder="cooluser"
+                              {...field}
+                              autoComplete="username"
+                              className={`transition-all duration-500 ease-in-out ${
+                                hoveredField === "username"
+                                  ? "border-primary shadow-lg shadow-primary/20"
+                                  : ""
+                              }`}
+                              name="username"
+                              onMouseEnter={() => setHoveredField("username")}
+                              onMouseLeave={() => setHoveredField(null)}
+                            />
+                            <User className="-translate-y-1/2 absolute top-1/2 right-3 h-4 w-4 text-muted-foreground" />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Input
+                              placeholder="you@example.com"
+                              type="email"
+                              {...field}
+                              autoComplete="email"
+                              className={`transition-all duration-500 ease-in-out ${
+                                hoveredField === "email"
+                                  ? "border-primary shadow-lg shadow-primary/20"
+                                  : ""
+                              }`}
+                              name="email"
+                              onMouseEnter={() => setHoveredField("email")}
+                              onMouseLeave={() => setHoveredField(null)}
+                            />
+                            <Mail className="-translate-y-1/2 absolute top-1/2 right-3 h-4 w-4 text-muted-foreground" />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Password</FormLabel>
+                        <FormControl>
+                          <PasswordInput
+                            placeholder="••••••••"
+                            {...field}
+                            autoComplete="new-password"
+                            className={`transition-all duration-500 ease-in-out ${
+                              hoveredField === "password"
+                                ? "border-primary shadow-lg shadow-primary/20"
+                                : ""
+                            }`}
+                            name="password"
+                            onChange={(e) => {
+                              field.onChange(e);
+                              setPassword(e.target.value);
+                            }}
+                            onMouseEnter={() => setHoveredField("password")}
+                            onMouseLeave={() => setHoveredField(null)}
+                          />
+                        </FormControl>
+                        <PasswordStrengthChecker
+                          password={password}
+                          setPassword={setPassword}
+                          setValue={form.setValue}
                         />
-                        <User className="-translate-y-1/2 absolute top-1/2 right-3 h-4 w-4 text-muted-foreground" />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Input
-                          placeholder="you@example.com"
-                          type="email"
-                          {...field}
-                          autoComplete="email"
-                          className={`transition-all duration-500 ease-in-out ${
-                            hoveredField === "email"
-                              ? "border-primary shadow-lg shadow-primary/20"
-                              : ""
-                          }`}
-                          name="email"
-                          onMouseEnter={() => setHoveredField("email")}
-                          onMouseLeave={() => setHoveredField(null)}
-                        />
-                        <Mail className="-translate-y-1/2 absolute top-1/2 right-3 h-4 w-4 text-muted-foreground" />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Password</FormLabel>
-                    <FormControl>
-                      <PasswordInput
-                        placeholder="••••••••"
-                        {...field}
-                        autoComplete="new-password"
-                        className={`transition-all duration-500 ease-in-out ${
-                          hoveredField === "password"
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="space-y-3 pt-2">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        checked={isAgeVerified}
+                        className={`border-primary/20 transition-all duration-500 ease-in-out data-[state=checked]:border-primary/80 data-[state=checked]:bg-primary/80 ${
+                          hoveredField === "ageVerify"
                             ? "border-primary shadow-lg shadow-primary/20"
                             : ""
                         }`}
-                        name="password"
-                        onChange={(e) => {
-                          field.onChange(e);
-                          setPassword(e.target.value);
-                        }}
-                        onMouseEnter={() => setHoveredField("password")}
+                        id={ageVerifyId}
+                        onCheckedChange={(checked) =>
+                          setIsAgeVerified(checked as boolean)
+                        }
+                        onMouseEnter={() => setHoveredField("ageVerify")}
                         onMouseLeave={() => setHoveredField(null)}
                       />
-                    </FormControl>
-                    <PasswordStrengthChecker
-                      password={password}
-                      setPassword={setPassword}
-                      setValue={form.setValue}
-                    />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      <label
+                        className="text-muted-foreground text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        htmlFor={ageVerifyId}
+                      >
+                        Yes, I've survived enough birthdays to be here
+                      </label>
+                    </div>
 
-              <div className="space-y-3 pt-2">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    checked={isAgeVerified}
-                    className={`border-primary/20 transition-all duration-500 ease-in-out data-[state=checked]:border-primary/80 data-[state=checked]:bg-primary/80 ${
-                      hoveredField === "ageVerify"
-                        ? "border-primary shadow-lg shadow-primary/20"
-                        : ""
-                    }`}
-                    id={ageVerifyId}
-                    onCheckedChange={(checked) =>
-                      setIsAgeVerified(checked as boolean)
-                    }
-                    onMouseEnter={() => setHoveredField("ageVerify")}
-                    onMouseLeave={() => setHoveredField(null)}
-                  />
-                  <label
-                    className="text-muted-foreground text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    htmlFor={ageVerifyId}
-                  >
-                    Yes, I've survived enough birthdays to be here
-                  </label>
-                </div>
+                    <div className="flex items-start space-x-2">
+                      <Checkbox
+                        checked={acceptedTerms}
+                        className={`mt-1 border-primary/20 transition-all duration-500 ease-in-out data-[state=checked]:border-primary/80 data-[state=checked]:bg-primary/80 ${
+                          hoveredField === "terms"
+                            ? "border-primary shadow-lg shadow-primary/20"
+                            : ""
+                        }`}
+                        id={termsId}
+                        onCheckedChange={(checked) =>
+                          setAcceptedTerms(checked as boolean)
+                        }
+                        onMouseEnter={() => setHoveredField("terms")}
+                        onMouseLeave={() => setHoveredField(null)}
+                      />
+                      <label
+                        className="text-muted-foreground text-sm leading-tight peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        htmlFor={termsId}
+                      >
+                        I agree to the{" "}
+                        <Link
+                          className="font-medium text-primary underline-offset-4 hover:underline"
+                          href="/toc"
+                        >
+                          Terms of Service
+                        </Link>{" "}
+                        and{" "}
+                        <Link
+                          className="font-medium text-primary underline-offset-4 hover:underline"
+                          href="/privacy"
+                        >
+                          Privacy Policy
+                        </Link>
+                      </label>
+                    </div>
 
-                <div className="flex items-start space-x-2">
-                  <Checkbox
-                    checked={acceptedTerms}
-                    className={`mt-1 border-primary/20 transition-all duration-500 ease-in-out data-[state=checked]:border-primary/80 data-[state=checked]:bg-primary/80 ${
-                      hoveredField === "terms"
-                        ? "border-primary shadow-lg shadow-primary/20"
-                        : ""
-                    }`}
-                    id={termsId}
-                    onCheckedChange={(checked) =>
-                      setAcceptedTerms(checked as boolean)
-                    }
-                    onMouseEnter={() => setHoveredField("terms")}
-                    onMouseLeave={() => setHoveredField(null)}
-                  />
-                  <label
-                    className="text-muted-foreground text-sm leading-tight peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    htmlFor={termsId}
-                  >
-                    I agree to the{" "}
-                    <Link
-                      className="font-medium text-primary underline-offset-4 hover:underline"
-                      href="/toc"
+                    <LoadingButton
+                      className="my-4 w-full"
+                      loading={isPending || isLoading || isStarting}
+                      type="submit"
                     >
-                      Terms of Service
-                    </Link>{" "}
-                    and{" "}
-                    <Link
-                      className="font-medium text-primary underline-offset-4 hover:underline"
-                      href="/privacy"
-                    >
-                      Privacy Policy
-                    </Link>
-                  </label>
-                </div>
-
-                <LoadingButton
-                  className="my-4 w-full"
-                  loading={isPending || isLoading}
-                  type="submit"
-                >
-                  Create account
-                </LoadingButton>
-              </div>
-
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="mt-2 w-full border-border/30 border-t" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="mt-2 px-2 text-muted-foreground">
-                    or continue with
-                  </span>
-                </div>
-              </div>
-            </form>
-          </Form>
-        </div>
-
-        <div
-          className={`absolute top-0 left-0 w-full transition-all duration-500 ease-in-out ${
-            isVerificationEmailSent
-              ? "translate-y-0 transform opacity-100"
-              : "pointer-events-none translate-y-[20px] transform opacity-0"
-          }`}
-        >
-          <div className="relative overflow-hidden rounded-xl border border-border/50 bg-background/60 p-8 shadow-lg backdrop-blur-xl">
-            <div className="-z-10 absolute inset-0 overflow-hidden">
-              <div className="-left-4 absolute top-0 h-[200px] w-[200px] rounded-full bg-primary/10 blur-[50px]" />
-              <div className="absolute top-1/2 right-0 h-[150px] w-[150px] rounded-full bg-purple-500/10 blur-[50px]" />
-            </div>
-
-            <div className="flex flex-col items-center space-y-6 text-center">
-              <div className="relative">
-                <div className="absolute inset-0 animate-pulse rounded-full bg-primary/20 blur-md" />
-                <div className="relative rounded-full border border-primary/20 bg-background/80 p-4 backdrop-blur-sm">
-                  <Mail className="h-8 w-8 text-primary" />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <h3 className="bg-gradient-to-r from-primary via-primary/80 to-primary bg-clip-text font-bold text-2xl text-transparent">
-                  Check Your Email
-                </h3>
-                <div className="mx-auto h-1 w-12 rounded-full bg-gradient-to-r from-primary/5 via-primary/60 to-primary/5" />
-              </div>
-
-              <div className="space-y-3">
-                <p className="text-muted-foreground text-sm">
-                  We've sent a verification link to
-                </p>
-                <p className="rounded-lg border border-border/50 bg-muted/50 px-4 py-2 font-medium text-foreground">
-                  {form.getValues("email")}
-                </p>
-                <p className="text-muted-foreground text-sm">
-                  Please check your inbox to complete your registration
-                </p>
-              </div>
-
-              <div className="w-full space-y-4 pt-2">
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-border/30 border-t" />
+                      Create account
+                    </LoadingButton>
                   </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-background/60 px-2 text-muted-foreground backdrop-blur-sm">
-                      Didn't receive the email?
-                    </span>
-                  </div>
-                </div>
 
-                <Button
-                  className="group relative w-full overflow-hidden rounded-lg border border-border/50 bg-background/50 transition-all hover:bg-background/80"
-                  disabled={isResending || (count > 0 && count < 60)}
-                  onClick={onResendVerificationEmail}
-                  variant="ghost"
-                >
-                  {(() => {
-                    if (isResending) {
-                      return (
-                        <span className="relative text-muted-foreground">
-                          Sending...
-                        </span>
-                      );
-                    }
-                    if (count > 0 && count < 60) {
-                      return (
-                        <>
-                          <motion.div
-                            animate={{ width: "0%" }}
-                            className="absolute top-0 left-0 h-full bg-primary/10"
-                            initial={{ width: "100%" }}
-                            transition={{ duration: count, ease: "linear" }}
-                          />
-                          <span className="relative text-muted-foreground">
-                            Resend available in {count}s
-                          </span>
-                        </>
-                      );
-                    }
-                    return (
-                      <span className="relative text-primary">
-                        Resend verification email
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="mt-2 w-full border-border/30 border-t" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="mt-2 px-2 text-muted-foreground">
+                        or continue with
                       </span>
-                    );
-                  })()}
-                </Button>
+                    </div>
+                  </div>
+                </form>
+              </Form>
+            </motion.div>
+          )}
 
-                <p className="text-center text-muted-foreground text-xs">
-                  Check your spam folder if you don't see the email in your
-                  inbox
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
+          {showOTPPanel && (
+            <motion.div
+              animate={{ opacity: 1, y: 0 }}
+              className="relative space-y-6"
+              exit={{ opacity: 0, y: -8 }}
+              initial={{ opacity: 0, y: 8 }}
+              key="otp-panel"
+              transition={{ duration: 0.25 }}
+            >
+              {showEmailVerification ? (
+                <motion.div
+                  animate={{ opacity: 1, y: 0 }}
+                  className="space-y-6 p-6"
+                  exit={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <button
+                    className="group -ml-2 -mt-2 mb-2 flex items-center gap-2 text-muted-foreground text-sm transition-colors hover:text-foreground"
+                    onClick={() => {
+                      setOTPState(currentEmail || form.getValues("email"));
+                    }}
+                    type="button"
+                  >
+                    <ArrowLeft className="group-hover:-translate-x-1 h-4 w-4 transition-transform" />
+                    <span>Back to Code Entry</span>
+                  </button>
+                  <div className="flex flex-col items-center space-y-2 pt-2 text-center">
+                    <div className="relative">
+                      <div className="absolute inset-0 animate-pulse rounded-full bg-primary/20 blur-md" />
+                      <div className="relative rounded-full border border-primary/20 bg-background/80 p-4 backdrop-blur-sm">
+                        <Mail className="h-8 w-8 text-primary" />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <h3 className="bg-gradient-to-r from-primary via-primary/80 to-primary bg-clip-text font-bold text-2xl text-transparent">
+                        Check Your Email
+                      </h3>
+                    </div>
+
+                    <div className="space-y-3">
+                      <p className="text-muted-foreground text-sm">
+                        We've sent a verification link to
+                      </p>
+                      <p className="rounded-lg border border-border/50 bg-muted/50 px-4 py-2 font-medium text-foreground">
+                        {currentEmail || form.getValues("email")}
+                      </p>
+                    </div>
+
+                    <div className="w-full space-y-3 pt-2">
+                      <Button
+                        className="w-full cursor-pointer bg-accent text-accent-foreground"
+                        disabled={isResending || !canResend()}
+                        onClick={async () => {
+                          if (!canResend()) {
+                            return;
+                          }
+                          setResending(true);
+                          const { sendVerificationLink } = await import(
+                            "@/app/(auth)/signup/actions"
+                          );
+                          const res = await sendVerificationLink(
+                            currentEmail || form.getValues("email")
+                          );
+                          if (res.success) {
+                            resetResendCountdown();
+                            startResendCountdown();
+                            setRateLimit("resend", { isLimited: false });
+                            toast({
+                              title: "Email Sent!",
+                              description:
+                                "A new verification link has been sent to your email.",
+                            });
+                          } else if (res.rateLimited && res.rateLimitInfo) {
+                            setRateLimit("resend", {
+                              remaining: res.rateLimitInfo.remaining,
+                              resetTime: res.rateLimitInfo.resetTime,
+                              isLimited: true,
+                            });
+                            toast({
+                              variant: "destructive",
+                              title: "Rate Limited!",
+                              description:
+                                res.error ||
+                                "Too many requests. Try again later.",
+                            });
+                          } else {
+                            toast({
+                              variant: "destructive",
+                              title: "Failed to Send",
+                              description:
+                                res.error ||
+                                "Failed to send verification link.",
+                            });
+                          }
+                          setResending(false);
+                        }}
+                        type="button"
+                        variant="secondary"
+                      >
+                        {(() => {
+                          if (isResending) {
+                            return "Sending...";
+                          }
+                          if (resendCountdownInfo.isActive) {
+                            return `Resend available in ${resendCountdownInfo.timeLeft}s`;
+                          }
+                          return "Resend verification email";
+                        })()}
+                      </Button>
+
+                      <details className="group">
+                        <summary className="flex cursor-pointer items-center justify-center gap-1 text-center text-muted-foreground text-xs transition-colors hover:text-foreground">
+                          <span>More info</span>
+                          <svg
+                            className="h-3 w-3 transition-transform group-open:rotate-180"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            viewBox="0 0 24 24"
+                          >
+                            <title>Toggle more info</title>
+                            <path
+                              d="M19 9l-7 7-7-7"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        </summary>
+                        <p className="mt-2 text-center text-muted-foreground text-xs">
+                          Please check your inbox to complete your registration
+                          or Check your spam folder if you don't see the email
+                          in your inbox
+                        </p>
+                      </details>
+                    </div>
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  animate={{ opacity: 1, y: 0 }}
+                  className="space-y-6"
+                  exit={{ opacity: 0, y: -20 }}
+                  initial={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <div className="space-y-6 p-4 sm:p-6">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0 flex-1 space-y-1 text-left">
+                        <h2 className="font-bold text-foreground text-lg sm:text-2xl">
+                          Verify Your Email
+                        </h2>
+                        <p className="text-muted-foreground text-xs sm:text-sm">
+                          Enter the 6-digit code sent to
+                        </p>
+                        <p className="truncate font-medium text-foreground text-xs sm:text-sm">
+                          {currentEmail || form.getValues("email")}
+                        </p>
+                      </div>
+
+                      <div className="relative shrink-0">
+                        <motion.button
+                          animate={
+                            count === 0 && !tooltipDismissed
+                              ? {
+                                  y: [0, -8, 0],
+                                  transition: {
+                                    duration: 0.6,
+                                    repeat: Number.POSITIVE_INFINITY,
+                                    ease: "easeInOut",
+                                  },
+                                }
+                              : {}
+                          }
+                          className="group relative h-12 w-12 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 sm:h-16 sm:w-16"
+                          disabled={!canResend() || count > 0}
+                          onClick={async () => {
+                            if (!canResend()) {
+                              return;
+                            }
+                            setTooltipDismissed(true);
+                            setResending(true);
+                            const { resendVerificationEmail } = await import(
+                              "@/app/(auth)/signup/actions"
+                            );
+                            const result = await resendVerificationEmail(
+                              currentEmail || form.getValues("email")
+                            );
+                            if (result.success) {
+                              resetCountdown();
+                              startCountdown();
+                              setOtp("");
+                              setTooltipDismissed(false);
+                              setRateLimit("resend", { isLimited: false });
+                              toast({
+                                title: "Code Sent!",
+                                description:
+                                  "A new verification code has been sent.",
+                              });
+                            } else if (
+                              result.rateLimited &&
+                              result.rateLimitInfo
+                            ) {
+                              setRateLimit("resend", {
+                                remaining: result.rateLimitInfo.remaining,
+                                resetTime: result.rateLimitInfo.resetTime,
+                                isLimited: true,
+                              });
+                              toast({
+                                variant: "destructive",
+                                title: "Rate Limited!",
+                                description:
+                                  result.error ||
+                                  "Too many requests. Try again later.",
+                              });
+                            } else {
+                              toast({
+                                variant: "destructive",
+                                title: "Failed to Resend",
+                                description:
+                                  result.error ||
+                                  "Failed to resend verification code.",
+                              });
+                            }
+                            setResending(false);
+                          }}
+                          type="button"
+                        >
+                          <svg
+                            className="-rotate-90 h-full w-full transform"
+                            viewBox="0 0 100 100"
+                          >
+                            <title>Resend verification code timer</title>
+                            <circle
+                              className="stroke-muted"
+                              cx="50"
+                              cy="50"
+                              fill="none"
+                              r="45"
+                              strokeWidth="8"
+                            />
+                            <motion.circle
+                              animate={{
+                                strokeDashoffset: 283 - (count / 300) * 283,
+                              }}
+                              className={`transition-colors ${count < 60 ? "stroke-destructive" : "stroke-primary"}`}
+                              cx="50"
+                              cy="50"
+                              fill="none"
+                              r="45"
+                              strokeDasharray="283"
+                              strokeDashoffset="283"
+                              strokeLinecap="round"
+                              strokeWidth="8"
+                              transition={{ duration: 1, ease: "linear" }}
+                            />
+                          </svg>
+                          {count === 0 && (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <span className="text-xl sm:text-2xl">↻</span>
+                            </div>
+                          )}
+                        </motion.button>
+
+                        <AnimatePresence>
+                          {count === 0 && !tooltipDismissed && (
+                            <motion.div
+                              animate={{ opacity: 1, scale: 1 }}
+                              className="absolute top-full right-0 z-10 mt-2 w-40 rounded-lg border border-border bg-popover p-2.5 text-popover-foreground shadow-lg sm:w-48 sm:p-3"
+                              exit={{ opacity: 0, scale: 0.95 }}
+                              initial={{ opacity: 0, scale: 0.95 }}
+                              transition={{ duration: 0.2 }}
+                            >
+                              <p className="text-[10px] sm:text-xs">
+                                Code expired! Click the button to resend a new
+                                verification code.
+                              </p>
+                              <div className="-top-2 absolute right-4 h-4 w-4 rotate-45 border-border border-t border-l bg-popover" />
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <motion.div
+                        animate={otpError ? { x: [-10, 10, -10, 10, 0] } : {}}
+                        className="flex justify-center"
+                        transition={{ duration: 0.4 }}
+                      >
+                        <InputOTP
+                          containerClassName="w-full"
+                          disabled={isVerifyingOTP || count === 0}
+                          maxLength={6}
+                          onChange={(val) => {
+                            if (DIGITS_ONLY_REGEX.test(val)) {
+                              setOtp(val);
+                              setOtpError(false);
+                              if (val.length === 6) {
+                                handleOTPVerification(val);
+                              }
+                            } else {
+                              setOtpError(true);
+                              toast({
+                                variant: "destructive",
+                                title: "Numbers only, please!",
+                                description:
+                                  "We're looking for digits, not your life story!",
+                                duration: 2000,
+                              });
+                            }
+                          }}
+                          pattern="[0-9]*"
+                          value={otp}
+                        >
+                          <InputOTPGroup className="w-full justify-between">
+                            {OTP_SLOT_IDS.map((slotId, index) => (
+                              <motion.div
+                                animate={
+                                  otp[index]
+                                    ? {
+                                        scale: [1, 1.1, 1],
+                                        rotate: [0, 5, -5, 0],
+                                      }
+                                    : {}
+                                }
+                                className="flex-1"
+                                key={slotId}
+                                transition={{ duration: 0.3 }}
+                              >
+                                <InputOTPSlot
+                                  className={`w-full ${otpError ? "border-destructive" : ""}`}
+                                  index={index}
+                                />
+                              </motion.div>
+                            ))}
+                          </InputOTPGroup>
+                        </InputOTP>
+                      </motion.div>
+
+                      <AnimatePresence mode="wait">
+                        {isVerifyingOTP && (
+                          <motion.div
+                            animate={{ opacity: 1, y: 0 }}
+                            className="flex items-center justify-center gap-2 text-primary text-sm"
+                            exit={{ opacity: 0, y: -10 }}
+                            initial={{ opacity: 0, y: -10 }}
+                            transition={{ duration: 0.2 }}
+                          >
+                            <motion.div
+                              animate={{ rotate: 360 }}
+                              className="h-4 w-4 shrink-0 rounded-full border-2 border-primary/20 border-t-primary"
+                              transition={{
+                                duration: 1,
+                                repeat: Number.POSITIVE_INFINITY,
+                                ease: "linear",
+                              }}
+                            />
+                            <span>Verifying your code...</span>
+                          </motion.div>
+                        )}
+                        {!isVerifyingOTP && otpError && (
+                          <motion.div
+                            animate={{ opacity: 1, y: 0 }}
+                            className="flex items-center justify-center gap-2 text-destructive text-sm"
+                            exit={{ opacity: 0, y: -10 }}
+                            initial={{ opacity: 0, y: -10 }}
+                            transition={{ duration: 0.2 }}
+                          >
+                            <AlertCircle className="h-5 w-5 shrink-0" />
+                            <span>
+                              That code didn't work. Please try again.
+                            </span>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+
+                    <div className="space-y-2">
+                      <AnimatePresence>
+                        {otpResendCount === 0 && (
+                          <motion.div
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            initial={{ opacity: 0, y: -10 }}
+                            transition={{ duration: 0.3 }}
+                          >
+                            <Button
+                              className="w-full cursor-pointer"
+                              disabled={isResending || !canResend()}
+                              onClick={async () => {
+                                if (!canResend()) {
+                                  return;
+                                }
+                                setResending(true);
+                                const { resendVerificationEmail } =
+                                  await import("@/app/(auth)/signup/actions");
+                                const result = await resendVerificationEmail(
+                                  currentEmail || form.getValues("email")
+                                );
+                                if (result.success) {
+                                  resetOtpResendCountdown();
+                                  startOtpResendCountdown();
+                                  setOtp("");
+                                  setRateLimit("resend", { isLimited: false });
+                                  toast({
+                                    title: "Code Sent!",
+                                    description:
+                                      "A new verification code has been sent.",
+                                  });
+                                } else if (
+                                  result.rateLimited &&
+                                  result.rateLimitInfo
+                                ) {
+                                  setRateLimit("resend", {
+                                    remaining: result.rateLimitInfo.remaining,
+                                    resetTime: result.rateLimitInfo.resetTime,
+                                    isLimited: true,
+                                  });
+                                  toast({
+                                    variant: "destructive",
+                                    title: "Rate Limited!",
+                                    description:
+                                      result.error ||
+                                      "Too many requests. Try again later.",
+                                  });
+                                } else {
+                                  toast({
+                                    variant: "destructive",
+                                    title: "Failed to Resend",
+                                    description:
+                                      result.error ||
+                                      "Failed to resend verification code.",
+                                  });
+                                }
+                                setResending(false);
+                              }}
+                              type="button"
+                              variant="default"
+                            >
+                              {isResending ? "Sending..." : "Resend Code"}
+                            </Button>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+
+                      <Button
+                        className="w-full cursor-pointer bg-accent text-accent-foreground"
+                        onClick={async () => {
+                          const { sendVerificationLink } = await import(
+                            "@/app/(auth)/signup/actions"
+                          );
+                          const res = await sendVerificationLink(
+                            currentEmail || form.getValues("email")
+                          );
+                          if (res.success) {
+                            setEmailVerificationState(
+                              currentEmail || form.getValues("email")
+                            );
+                            setRateLimit("resend", { isLimited: false });
+                            toast({
+                              title: "Email Link Sent!",
+                              description:
+                                "Check your inbox for the verification link.",
+                            });
+                          } else if (res.rateLimited && res.rateLimitInfo) {
+                            setRateLimit("resend", {
+                              remaining: res.rateLimitInfo.remaining,
+                              resetTime: res.rateLimitInfo.resetTime,
+                              isLimited: true,
+                            });
+                            toast({
+                              variant: "destructive",
+                              title: "Rate Limited!",
+                              description:
+                                res.error ||
+                                "Too many requests. Try again later.",
+                            });
+                          } else {
+                            toast({
+                              variant: "destructive",
+                              title: "Failed to Send",
+                              description:
+                                res.error ||
+                                "Failed to send verification link.",
+                            });
+                          }
+                        }}
+                        type="button"
+                        variant="secondary"
+                      >
+                        Verify via Email Link Instead
+                      </Button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

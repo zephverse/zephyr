@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 import type React from "react";
 import { getSessionFromApi } from "@/lib/session";
 
@@ -13,5 +14,9 @@ export default async function Layout({
     redirect("/");
   }
 
-  return <div className="font-sofiaProSoftMed">{children}</div>;
+  return (
+    <div className="font-sofiaProSoftMed">
+      <NuqsAdapter>{children}</NuqsAdapter>
+    </div>
+  );
 }

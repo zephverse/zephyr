@@ -25,7 +25,7 @@ type UserUpdateModalProps = {
   onSuccessAction: () => void;
 };
 
-export function UserUpdateModal({
+export default function UserUpdateModal({
   user,
   onCloseAction,
   onSuccessAction,

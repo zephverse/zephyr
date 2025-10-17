@@ -4,8 +4,7 @@ import { Button } from "@zephyr/ui/shadui/button";
 import { XCircle } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import { authClient } from "@/lib/auth";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 const ERROR_MESSAGES = {
   "invalid-token": "The verification link is invalid.",
@@ -183,7 +182,11 @@ export default function VerifyEmailPage() {
   const [status, setStatus] = useState<"loading" | "success" | "error">(
     "loading"
   );
-  const verificationChannel = new BroadcastChannel("email-verification");
+  const verificationChannel = useMemo(
+    () => new BroadcastChannel("email-verification"),
+    []
+  );
+  const verificationAttempted = useRef(false);
 
   useEffect(() => {
     const error = searchParams.get("error");
@@ -199,7 +202,8 @@ export default function VerifyEmailPage() {
 
     if (error) {
       setStatus("error");
-    } else if (token) {
+    } else if (token && !verificationAttempted.current) {
+      verificationAttempted.current = true;
       // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: ignore
       (async () => {
         try {
@@ -211,48 +215,42 @@ export default function VerifyEmailPage() {
           const ok = (data as { ok?: boolean }).ok === true || res.ok;
 
           if (ok) {
-            const email = (data as { email?: string }).email;
-            const password = (data as { password?: string }).password;
-
-            if (email && password) {
-              try {
-                await authClient.signIn.email({
-                  email,
-                  password,
-                  fetchOptions: {
-                    onError: () => {
-                      throw new Error("auto-signin-failed");
-                    },
-                  },
-                });
-                verificationChannel.postMessage("verification-success");
-                setStatus("success");
-                router.replace("/verify-email?verified=1");
-                setTimeout(() => router.push("/"), 100);
-                return;
-              } catch {
-                console.warn("Auto sign-in failed, redirecting to login");
-              }
+            try {
+              verificationChannel.postMessage("verification-success");
+            } catch {
+              // BroadcastChannel error is non-critical
             }
-
-            verificationChannel.postMessage("verification-success");
             setStatus("success");
-            router.replace("/verify-email?verified=1");
-            setTimeout(() => router.push("/"), 100);
-          } else {
-            setStatus("error");
+
+            await new Promise((resolve) => setTimeout(resolve, 500));
+
+            try {
+              const sessionRes = await fetch("/api/auth/get-session", {
+                credentials: "include",
+              });
+              const sessionData = await sessionRes.json().catch(() => null);
+
+              if (sessionData?.user) {
+                router.replace("/verify-email?verified=1");
+                setTimeout(() => router.push("/"), 1000);
+              } else {
+                router.replace("/verify-email?verified=1");
+                setTimeout(() => router.push("/login"), 1000);
+              }
+            } catch {
+              router.replace("/verify-email?verified=1");
+              setTimeout(() => router.push("/login"), 1000);
+            }
+            return;
           }
+          setStatus("error");
         } catch {
           setStatus("error");
         }
       })();
-    } else {
+    } else if (!token) {
       setStatus("error");
     }
-
-    return () => {
-      verificationChannel.close();
-    };
   }, [searchParams, router, verificationChannel]);
 
   const error = searchParams.get("error");
@@ -282,6 +280,52 @@ export default function VerifyEmailPage() {
             transition={{ duration: 0.5 }}
           >
             {status === "loading" && <VerificationAnimation />}
+
+            {status === "success" && (
+              <motion.div
+                animate={{ opacity: 1, scale: 1 }}
+                className="flex flex-col items-center space-y-4"
+                initial={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.3 }}
+              >
+                <motion.div
+                  animate={{ scale: [1, 1.2, 1] }}
+                  className="rounded-full bg-primary/10 p-4"
+                  transition={{ duration: 0.5 }}
+                >
+                  {/* biome-ignore lint/a11y/noSvgWithoutTitle: SVG is decorative */}
+                  <svg
+                    className="h-16 w-16 text-primary"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                    />
+                  </svg>
+                </motion.div>
+                <h2 className="text-center font-bold text-2xl text-foreground">
+                  Email Verified! 🎉
+                </h2>
+                <p className="text-center text-muted-foreground">
+                  Your email has been successfully verified. Redirecting you
+                  now...
+                </p>
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  className="h-8 w-8 rounded-full border-4 border-primary/20 border-t-primary"
+                  transition={{
+                    duration: 1,
+                    repeat: Number.POSITIVE_INFINITY,
+                    ease: "linear",
+                  }}
+                />
+              </motion.div>
+            )}
 
             {status === "error" && (
               <motion.div
