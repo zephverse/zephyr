@@ -22,7 +22,7 @@ import {
   InputOTPGroup,
   InputOTPSlot,
 } from "@zephyr/ui/shadui/input-otp";
-import { AlertCircle, Mail, User } from "lucide-react";
+import { AlertCircle, ArrowLeft, Mail, User } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 import {
@@ -52,6 +52,8 @@ const texts = [
   "Where every post finds you.",
 ];
 
+const DIGITS_ONLY_REGEX = /^\d*$/;
+
 type ErrorWithMessage = {
   message: string;
 };
@@ -76,6 +78,7 @@ function toErrorWithMessage(maybeError: unknown): ErrorWithMessage {
   }
 }
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: ignore
 export default function SignUpForm() {
   const { toast } = useToast();
   const { setIsVerifying } = useVerification();
@@ -89,14 +92,28 @@ export default function SignUpForm() {
   const [showOTPPanel, setShowOTPPanel] = useState(false);
   const [isVerifyingOTP, setIsVerifyingOTP] = useState(false);
   const [otp, setOtp] = useState("");
+  const [otpError, setOtpError] = useState(false);
+  const [showEmailVerification, setShowEmailVerification] = useState(false);
+  const [isResending, setIsResending] = useState(false);
   const [count, { startCountdown, stopCountdown, resetCountdown }] =
     useCountdown({
       countStart: 300,
       intervalMs: 1000,
     });
+  const [
+    resendCount,
+    {
+      startCountdown: startResendCountdown,
+      resetCountdown: resetResendCountdown,
+    },
+  ] = useCountdown({
+    countStart: 60,
+    intervalMs: 1000,
+  });
   const verificationChannel = useRef<BroadcastChannel | null>(null);
   const [isAgeVerified, setIsAgeVerified] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [tooltipDismissed, setTooltipDismissed] = useState(false);
 
   const form = useForm<SignUpValues>({
     resolver: zodResolver(signUpSchema),
@@ -130,14 +147,20 @@ export default function SignUpForm() {
   }, [setIsVerifying]);
 
   useEffect(() => {
-    if (showOTPPanel) {
+    if (showOTPPanel && !showEmailVerification) {
       startCountdown();
     } else {
       stopCountdown();
       resetCountdown();
       setOtp("");
     }
-  }, [showOTPPanel, startCountdown, stopCountdown, resetCountdown]);
+  }, [
+    showOTPPanel,
+    showEmailVerification,
+    startCountdown,
+    stopCountdown,
+    resetCountdown,
+  ]);
 
   const handleInvalidSubmit: SubmitErrorHandler<FieldValues> = useCallback(
     (errors) => {
@@ -147,7 +170,7 @@ export default function SignUpForm() {
 
       toast({
         variant: "destructive",
-        title: "Oopsie daisy! 🤭",
+        title: "Oopsie daisy!",
         description: errorMessage,
         duration: 3000,
       });
@@ -214,6 +237,7 @@ export default function SignUpForm() {
   const handleOTPVerification = async (otpValue: string) => {
     try {
       setIsVerifyingOTP(true);
+      setOtpError(false);
       const email = form.getValues("email");
       const authBase = env.NEXT_PUBLIC_AUTH_URL;
       const res = await fetch(`${authBase}/api/trpc/pendingSignupVerify`, {
@@ -242,6 +266,8 @@ export default function SignUpForm() {
         if (serverError === "invalid-otp") {
           userFriendlyError =
             "The verification code is incorrect. Please check and try again.";
+          setOtpError(true);
+          setOtp("");
         } else if (serverError === "user-exists") {
           userFriendlyError =
             "An account with this email or username already exists.";
@@ -311,17 +337,17 @@ export default function SignUpForm() {
       });
       verificationChannel.current?.postMessage("verification-success");
       setTimeout(() => window.location.reload(), 100);
-    } catch (otpError) {
+    } catch (verificationError) {
       const message =
-        otpError instanceof Error
-          ? otpError.message
+        verificationError instanceof Error
+          ? verificationError.message
           : "OTP verification failed";
       toast({
         variant: "destructive",
         title: "Verification Failed",
         description: message,
       });
-      throw otpError;
+      throw verificationError;
     } finally {
       setIsVerifyingOTP(false);
     }
@@ -539,144 +565,338 @@ export default function SignUpForm() {
           {showOTPPanel && (
             <motion.div
               animate={{ opacity: 1, y: 0 }}
-              className="space-y-6"
+              className="relative space-y-6"
               exit={{ opacity: 0, y: -8 }}
               initial={{ opacity: 0, y: 8 }}
               key="otp-panel"
               transition={{ duration: 0.25 }}
             >
-              <div className="space-y-2 text-center">
-                <p className="bg-gradient-to-r from-primary via-primary/80 to-primary bg-clip-text font-semibold text-2xl text-transparent">
-                  Verify Your Email
-                </p>
-                <p className="text-muted-foreground">
-                  We've sent a 6-digit code to
-                </p>
-                <p className="rounded-lg border border-border/50 bg-muted/50 px-4 py-2 font-medium text-foreground">
-                  {form.getValues("email")}
-                </p>
-              </div>
-
-              <div className="flex justify-center">
-                <InputOTP
-                  disabled={isVerifyingOTP || count === 0}
-                  maxLength={6}
-                  onChange={(val) => setOtp(val)}
-                  value={otp}
+              {showEmailVerification ? (
+                <motion.div
+                  animate={{ opacity: 1, y: 0 }}
+                  className="space-y-6 p-6"
+                  exit={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 20 }}
+                  transition={{ duration: 0.3 }}
                 >
-                  <InputOTPGroup>
-                    <InputOTPSlot index={0} key="otp-slot-0" />
-                    <InputOTPSlot index={1} key="otp-slot-1" />
-                    <InputOTPSlot index={2} key="otp-slot-2" />
-                    <InputOTPSlot index={3} key="otp-slot-3" />
-                    <InputOTPSlot index={4} key="otp-slot-4" />
-                    <InputOTPSlot index={5} key="otp-slot-5" />
-                  </InputOTPGroup>
-                </InputOTP>
-              </div>
-
-              <div className="space-y-2 text-center text-sm">
-                <div className="flex items-center justify-center gap-2">
-                  <span className="text-muted-foreground">Code expires in</span>
-                  <span
-                    className={`font-bold font-mono ${count < 60 ? "text-destructive" : "text-muted-foreground"}`}
+                  <button
+                    className="group -ml-2 -mt-2 mb-2 flex items-center gap-2 text-muted-foreground text-sm transition-colors hover:text-foreground"
+                    onClick={() => setShowEmailVerification(false)}
+                    type="button"
                   >
-                    {`${Math.floor(count / 60)}:${String(count % 60).padStart(2, "0")}`}
-                  </span>
-                </div>
-                <div className="relative h-1 w-full overflow-hidden rounded-full bg-muted">
-                  <div
-                    className="absolute top-0 left-0 h-full bg-gradient-to-r from-primary to-primary/60"
-                    style={{ width: `${(count / 300) * 100}%` }}
-                  />
-                </div>
-              </div>
+                    <ArrowLeft className="group-hover:-translate-x-1 h-4 w-4 transition-transform" />
+                    <span>Back to Code Entry</span>
+                  </button>
+                  <div className="flex flex-col items-center space-y-2 pt-2 text-center">
+                    <div className="relative">
+                      <div className="absolute inset-0 animate-pulse rounded-full bg-primary/20 blur-md" />
+                      <div className="relative rounded-full border border-primary/20 bg-background/80 p-4 backdrop-blur-sm">
+                        <Mail className="h-8 w-8 text-primary" />
+                      </div>
+                    </div>
 
-              <div className="space-y-3">
-                <Button
-                  className="w-full"
-                  disabled={isVerifyingOTP || otp.length !== 6 || count === 0}
-                  onClick={() => handleOTPVerification(otp)}
-                  type="button"
+                    <div className="space-y-2">
+                      <h3 className="bg-gradient-to-r from-primary via-primary/80 to-primary bg-clip-text font-bold text-2xl text-transparent">
+                        Check Your Email
+                      </h3>
+                    </div>
+
+                    <div className="space-y-3">
+                      <p className="text-muted-foreground text-sm">
+                        We've sent a verification link to
+                      </p>
+                      <p className="rounded-lg border border-border/50 bg-muted/50 px-4 py-2 font-medium text-foreground">
+                        {form.getValues("email")}
+                      </p>
+                    </div>
+
+                    <div className="w-full space-y-3 pt-2">
+                      <Button
+                        className="w-full cursor-pointer bg-accent text-accent-foreground"
+                        disabled={
+                          isResending || (resendCount > 0 && resendCount < 60)
+                        }
+                        onClick={async () => {
+                          if (resendCount > 0 && resendCount < 60) {
+                            return;
+                          }
+                          setIsResending(true);
+                          const { sendVerificationLink } = await import(
+                            "@/app/(auth)/signup/actions"
+                          );
+                          const res = await sendVerificationLink(
+                            form.getValues("email")
+                          );
+                          if (res.success) {
+                            resetResendCountdown();
+                            startResendCountdown();
+                            toast({
+                              title: "Email Sent!",
+                              description:
+                                "A new verification link has been sent to your email.",
+                            });
+                          } else {
+                            toast({
+                              variant: "destructive",
+                              title: "Failed to Send",
+                              description:
+                                res.error ||
+                                "Failed to send verification link.",
+                            });
+                          }
+                          setIsResending(false);
+                        }}
+                        type="button"
+                        variant="secondary"
+                      >
+                        {(() => {
+                          if (isResending) {
+                            return "Sending...";
+                          }
+                          if (resendCount > 0 && resendCount < 60) {
+                            return `Resend available in ${resendCount}s`;
+                          }
+                          return "Resend verification email";
+                        })()}
+                      </Button>
+
+                      <details className="group">
+                        <summary className="flex cursor-pointer items-center justify-center gap-1 text-center text-muted-foreground text-xs transition-colors hover:text-foreground">
+                          <span>More info</span>
+                          <svg
+                            className="h-3 w-3 transition-transform group-open:rotate-180"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            viewBox="0 0 24 24"
+                          >
+                            <title>Toggle more info</title>
+                            <path
+                              d="M19 9l-7 7-7-7"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        </summary>
+                        <p className="mt-2 text-center text-muted-foreground text-xs">
+                          Please check your inbox to complete your registration
+                          or Check your spam folder if you don't see the email
+                          in your inbox
+                        </p>
+                      </details>
+                    </div>
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  animate={{ opacity: 1, y: 0 }}
+                  className="space-y-6"
+                  exit={{ opacity: 0, y: -20 }}
+                  initial={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
                 >
-                  {isVerifyingOTP ? "Verifying..." : "Verify Code"}
-                </Button>
+                  <div className="space-y-6 p-4 sm:p-6">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0 flex-1 space-y-1 text-left">
+                        <h2 className="font-bold text-foreground text-lg sm:text-2xl">
+                          Verify Your Email
+                        </h2>
+                        <p className="text-muted-foreground text-xs sm:text-sm">
+                          Enter the 6-digit code sent to
+                        </p>
+                        <p className="truncate font-medium text-foreground text-xs sm:text-sm">
+                          {form.getValues("email")}
+                        </p>
+                      </div>
 
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-border/30 border-t" />
-                  </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-background px-2 text-muted-foreground">
-                      Having trouble?
-                    </span>
-                  </div>
-                </div>
+                      <div className="relative shrink-0">
+                        <motion.button
+                          animate={
+                            count === 0 && !tooltipDismissed
+                              ? {
+                                  y: [0, -8, 0],
+                                  transition: {
+                                    duration: 0.6,
+                                    repeat: Number.POSITIVE_INFINITY,
+                                    ease: "easeInOut",
+                                  },
+                                }
+                              : {}
+                          }
+                          className="group relative h-12 w-12 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 sm:h-16 sm:w-16"
+                          disabled={count > 0 && count < 300}
+                          onClick={async () => {
+                            if (count > 0 && count < 300) {
+                              return;
+                            }
+                            setTooltipDismissed(true);
+                            const { resendVerificationEmail } = await import(
+                              "@/app/(auth)/signup/actions"
+                            );
+                            const result = await resendVerificationEmail(
+                              form.getValues("email")
+                            );
+                            if (result.success) {
+                              resetCountdown();
+                              startCountdown();
+                              setOtp("");
+                              setTooltipDismissed(false);
+                              toast({
+                                title: "Code Sent!",
+                                description:
+                                  "A new verification code has been sent.",
+                              });
+                            } else {
+                              toast({
+                                variant: "destructive",
+                                title: "Failed to Resend",
+                                description:
+                                  result.error ||
+                                  "Failed to resend verification code.",
+                              });
+                            }
+                          }}
+                          type="button"
+                        >
+                          <svg
+                            className="-rotate-90 h-full w-full transform"
+                            viewBox="0 0 100 100"
+                          >
+                            <title>Resend verification code timer</title>
+                            <circle
+                              className="stroke-muted"
+                              cx="50"
+                              cy="50"
+                              fill="none"
+                              r="45"
+                              strokeWidth="8"
+                            />
+                            <motion.circle
+                              animate={{
+                                strokeDashoffset: 283 - (count / 300) * 283,
+                              }}
+                              className={`transition-colors ${count < 60 ? "stroke-destructive" : "stroke-primary"}`}
+                              cx="50"
+                              cy="50"
+                              fill="none"
+                              r="45"
+                              strokeDasharray="283"
+                              strokeDashoffset="283"
+                              strokeLinecap="round"
+                              strokeWidth="8"
+                              transition={{ duration: 1, ease: "linear" }}
+                            />
+                          </svg>
+                          {count === 0 && (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <span className="text-xl sm:text-2xl">↻</span>
+                            </div>
+                          )}
+                        </motion.button>
 
-                <div className="grid grid-cols-2 gap-2">
-                  <Button
-                    onClick={async () => {
-                      if (count > 0 && count < 300) {
-                        return;
-                      }
-                      const { resendVerificationEmail } = await import(
-                        "@/app/(auth)/signup/actions"
-                      );
-                      const result = await resendVerificationEmail(
-                        form.getValues("email")
-                      );
-                      if (result.success) {
-                        startCountdown();
-                        toast({
-                          title: "Code Sent!",
-                          description:
-                            "A new verification code has been sent to your email.",
-                        });
-                      } else {
-                        toast({
-                          variant: "destructive",
-                          title: "Failed to Resend",
-                          description:
-                            result.error ||
-                            "Failed to resend verification code.",
-                        });
-                      }
-                    }}
-                    type="button"
-                    variant="outline"
-                  >
-                    Resend Code
-                  </Button>
-                  <Button
-                    onClick={async () => {
-                      const { sendVerificationLink } = await import(
-                        "@/app/(auth)/signup/actions"
-                      );
-                      const res = await sendVerificationLink(
-                        form.getValues("email")
-                      );
-                      if (res.success) {
-                        toast({
-                          title: "Email Link Sent!",
-                          description:
-                            "A verification link has been sent to your email.",
-                        });
-                      } else {
-                        toast({
-                          variant: "destructive",
-                          title: "Failed to Send",
-                          description:
-                            res.error || "Failed to send verification link.",
-                        });
-                      }
-                    }}
-                    type="button"
-                    variant="ghost"
-                  >
-                    Use Email Link
-                  </Button>
-                </div>
-              </div>
+                        <AnimatePresence>
+                          {count === 0 && !tooltipDismissed && (
+                            <motion.div
+                              animate={{ opacity: 1, scale: 1 }}
+                              className="absolute top-full right-0 z-10 mt-2 w-40 rounded-lg border border-border bg-popover p-2.5 text-popover-foreground shadow-lg sm:w-48 sm:p-3"
+                              exit={{ opacity: 0, scale: 0.95 }}
+                              initial={{ opacity: 0, scale: 0.95 }}
+                              transition={{ duration: 0.2 }}
+                            >
+                              <p className="text-[10px] sm:text-xs">
+                                Code expired! Click the button to resend a new
+                                verification code.
+                              </p>
+                              <div className="-top-2 absolute right-4 h-4 w-4 rotate-45 border-border border-t border-l bg-popover" />
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    </div>
+
+                    <motion.div
+                      animate={otpError ? { x: [-10, 10, -10, 10, 0] } : {}}
+                      className="flex justify-center"
+                      transition={{ duration: 0.4 }}
+                    >
+                      <InputOTP
+                        disabled={isVerifyingOTP || count === 0}
+                        maxLength={6}
+                        onChange={(val) => {
+                          if (DIGITS_ONLY_REGEX.test(val)) {
+                            setOtp(val);
+                            setOtpError(false);
+                            if (val.length === 6) {
+                              handleOTPVerification(val);
+                            }
+                          } else {
+                            setOtpError(true);
+                            toast({
+                              variant: "destructive",
+                              title: "Numbers only, please!",
+                              description:
+                                "We're looking for digits, not your life story!",
+                              duration: 2000,
+                            });
+                          }
+                        }}
+                        pattern="[0-9]*"
+                        value={otp}
+                      >
+                        <InputOTPGroup className="gap-2.5">
+                          {[0, 1, 2, 3, 4, 5].map((index) => (
+                            <motion.div
+                              animate={
+                                otp[index]
+                                  ? {
+                                      scale: [1, 1.1, 1],
+                                      rotate: [0, 5, -5, 0],
+                                    }
+                                  : {}
+                              }
+                              key={`otp-slot-${index}`}
+                              transition={{ duration: 0.3 }}
+                            >
+                              <InputOTPSlot index={index} />
+                            </motion.div>
+                          ))}
+                        </InputOTPGroup>
+                      </InputOTP>
+                    </motion.div>
+
+                    <Button
+                      className="w-full cursor-pointer bg-accent text-accent-foreground"
+                      onClick={async () => {
+                        const { sendVerificationLink } = await import(
+                          "@/app/(auth)/signup/actions"
+                        );
+                        const res = await sendVerificationLink(
+                          form.getValues("email")
+                        );
+                        if (res.success) {
+                          setShowEmailVerification(true);
+                          toast({
+                            title: "Email Link Sent!",
+                            description:
+                              "Check your inbox for the verification link.",
+                          });
+                        } else {
+                          toast({
+                            variant: "destructive",
+                            title: "Failed to Send",
+                            description:
+                              res.error || "Failed to send verification link.",
+                          });
+                        }
+                      }}
+                      type="button"
+                      variant="secondary"
+                    >
+                      Verify via Email Link Instead
+                    </Button>
+                  </div>
+                </motion.div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
