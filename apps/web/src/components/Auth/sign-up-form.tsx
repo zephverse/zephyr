@@ -345,17 +345,29 @@ export default function SignUpForm() {
         let userFriendlyError = "Something went wrong. Please try again.";
         if (serverError === "invalid-otp") {
           userFriendlyError =
-            "The verification code is incorrect. Please check and try again.";
+            "The verification code is incorrect or has expired. Please check and try again.";
           setOtpError(true);
           setOtp("");
         } else if (serverError === "user-exists") {
           userFriendlyError =
             "An account with this email or username already exists.";
+          clearSignupState();
+          setTimeout(() => {
+            window.location.href = "/login";
+          }, 2000);
         } else if (serverError === "no-pending-signup") {
           userFriendlyError =
-            "Your verification session has expired. Please start over.";
+            "Your verification session has expired. Please start the signup process again.";
+          clearSignupState();
+          setTimeout(() => {
+            window.location.reload();
+          }, 2000);
+        } else if (serverError === "rate-limited") {
+          userFriendlyError =
+            "Too many attempts. Please wait a moment before trying again.";
         }
 
+        console.error("OTP verification error:", serverError);
         toast({
           variant: "destructive",
           title: "Verification Failed",
@@ -366,58 +378,68 @@ export default function SignUpForm() {
 
       const responseData = data?.result?.data?.json;
       const responseEmail = responseData?.email;
-      const responsePassword = responseData?.password;
+      const responsePassword = form.getValues("password");
 
       if (responseEmail && responsePassword) {
         try {
-          console.log("Attempting auto-login with:", { email: responseEmail });
+          console.log("Attempting auto-login after OTP verification");
           const { authClient } = await import("@/lib/auth");
-          await authClient.signIn.email({
+
+          const loginResult = await authClient.signIn.email({
             email: responseEmail,
             password: responsePassword,
             fetchOptions: {
-              onError: () => {
-                throw new Error("Auto-login failed");
+              onSuccess: () => {
+                console.log("Auto-login successful");
+              },
+              onError: (ctx) => {
+                console.error("Auto-login error:", ctx.error);
+                throw new Error(ctx.error.message || "Auto-login failed");
               },
             },
           });
 
-          console.log("Auto-login API call completed successfully");
-          verificationChannel.current?.postMessage("verification-success");
-          setIsVerifying(true);
-          clearSignupState();
-          toast({
-            title: "Welcome to Zephyr! 🎉",
-            description:
-              "Your account has been created and you're now logged in.",
-          });
-          setTimeout(() => {
-            console.log("Reloading page after successful login");
-            window.location.reload();
-          }, 500);
-          return;
+          if (loginResult?.data) {
+            console.log("Auto-login completed successfully");
+            verificationChannel.current?.postMessage("verification-success");
+            setIsVerifying(true);
+            clearSignupState();
+            toast({
+              title: "Welcome to Zephyr! 🎉",
+              description:
+                "Your account has been created and you're now logged in.",
+            });
+
+            await new Promise((resolve) => setTimeout(resolve, 500));
+            window.location.href = "/";
+            return;
+          }
         } catch (signError) {
           console.error("Auto sign-in failed:", signError);
           toast({
-            variant: "destructive",
-            title: "Login Failed",
+            title: "Account Created! 🎉",
             description:
-              "Account created but automatic login failed. Please log in manually.",
+              "Your account has been created. Please log in to continue.",
           });
+          clearSignupState();
+          setTimeout(() => {
+            window.location.href = "/login";
+          }, 1000);
+          return;
         }
-      } else {
-        console.log("No email/password returned for auto-login");
       }
 
       setIsVerifying(true);
-      // Clear URL state on successful signup completion
       clearSignupState();
       toast({
         title: "Welcome to Zephyr! 🎉",
-        description: "Your account has been created successfully.",
+        description:
+          "Your account has been created successfully. Please log in.",
       });
       verificationChannel.current?.postMessage("verification-success");
-      setTimeout(() => window.location.reload(), 100);
+      setTimeout(() => {
+        window.location.href = "/login";
+      }, 1000);
     } catch (verificationError) {
       const message =
         verificationError instanceof Error

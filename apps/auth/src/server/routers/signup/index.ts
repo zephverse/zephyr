@@ -18,22 +18,89 @@ const RATE_MAX_RESEND_PER_WINDOW = 3;
 const RATE_CREATION_WINDOW_SECONDS = 60 * 60;
 const RATE_MAX_CREATIONS_PER_WINDOW = 3;
 
+async function cleanupExpiredVerifications(): Promise<void> {
+  try {
+    const result = await prisma.verification.deleteMany({
+      where: {
+        expiresAt: { lt: new Date() },
+      },
+    });
+    if (result.count > 0) {
+      debugLog.api("cleanup:expired-verifications", { count: result.count });
+      console.log(`Cleaned up ${result.count} expired verification records`);
+    }
+  } catch (error) {
+    console.error("Failed to cleanup expired verifications:", error);
+  }
+}
+
 async function verifyEmailOtp(
   emailLower: string,
   otp: string
 ): Promise<boolean> {
-  const v = await prisma.verification.findFirst({
+  // Better-auth stores OTP identifiers with a prefix
+  const betterAuthIdentifier = `email-verification-otp-${emailLower}`;
+
+  // Clean up expired OTPs for this email first
+  try {
+    await prisma.verification.deleteMany({
+      where: {
+        identifier: { equals: betterAuthIdentifier, mode: "insensitive" },
+        expiresAt: { lt: new Date() },
+      },
+    });
+  } catch (cleanupError) {
+    console.error("Failed to cleanup expired OTPs:", cleanupError);
+  }
+
+  // Better-auth stores the value as "OTP:attemptCount" (e.g., "272123:0")
+  // We need to find records where the value starts with our OTP
+  const allVerifications = await prisma.verification.findMany({
     where: {
-      identifier: emailLower,
-      value: otp,
+      identifier: { equals: betterAuthIdentifier, mode: "insensitive" },
+      expiresAt: { gte: new Date() },
     },
-    select: { expiresAt: true },
+    select: { identifier: true, value: true, expiresAt: true, id: true },
   });
 
-  if (!v?.expiresAt || v.expiresAt < new Date()) {
+  console.log(`DEBUG: Looking for OTP ${otp} for ${emailLower}`);
+  console.log(`DEBUG: Better-auth identifier: ${betterAuthIdentifier}`);
+  console.log(
+    `DEBUG: Found ${allVerifications.length} active verification records`
+  );
+
+  // Find the verification record where the value starts with our OTP
+  const v = allVerifications.find((record) => {
+    // Better-auth format: "OTP:attemptCount"
+    const storedOtp = record.value.split(":")[0];
+    return storedOtp === otp;
+  });
+
+  if (!v) {
+    debugLog.api("verifyEmailOtp:not-found", {
+      emailLower,
+      otp,
+      betterAuthIdentifier,
+    });
+    console.log(
+      `OTP verification failed: No matching OTP found for ${emailLower} with code ${otp}`
+    );
     return false;
   }
 
+  if (v.expiresAt < new Date()) {
+    debugLog.api("verifyEmailOtp:expired", {
+      emailLower,
+      expiresAt: v.expiresAt,
+    });
+    console.log(
+      `OTP verification failed: OTP expired for ${emailLower} at ${v.expiresAt}`
+    );
+    return false;
+  }
+
+  debugLog.api("verifyEmailOtp:valid", { emailLower, otp });
+  console.log(`OTP verification successful for ${emailLower}`);
   return true;
 }
 
@@ -490,6 +557,10 @@ export const signupRouter = router({
 
       if ("otpVerified" in input && input.email && input.otp) {
         debugLog.api("pendingSignupVerify:otp-verification-start");
+        cleanupExpiredVerifications().catch(() => {
+          // Don't block on cleanup failure
+        });
+
         const emailLower = input.email.toLowerCase();
         const otpIsValid = await verifyEmailOtp(emailLower, input.otp);
         if (!otpIsValid) {
@@ -539,20 +610,36 @@ export const signupRouter = router({
           }
 
           try {
-            await prisma.verification.deleteMany({
+            // biome-ignore lint/nursery/noShadow: who cares it works
+            const emailLower = input.email.toLowerCase();
+            const betterAuthIdentifier = `email-verification-otp-${emailLower}`;
+            const deletedCount = await prisma.verification.deleteMany({
               where: {
-                identifier: input.email.toLowerCase(),
+                OR: [
+                  {
+                    identifier: {
+                      equals: betterAuthIdentifier,
+                      mode: "insensitive",
+                    },
+                  },
+                  { identifier: { equals: emailLower, mode: "insensitive" } },
+                ],
               },
             });
-            debugLog.api("pendingSignupVerify:otp-cleaned-up");
+            debugLog.api("pendingSignupVerify:otp-cleaned-up", {
+              deletedCount: deletedCount.count,
+            });
+            console.log(
+              `Cleaned up ${deletedCount.count} OTP records for ${emailLower}`
+            );
           } catch (cleanupError) {
+            console.error("Failed to cleanup OTP records:", cleanupError);
             debugLog.api("pendingSignupVerify:otp-cleanup-failed", {
               error:
                 cleanupError instanceof Error
                   ? cleanupError.message
                   : String(cleanupError),
             });
-            // Don't fail if cleanup fails
           }
 
           const creationRateCheck = await checkAccountCreationRateLimit(
@@ -727,6 +814,39 @@ export const signupRouter = router({
 
       await redis.del(key);
       debugLog.api("pendingSignupVerify:redis-del");
+
+      try {
+        const emailLower = data.email.toLowerCase();
+        const betterAuthIdentifier = `email-verification-otp-${emailLower}`;
+        const deletedCount = await prisma.verification.deleteMany({
+          where: {
+            OR: [
+              {
+                identifier: {
+                  equals: betterAuthIdentifier,
+                  mode: "insensitive",
+                },
+              },
+              { identifier: { equals: emailLower, mode: "insensitive" } },
+            ],
+          },
+        });
+        debugLog.api("pendingSignupVerify:otp-cleaned-up-link-path", {
+          deletedCount: deletedCount.count,
+        });
+        console.log(
+          `Cleaned up ${deletedCount.count} OTP records for ${emailLower} (link path)`
+        );
+      } catch (cleanupError) {
+        console.error("Failed to cleanup OTP records:", cleanupError);
+        debugLog.api("pendingSignupVerify:otp-cleanup-failed-link-path", {
+          error:
+            cleanupError instanceof Error
+              ? cleanupError.message
+              : String(cleanupError),
+        });
+      }
+
       return {
         success: true,
         userId: user.id,
