@@ -22,6 +22,10 @@ import {
   InputOTPGroup,
   InputOTPSlot,
 } from "@zephyr/ui/shadui/input-otp";
+import {
+  useRateLimitCountdown,
+  useSignupStore,
+} from "@zephyr/ui/store/signup-store";
 import { AlertCircle, ArrowLeft, Mail, User } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
@@ -42,6 +46,7 @@ import { useCountdown } from "usehooks-ts";
 import { signUp } from "@/app/(auth)/signup/actions";
 import { LoadingButton } from "@/components/Auth/loading-button";
 import { PasswordInput } from "@/components/Auth/password-input";
+import { useSignupUrlState } from "@/hooks/use-signup-url-state";
 import { PasswordStrengthChecker } from "./password-strength-checker";
 
 const texts = [
@@ -89,19 +94,46 @@ export default function SignUpForm() {
   const [isPending, startTransition] = useTransition();
   const [isLoading, setIsLoading] = useState(false);
   const [hoveredField, setHoveredField] = useState<string | null>(null);
-  const [showOTPPanel, setShowOTPPanel] = useState(false);
-  const [isVerifyingOTP, setIsVerifyingOTP] = useState(false);
   const [otp, setOtp] = useState("");
   const [otpError, setOtpError] = useState(false);
-  const [showEmailVerification, setShowEmailVerification] = useState(false);
-  const [isResending, setIsResending] = useState(false);
+  const [tooltipDismissed, setTooltipDismissed] = useState(false);
+  const [isAgeVerified, setIsAgeVerified] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+
+  // URL-based state for UI panels (persisted across refreshes)
+  const {
+    showOTPPanel,
+    showEmailVerification,
+    currentEmail,
+    clearSignupState,
+    setOTPState,
+    setEmailVerificationState,
+  } = useSignupUrlState();
+
+  // Zustand store for loading states and rate limiting
+  const {
+    isStarting,
+    isResending,
+    isVerifying: isVerifyingOTP,
+    setStarting,
+    setResending,
+    setVerifying,
+    setRateLimit,
+    canStartSignup,
+    canResend,
+    reset: resetStore,
+  } = useSignupStore();
+
+  const startCountdownInfo = useRateLimitCountdown("start");
+  const resendCountdownInfo = useRateLimitCountdown("resend");
+
   const [count, { startCountdown, stopCountdown, resetCountdown }] =
     useCountdown({
       countStart: 300,
       intervalMs: 1000,
     });
   const [
-    resendCount,
+    _resendCount,
     {
       startCountdown: startResendCountdown,
       resetCountdown: resetResendCountdown,
@@ -110,10 +142,17 @@ export default function SignUpForm() {
     countStart: 60,
     intervalMs: 1000,
   });
+  const [
+    otpResendCount,
+    {
+      startCountdown: startOtpResendCountdown,
+      resetCountdown: resetOtpResendCountdown,
+    },
+  ] = useCountdown({
+    countStart: 30,
+    intervalMs: 1000,
+  });
   const verificationChannel = useRef<BroadcastChannel | null>(null);
-  const [isAgeVerified, setIsAgeVerified] = useState(false);
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
-  const [tooltipDismissed, setTooltipDismissed] = useState(false);
 
   const form = useForm<SignUpValues>({
     resolver: zodResolver(signUpSchema),
@@ -143,15 +182,18 @@ export default function SignUpForm() {
       if (verificationChannel.current) {
         verificationChannel.current.close();
       }
+      resetStore();
     };
-  }, [setIsVerifying]);
+  }, [setIsVerifying, resetStore]);
 
   useEffect(() => {
     if (showOTPPanel && !showEmailVerification) {
       startCountdown();
-    } else {
+      startOtpResendCountdown();
+    } else if (!showOTPPanel) {
       stopCountdown();
       resetCountdown();
+      resetOtpResendCountdown();
       setOtp("");
     }
   }, [
@@ -160,6 +202,8 @@ export default function SignUpForm() {
     startCountdown,
     stopCountdown,
     resetCountdown,
+    startOtpResendCountdown,
+    resetOtpResendCountdown,
   ]);
 
   const handleInvalidSubmit: SubmitErrorHandler<FieldValues> = useCallback(
@@ -195,16 +239,43 @@ export default function SignUpForm() {
       });
       return;
     }
+
+    if (!canStartSignup()) {
+      toast({
+        variant: "destructive",
+        title: "Too Fast!",
+        description: `You've reached the signup limit. Try again in ${startCountdownInfo.timeLeft} seconds.`,
+        duration: 3000,
+      });
+      return;
+    }
+
+    setStarting(true);
+    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: signup flow requires comprehensive error handling
     startTransition(async () => {
       try {
         setIsLoading(true);
         const result = await signUp(values);
 
         if (result.success) {
-          setShowOTPPanel(true);
+          setOTPState(values.email);
+          setRateLimit("start", { isLimited: false });
           toast({
             title: "Check Your Email!",
             description: "We've sent a verification code to your email.",
+          });
+        } else if (result.rateLimited && result.rateLimitInfo) {
+          setRateLimit("start", {
+            remaining: result.rateLimitInfo.remaining,
+            resetTime: result.rateLimitInfo.resetTime,
+            isLimited: true,
+          });
+          const msg = String(result.error);
+          setError(msg);
+          toast({
+            variant: "destructive",
+            title: "Rate Limited!",
+            description: msg,
           });
         } else if (result.error) {
           const msg = String(result.error);
@@ -229,6 +300,7 @@ export default function SignUpForm() {
         });
       } finally {
         setIsLoading(false);
+        setStarting(false);
       }
     });
   };
@@ -236,9 +308,9 @@ export default function SignUpForm() {
   // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: it's fine
   const handleOTPVerification = async (otpValue: string) => {
     try {
-      setIsVerifyingOTP(true);
+      setVerifying(true);
       setOtpError(false);
-      const email = form.getValues("email");
+      const email = currentEmail || form.getValues("email");
       const authBase = env.NEXT_PUBLIC_AUTH_URL;
       const res = await fetch(`${authBase}/api/trpc/pendingSignupVerify`, {
         method: "POST",
@@ -304,8 +376,8 @@ export default function SignUpForm() {
 
           console.log("Auto-login API call completed successfully");
           verificationChannel.current?.postMessage("verification-success");
-          setShowOTPPanel(false);
           setIsVerifying(true);
+          clearSignupState();
           toast({
             title: "Welcome to Zephyr! 🎉",
             description:
@@ -329,8 +401,9 @@ export default function SignUpForm() {
         console.log("No email/password returned for auto-login");
       }
 
-      setShowOTPPanel(false);
       setIsVerifying(true);
+      // Clear URL state on successful signup completion
+      clearSignupState();
       toast({
         title: "Welcome to Zephyr! 🎉",
         description: "Your account has been created successfully.",
@@ -349,7 +422,7 @@ export default function SignUpForm() {
       });
       throw verificationError;
     } finally {
-      setIsVerifyingOTP(false);
+      setVerifying(false);
     }
   };
 
@@ -540,7 +613,7 @@ export default function SignUpForm() {
 
                     <LoadingButton
                       className="my-4 w-full"
-                      loading={isPending || isLoading}
+                      loading={isPending || isLoading || isStarting}
                       type="submit"
                     >
                       Create account
@@ -581,7 +654,9 @@ export default function SignUpForm() {
                 >
                   <button
                     className="group -ml-2 -mt-2 mb-2 flex items-center gap-2 text-muted-foreground text-sm transition-colors hover:text-foreground"
-                    onClick={() => setShowEmailVerification(false)}
+                    onClick={() => {
+                      setOTPState(currentEmail || form.getValues("email"));
+                    }}
                     type="button"
                   >
                     <ArrowLeft className="group-hover:-translate-x-1 h-4 w-4 transition-transform" />
@@ -606,34 +681,46 @@ export default function SignUpForm() {
                         We've sent a verification link to
                       </p>
                       <p className="rounded-lg border border-border/50 bg-muted/50 px-4 py-2 font-medium text-foreground">
-                        {form.getValues("email")}
+                        {currentEmail || form.getValues("email")}
                       </p>
                     </div>
 
                     <div className="w-full space-y-3 pt-2">
                       <Button
                         className="w-full cursor-pointer bg-accent text-accent-foreground"
-                        disabled={
-                          isResending || (resendCount > 0 && resendCount < 60)
-                        }
+                        disabled={isResending || !canResend()}
                         onClick={async () => {
-                          if (resendCount > 0 && resendCount < 60) {
+                          if (!canResend()) {
                             return;
                           }
-                          setIsResending(true);
+                          setResending(true);
                           const { sendVerificationLink } = await import(
                             "@/app/(auth)/signup/actions"
                           );
                           const res = await sendVerificationLink(
-                            form.getValues("email")
+                            currentEmail || form.getValues("email")
                           );
                           if (res.success) {
                             resetResendCountdown();
                             startResendCountdown();
+                            setRateLimit("resend", { isLimited: false });
                             toast({
                               title: "Email Sent!",
                               description:
                                 "A new verification link has been sent to your email.",
+                            });
+                          } else if (res.rateLimited && res.rateLimitInfo) {
+                            setRateLimit("resend", {
+                              remaining: res.rateLimitInfo.remaining,
+                              resetTime: res.rateLimitInfo.resetTime,
+                              isLimited: true,
+                            });
+                            toast({
+                              variant: "destructive",
+                              title: "Rate Limited!",
+                              description:
+                                res.error ||
+                                "Too many requests. Try again later.",
                             });
                           } else {
                             toast({
@@ -644,7 +731,7 @@ export default function SignUpForm() {
                                 "Failed to send verification link.",
                             });
                           }
-                          setIsResending(false);
+                          setResending(false);
                         }}
                         type="button"
                         variant="secondary"
@@ -653,8 +740,8 @@ export default function SignUpForm() {
                           if (isResending) {
                             return "Sending...";
                           }
-                          if (resendCount > 0 && resendCount < 60) {
-                            return `Resend available in ${resendCount}s`;
+                          if (resendCountdownInfo.isActive) {
+                            return `Resend available in ${resendCountdownInfo.timeLeft}s`;
                           }
                           return "Resend verification email";
                         })()}
@@ -705,7 +792,7 @@ export default function SignUpForm() {
                           Enter the 6-digit code sent to
                         </p>
                         <p className="truncate font-medium text-foreground text-xs sm:text-sm">
-                          {form.getValues("email")}
+                          {currentEmail || form.getValues("email")}
                         </p>
                       </div>
 
@@ -724,27 +811,45 @@ export default function SignUpForm() {
                               : {}
                           }
                           className="group relative h-12 w-12 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 sm:h-16 sm:w-16"
-                          disabled={count > 0 && count < 300}
+                          disabled={!canResend() || count > 0}
                           onClick={async () => {
-                            if (count > 0 && count < 300) {
+                            if (!canResend()) {
                               return;
                             }
                             setTooltipDismissed(true);
+                            setResending(true);
                             const { resendVerificationEmail } = await import(
                               "@/app/(auth)/signup/actions"
                             );
                             const result = await resendVerificationEmail(
-                              form.getValues("email")
+                              currentEmail || form.getValues("email")
                             );
                             if (result.success) {
                               resetCountdown();
                               startCountdown();
                               setOtp("");
                               setTooltipDismissed(false);
+                              setRateLimit("resend", { isLimited: false });
                               toast({
                                 title: "Code Sent!",
                                 description:
                                   "A new verification code has been sent.",
+                              });
+                            } else if (
+                              result.rateLimited &&
+                              result.rateLimitInfo
+                            ) {
+                              setRateLimit("resend", {
+                                remaining: result.rateLimitInfo.remaining,
+                                resetTime: result.rateLimitInfo.resetTime,
+                                isLimited: true,
+                              });
+                              toast({
+                                variant: "destructive",
+                                title: "Rate Limited!",
+                                description:
+                                  result.error ||
+                                  "Too many requests. Try again later.",
                               });
                             } else {
                               toast({
@@ -755,6 +860,7 @@ export default function SignUpForm() {
                                   "Failed to resend verification code.",
                               });
                             }
+                            setResending(false);
                           }}
                           type="button"
                         >
@@ -820,7 +926,8 @@ export default function SignUpForm() {
                       transition={{ duration: 0.4 }}
                     >
                       <InputOTP
-                        disabled={isVerifyingOTP || count === 0}
+                        containerClassName="w-full"
+                        disabled={isVerifyingOTP || count === 0 || !canResend()}
                         maxLength={6}
                         onChange={(val) => {
                           if (DIGITS_ONLY_REGEX.test(val)) {
@@ -843,7 +950,7 @@ export default function SignUpForm() {
                         pattern="[0-9]*"
                         value={otp}
                       >
-                        <InputOTPGroup className="gap-2.5">
+                        <InputOTPGroup className="w-full justify-between">
                           {[0, 1, 2, 3, 4, 5].map((index) => (
                             <motion.div
                               animate={
@@ -854,46 +961,133 @@ export default function SignUpForm() {
                                     }
                                   : {}
                               }
+                              className="flex-1"
                               key={`otp-slot-${index}`}
                               transition={{ duration: 0.3 }}
                             >
-                              <InputOTPSlot index={index} />
+                              <InputOTPSlot className="w-full" index={index} />
                             </motion.div>
                           ))}
                         </InputOTPGroup>
                       </InputOTP>
                     </motion.div>
 
-                    <Button
-                      className="w-full cursor-pointer bg-accent text-accent-foreground"
-                      onClick={async () => {
-                        const { sendVerificationLink } = await import(
-                          "@/app/(auth)/signup/actions"
-                        );
-                        const res = await sendVerificationLink(
-                          form.getValues("email")
-                        );
-                        if (res.success) {
-                          setShowEmailVerification(true);
-                          toast({
-                            title: "Email Link Sent!",
-                            description:
-                              "Check your inbox for the verification link.",
-                          });
-                        } else {
-                          toast({
-                            variant: "destructive",
-                            title: "Failed to Send",
-                            description:
-                              res.error || "Failed to send verification link.",
-                          });
-                        }
-                      }}
-                      type="button"
-                      variant="secondary"
-                    >
-                      Verify via Email Link Instead
-                    </Button>
+                    <div className="space-y-2">
+                      <AnimatePresence>
+                        {otpResendCount === 0 && (
+                          <motion.div
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            initial={{ opacity: 0, y: -10 }}
+                            transition={{ duration: 0.3 }}
+                          >
+                            <Button
+                              className="w-full cursor-pointer"
+                              disabled={isResending || !canResend()}
+                              onClick={async () => {
+                                if (!canResend()) {
+                                  return;
+                                }
+                                setResending(true);
+                                const { resendVerificationEmail } =
+                                  await import("@/app/(auth)/signup/actions");
+                                const result = await resendVerificationEmail(
+                                  currentEmail || form.getValues("email")
+                                );
+                                if (result.success) {
+                                  resetOtpResendCountdown();
+                                  startOtpResendCountdown();
+                                  setOtp("");
+                                  setRateLimit("resend", { isLimited: false });
+                                  toast({
+                                    title: "Code Sent!",
+                                    description:
+                                      "A new verification code has been sent.",
+                                  });
+                                } else if (
+                                  result.rateLimited &&
+                                  result.rateLimitInfo
+                                ) {
+                                  setRateLimit("resend", {
+                                    remaining: result.rateLimitInfo.remaining,
+                                    resetTime: result.rateLimitInfo.resetTime,
+                                    isLimited: true,
+                                  });
+                                  toast({
+                                    variant: "destructive",
+                                    title: "Rate Limited!",
+                                    description:
+                                      result.error ||
+                                      "Too many requests. Try again later.",
+                                  });
+                                } else {
+                                  toast({
+                                    variant: "destructive",
+                                    title: "Failed to Resend",
+                                    description:
+                                      result.error ||
+                                      "Failed to resend verification code.",
+                                  });
+                                }
+                                setResending(false);
+                              }}
+                              type="button"
+                              variant="default"
+                            >
+                              {isResending ? "Sending..." : "Resend Code"}
+                            </Button>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+
+                      <Button
+                        className="w-full cursor-pointer bg-accent text-accent-foreground"
+                        onClick={async () => {
+                          const { sendVerificationLink } = await import(
+                            "@/app/(auth)/signup/actions"
+                          );
+                          const res = await sendVerificationLink(
+                            currentEmail || form.getValues("email")
+                          );
+                          if (res.success) {
+                            setEmailVerificationState(
+                              currentEmail || form.getValues("email")
+                            );
+                            setRateLimit("resend", { isLimited: false });
+                            toast({
+                              title: "Email Link Sent!",
+                              description:
+                                "Check your inbox for the verification link.",
+                            });
+                          } else if (res.rateLimited && res.rateLimitInfo) {
+                            setRateLimit("resend", {
+                              remaining: res.rateLimitInfo.remaining,
+                              resetTime: res.rateLimitInfo.resetTime,
+                              isLimited: true,
+                            });
+                            toast({
+                              variant: "destructive",
+                              title: "Rate Limited!",
+                              description:
+                                res.error ||
+                                "Too many requests. Try again later.",
+                            });
+                          } else {
+                            toast({
+                              variant: "destructive",
+                              title: "Failed to Send",
+                              description:
+                                res.error ||
+                                "Failed to send verification link.",
+                            });
+                          }
+                        }}
+                        type="button"
+                        variant="secondary"
+                      >
+                        Verify via Email Link Instead
+                      </Button>
+                    </div>
                   </div>
                 </motion.div>
               )}

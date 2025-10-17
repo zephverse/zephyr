@@ -10,6 +10,11 @@ type SignUpResponse = {
     email: string;
     isNewToken: boolean;
   };
+  rateLimited?: boolean;
+  rateLimitInfo?: {
+    remaining: number;
+    resetTime: number;
+  };
 };
 
 export async function signUp(credentials: {
@@ -49,6 +54,23 @@ export async function signUp(credentials: {
         data?.result?.data?.error ||
         data?.error ||
         "Signup failed";
+
+      if (String(err) === "rate-limited") {
+        const rateLimitInfo = data?.result?.data?.json;
+        return {
+          success: false,
+          rateLimited: true,
+          error:
+            "Whoa there, speed racer! You've hit the signup limit. Take a break and try again later.",
+          rateLimitInfo: rateLimitInfo
+            ? {
+                remaining: rateLimitInfo.remaining || 0,
+                resetTime: rateLimitInfo.resetTime || 0,
+              }
+            : undefined,
+        };
+      }
+
       return { success: false, error: String(err) };
     }
 
@@ -76,6 +98,11 @@ export async function signUp(credentials: {
 export async function resendVerificationEmail(email: string): Promise<{
   success: boolean;
   error?: string;
+  rateLimited?: boolean;
+  rateLimitInfo?: {
+    remaining: number;
+    resetTime: number;
+  };
 }> {
   try {
     const authBase = env.NEXT_PUBLIC_AUTH_URL;
@@ -94,6 +121,23 @@ export async function resendVerificationEmail(email: string): Promise<{
         data?.result?.data?.error ||
         data?.error ||
         "Failed to resend verification email";
+
+      if (String(err) === "rate-limited") {
+        const rateLimitInfo = data?.result?.data?.json;
+        return {
+          success: false,
+          rateLimited: true,
+          error:
+            "Easy there, trigger finger! You've requested too many codes. Give it a moment and try again.",
+          rateLimitInfo: rateLimitInfo
+            ? {
+                remaining: rateLimitInfo.remaining || 0,
+                resetTime: rateLimitInfo.resetTime || 0,
+              }
+            : undefined,
+        };
+      }
+
       return { success: false, error: String(err) };
     }
     return { success: true };
@@ -150,6 +194,11 @@ export async function verifyOTP(
 export async function sendVerificationLink(email: string): Promise<{
   success: boolean;
   error?: string;
+  rateLimited?: boolean;
+  rateLimitInfo?: {
+    remaining: number;
+    resetTime: number;
+  };
 }> {
   try {
     const authBase = env.NEXT_PUBLIC_AUTH_URL;
@@ -168,6 +217,23 @@ export async function sendVerificationLink(email: string): Promise<{
         data?.result?.data?.json?.error ||
         data?.error ||
         "Failed to send verification link";
+
+      if (String(err) === "rate-limited") {
+        const rateLimitInfo = data?.result?.data?.json;
+        return {
+          success: false,
+          rateLimited: true,
+          error:
+            "Hold your horses! You've been clicking that button like it owes you money. Wait a moment before trying again.",
+          rateLimitInfo: rateLimitInfo
+            ? {
+                remaining: rateLimitInfo.remaining || 0,
+                resetTime: rateLimitInfo.resetTime || 0,
+              }
+            : undefined,
+        };
+      }
+
       return { success: false, error: String(err) };
     }
     return { success: true };

@@ -9,10 +9,14 @@ import { emailRouter } from "../email";
 
 const PENDING_PREFIX = "pending-signup:";
 const PENDING_TTL_SECONDS = 60 * 60 * 2;
-const RATE_PREFIX = "rate:pending:";
-const RATE_WINDOW_SECONDS = 60 * 10;
-const RATE_MAX_START_PER_WINDOW = 5;
+const RATE_PREFIX = "rate:signup:";
+const RATE_GLOBAL_WINDOW_SECONDS = 60 * 15;
+const RATE_GLOBAL_MAX_ATTEMPTS = 8;
+const RATE_ACTION_WINDOW_SECONDS = 60 * 5;
+const RATE_MAX_START_PER_WINDOW = 6;
 const RATE_MAX_RESEND_PER_WINDOW = 3;
+const RATE_CREATION_WINDOW_SECONDS = 60 * 60;
+const RATE_MAX_CREATIONS_PER_WINDOW = 3;
 
 function getClientIpFromHeaders(headers: Headers | undefined): string {
   const forwarded = headers?.get?.("x-forwarded-for");
@@ -50,42 +54,154 @@ async function getPendingSignupData(input: {
 }
 
 async function checkRateLimit(
-  kind: "start" | "resend",
+  kind: "start" | "resend" | "verify" | "create",
   ip: string,
   emailLower: string
-): Promise<boolean> {
-  const ipKey = `${RATE_PREFIX}${kind}:ip:${ip}`;
-  const emailKeyRate = `${RATE_PREFIX}${kind}:email:${emailLower}`;
-  const multi = (redis as unknown as { multi?: () => unknown }).multi?.();
-  const pipe = multi as
-    | {
-        incr: (k: string) => void;
-        expire: (k: string, s: number) => void;
-        exec: () => Promise<[unknown, number][]>;
-      }
-    | null
-    | undefined;
-  if (pipe) {
-    pipe.incr(ipKey);
-    pipe.expire(ipKey, RATE_WINDOW_SECONDS);
-    pipe.incr(emailKeyRate);
-    pipe.expire(emailKeyRate, RATE_WINDOW_SECONDS);
-    const results = (await pipe.exec()) as [unknown, number][] | null;
-    const ipCount = Number(results?.[0]?.[1] ?? 0);
-    const emailCount = Number(results?.[2]?.[1] ?? 0);
-    debugLog.api(`rate:${kind}`, { ip, ipCount, emailCount });
-    const max =
+): Promise<{ allowed: boolean; remaining: number; resetTime: number }> {
+  const now = Math.floor(Date.now() / 1000);
+  const globalIpKey = `${RATE_PREFIX}global:ip:${ip}`;
+  const globalEmailKey = `${RATE_PREFIX}global:email:${emailLower}`;
+  const actionIpKey = `${RATE_PREFIX}${kind}:ip:${ip}`;
+  const actionEmailKey = `${RATE_PREFIX}${kind}:email:${emailLower}`;
+
+  try {
+    const multi = redis.multi();
+    multi.incr(globalIpKey);
+    multi.expire(globalIpKey, RATE_GLOBAL_WINDOW_SECONDS);
+    multi.incr(globalEmailKey);
+    multi.expire(globalEmailKey, RATE_GLOBAL_WINDOW_SECONDS);
+    multi.incr(actionIpKey);
+    multi.expire(actionIpKey, RATE_ACTION_WINDOW_SECONDS);
+    multi.incr(actionEmailKey);
+    multi.expire(actionEmailKey, RATE_ACTION_WINDOW_SECONDS);
+    multi.ttl(globalIpKey);
+
+    const results = await multi.exec();
+
+    if (!results) {
+      debugLog.api("rate:redis-error", { kind, ip, emailLower });
+      return { allowed: false, remaining: 0, resetTime: now + 60 };
+    }
+
+    const globalIpCount = Number(results[0]?.[1] ?? 0);
+    const globalEmailCount = Number(results[1]?.[1] ?? 0);
+    const actionIpCount = Number(results[2]?.[1] ?? 0);
+    const actionEmailCount = Number(results[3]?.[1] ?? 0);
+    const ttl = Number(results[4]?.[1] ?? RATE_GLOBAL_WINDOW_SECONDS);
+    const globalIpAllowed = globalIpCount <= RATE_GLOBAL_MAX_ATTEMPTS;
+    const globalEmailAllowed = globalEmailCount <= RATE_GLOBAL_MAX_ATTEMPTS;
+
+    if (!(globalIpAllowed && globalEmailAllowed)) {
+      const resetTime = now + ttl;
+      debugLog.api(`rate:global-exceeded:${kind}`, {
+        ip,
+        emailLower,
+        globalIpCount,
+        globalEmailCount,
+        resetTime,
+      });
+      return { allowed: false, remaining: 0, resetTime };
+    }
+
+    const actionMax =
       kind === "start" ? RATE_MAX_START_PER_WINDOW : RATE_MAX_RESEND_PER_WINDOW;
-    return ipCount <= max && emailCount <= max;
+    const actionIpAllowed = actionIpCount <= actionMax;
+    const actionEmailAllowed = actionEmailCount <= actionMax;
+
+    if (!(actionIpAllowed && actionEmailAllowed)) {
+      const resetTime = now + RATE_ACTION_WINDOW_SECONDS;
+      debugLog.api(`rate:action-exceeded:${kind}`, {
+        ip,
+        emailLower,
+        actionIpCount,
+        actionEmailCount,
+        resetTime,
+      });
+      return { allowed: false, remaining: 0, resetTime };
+    }
+
+    const globalRemaining = Math.max(
+      0,
+      RATE_GLOBAL_MAX_ATTEMPTS - Math.max(globalIpCount, globalEmailCount)
+    );
+    const actionRemaining = Math.max(
+      0,
+      actionMax - Math.max(actionIpCount, actionEmailCount)
+    );
+    const remaining = Math.min(globalRemaining, actionRemaining);
+
+    debugLog.api(`rate:allowed:${kind}`, {
+      ip,
+      emailLower,
+      globalIpCount,
+      globalEmailCount,
+      actionIpCount,
+      actionEmailCount,
+      remaining,
+    });
+
+    return { allowed: true, remaining, resetTime: now + ttl };
+  } catch (error) {
+    debugLog.api("rate:error", { kind, ip, emailLower, error: String(error) });
+    return { allowed: false, remaining: 0, resetTime: now + 60 };
   }
-  const ipCount = Number((await redis.incr(ipKey)) || 0);
-  await redis.expire(ipKey, RATE_WINDOW_SECONDS);
-  const emailCount = Number((await redis.incr(emailKeyRate)) || 0);
-  await redis.expire(emailKeyRate, RATE_WINDOW_SECONDS);
-  debugLog.api(`rate-fallback:${kind}`, { ip, ipCount, emailCount });
-  const max =
-    kind === "start" ? RATE_MAX_START_PER_WINDOW : RATE_MAX_RESEND_PER_WINDOW;
-  return ipCount <= max && emailCount <= max;
+}
+
+async function checkAccountCreationRateLimit(
+  ip: string,
+  emailLower: string
+): Promise<{ allowed: boolean; remaining: number; resetTime: number }> {
+  const now = Math.floor(Date.now() / 1000);
+
+  const ipKey = `${RATE_PREFIX}creation:ip:${ip}`;
+  const emailKey = `${RATE_PREFIX}creation:email:${emailLower}`;
+
+  try {
+    const multi = redis.multi();
+    multi.incr(ipKey);
+    multi.expire(ipKey, RATE_CREATION_WINDOW_SECONDS);
+    multi.incr(emailKey);
+    multi.expire(emailKey, RATE_CREATION_WINDOW_SECONDS);
+    multi.ttl(ipKey);
+
+    const results = await multi.exec();
+
+    if (!results) {
+      return { allowed: false, remaining: 0, resetTime: now + 60 };
+    }
+
+    const ipCount = Number(results[0]?.[1] ?? 0);
+    const emailCount = Number(results[1]?.[1] ?? 0);
+    const ttl = Number(results[2]?.[1] ?? RATE_CREATION_WINDOW_SECONDS);
+
+    const ipAllowed = ipCount <= RATE_MAX_CREATIONS_PER_WINDOW;
+    const emailAllowed = emailCount <= RATE_MAX_CREATIONS_PER_WINDOW;
+
+    if (!(ipAllowed && emailAllowed)) {
+      const resetTime = now + ttl;
+      debugLog.api("rate:creation-exceeded", {
+        ip,
+        emailLower,
+        ipCount,
+        emailCount,
+        resetTime,
+      });
+      return { allowed: false, remaining: 0, resetTime };
+    }
+
+    const remaining = Math.max(
+      0,
+      RATE_MAX_CREATIONS_PER_WINDOW - Math.max(ipCount, emailCount)
+    );
+    return { allowed: true, remaining, resetTime: now + ttl };
+  } catch (error) {
+    debugLog.api("rate:creation-error", {
+      ip,
+      emailLower,
+      error: String(error),
+    });
+    return { allowed: false, remaining: 0, resetTime: now + 60 };
+  }
 }
 
 async function doesUserExist(
@@ -165,13 +281,18 @@ export const signupRouter = router({
         const ip = getClientIpFromHeaders(
           ctx?.req?.headers as Headers | undefined
         );
-        const rateOk = await checkRateLimit(
+        const rateCheck = await checkRateLimit(
           "start",
           ip,
           input.email.toLowerCase()
         );
-        if (!rateOk) {
-          return { success: false, error: "rate-limited" } as const;
+        if (!rateCheck.allowed) {
+          return {
+            success: false,
+            error: "rate-limited",
+            remaining: rateCheck.remaining,
+            resetTime: rateCheck.resetTime,
+          } as const;
         }
 
         const exists = await doesUserExist(input.email, input.username);
@@ -241,13 +362,18 @@ export const signupRouter = router({
       debugLog.api("pendingSignupResend:begin", { email: input.email });
       const reqHeaders = ctx?.req?.headers as Headers | undefined;
       const ip = reqHeaders?.get?.("x-forwarded-for") || "unknown";
-      const rateOk = await checkRateLimit(
+      const rateCheck = await checkRateLimit(
         "resend",
         ip,
         input.email.toLowerCase()
       );
-      if (!rateOk) {
-        return { success: false, error: "rate-limited" } as const;
+      if (!rateCheck.allowed) {
+        return {
+          success: false,
+          error: "rate-limited",
+          remaining: rateCheck.remaining,
+          resetTime: rateCheck.resetTime,
+        } as const;
       }
       const emailKey = `${PENDING_PREFIX}email:${input.email.toLowerCase()}`;
       const token = await redis.get(emailKey);
@@ -292,9 +418,22 @@ export const signupRouter = router({
 
   pendingSignupSendLink: procedure
     .input(z.object({ email: z.string().email() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       debugLog.api("pendingSignupSendLink:begin", { email: input.email });
       const emailLower = input.email.toLowerCase();
+
+      const reqHeaders = ctx?.req?.headers as Headers | undefined;
+      const ip = getClientIpFromHeaders(reqHeaders);
+      const rateCheck = await checkRateLimit("resend", ip, emailLower);
+      if (!rateCheck.allowed) {
+        return {
+          success: false,
+          error: "rate-limited",
+          remaining: rateCheck.remaining,
+          resetTime: rateCheck.resetTime,
+        } as const;
+      }
+
       const emailKey = `${PENDING_PREFIX}email:${emailLower}`;
       const token = await redis.get(emailKey);
       if (!token) {
@@ -324,8 +463,11 @@ export const signupRouter = router({
       ])
     )
     // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: ignore
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       debugLog.api("pendingSignupVerify:begin");
+      const ip = getClientIpFromHeaders(
+        ctx?.req?.headers as Headers | undefined
+      );
 
       if (
         "otpVerified" in input &&
@@ -392,6 +534,24 @@ export const signupRouter = router({
                   : String(cleanupError),
             });
             // Don't fail if cleanup fails
+          }
+
+          const creationRateCheck = await checkAccountCreationRateLimit(
+            ip,
+            pendingData.email.toLowerCase()
+          );
+          if (!creationRateCheck.allowed) {
+            debugLog.api("pendingSignupVerify:creation-rate-limited", {
+              email: pendingData.email,
+              ip,
+            });
+            await redis.del(pendingKey);
+            return {
+              success: false,
+              error: "rate-limited",
+              remaining: creationRateCheck.remaining,
+              resetTime: creationRateCheck.resetTime,
+            } as const;
           }
 
           const user = await prisma.user.create({
@@ -480,6 +640,24 @@ export const signupRouter = router({
       if (existing) {
         await redis.del(key);
         return { success: false, error: "user-exists" } as const;
+      }
+
+      const creationRateCheck = await checkAccountCreationRateLimit(
+        ip,
+        data.email.toLowerCase()
+      );
+      if (!creationRateCheck.allowed) {
+        debugLog.api("pendingSignupVerify:creation-rate-limited", {
+          email: data.email,
+          ip,
+        });
+        await redis.del(key);
+        return {
+          success: false,
+          error: "rate-limited",
+          remaining: creationRateCheck.remaining,
+          resetTime: creationRateCheck.resetTime,
+        } as const;
       }
 
       const user = await prisma.user.create({
