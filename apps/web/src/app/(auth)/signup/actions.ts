@@ -2,6 +2,35 @@
 
 import { env } from "@root/env";
 
+const RATE_LIMIT_ERROR = "rate-limited";
+
+function handleRateLimitError(
+  data: unknown,
+  userMessage: string
+): {
+  success: false;
+  rateLimited: true;
+  error: string;
+  rateLimitInfo?: { remaining: number; resetTime: number };
+} {
+  const rateLimitInfo = (
+    data as {
+      result?: { data?: { json?: { remaining?: number; resetTime?: number } } };
+    }
+  )?.result?.data?.json;
+  return {
+    success: false,
+    rateLimited: true,
+    error: userMessage,
+    rateLimitInfo: rateLimitInfo
+      ? {
+          remaining: rateLimitInfo.remaining || 0,
+          resetTime: rateLimitInfo.resetTime || 0,
+        }
+      : undefined,
+  };
+}
+
 type SignUpResponse = {
   error?: string;
   success: boolean;
@@ -55,20 +84,11 @@ export async function signUp(credentials: {
         data?.error ||
         "Signup failed";
 
-      if (String(err) === "rate-limited") {
-        const rateLimitInfo = data?.result?.data?.json;
-        return {
-          success: false,
-          rateLimited: true,
-          error:
-            "Whoa there, speed racer! You've hit the signup limit. Take a break and try again later.",
-          rateLimitInfo: rateLimitInfo
-            ? {
-                remaining: rateLimitInfo.remaining || 0,
-                resetTime: rateLimitInfo.resetTime || 0,
-              }
-            : undefined,
-        };
+      if (String(err) === RATE_LIMIT_ERROR) {
+        return handleRateLimitError(
+          data,
+          "Whoa there, speed racer! You've hit the signup limit. Take a break and try again later."
+        );
       }
 
       return { success: false, error: String(err) };
@@ -122,20 +142,11 @@ export async function resendVerificationEmail(email: string): Promise<{
         data?.error ||
         "Failed to resend verification email";
 
-      if (String(err) === "rate-limited") {
-        const rateLimitInfo = data?.result?.data?.json;
-        return {
-          success: false,
-          rateLimited: true,
-          error:
-            "Easy there, trigger finger! You've requested too many codes. Give it a moment and try again.",
-          rateLimitInfo: rateLimitInfo
-            ? {
-                remaining: rateLimitInfo.remaining || 0,
-                resetTime: rateLimitInfo.resetTime || 0,
-              }
-            : undefined,
-        };
+      if (String(err) === RATE_LIMIT_ERROR) {
+        return handleRateLimitError(
+          data,
+          "Easy there, trigger finger! You've requested too many codes. Give it a moment and try again."
+        );
       }
 
       return { success: false, error: String(err) };
@@ -159,6 +170,11 @@ export async function verifyOTP(
 ): Promise<{
   success: boolean;
   error?: string;
+  rateLimited?: boolean;
+  rateLimitInfo?: {
+    remaining: number;
+    resetTime: number;
+  };
 }> {
   try {
     const authBase = env.NEXT_PUBLIC_AUTH_URL;
@@ -172,6 +188,24 @@ export async function verifyOTP(
 
     if (!res.ok) {
       const err = data?.message || data?.error || "OTP verification failed";
+
+      if (String(err) === RATE_LIMIT_ERROR) {
+        const rateLimitInfo = (
+          data as { json?: { remaining?: number; resetTime?: number } }
+        )?.json;
+        return {
+          success: false,
+          rateLimited: true,
+          error: "Too many verification attempts. Please try again later.",
+          rateLimitInfo: rateLimitInfo
+            ? {
+                remaining: rateLimitInfo.remaining || 0,
+                resetTime: rateLimitInfo.resetTime || 0,
+              }
+            : { remaining: 0, resetTime: 0 },
+        };
+      }
+
       return { success: false, error: String(err) };
     }
 
@@ -218,20 +252,11 @@ export async function sendVerificationLink(email: string): Promise<{
         data?.error ||
         "Failed to send verification link";
 
-      if (String(err) === "rate-limited") {
-        const rateLimitInfo = data?.result?.data?.json;
-        return {
-          success: false,
-          rateLimited: true,
-          error:
-            "Hold your horses! You've been clicking that button like it owes you money. Wait a moment before trying again.",
-          rateLimitInfo: rateLimitInfo
-            ? {
-                remaining: rateLimitInfo.remaining || 0,
-                resetTime: rateLimitInfo.resetTime || 0,
-              }
-            : undefined,
-        };
+      if (String(err) === RATE_LIMIT_ERROR) {
+        return handleRateLimitError(
+          data,
+          "Hold your horses! You've been clicking that button like it owes you money. Wait a moment before trying again."
+        );
       }
 
       return { success: false, error: String(err) };

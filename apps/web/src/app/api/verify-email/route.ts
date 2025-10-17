@@ -37,19 +37,8 @@ export async function GET(req: NextRequest) {
         data?.success === true ||
         res.ok;
 
-      // Return credentials if verification succeeded
-      if (
-        ok === true &&
-        wrapped &&
-        typeof wrapped === "object" &&
-        "email" in wrapped &&
-        "password" in wrapped
-      ) {
-        return {
-          ok: true,
-          email: wrapped.email as string,
-          password: wrapped.password as string,
-        };
+      if (ok === true) {
+        return { ok: true };
       }
 
       return ok === true ? { ok: true } : false;
@@ -65,18 +54,9 @@ export async function GET(req: NextRequest) {
     if (
       pendingResult &&
       typeof pendingResult === "object" &&
-      pendingResult.ok &&
-      pendingResult.email &&
-      pendingResult.password
+      pendingResult.ok
     ) {
-      return Response.json(
-        {
-          ok: true,
-          email: pendingResult.email,
-          password: pendingResult.password,
-        },
-        { status: 200 }
-      );
+      return Response.json({ ok: true }, { status: 200 });
     }
     if (pendingResult) {
       return Response.json({ ok: true }, { status: 200 });

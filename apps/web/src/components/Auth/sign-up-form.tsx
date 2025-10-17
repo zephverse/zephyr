@@ -58,6 +58,14 @@ const texts = [
 ];
 
 const DIGITS_ONLY_REGEX = /^\d*$/;
+const OTP_SLOT_IDS = [
+  "slot-0",
+  "slot-1",
+  "slot-2",
+  "slot-3",
+  "slot-4",
+  "slot-5",
+];
 
 type ErrorWithMessage = {
   message: string;
@@ -927,7 +935,7 @@ export default function SignUpForm() {
                     >
                       <InputOTP
                         containerClassName="w-full"
-                        disabled={isVerifyingOTP || count === 0 || !canResend()}
+                        disabled={isVerifyingOTP || count === 0}
                         maxLength={6}
                         onChange={(val) => {
                           if (DIGITS_ONLY_REGEX.test(val)) {
@@ -951,7 +959,7 @@ export default function SignUpForm() {
                         value={otp}
                       >
                         <InputOTPGroup className="w-full justify-between">
-                          {[0, 1, 2, 3, 4, 5].map((index) => (
+                          {OTP_SLOT_IDS.map((slotId, index) => (
                             <motion.div
                               animate={
                                 otp[index]
@@ -962,7 +970,7 @@ export default function SignUpForm() {
                                   : {}
                               }
                               className="flex-1"
-                              key={`otp-slot-${index}`}
+                              key={slotId}
                               transition={{ duration: 0.3 }}
                             >
                               <InputOTPSlot className="w-full" index={index} />

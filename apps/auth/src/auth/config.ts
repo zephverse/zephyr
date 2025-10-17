@@ -30,7 +30,12 @@ export const auth = createAuthConfig({
   environment: env.NODE_ENV as "development" | "production",
   sendVerificationOTP: async ({ email, otp, type }) => {
     if (type === "email-verification") {
-      await sendVerificationOTP(email, otp);
+      const result = await sendVerificationOTP(email, otp);
+      if (!result.success) {
+        throw new Error(result.error || "Failed to send verification OTP");
+      }
+      return;
     }
+    throw new Error(`Unsupported verification type: ${type}`);
   },
 });

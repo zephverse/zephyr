@@ -90,9 +90,9 @@ type OTPVerificationEmailProps = {
 };
 
 export const OTPVerificationEmail = ({ otp }: OTPVerificationEmailProps) => (
-  <Html>
+  <Html lang="en">
     <Head />
-    <Preview>Your verification code for Zephyr - {otp}</Preview>
+    <Preview>Your verification code for Zephyr</Preview>
     <Body style={main}>
       <Container style={container}>
         <Section style={outerCard}>
@@ -262,7 +262,7 @@ const footer = {
 
 const otpContainer = {
   backgroundColor: "#f8fafc",
-  border: `2px solid ${brandPrimary}20`,
+  border: "2px solid rgba(248, 85, 34, 0.125)",
   borderRadius: "12px",
   margin: "24px 0",
   padding: "32px 24px",

@@ -5,7 +5,6 @@ import { XCircle } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { authClient } from "@/lib/auth";
 
 const ERROR_MESSAGES = {
   "invalid-token": "The verification link is invalid.",
@@ -200,7 +199,6 @@ export default function VerifyEmailPage() {
     if (error) {
       setStatus("error");
     } else if (token) {
-      // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: ignore
       (async () => {
         try {
           const res = await fetch(
@@ -211,38 +209,13 @@ export default function VerifyEmailPage() {
           const ok = (data as { ok?: boolean }).ok === true || res.ok;
 
           if (ok) {
-            const email = (data as { email?: string }).email;
-            const password = (data as { password?: string }).password;
-
-            if (email && password) {
-              try {
-                const result = await authClient.signIn.email({
-                  email,
-                  password,
-                });
-
-                if (result?.data?.user) {
-                  verificationChannel.postMessage("verification-success");
-                  setStatus("success");
-                  router.replace("/verify-email?verified=1");
-                  setTimeout(() => router.push("/"), 100);
-                  return;
-                }
-              } catch (signError) {
-                console.warn(
-                  "Auto sign-in failed, redirecting to login",
-                  signError
-                );
-              }
-            }
-
             verificationChannel.postMessage("verification-success");
             setStatus("success");
             router.replace("/verify-email?verified=1");
-            setTimeout(() => router.push("/"), 100);
-          } else {
-            setStatus("error");
+            setTimeout(() => router.push("/login"), 100);
+            return;
           }
+          setStatus("error");
         } catch {
           setStatus("error");
         }

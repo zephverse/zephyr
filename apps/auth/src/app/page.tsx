@@ -6,9 +6,14 @@ import AdminDashboardClient from "./admin-dashboard.client";
 export default async function AdminDashboard() {
   const hdrs = await headers();
   const serverHeaders = new Headers();
-  hdrs.forEach((value, key) => {
-    serverHeaders.set(key, value);
-  });
+  const cookie = hdrs.get("cookie");
+  const userAgent = hdrs.get("user-agent");
+  if (cookie) {
+    serverHeaders.set("cookie", cookie);
+  }
+  if (userAgent) {
+    serverHeaders.set("user-agent", userAgent);
+  }
   const session = await auth.api.getSession({
     headers: serverHeaders,
   });

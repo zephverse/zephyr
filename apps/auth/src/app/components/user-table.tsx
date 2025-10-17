@@ -1,7 +1,9 @@
 /** biome-ignore-all lint/a11y/noSvgWithoutTitle: not needed */
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useDebounce } from "@zephyr/ui/hooks/use-debounce";
+import { useToast } from "@zephyr/ui/hooks/use-toast";
 import { cn } from "@zephyr/ui/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@zephyr/ui/shadui/avatar";
 import { Button } from "@zephyr/ui/shadui/button";
@@ -86,10 +88,17 @@ export default function UserTable({
   const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery);
   const debouncedSearchQuery = useDebounce(localSearchQuery, 300);
 
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const banUser = trpc.admin.banUser.useMutation();
   const unbanUser = trpc.admin.unbanUser.useMutation();
   const revokeAll = trpc.admin.revokeUserSessions.useMutation();
   const setRole = trpc.admin.setRole.useMutation();
+  const [roleToggleLoading, setRoleToggleLoading] = useState<string | null>(
+    null
+  );
+  const [revokeLoading, setRevokeLoading] = useState<string | null>(null);
+  const [banLoading, setBanLoading] = useState<string | null>(null);
 
   useEffect(() => {
     setLocalSearchQuery(searchQuery);
@@ -345,17 +354,28 @@ export default function UserTable({
                                 </Button>
                                 <Button
                                   className="border-border hover:bg-accent"
+                                  disabled={roleToggleLoading === user.id}
                                   onClick={async () => {
-                                    if (user.role === "admin") {
-                                      await setRole.mutateAsync({
-                                        userId: user.id,
-                                        role: "user",
-                                      });
-                                    } else {
-                                      await setRole.mutateAsync({
-                                        userId: user.id,
-                                        role: "admin",
-                                      });
+                                    try {
+                                      setRoleToggleLoading(user.id);
+                                      if (user.role === "admin") {
+                                        await setRole.mutateAsync({
+                                          userId: user.id,
+                                          role: "user",
+                                        });
+                                      } else {
+                                        await setRole.mutateAsync({
+                                          userId: user.id,
+                                          role: "admin",
+                                        });
+                                      }
+                                    } catch (error) {
+                                      console.error(
+                                        "Failed to update user role:",
+                                        error
+                                      );
+                                    } finally {
+                                      setRoleToggleLoading(null);
                                     }
                                   }}
                                   size="sm"
@@ -384,10 +404,29 @@ export default function UserTable({
                                 </Button>
                                 <Button
                                   className="border-border hover:bg-accent"
+                                  disabled={revokeLoading === user.id}
                                   onClick={async () => {
-                                    await revokeAll.mutateAsync({
-                                      userId: user.id,
-                                    });
+                                    try {
+                                      setRevokeLoading(user.id);
+                                      await revokeAll.mutateAsync({
+                                        userId: user.id,
+                                      });
+                                      await queryClient.invalidateQueries({
+                                        queryKey: [["admin", "getUsers"]],
+                                      });
+                                      toast({
+                                        title: "Success",
+                                        description: `Successfully revoked all sessions for ${user.username}`,
+                                      });
+                                    } catch (error) {
+                                      toast({
+                                        variant: "destructive",
+                                        title: "Error",
+                                        description: `Failed to revoke sessions for ${user.username}: ${error instanceof Error ? error.message : "Unknown error"}`,
+                                      });
+                                    } finally {
+                                      setRevokeLoading(null);
+                                    }
                                   }}
                                   size="sm"
                                   variant="outline"
@@ -396,16 +435,43 @@ export default function UserTable({
                                 </Button>
                                 <Button
                                   className="border-border hover:bg-destructive/10 hover:text-destructive"
+                                  disabled={banLoading === user.id}
                                   onClick={async () => {
-                                    if (user.banned ?? false) {
-                                      await unbanUser.mutateAsync({
-                                        userId: user.id,
+                                    try {
+                                      setBanLoading(user.id);
+                                      const isBanned = user.banned ?? false;
+                                      if (isBanned) {
+                                        await unbanUser.mutateAsync({
+                                          userId: user.id,
+                                        });
+                                        await queryClient.invalidateQueries({
+                                          queryKey: [["admin", "getUsers"]],
+                                        });
+                                        toast({
+                                          title: "Success",
+                                          description: `Successfully unbanned user ${user.username}`,
+                                        });
+                                      } else {
+                                        await banUser.mutateAsync({
+                                          userId: user.id,
+                                          banReason: "Admin action",
+                                        });
+                                        await queryClient.invalidateQueries({
+                                          queryKey: [["admin", "getUsers"]],
+                                        });
+                                        toast({
+                                          title: "Success",
+                                          description: `Successfully banned user ${user.username}`,
+                                        });
+                                      }
+                                    } catch (error) {
+                                      toast({
+                                        variant: "destructive",
+                                        title: "Error",
+                                        description: `Failed to ${user.banned ? "unban" : "ban"} user ${user.username}: ${error instanceof Error ? error.message : "Unknown error"}`,
                                       });
-                                    } else {
-                                      await banUser.mutateAsync({
-                                        userId: user.id,
-                                        banReason: "Admin action",
-                                      });
+                                    } finally {
+                                      setBanLoading(null);
                                     }
                                   }}
                                   size="sm"

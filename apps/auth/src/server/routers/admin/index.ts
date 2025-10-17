@@ -278,15 +278,29 @@ export const adminRouter = router({
     .input(
       z.object({
         userId: z.string(),
-        role: z.union([z.string(), z.array(z.string())]),
+        role: z.enum(["user", "admin"]),
       })
     )
     .mutation(async ({ input }) => {
-      await syncUsersWithMeiliSearch([input.userId], "updateRole");
-      await userCache.invalidateUserDetail(input.userId);
-      await userCache.invalidateUserList();
-      await userCache.invalidateUserStats();
-      return { success: true };
+      try {
+        await prisma.user.update({
+          where: { id: input.userId },
+          data: { role: input.role },
+        });
+
+        await syncUsersWithMeiliSearch([input.userId], "updateRole");
+        await userCache.invalidateUserDetail(input.userId);
+        await userCache.invalidateUserList();
+        await userCache.invalidateUserStats();
+
+        return { success: true };
+      } catch (error) {
+        console.error("Failed to update user role:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to update user role",
+        });
+      }
     }),
 
   banUser: rateLimitedAdminProcedure
@@ -301,11 +315,15 @@ export const adminRouter = router({
       const banExpires = input.banExpiresIn
         ? new Date(Date.now() + input.banExpiresIn * 1000)
         : null;
-      await prisma.user.update({
-        where: { id: input.userId },
-        data: { banned: true, banReason: input.banReason, banExpires },
+
+      await prisma.$transaction(async (tx) => {
+        await tx.user.update({
+          where: { id: input.userId },
+          data: { banned: true, banReason: input.banReason, banExpires },
+        });
+        await tx.session.deleteMany({ where: { userId: input.userId } });
       });
-      await prisma.session.deleteMany({ where: { userId: input.userId } });
+
       await userCache.invalidateUserDetail(input.userId);
       await userCache.invalidateUserList();
       return { success: true };
@@ -314,10 +332,13 @@ export const adminRouter = router({
   unbanUser: rateLimitedAdminProcedure
     .input(z.object({ userId: z.string() }))
     .mutation(async ({ input }) => {
-      await prisma.user.update({
-        where: { id: input.userId },
-        data: { banned: false, banReason: null, banExpires: null },
+      await prisma.$transaction(async (tx) => {
+        await tx.user.update({
+          where: { id: input.userId },
+          data: { banned: false, banReason: null, banExpires: null },
+        });
       });
+
       await userCache.invalidateUserDetail(input.userId);
       await userCache.invalidateUserList();
       return { success: true };
@@ -344,7 +365,10 @@ export const adminRouter = router({
   revokeUserSessions: rateLimitedAdminProcedure
     .input(z.object({ userId: z.string() }))
     .mutation(async ({ input }) => {
-      await prisma.session.deleteMany({ where: { userId: input.userId } });
+      await prisma.$transaction(async (tx) => {
+        await tx.session.deleteMany({ where: { userId: input.userId } });
+      });
+
       await userCache.invalidateUserStats();
       return { success: true };
     }),

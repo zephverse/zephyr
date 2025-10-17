@@ -75,18 +75,23 @@ export const useSignupStore = create<SignupState>()(
       ...initialState,
 
       setRateLimit: (action, info) =>
-        set((state) => ({
-          rateLimits: {
-            ...state.rateLimits,
-            [action]: {
-              ...state.rateLimits[action],
-              ...info,
-              isLimited:
-                info.remaining === 0 ||
-                (info.resetTime ?? 0) > Date.now() / 1000,
+        set((state) => {
+          const mergedLimits = {
+            ...state.rateLimits[action],
+            ...info,
+          };
+          return {
+            rateLimits: {
+              ...state.rateLimits,
+              [action]: {
+                ...mergedLimits,
+                isLimited:
+                  (mergedLimits.remaining ?? 0) <= 0 &&
+                  (mergedLimits.resetTime ?? 0) > Date.now() / 1000,
+              },
             },
-          },
-        })),
+          };
+        }),
 
       clearRateLimit: (action) =>
         set((state) => ({
@@ -125,7 +130,16 @@ export const useSignupStore = create<SignupState>()(
         return !(isCreating || rateLimits.create.isLimited);
       },
 
-      reset: () => set(initialState),
+      reset: () =>
+        set({
+          ...initialState,
+          rateLimits: {
+            start: { ...initialState.rateLimits.start },
+            resend: { ...initialState.rateLimits.resend },
+            verify: { ...initialState.rateLimits.verify },
+            create: { ...initialState.rateLimits.create },
+          },
+        }),
     }),
     {
       name: "signup-store",

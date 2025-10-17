@@ -18,6 +18,25 @@ const RATE_MAX_RESEND_PER_WINDOW = 3;
 const RATE_CREATION_WINDOW_SECONDS = 60 * 60;
 const RATE_MAX_CREATIONS_PER_WINDOW = 3;
 
+async function verifyEmailOtp(
+  emailLower: string,
+  otp: string
+): Promise<boolean> {
+  const v = await prisma.verification.findFirst({
+    where: {
+      identifier: emailLower,
+      value: otp,
+    },
+    select: { expiresAt: true },
+  });
+
+  if (!v?.expiresAt || v.expiresAt < new Date()) {
+    return false;
+  }
+
+  return true;
+}
+
 function getClientIpFromHeaders(headers: Headers | undefined): string {
   const forwarded = headers?.get?.("x-forwarded-for");
   if (!forwarded) {
@@ -84,10 +103,10 @@ async function checkRateLimit(
     }
 
     const globalIpCount = Number(results[0]?.[1] ?? 0);
-    const globalEmailCount = Number(results[1]?.[1] ?? 0);
-    const actionIpCount = Number(results[2]?.[1] ?? 0);
-    const actionEmailCount = Number(results[3]?.[1] ?? 0);
-    const ttl = Number(results[4]?.[1] ?? RATE_GLOBAL_WINDOW_SECONDS);
+    const globalEmailCount = Number(results[2]?.[1] ?? 0);
+    const actionIpCount = Number(results[4]?.[1] ?? 0);
+    const actionEmailCount = Number(results[6]?.[1] ?? 0);
+    const ttl = Number(results[8]?.[1] ?? RATE_GLOBAL_WINDOW_SECONDS);
     const globalIpAllowed = globalIpCount <= RATE_GLOBAL_MAX_ATTEMPTS;
     const globalEmailAllowed = globalEmailCount <= RATE_GLOBAL_MAX_ATTEMPTS;
 
@@ -171,8 +190,8 @@ async function checkAccountCreationRateLimit(
     }
 
     const ipCount = Number(results[0]?.[1] ?? 0);
-    const emailCount = Number(results[1]?.[1] ?? 0);
-    const ttl = Number(results[2]?.[1] ?? RATE_CREATION_WINDOW_SECONDS);
+    const emailCount = Number(results[2]?.[1] ?? 0);
+    const ttl = Number(results[4]?.[1] ?? RATE_CREATION_WINDOW_SECONDS);
 
     const ipAllowed = ipCount <= RATE_MAX_CREATIONS_PER_WINDOW;
     const emailAllowed = emailCount <= RATE_MAX_CREATIONS_PER_WINDOW;
@@ -309,7 +328,7 @@ export const signupRouter = router({
           email: input.email,
           username: input.username,
           passwordHash: hashedPassword,
-          displayName: input.username,
+          displayName: input.displayName,
           password: input.password,
         };
 
@@ -339,11 +358,11 @@ export const signupRouter = router({
             error:
               otpError instanceof Error ? otpError.message : String(otpError),
           });
-          const { sendVerificationOTP } = await import(
-            "../../../email/service"
-          );
-          await sendVerificationOTP(input.email, "123456");
-          debugLog.api("pendingSignupStart:fallback-otp-sent");
+          debugLog.api("pendingSignupStart:otp-send-failed", {
+            email: input.email,
+            error:
+              otpError instanceof Error ? otpError.message : String(otpError),
+          });
         }
 
         debugLog.api("pendingSignupStart:done");
@@ -469,13 +488,13 @@ export const signupRouter = router({
         ctx?.req?.headers as Headers | undefined
       );
 
-      if (
-        "otpVerified" in input &&
-        input.otpVerified &&
-        input.email &&
-        input.otp
-      ) {
+      if ("otpVerified" in input && input.email && input.otp) {
         debugLog.api("pendingSignupVerify:otp-verification-start");
+        const emailLower = input.email.toLowerCase();
+        const otpIsValid = await verifyEmailOtp(emailLower, input.otp);
+        if (!otpIsValid) {
+          return { success: false, error: "invalid-otp" } as const;
+        }
 
         const emailKey = `${PENDING_PREFIX}email:${input.email.toLowerCase()}`;
         const token = await redis.get(emailKey);
@@ -570,7 +589,7 @@ export const signupRouter = router({
           debugLog.api("pendingSignupVerify:user-created", { userId: user.id });
 
           try {
-            const emailLower = pendingData.email.toLowerCase();
+            const pendingEmailLower = pendingData.email.toLowerCase();
             const passwordObj = JSON.stringify({
               hash: pendingData.passwordHash,
             });
@@ -579,7 +598,7 @@ export const signupRouter = router({
               data: {
                 userId: user.id,
                 providerId: "email",
-                accountId: emailLower,
+                accountId: pendingEmailLower,
                 password: passwordObj,
               },
             });
@@ -589,7 +608,7 @@ export const signupRouter = router({
                 data: {
                   userId: user.id,
                   providerId: "credential",
-                  accountId: emailLower,
+                  accountId: pendingEmailLower,
                   password: passwordObj,
                 },
               })
@@ -610,7 +629,6 @@ export const signupRouter = router({
             success: true,
             userId: user.id,
             email: pendingData.email,
-            password: pendingData.password,
           } as const;
         } catch {
           debugLog.api("pendingSignupVerify:parse-error");

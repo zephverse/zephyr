@@ -23,8 +23,19 @@ import { z } from "zod";
 import { requestPasswordReset } from "@/app/(auth)/reset-password/server-actions";
 import { LoadingButton } from "./loading-button";
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const USERNAME_REGEX = /^[a-zA-Z0-9_-]{3,30}$/;
+
 const schema = z.object({
-  email: z.string().email("Please enter a valid email address"),
+  identifier: z
+    .string()
+    .min(1, "Please enter your username or email address")
+    .refine((value) => {
+      if (EMAIL_REGEX.test(value)) {
+        return true;
+      }
+      return USERNAME_REGEX.test(value);
+    }, "Please enter a valid email address or username"),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -133,7 +144,7 @@ export default function ResetPasswordForm() {
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      email: "",
+      identifier: "",
     },
     mode: "onChange",
   });
@@ -145,10 +156,14 @@ export default function ResetPasswordForm() {
           const result = await requestPasswordReset(values);
 
           if (result.error) {
+            const description = result.retryAfter
+              ? `${result.error} Please wait ${Math.ceil(result.retryAfter / 60)} minutes before trying again.`
+              : result.error;
+
             toast({
               variant: "destructive",
               title: "Error",
-              description: result.error,
+              description,
             });
             return;
           }
@@ -157,9 +172,10 @@ export default function ResetPasswordForm() {
           toast({
             title: "Check Your Email",
             description:
-              "If an account exists, you'll receive password reset instructions.",
+              "If an account exists with that username or email, you'll receive password reset instructions.",
           });
-        } catch (_error) {
+        } catch (error) {
+          console.error("Password reset error:", error);
           toast({
             variant: "destructive",
             title: "Error",
@@ -255,8 +271,8 @@ export default function ResetPasswordForm() {
                         Check Your Email
                       </h3>
                       <p className="text-muted-foreground">
-                        If an account exists for that email, you'll receive
-                        password reset instructions.
+                        If an account exists with that username or email, you'll
+                        receive password reset instructions.
                       </p>
                     </motion.div>
                   ) : (
@@ -273,17 +289,17 @@ export default function ResetPasswordForm() {
                         >
                           <FormField
                             control={form.control}
-                            name="email"
+                            name="identifier"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Email</FormLabel>
+                                <FormLabel>Username or Email</FormLabel>
                                 <FormControl>
                                   <div className="relative">
                                     <Input
                                       {...field}
                                       className="pr-10 focus-visible:ring-blue-400"
-                                      placeholder="Enter your email"
-                                      type="email"
+                                      placeholder="Enter your username or email"
+                                      type="text"
                                       value={field.value ?? ""}
                                     />
                                     <Mail className="-translate-y-1/2 absolute top-1/2 right-3 h-4 w-4 text-muted-foreground" />

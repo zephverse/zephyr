@@ -40,10 +40,8 @@ export default function AdminDashboardClient() {
     sortOrder,
   });
 
-  const handleAction = (_user: User, action: ModalAction) => {
-    if (action === "update") {
-      refetch();
-    }
+  const handleAction = (_user: User, _action: ModalAction) => {
+    refetch();
   };
 
   const handleLoadMore = () => {
@@ -73,6 +71,10 @@ export default function AdminDashboardClient() {
 
   if (isLoading && !userList) {
     return <LoadingState />;
+  }
+
+  if (!(isLoading || userList)) {
+    return <EmptyState description="Failed to load users." title="Error" />;
   }
 
   if (!userList || userList.users.length === 0) {

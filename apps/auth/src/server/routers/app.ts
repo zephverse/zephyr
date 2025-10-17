@@ -1,6 +1,7 @@
 import { router } from "../trpc";
 import { adminRouter } from "./admin";
 import { authRouter } from "./auth";
+import { resetPasswordRouter } from "./reset-password";
 import { securityRouter } from "./security";
 import { signupRouter } from "./signup";
 import { userRouter } from "./user";
@@ -11,6 +12,9 @@ export const appRouter = router({
 
   // User management procedures
   ...userRouter._def.procedures,
+
+  // Password reset procedures
+  resetPassword: resetPasswordRouter,
 
   // Admin procedures
   admin: adminRouter,
