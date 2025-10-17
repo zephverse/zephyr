@@ -4,7 +4,7 @@ import { Button } from "@zephyr/ui/shadui/button";
 import { XCircle } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 const ERROR_MESSAGES = {
   "invalid-token": "The verification link is invalid.",
@@ -182,7 +182,11 @@ export default function VerifyEmailPage() {
   const [status, setStatus] = useState<"loading" | "success" | "error">(
     "loading"
   );
-  const verificationChannel = new BroadcastChannel("email-verification");
+  const verificationChannel = useMemo(
+    () => new BroadcastChannel("email-verification"),
+    []
+  );
+  const verificationAttempted = useRef(false);
 
   useEffect(() => {
     const error = searchParams.get("error");
@@ -198,7 +202,8 @@ export default function VerifyEmailPage() {
 
     if (error) {
       setStatus("error");
-    } else if (token) {
+    } else if (token && !verificationAttempted.current) {
+      verificationAttempted.current = true;
       // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: ignore
       (async () => {
         try {
@@ -210,7 +215,11 @@ export default function VerifyEmailPage() {
           const ok = (data as { ok?: boolean }).ok === true || res.ok;
 
           if (ok) {
-            verificationChannel.postMessage("verification-success");
+            try {
+              verificationChannel.postMessage("verification-success");
+            } catch {
+              // BroadcastChannel error is non-critical
+            }
             setStatus("success");
 
             await new Promise((resolve) => setTimeout(resolve, 500));
@@ -239,13 +248,9 @@ export default function VerifyEmailPage() {
           setStatus("error");
         }
       })();
-    } else {
+    } else if (!token) {
       setStatus("error");
     }
-
-    return () => {
-      verificationChannel.close();
-    };
   }, [searchParams, router, verificationChannel]);
 
   const error = searchParams.get("error");

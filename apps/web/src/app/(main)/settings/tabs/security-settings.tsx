@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { USERNAME_REGEX } from "@zephyr/auth/validation";
 import type { UserData } from "@zephyr/db";
 import { useToast } from "@zephyr/ui/hooks/use-toast";
 import {
@@ -20,19 +21,16 @@ import { z } from "zod";
 import { requestPasswordReset } from "@/app/(auth)/reset-password/server-actions";
 import { LoadingButton } from "@/components/Auth/loading-button";
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const USERNAME_REGEX = /^[a-zA-Z0-9_-]{3,30}$/;
-
 const identifierSchema = z.object({
-  identifier: z
-    .string()
-    .min(1, "Please enter your username or email address")
-    .refine((value) => {
-      if (EMAIL_REGEX.test(value)) {
-        return true;
-      }
-      return USERNAME_REGEX.test(value);
-    }, "Please enter a valid email address or username"),
+  identifier: z.union([
+    z.email("Please enter a valid email address"),
+    z
+      .string()
+      .regex(
+        USERNAME_REGEX,
+        "Username can only contain letters, numbers, and underscores"
+      ),
+  ]),
 });
 
 type FormValues = z.infer<typeof identifierSchema>;

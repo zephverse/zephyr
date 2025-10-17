@@ -1,4 +1,5 @@
 import { keys } from "@root/keys";
+import { debugLog } from "@zephyr/config/debug";
 import type { NextRequest } from "next/server";
 
 type PendingVerifyResult =
@@ -20,7 +21,7 @@ async function tryPendingSignupVerification(
         "x-forwarded-for": req.headers.get("x-forwarded-for") ?? "",
         "x-real-ip": req.headers.get("x-real-ip") ?? "",
       },
-      credentials: "include",
+      cache: "no-store",
       body: JSON.stringify({
         id: 1,
         json: { token },
@@ -43,8 +44,7 @@ async function tryPendingSignupVerification(
       (wrapped &&
         (wrapped.success === true || wrapped?.json?.success === true)) ||
       // @ts-expect-error loose parsing
-      data?.success === true ||
-      res.ok;
+      data?.success === true;
 
     if (!isSuccess) {
       return false;
@@ -97,13 +97,18 @@ async function attemptAutoLogin(
       { status: 200 }
     );
 
-    for (const cookie of setCookieHeaders) {
-      response.headers.append("Set-Cookie", cookie);
+    if (setCookieHeaders) {
+      for (const cookie of setCookieHeaders) {
+        response.headers.append("Set-Cookie", cookie);
+      }
     }
 
     return response;
   } catch (loginError) {
-    console.error("Auto-login failed after verification:", loginError);
+    debugLog.api("Auto-login failed after verification", {
+      error:
+        loginError instanceof Error ? loginError.message : String(loginError),
+    });
     return null;
   }
 }
@@ -120,14 +125,12 @@ async function handleVerificationFallback(
     headers: {
       "user-agent": req.headers.get("user-agent") ?? "",
     },
-    credentials: "include",
+    cache: "no-store",
   });
 
   const data = await res.json().catch(() => ({}) as unknown);
-  const isVerified =
-    (data as { status?: boolean; ok?: boolean }).status === true ||
-    (data as { status?: boolean; ok?: boolean }).ok === true ||
-    res.ok;
+  const wrapped = data as { success?: boolean; data?: { success?: boolean } };
+  const isVerified = wrapped.success === true || wrapped.data?.success === true;
 
   return Response.json({ ok: isVerified }, { status: isVerified ? 200 : 400 });
 }
@@ -144,6 +147,27 @@ export async function GET(req: NextRequest) {
   const authBase = keys.NEXT_PUBLIC_AUTH_URL;
 
   try {
+    try {
+      const sessionRes = await fetch(
+        `${req.nextUrl.origin}/api/auth/get-session`,
+        {
+          headers: {
+            cookie: req.headers.get("cookie") ?? "",
+          },
+        }
+      );
+
+      if (sessionRes.ok) {
+        const sessionData = await sessionRes.json().catch(() => null);
+
+        if (sessionData?.user) {
+          return Response.json({ ok: true }, { status: 200 });
+        }
+      }
+    } catch {
+      // Ignore session check errors and continue with token verification
+    }
+
     const pendingResult = await tryPendingSignupVerification(
       req,
       token,

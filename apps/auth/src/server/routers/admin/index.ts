@@ -1,4 +1,5 @@
 import { TRPCError } from "@trpc/server";
+import { debugLog } from "@zephyr/config/debug";
 import { prisma, userCache, userSearchIndex } from "@zephyr/db";
 import { z } from "zod";
 import type { User } from "../../../app/types/types";
@@ -377,7 +378,15 @@ export const adminRouter = router({
     .input(z.object({ userId: z.string() }))
     .mutation(async ({ input }) => {
       await prisma.user.delete({ where: { id: input.userId } });
-      await syncUsersWithMeiliSearch([input.userId], "deleteUsers");
+      try {
+        await syncUsersWithMeiliSearch([input.userId], "deleteUsers");
+      } catch (error) {
+        debugLog.api("removeUser:meili-sync-failed", {
+          userId: input.userId,
+          operation: "deleteUsers",
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
       await userCache.invalidateUserDetail(input.userId);
       await userCache.invalidateUserList();
       await userCache.invalidateUserStats();

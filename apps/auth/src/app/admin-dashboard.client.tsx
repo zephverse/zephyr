@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { EmptyState } from "./components/empty-state";
 import { LoadingState } from "./components/loading-state";
 import UserManagement from "./components/user-management";
@@ -40,34 +40,37 @@ export default function AdminDashboardClient() {
     sortOrder,
   });
 
-  const handleAction = (_user: User, _action: ModalAction) => {
-    refetch();
-  };
+  const handleAction = useCallback(
+    (_user: User, _action: ModalAction) => {
+      refetch();
+    },
+    [refetch]
+  );
 
-  const handleLoadMore = () => {
+  const handleLoadMore = useCallback(() => {
     if (userList?.hasMore && userList.nextCursor) {
       setCursor(userList.nextCursor);
     }
-  };
+  }, [userList?.hasMore, userList?.nextCursor]);
 
-  const handleFiltersChange = (newFilters: UserFilters) => {
+  const handleFiltersChange = useCallback((newFilters: UserFilters) => {
     setFilters(newFilters);
     setCursor(undefined);
-  };
+  }, []);
 
-  const handleSortChange = (
-    newSortBy: typeof sortBy,
-    newSortOrder: typeof sortOrder
-  ) => {
-    setSortBy(newSortBy);
-    setSortOrder(newSortOrder);
-    setCursor(undefined);
-  };
+  const handleSortChange = useCallback(
+    (newSortBy: typeof sortBy, newSortOrder: typeof sortOrder) => {
+      setSortBy(newSortBy);
+      setSortOrder(newSortOrder);
+      setCursor(undefined);
+    },
+    []
+  );
 
-  const handleSearchChange = (query: string) => {
+  const handleSearchChange = useCallback((query: string) => {
     setSearchQuery(query);
     setCursor(undefined);
-  };
+  }, []);
 
   if (isLoading && !userList) {
     return <LoadingState />;

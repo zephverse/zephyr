@@ -1,3 +1,5 @@
+import { hashPasswordWithScrypt } from "@zephyr/auth/core";
+import { debugLog } from "@zephyr/config/debug";
 import { prisma } from "@zephyr/db";
 import { z } from "zod";
 import { procedure, router } from "../trpc";
@@ -5,16 +7,23 @@ import { auditResetPassword, checkResetPasswordRateLimit } from "./security";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const requestResetSchema = z.object({
-  identifier: z.string().min(1, "Identifier is required"),
-  ip: z.string().optional(),
-  userAgent: z.string().optional(),
-});
+const requestResetSchema = z
+  .object({
+    identifier: z.string().trim().nonempty("Identifier is required"),
+    ip: z.string().optional(),
+    userAgent: z.string().optional(),
+  })
+  .strict();
 
-const resetPasswordSchema = z.object({
-  token: z.string(),
-  newPassword: z.string().min(8, "Password must be at least 8 characters"),
-});
+const resetPasswordSchema = z
+  .object({
+    token: z.string(),
+    newPassword: z
+      .string()
+      .trim()
+      .min(8, "Password must be at least 8 characters"),
+  })
+  .strict();
 
 export const resetPasswordRouter = router({
   requestReset: procedure
@@ -88,7 +97,10 @@ export const resetPasswordRouter = router({
 
         return { success: true };
       } catch (error) {
-        console.error("Password reset request error:", error);
+        debugLog.api("reset-password:request-error", {
+          identifier,
+          error: error instanceof Error ? error.message : String(error),
+        });
 
         await auditResetPassword({
           identifier,
@@ -112,7 +124,7 @@ export const resetPasswordRouter = router({
   resetPassword: procedure
     .input(resetPasswordSchema)
     .mutation(async ({ input }) => {
-      const { token, newPassword: _newPassword } = input;
+      const { token, newPassword } = input;
 
       try {
         const verification = await prisma.verification.findFirst({
@@ -123,16 +135,36 @@ export const resetPasswordRouter = router({
           select: { id: true, userId: true },
         });
 
-        if (!verification) {
+        if (!verification?.userId) {
           return {
             success: false,
             error: "Invalid or expired reset token",
           };
         }
 
+        const hashedPassword = await hashPasswordWithScrypt(newPassword);
+
+        await prisma.$transaction(async (tx) => {
+          const userId = verification.userId as string;
+          await tx.user.update({
+            where: { id: userId },
+            data: { passwordHash: hashedPassword },
+          });
+
+          await tx.verification.delete({
+            where: { id: verification.id },
+          });
+
+          await tx.session.deleteMany({
+            where: { userId },
+          });
+        });
+
         return { success: true };
       } catch (error) {
-        console.error("Password reset error:", error);
+        debugLog.api("reset-password:error", {
+          error: error instanceof Error ? error.message : String(error),
+        });
         return {
           success: false,
           error: "Failed to reset password",

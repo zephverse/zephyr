@@ -1,3 +1,4 @@
+import { prisma } from "@zephyr/db";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth/config";
@@ -18,11 +19,14 @@ export default async function AdminDashboard() {
     headers: serverHeaders,
   });
 
-  const isAdmin = Boolean(
-    session?.user &&
-      "role" in session.user &&
-      (session.user as { role?: string }).role === "admin"
-  );
+  let isAdmin = false;
+  if (session?.user?.id) {
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { role: true },
+    });
+    isAdmin = user?.role === "admin";
+  }
 
   if (!isAdmin) {
     redirect(process.env.NEXT_PUBLIC_URL || "http://localhost:3000");

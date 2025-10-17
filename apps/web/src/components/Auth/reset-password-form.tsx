@@ -2,6 +2,7 @@
 
 import resetImage from "@assets/auth/password-reset-image.jpg";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { EMAIL_REGEX, USERNAME_REGEX } from "@zephyr/auth/validation";
 import { useToast } from "@zephyr/ui/hooks/use-toast";
 import {
   Form,
@@ -22,9 +23,6 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { requestPasswordReset } from "@/app/(auth)/reset-password/server-actions";
 import { LoadingButton } from "./loading-button";
-
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const USERNAME_REGEX = /^[a-zA-Z0-9_-]{3,30}$/;
 
 const schema = z.object({
   identifier: z
@@ -174,8 +172,7 @@ export default function ResetPasswordForm() {
             description:
               "If an account exists with that username or email, you'll receive password reset instructions.",
           });
-        } catch (error) {
-          console.error("Password reset error:", error);
+        } catch {
           toast({
             variant: "destructive",
             title: "Error",

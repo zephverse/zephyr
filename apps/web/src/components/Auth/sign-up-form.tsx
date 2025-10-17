@@ -404,7 +404,7 @@ export default function SignUpForm() {
           description: userFriendlyError,
           duration: serverError === "rate-limited" ? 8000 : 5000,
         });
-        throw new Error(serverError);
+        return;
       }
 
       const responseData = data?.result?.data?.json;

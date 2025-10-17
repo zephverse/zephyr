@@ -38,10 +38,7 @@ async function verifyEmailOtp(
   emailLower: string,
   otp: string
 ): Promise<boolean> {
-  // Better-auth stores OTP identifiers with a prefix
   const betterAuthIdentifier = `email-verification-otp-${emailLower}`;
-
-  // Clean up expired OTPs for this email first
   try {
     await prisma.verification.deleteMany({
       where: {
@@ -53,8 +50,6 @@ async function verifyEmailOtp(
     console.error("Failed to cleanup expired OTPs:", cleanupError);
   }
 
-  // Better-auth stores the value as "OTP:attemptCount" (e.g., "272123:0")
-  // We need to find records where the value starts with our OTP
   const allVerifications = await prisma.verification.findMany({
     where: {
       identifier: { equals: betterAuthIdentifier, mode: "insensitive" },
@@ -63,15 +58,13 @@ async function verifyEmailOtp(
     select: { identifier: true, value: true, expiresAt: true, id: true },
   });
 
-  console.log(`DEBUG: Looking for OTP ${otp} for ${emailLower}`);
-  console.log(`DEBUG: Better-auth identifier: ${betterAuthIdentifier}`);
-  console.log(
-    `DEBUG: Found ${allVerifications.length} active verification records`
-  );
+  debugLog.api("verifyEmailOtp:lookup", {
+    emailLower,
+    betterAuthIdentifier,
+    recordCount: allVerifications.length,
+  });
 
-  // Find the verification record where the value starts with our OTP
   const v = allVerifications.find((record) => {
-    // Better-auth format: "OTP:attemptCount"
     const storedOtp = record.value.split(":")[0];
     return storedOtp === otp;
   });
@@ -82,9 +75,6 @@ async function verifyEmailOtp(
       otp,
       betterAuthIdentifier,
     });
-    console.log(
-      `OTP verification failed: No matching OTP found for ${emailLower} with code ${otp}`
-    );
     return false;
   }
 
@@ -93,14 +83,10 @@ async function verifyEmailOtp(
       emailLower,
       expiresAt: v.expiresAt,
     });
-    console.log(
-      `OTP verification failed: OTP expired for ${emailLower} at ${v.expiresAt}`
-    );
     return false;
   }
 
   debugLog.api("verifyEmailOtp:valid", { emailLower, otp });
-  console.log(`OTP verification successful for ${emailLower}`);
   return true;
 }
 

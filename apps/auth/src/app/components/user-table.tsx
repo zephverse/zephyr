@@ -1,7 +1,6 @@
 /** biome-ignore-all lint/a11y/noSvgWithoutTitle: not needed */
 "use client";
 
-import { useQueryClient } from "@tanstack/react-query";
 import { useDebounce } from "@zephyr/ui/hooks/use-debounce";
 import { useToast } from "@zephyr/ui/hooks/use-toast";
 import { cn } from "@zephyr/ui/lib/utils";
@@ -89,7 +88,7 @@ export default function UserTable({
   const debouncedSearchQuery = useDebounce(localSearchQuery, 300);
 
   const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const utils = trpc.useUtils();
   const banUser = trpc.admin.banUser.useMutation();
   const unbanUser = trpc.admin.unbanUser.useMutation();
   const revokeAll = trpc.admin.revokeUserSessions.useMutation();
@@ -358,22 +357,25 @@ export default function UserTable({
                                   onClick={async () => {
                                     try {
                                       setRoleToggleLoading(user.id);
-                                      if (user.role === "admin") {
-                                        await setRole.mutateAsync({
-                                          userId: user.id,
-                                          role: "user",
-                                        });
-                                      } else {
-                                        await setRole.mutateAsync({
-                                          userId: user.id,
-                                          role: "admin",
-                                        });
-                                      }
+                                      const newRole =
+                                        user.role === "admin"
+                                          ? "user"
+                                          : "admin";
+                                      await setRole.mutateAsync({
+                                        userId: user.id,
+                                        role: newRole,
+                                      });
+                                      await utils.admin.getUsers.invalidate();
+                                      toast({
+                                        title: "Success",
+                                        description: `Successfully updated ${user.username}'s role to ${newRole}`,
+                                      });
                                     } catch (error) {
-                                      console.error(
-                                        "Failed to update user role:",
-                                        error
-                                      );
+                                      toast({
+                                        variant: "destructive",
+                                        title: "Error",
+                                        description: `Failed to update user role: ${error instanceof Error ? error.message : "Unknown error"}`,
+                                      });
                                     } finally {
                                       setRoleToggleLoading(null);
                                     }
@@ -411,9 +413,7 @@ export default function UserTable({
                                       await revokeAll.mutateAsync({
                                         userId: user.id,
                                       });
-                                      await queryClient.invalidateQueries({
-                                        queryKey: [["admin", "getUsers"]],
-                                      });
+                                      await utils.admin.getUsers.invalidate();
                                       toast({
                                         title: "Success",
                                         description: `Successfully revoked all sessions for ${user.username}`,
@@ -444,9 +444,7 @@ export default function UserTable({
                                         await unbanUser.mutateAsync({
                                           userId: user.id,
                                         });
-                                        await queryClient.invalidateQueries({
-                                          queryKey: [["admin", "getUsers"]],
-                                        });
+                                        await utils.admin.getUsers.invalidate();
                                         toast({
                                           title: "Success",
                                           description: `Successfully unbanned user ${user.username}`,
@@ -456,9 +454,7 @@ export default function UserTable({
                                           userId: user.id,
                                           banReason: "Admin action",
                                         });
-                                        await queryClient.invalidateQueries({
-                                          queryKey: [["admin", "getUsers"]],
-                                        });
+                                        await utils.admin.getUsers.invalidate();
                                         toast({
                                           title: "Success",
                                           description: `Successfully banned user ${user.username}`,

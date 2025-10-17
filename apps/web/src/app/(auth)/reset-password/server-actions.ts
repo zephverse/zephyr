@@ -1,12 +1,69 @@
 "use server";
 
+import { EMAIL_REGEX, USERNAME_REGEX } from "@zephyr/auth/validation";
+import { debugLog } from "@zephyr/config/debug";
 import { prisma } from "@zephyr/db";
 import { headers } from "next/headers";
 import { z } from "zod";
 import { authClient } from "@/lib/auth";
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const USERNAME_REGEX = /^[a-zA-Z0-9_-]{3,30}$/;
+async function makePasswordResetRequest(
+  identifier: string,
+  ip: string,
+  userAgent: string | null
+): Promise<{ success: boolean; error?: string; retryAfter?: number }> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10_000);
+
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_AUTH_URL}/api/trpc/resetPassword.requestReset`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(userAgent && { "user-agent": userAgent }),
+        },
+        body: JSON.stringify({
+          json: { identifier, ip, userAgent },
+        }),
+        signal: controller.signal,
+      }
+    );
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorData = await response
+        .json()
+        .catch(() => ({ error: "Network error" }));
+      return {
+        success: false,
+        error:
+          errorData.error || `HTTP ${response.status}: ${response.statusText}`,
+      };
+    }
+
+    const result = await response.json();
+
+    if (!result.result?.data?.json?.success) {
+      const error = result.result?.data?.json?.error || "Rate limit exceeded";
+      const retryAfter = result.result?.data?.json?.retryAfter;
+      return { success: false, error, retryAfter };
+    }
+
+    return { success: true };
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error instanceof Error && error.name === "AbortError") {
+      return { success: false, error: "Request timeout. Please try again." };
+    }
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Network error occurred",
+    };
+  }
+}
 
 const requestResetSchema = z.object({
   identifier: z
@@ -49,37 +106,13 @@ export async function requestPasswordReset(
     const { identifier } = requestResetSchema.parse(data);
     const { ip, userAgent } = await getClientInfo();
 
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_AUTH_URL}/api/trpc/resetPassword.requestReset`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            json: {
-              identifier,
-              ip,
-              userAgent,
-            },
-          }),
-        }
-      );
-
-      const result = await response.json();
-
-      if (!result.result?.data?.success) {
-        const error = result.result?.data?.error || "Rate limit exceeded";
-        const retryAfter = result.result?.data?.retryAfter;
-        return {
-          success: false,
-          error,
-          retryAfter,
-        };
-      }
-    } catch (rateLimitError) {
-      console.error("Rate limit check failed:", rateLimitError);
+    const requestResult = await makePasswordResetRequest(
+      identifier,
+      ip,
+      userAgent
+    );
+    if (!requestResult.success) {
+      return requestResult;
     }
 
     let user: { id: string; email: string | null; username: string } | null =
@@ -111,7 +144,9 @@ export async function requestPasswordReset(
           // Password reset email sent successfully
         },
         onError: (error) => {
-          console.error("Password reset request error:", error);
+          debugLog.api("Password reset request error", {
+            error: error instanceof Error ? error.message : String(error),
+          });
           throw new Error("Failed to process password reset request");
         },
       },
@@ -119,7 +154,9 @@ export async function requestPasswordReset(
 
     return { success: true };
   } catch (error) {
-    console.error("Password reset request error:", error);
+    debugLog.api("Password reset request error", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return {
       success: false,
       error: "Failed to process password reset request",
@@ -139,7 +176,9 @@ export async function resetPassword(data: z.infer<typeof resetPasswordSchema>) {
           // Password reset successfully
         },
         onError: (error) => {
-          console.error("Password reset error:", error);
+          debugLog.api("Password reset error", {
+            error: error instanceof Error ? error.message : String(error),
+          });
           throw new Error("Failed to reset password");
         },
       },
@@ -147,7 +186,9 @@ export async function resetPassword(data: z.infer<typeof resetPasswordSchema>) {
 
     return { success: true };
   } catch (error) {
-    console.error("Password reset error:", error);
+    debugLog.api("Password reset error", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return { error: "Failed to reset password" };
   }
 }

@@ -51,6 +51,7 @@ model User {
   hnbookmark            HNBookmark[]
   auraReceived          AuraLog[]            @relation("AuraReceived")
   auraIssued            AuraLog[]            @relation("AuraIssued")
+  impersonatedSessions  Session[]            @relation("ImpersonatedSessions")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -113,6 +114,7 @@ model Session {
   userAgent      String?
   impersonatedBy String?
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  admin          User?    @relation("ImpersonatedSessions", fields: [impersonatedBy], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
