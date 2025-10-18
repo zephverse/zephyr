@@ -1,0 +1,189 @@
+---
+title: Routing Patterns
+description: Next.js App Router patterns used in Zephyr
+---
+
+## Routing Patterns
+
+### App Router (Next.js 15)
+
+Zephyr uses the App Router with file-based routing and RSC (React Server Components).
+
+**Route groups** organize pages without affecting URLs:
+
+```
+app/
+├── (auth)/         # Layout: Minimal, centered forms
+│   ├── login/
+│   └── signup/
+├── (main)/         # Layout: Sidebar + header
+│   ├── page.tsx    # → /
+│   ├── posts/[postId]/  # → /posts/:postId
+│   └── users/[username]/  # → /users/:username
+```
+
+**Dynamic routes** use square brackets:
+- `/posts/[postId]` – Post detail
+- `/users/[username]` – User profile
+
+**Parallel routes** (not heavily used yet):
+- Could add `@modal` for dialogs without URL changes
+
+### Server Components vs Client Components
+
+**Server Components** (default):
+- Fetch data directly with `async/await`
+- No JavaScript sent to client
+- Examples: `ProfileFeed`, `PostList`
+
+**Client Components** (`"use client"`):
+- Interactive state (`useState`, React Query)
+- Event handlers
+- Examples: `VoteButton`, `PostEditor`
+
+**Pattern:**
+Fetch data in Server Components, pass to Client Components as props.
+
+## Routing Patterns (Detailed)
+
+### Next.js App Router
+
+Zephyr uses Next.js 15's App Router with several patterns:
+
+#### Route Groups
+
+Route groups organize routes without affecting the URL:
+
+```
+app/
+├── (auth)/         # Auth-related pages
+│   ├── layout.tsx  # Auth layout (minimal, no nav)
+│   ├── login/
+│   └── signup/
+├── (main)/         # Main application
+│   ├── layout.tsx  # Main layout (with sidebar, nav)
+│   ├── page.tsx    # Home feed
+│   └── posts/
+└── (docs)/         # Documentation pages
+    ├── layout.tsx  # Docs layout (simple footer)
+    └── privacy/
+```
+
+**Benefits:**
+- Different layouts for different sections
+- No URL pollution (`/login`, not `/auth/login`)
+- Shared layouts and providers
+
+#### Dynamic Routes
+
+```
+app/(main)/
+├── posts/[postId]/page.tsx     # /posts/abc123
+├── users/[username]/page.tsx   # /users/johndoe
+└── tags/[tag]/page.tsx         # /tags/typescript
+```
+
+**Accessing params:**
+```tsx
+export default async function PostPage({
+  params,
+}: {
+  params: { postId: string };
+}) {
+  const post = await getPost(params.postId);
+  return <PostDetail post={post} />;
+}
+```
+
+#### Parallel Routes
+
+Used for modals and complex layouts:
+
+```
+app/(main)/
+├── @modal/
+│   └── posts/[postId]/page.tsx
+├── layout.tsx
+└── posts/[postId]/page.tsx
+```
+
+**Usage:**
+```tsx
+// layout.tsx
+export default function Layout({
+  children,
+  modal,
+}: {
+  children: React.ReactNode;
+  modal: React.ReactNode;
+}) {
+  return (
+    <>
+      {children}
+      {modal}
+    </>
+  );
+}
+```
+
+#### API Routes
+
+API routes are colocated with pages:
+
+```
+app/api/
+├── posts/
+│   ├── route.ts              # GET /api/posts
+│   ├── [postId]/
+│   │   ├── route.ts          # GET /api/posts/:id
+│   │   ├── votes/route.ts    # POST /api/posts/:id/votes
+│   │   └── comments/route.ts # GET /api/posts/:id/comments
+└── users/
+    └── [userId]/
+        └── route.ts          # GET /api/users/:id
+```
+
+**Example route:**
+```typescript
+// app/api/posts/[postId]/votes/route.ts
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { getSession } from "@/lib/session";
+
+const voteSchema = z.object({
+  value: z.number().int().min(-1).max(1),
+});
+
+export async function POST(
+  request: Request,
+  { params }: { params: { postId: string } }
+) {
+  const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (!params.postId) {
+    return NextResponse.json({ error: "Post ID is required" }, { status: 400 });
+  }
+
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
+  const validation = voteSchema.safeParse(body);
+  if (!validation.success) {
+    return NextResponse.json(
+      { error: "Invalid vote value", details: validation.error.issues },
+      { status: 400 }
+    );
+  }
+
+  const vote = await voteOnPost(params.postId, session.user.id, validation.data.value);
+  
+  return NextResponse.json(vote);
+}
+```

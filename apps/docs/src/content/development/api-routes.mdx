@@ -1,0 +1,447 @@
+---
+title: API Routes
+description: Complete REST API reference for Zephyr's Next.js Route Handlers.
+---
+
+import { Callout } from "nextra/components";
+
+## Overview
+
+Zephyr's API is built with Next.js 15 Route Handlers in `apps/web/src/app/api/`. All routes return JSON and use consistent authentication patterns.
+
+## Authentication
+
+All protected routes check session using Better Auth:
+
+```typescript
+import { getSessionFromApi } from "@/lib/session";
+
+const session = await getSessionFromApi();
+if (!session?.user) {
+  return Response.json({ error: "Unauthorized" }, { status: 401 });
+}
+```
+
+## Posts
+
+### `/api/posts`
+**POST** - Create a new post
+
+Creates a new post with content, optional media attachments, tags, and mentions.
+
+```typescript
+// Request body
+{
+  content: string,
+  mediaIds?: string[],  // Optional array of media IDs
+  tags: string[],       // Array of tag names
+  mentions: string[]    // Array of mentioned user IDs
+}
+
+// Response
+{
+  post: Post  // The created post object
+}
+```
+
+### `/api/posts/for-you`
+**GET** - Personalized feed algorithm
+
+Returns posts tailored to the user based on follows, engagement, and preferences.
+
+### `/api/posts/following`
+**GET** - Following feed
+
+Returns posts from users the current user follows.
+
+### `/api/posts/[postId]`
+**GET** - Get specific post
+**DELETE** - Delete post (author only)
+
+### `/api/posts/[postId]/votes`
+**GET** - Get vote information for a post
+**POST** - Upvote/downvote a post
+**DELETE** - Remove your vote
+
+```typescript
+// Request body for POST
+{
+  value: 1 | -1  // 1 for upvote, -1 for downvote
+}
+```
+
+### `/api/posts/[postId]/tags`
+**POST** - Update post tags (author only)
+
+```typescript
+// Request body
+{
+  tags: string[]  // Array of tag names
+}
+```
+
+### `/api/posts/[postId]/mentions`
+**GET** - Get mentioned users in a post
+**POST** - Update post mentions (author only)
+
+```typescript
+// Request body
+{
+  userIds: string[]  // Array of user IDs to mention
+}
+```
+
+### `/api/posts/[postId]/share`
+**POST** - Track share action
+
+```typescript
+// Request body
+{
+  platform: "twitter" | "facebook" | "linkedin" | "instagram" | 
+            "pinterest" | "reddit" | "whatsapp" | "discord" | 
+            "email" | "copy" | "qr"
+}
+```
+
+### `/api/posts/[postId]/views`
+**POST** - Increment view count
+
+### `/api/posts/[postId]/bookmark`
+**POST** - Bookmark a post
+**DELETE** - Remove bookmark
+
+## Users
+
+### Discovery & Search
+
+#### `/api/users/suggested`
+**GET** - Get suggested users to follow
+
+Returns personalized user suggestions based on mutual follows and Aura.
+
+#### `/api/users/browse`
+**GET** - Browse all users with pagination
+
+#### `/api/users/new`
+**GET** - Recently joined users
+
+#### `/api/users/trending`
+**GET** - Trending users by engagement
+
+#### `/api/users/search`
+**GET** - Search users by query
+
+Query parameter: `?q=searchTerm`
+
+### User Profiles
+
+#### `/api/users/[userId]`
+**GET** - Get user profile by ID
+
+#### `/api/users/username/[username]`
+**GET** - Get user profile by username
+
+#### `/api/users/username-to-id/[username]`
+**GET** - Convert username to user ID
+
+#### `/api/users/[userId]/profile`
+**GET** - Get detailed user profile
+
+#### `/api/users/profile`
+**PATCH** - Update current user's profile
+
+```typescript
+// Request body
+{
+  displayName?: string;
+  bio?: string;
+  displayUsername?: string;
+}
+```
+
+### Social Features
+
+#### `/api/users/[userId]/followers`
+**POST** - Follow a user
+**DELETE** - Unfollow a user
+
+#### `/api/users/[userId]/followers-list`
+**GET** - Get user's followers list
+
+#### `/api/users/[userId]/following-list`
+**GET** - Get users this user follows
+
+#### `/api/users/follow-states`
+**POST** - Batch check follow states
+
+```typescript
+// Request body
+{
+  userIds: string[]
+}
+
+// Response
+{
+  [userId: string]: boolean  // true if following
+}
+```
+
+#### `/api/users/followed`
+**GET** - Get IDs of users you follow
+
+#### `/api/users/mentioned`
+**GET** - Get users you've mentioned
+
+### User Content
+
+#### `/api/users/[userId]/posts`
+**GET** - Get user's posts with pagination
+
+#### `/api/users/[userId]/mentions`
+**GET** - Get posts where user is mentioned
+
+### Account Management
+
+#### `/api/users/email`
+**PATCH** - Update user email
+
+```typescript
+// Request body
+{
+  email: string;
+}
+```
+
+### Avatars
+
+#### `/api/users/avatar`
+**POST** - Upload avatar
+**DELETE** - Remove avatar
+
+#### `/api/users/avatar/[userId]`
+**GET** - Get user avatar URL (cached)
+
+## HackerNews
+
+### `/api/hackernews/stories`
+**GET** - Fetch HackerNews top stories
+
+Returns cached stories with rate limiting (30 requests/minute).
+
+### `/api/hackernews/bookmarked`
+**GET** - Get user's bookmarked HN stories
+
+### `/api/hackernews/[storyId]/bookmark`
+**POST** - Bookmark an HN story
+**DELETE** - Remove HN bookmark
+
+## Notifications
+
+### `/api/notifications`
+**GET** - List user notifications with pagination
+
+Query parameter: `?cursor=lastNotificationId`
+
+### `/api/notifications/mark-as-read`
+**POST** - Mark notification(s) as read
+
+```typescript
+// Request body
+{
+  notificationId?: string;  // Mark single notification
+  // OR
+  notificationIds?: string[];  // Mark multiple notifications
+}
+```
+
+### `/api/notifications/unread-count`
+**GET** - Get count of unread notifications
+
+## Search
+
+### `/api/search/users`
+**GET** - Search users with Meilisearch
+
+Query parameter: `?q=searchTerm&limit=20`
+
+Uses fuzzy search and returns ranked results.
+
+## Tags
+
+### `/api/tags`
+**GET** - List all tags
+
+### `/api/tags/counts`
+**GET** - Get usage counts for tags
+
+### `/api/tags/popular`
+**GET** - Get trending tags
+
+### `/api/tags/sync`
+**POST** - Sync tags to search index (admin)
+
+## Media
+
+### `/api/upload`
+**POST** - Generate presigned upload URL for media
+
+```typescript
+// Request body
+{
+  fileName: string;
+  fileType: string;  // MIME type
+  fileSize: number;
+}
+
+// Response
+{
+  uploadUrl: string;      // Presigned S3 URL
+  mediaId: string;        // Media record ID
+  key: string;            // Storage key
+}
+```
+
+### `/api/media/[id]`
+**GET** - Get media file metadata
+
+## Cache Management
+
+### `/api/cache/revalidate`
+**POST** - Revalidate specific cache keys (admin only)
+
+⚠️ **Restricted Endpoint**: This endpoint is not publicly accessible and requires special authorization.
+
+**Authorization Requirements:**
+- Must include `Authorization` header with valid bearer token
+- Requires `admin` role or `cache:revalidate` permission
+- Limited to authenticated admin users or server-to-server calls
+- CSRF protection not applicable (server-to-server only)
+
+```typescript
+// Request body
+{
+  keys: string[];  // Cache keys to invalidate
+}
+
+// Headers required
+{
+  "Authorization": "Bearer <admin-token>"
+}
+```
+
+## Health & Monitoring
+
+### `/api/health`
+**GET** - Health check endpoint
+
+Returns service status and database connectivity.
+
+## Cron Jobs
+
+All cron routes are protected by `CRON_SECRET` header validation.
+
+See [Cron Jobs](/development/cron-jobs) for detailed documentation.
+
+## Common Patterns
+
+### Pagination
+
+Most list endpoints use cursor-based pagination:
+
+```typescript
+// Request
+GET /api/posts/for-you?cursor=lastPostId
+
+// Response
+{
+  posts: Post[];
+  nextCursor: string | null;
+}
+```
+
+### Error Responses
+
+Consistent error format:
+
+```typescript
+{
+  error: string;  // Error message
+  code?: string;  // Optional error code
+}
+```
+
+HTTP status codes:
+- `200` - Success
+- `201` - Created
+- `400` - Bad request
+- `401` - Unauthorized
+- `403` - Forbidden
+- `404` - Not found
+- `500` - Internal server error
+
+### Type Safety
+
+All request/response types are validated with Zod schemas from `@zephyr/auth/validation`:
+
+```typescript
+import { createPostSchema } from "@zephyr/auth/validation";
+
+const validated = createPostSchema.parse(requestBody);
+```
+
+### Rate Limiting
+
+HackerNews API routes implement rate limiting:
+
+```typescript
+const WINDOW_SIZE = 60;  // seconds
+const MAX_REQUESTS = 30;  // per window
+```
+
+<Callout type="info">
+Rate limits are enforced per IP address using Redis sorted sets.
+</Callout>
+
+## Example Usage
+
+### Creating a Post
+
+```typescript
+const response = await fetch('/api/posts', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    content: 'Hello, Zephyr!',
+    mediaIds: ['media_123'],
+    tags: ['introduction'],
+    mentions: ['user_456']
+  })
+});
+
+const { post } = await response.json();
+```
+
+### Following a User
+
+```typescript
+const response = await fetch(`/api/users/${userId}/followers`, {
+  method: 'POST'
+});
+
+const { followerInfo } = await response.json();
+```
+
+### Searching Users
+
+```typescript
+const params = new URLSearchParams({ q: 'john', limit: '10' });
+const response = await fetch(`/api/search/users?${params}`);
+const { users } = await response.json();
+```
+
+<Callout type="warning">
+All mutation endpoints require authentication. Include credentials in your fetch requests.
+</Callout>
+

@@ -1,38 +1,369 @@
 ---
-title: Development
-description: Local dev workflow, commands, and contribution tips.
+title: Development Guide
+description: Comprehensive guide to developing Zephyr - from setup to deployment.
 ---
 
 import { Callout } from "nextra/components";
 
-## Run everything
+## Welcome to Zephyr Development
+
+This section covers everything you need to know to develop, debug, and contribute to Zephyr effectively.
+
+<Callout type="info">
+**Prerequisites**: Make sure you've completed the [Installation](/setup/installation) guide before diving into development.
+</Callout>
+
+## Quick Start
 
 ```bash
-# from repo root
-bun install
-bun run env:dev
-bun run db:up
+# Start development environment
+bun run docker:dev    # Start infrastructure
+bun run dev          # Start all apps
+```
+
+Your development environment is now running:
+- **Web App**: http://localhost:3000
+- **Auth Service**: http://localhost:3001
+- **Docs**: http://localhost:3002
+
+## What's in This Section
+
+### Core Concepts
+
+<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+
+<div className="border rounded-lg border-gray-600 p-4">
+  <h4 className="font-semibold mb-2">[Project Structure](/development/project-structure)</h4>
+  <p className="text-sm text-gray-200">Understand the monorepo layout, routing patterns, and folder organization.</p>
+</div>
+
+<div className="border rounded-lg border-gray-600 p-4">
+  <h4 className="font-semibold mb-2">[State Management](/development/state-management)</h4>
+  <p className="text-sm text-gray-200">React Query for server state, Jotai for client state, React Hook Form for forms.</p>
+</div>
+
+<div className="border rounded-lg border-gray-600 p-4">
+  <h4 className="font-semibold mb-2">[Authentication](/development/authentication)</h4>
+  <p className="text-sm text-gray-200">Better Auth integration, session management, and protected routes.</p>
+</div>
+
+<div className="border rounded-lg border-gray-600 p-4">
+  <h4 className="font-semibold mb-2">[Components](/development/components)</h4>
+  <p className="text-sm text-gray-200">Component architecture, patterns, and reusable UI elements.</p>
+</div>
+
+<div className="border rounded-lg border-gray-600 p-4">
+  <h4 className="font-semibold mb-2">[Styling](/development/styling)</h4>
+  <p className="text-sm text-gray-200">Tailwind CSS, shadcn/ui components, and theming system.</p>
+</div>
+
+<div className="border rounded-lg border-gray-600 p-4">
+  <h4 className="font-semibold mb-2">[File Uploads](/development/file-uploads)</h4>
+  <p className="text-sm text-gray-200">MinIO integration, media handling, and validation.</p>
+</div>
+
+</div>
+
+### Reference
+
+- **[Database](/development/database)** - Prisma schema, queries, and migrations
+- **[API Routes](/development/api-routes)** - Next.js Route Handlers and API patterns
+- **[Cron Jobs](/development/cron-jobs)** - Scheduled tasks and background jobs
+- **[Docker Infrastructure](/development/docker-infrastructure)** - Local development services
+
+### Practical Guides
+
+- **[Workflows](/development/workflows)** - Common development tasks and debugging strategies
+
+## Development Philosophy
+
+Zephyr follows these core principles:
+
+### 1. Type Safety First
+
+```typescript
+// ✅ Good: Full type safety from database to UI
+import type { Post } from "@zephyr/db";
+
+async function getPost(id: string): Promise<Post> {
+  return await prisma.post.findUniqueOrThrow({ where: { id } });
+}
+```
+
+Every layer is typed - database models, API responses, component props, and form inputs.
+
+### 2. Server-First Rendering
+
+```tsx
+// ✅ Good: Server component with data fetching
+export default async function PostPage({ params }: { params: { postId: string } }) {
+  const post = await getPost(params.postId);
+  return <Post data={post} />;
+}
+```
+
+Use Server Components by default, Client Components (`"use client"`) only when needed for interactivity.
+
+### 3. Optimistic Updates
+
+```typescript
+// ✅ Good: Instant UI feedback with rollback on error
+const mutation = useMutation({
+  mutationFn: voteOnPost,
+  onMutate: async (newVote) => {
+    // Cancel outgoing refetches
+    await queryClient.cancelQueries({ queryKey: ["post", postId] });
+    
+    // Snapshot previous value
+    const previousPost = queryClient.getQueryData(["post", postId]);
+    
+    // Optimistically update
+    queryClient.setQueryData(["post", postId], (old) => ({
+      ...old,
+      votes: old.votes + (newVote.value ? 1 : -1),
+    }));
+    
+    return { previousPost };
+  },
+  onError: (err, newVote, context) => {
+    // Rollback on error
+    queryClient.setQueryData(["post", postId], context.previousPost);
+  },
+});
+```
+
+### 4. Accessibility by Default
+
+```tsx
+// ✅ Good: Semantic HTML with ARIA when needed
+<button
+  type="button"
+  onClick={handleVote}
+  aria-label={isVoted ? "Remove upvote" : "Upvote post"}
+>
+  <ArrowUpIcon aria-hidden="true" />
+  {voteCount}
+</button>
+```
+
+All components follow Ultracite accessibility rules.
+
+### 5. Performance Optimization
+
+- **Caching**: Redis for frequently accessed data
+- **Lazy Loading**: Dynamic imports for heavy components
+- **Code Splitting**: Route-based chunks
+- **Image Optimization**: Next.js Image component
+- **Query Deduplication**: React Query automatic request deduplication
+
+## Essential Commands
+
+### Development
+
+| Command | Description |
+|---------|-------------|
+| `bun run dev` | Start all apps in development mode |
+| `bun run build` | Lint, type-check, and build for production |
+| `bun run check` | Lint and format code with Biome |
+| `bun run clean` | Delete all build artifacts and dependencies |
+
+### Database
+
+| Command | Description |
+|---------|-------------|
+| `bun run db:up` | Generate Prisma client and push schema |
+| `bun run search:init` | Initialize Meilisearch indexes |
+| `cd packages/db && bunx prisma studio` | Open Prisma Studio (database GUI) |
+| `cd packages/db && bunx prisma migrate dev` | Create and apply migration |
+
+### Docker
+
+| Command | Description |
+|---------|-------------|
+| `bun run docker:dev` | Start all infrastructure services |
+| `bun run docker:apps` | Build and run apps in Docker |
+| `bun run docker:logs` | View logs from all containers |
+| `bun run docker:down` | Stop all Docker services |
+| `bun run docker:clean` | Stop services and delete volumes |
+
+### Dependencies
+
+| Command | Description |
+|---------|-------------|
+| `bun add <package>` | Add dependency to current workspace |
+| `bun add <package> --workspace` | Add to all workspaces |
+| `bun run dep:check` | Check for dependency issues |
+| `bun run dep:fix` | Auto-fix dependency issues |
+
+## Development Workflow
+
+### Adding a New Feature
+
+1. **Create a branch**
+   ```bash
+   git checkout -b feature/my-new-feature
+   ```
+
+2. **Implement the feature**
+   - Update database schema if needed (`packages/db/prisma/schema.prisma`)
+   - Create API routes (`apps/web/src/app/api/...`)
+   - Build UI components (`apps/web/src/components/...`)
+   - Add pages (`apps/web/src/app/(main)/...`)
+
+3. **Test locally**
+   ```bash
+   bun run check        # Lint and format
+   bun run build        # Type-check and build
+   ```
+
+4. **Commit and push**
+   ```bash
+   git add .
+   git commit -m "feat: add my new feature"
+   git push origin feature/my-new-feature
+   ```
+
+### Debugging Tips
+
+**Enable verbose logging:**
+```typescript
+import { logger } from "@zephyr/config/debug";
+
+logger.info("User action", { userId, action: "vote" });
+logger.error("API call failed", { error, endpoint });
+```
+
+**Inspect React Query cache:**
+```tsx
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+
+// In apps/web/src/app/layout.tsx (dev only)
+<ReactQueryDevtools initialIsOpen={false} />
+```
+
+**Check Redis cache:**
+```bash
+# Open RedisInsight
+open http://localhost:5540
+
+# Or use CLI
+docker exec -it zephyr-redis redis-cli
+```
+
+**Database queries:**
+```bash
+# Open Prisma Studio
+cd packages/db && bunx prisma studio
+```
+
+## Code Quality
+
+### Linting & Formatting
+
+Zephyr uses **Ultracite** (powered by Biome) for lightning-fast linting and formatting:
+
+```bash
+# Check for issues
+npx ultracite check
+
+# Auto-fix issues
+npx ultracite fix
+
+# Check specific file
+npx ultracite check apps/web/src/app/page.tsx
+```
+
+### Type Checking
+
+```bash
+# Check all packages
+bun run build
+
+# Check specific package
+cd apps/web && bun run build
+```
+
+### Pre-commit Hooks
+
+Husky automatically runs checks before commits:
+- Linting (`ultracite check`)
+- Type checking (`tsc --noEmit`)
+
+## Hot Module Replacement (HMR)
+
+All apps support instant hot reloading:
+
+- **Components**: Changes appear instantly
+- **Server Actions**: Require page refresh
+- **API Routes**: Require page refresh
+- **Middleware**: Requires dev server restart
+
+```bash
+# Restart dev server if needed
+# Press Ctrl+C, then:
 bun run dev
 ```
 
-This starts `web`, `auth`, and `docs` concurrently.
+## Environment Variables
 
-## Useful scripts
+Development uses `.env` files with sensible defaults. See [Environment Configuration](/setup/environment) for details.
 
-- Lint/format: `npx ultracite check` or `npx ultracite fix`
-- Type check & build: `bun run build`
-- Clean artifacts: `bun run clean`
-- Docker (infra): `bun run docker:dev`
-- Docker (apps): `bun run docker:apps`
+**Quick reference:**
+```bash
+# Required for local development
+DATABASE_URL="postgresql://postgres:postgres@localhost:5433/zephyr?schema=public"
+REDIS_URL="redis://:zephyrredis@localhost:6379/0"
+MINIO_ENDPOINT="http://localhost:9000"
+RESEND_API_KEY="re_your_key"  # Required for emails
+BETTER_AUTH_SECRET="your-secret"  # Required for auth
+```
 
-## Making changes
+## Common Issues
 
-- Follow the Code style and A11y rules in the Contribution section
-- Prefer shared logic in `packages/` and compose in `apps/`
-- Keep components small, strongly typed, and accessible
+### "Module not found" errors
 
-<Callout type="info">
-When adding new dependencies in packages, ensure consumers list them as peer or workspace deps appropriately.
+```bash
+# Regenerate Prisma client
+cd packages/db && bunx prisma generate
+
+# Clear Turbo cache
+bun run clean
+bun install
+```
+
+### Port already in use
+
+```bash
+# Find process using port 3000
+lsof -i :3000  # macOS/Linux
+netstat -ano | findstr :3000  # Windows
+
+# Kill process
+kill -9 <PID>
+```
+
+### Docker services not starting
+
+```bash
+# Check Docker daemon
+docker ps
+
+# Restart services
+bun run docker:down
+bun run docker:dev
+```
+
+## Next Steps
+
+Ready to dive deeper? Choose a topic:
+
+- 📁 [Project Structure](/development/project-structure) - Understand the codebase organization
+- 🔄 [State Management](/development/state-management) - Learn data fetching and caching patterns
+- 🎨 [Components](/development/components) - Build reusable UI components
+- 🔐 [Authentication](/development/authentication) - Implement auth flows
+- 🎯 [Workflows](/development/workflows) - Master common development tasks
+
+<Callout type="tip">
+**Pro tip**: Keep the [Architecture Overview](/overview/architecture) open as a reference while developing. It provides the big picture of how everything connects.
 </Callout>
-
 

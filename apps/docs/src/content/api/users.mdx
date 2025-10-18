@@ -1,0 +1,807 @@
+# Users API
+
+The Users API provides endpoints for managing user profiles, relationships (following/followers), and user-related data.
+
+## Endpoints Overview
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/users/[userId]` | GET | Get user profile by ID |
+| `/api/users/[userId]/posts` | GET | Get user's posts |
+| `/api/users/[userId]/followers` | POST, DELETE | Follow/unfollow user |
+| `/api/users/search` | GET | Search for users |
+| `/api/users/suggested` | GET | Get suggested users to follow |
+| `/api/users/username` | GET, PATCH | Get/update username |
+| `/api/users/profile` | POST | Update user profile |
+| `/api/users/avatar` | POST, DELETE | Upload/delete avatar |
+
+---
+
+## Profile Endpoints
+
+### Get User Profile
+
+Retrieves detailed information about a specific user.
+
+```http
+GET /api/users/[userId]
+```
+
+#### Response
+
+```typescript
+{
+  id: string;
+  username: string;
+  displayName: string;
+  bio: string;
+  avatarUrl: string | null;
+  createdAt: Date;
+  _count: {
+    posts: number;
+    followers: number;
+    following: number;
+  };
+  followers: Array<{
+    followerId: string;
+  }>;
+}
+```
+
+#### Example
+
+```typescript
+const response = await fetch('/api/users/user-123');
+const user = await response.json();
+
+console.log(user.displayName);
+console.log(user._count.followers); // Follower count
+```
+
+---
+
+### Get User's Posts
+
+Retrieves all posts created by a specific user with pagination.
+
+```http
+GET /api/users/[userId]/posts
+```
+
+#### Query Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `cursor` | string | No | Cursor for pagination |
+
+#### Response
+
+```typescript
+{
+  posts: PostData[];
+  nextCursor: string | null;
+}
+```
+
+#### Example
+
+```typescript
+const response = await fetch('/api/users/user-123/posts?cursor=post-456');
+const { posts, nextCursor } = await response.json();
+```
+
+#### Implementation Details
+
+- **Page Size**: 20 posts per page
+- **Ordering**: Most recent first (`createdAt: desc`)
+- **Includes**: Full post data with user info, votes, comments, bookmarks
+
+---
+
+## Username Management
+
+### Get Current Username
+
+Retrieves the authenticated user's current username.
+
+```http
+GET /api/users/username
+```
+
+#### Response
+
+```typescript
+{
+  username: string;
+}
+```
+
+---
+
+### Update Username
+
+Updates the authenticated user's username with validation.
+
+```http
+PATCH /api/users/username
+```
+
+#### Request Body
+
+```typescript
+{
+  username: string;
+}
+```
+
+#### Validation Rules
+
+- **Minimum length**: 3 characters
+- **Maximum length**: 20 characters
+- **Allowed characters**: Letters, numbers, and underscores only
+- **Uniqueness**: Username must not be taken by another user
+
+#### Response
+
+```typescript
+{
+  success: true;
+}
+```
+
+#### Example
+
+```typescript
+const response = await fetch('/api/users/username', {
+  method: 'PATCH',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ username: 'new_username' })
+});
+
+if (response.ok) {
+  console.log('Username updated successfully');
+}
+```
+
+#### Error Responses
+
+```typescript
+// Username already taken
+{
+  error: "Username is already taken"
+}
+
+// Validation error
+{
+  error: "Username must be at least 3 characters"
+}
+```
+
+#### Implementation Details
+
+```typescript
+const usernameSchema = z.object({
+  username: z
+    .string()
+    .min(3, "Username must be at least 3 characters")
+    .max(20, "Username must be at most 20 characters")
+    .regex(
+      /^[a-zA-Z0-9_]+$/,
+      "Username can only contain letters, numbers, and underscores"
+    ),
+});
+```
+
+---
+
+## Profile Management
+
+### Update Profile
+
+Updates the user's profile information including display name, bio, and avatar.
+
+```http
+POST /api/users/profile
+```
+
+#### Request Body (FormData)
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `values` | JSON string | Yes | Profile data (displayName, bio) |
+| `avatar` | File | No | New avatar image file |
+| `userId` | string | Yes | User ID |
+| `oldAvatarKey` | string | No | Previous avatar key (for cleanup) |
+
+#### Response
+
+```typescript
+{
+  user: {
+    id: string;
+    displayName: string;
+    bio: string;
+    avatarUrl: string;
+    avatarKey: string;
+  };
+  avatar?: {
+    key: string;
+    url: string;
+    type: string;
+    mimeType: string;
+    size: number;
+    originalName: string;
+  };
+}
+```
+
+#### Example
+
+```typescript
+const formData = new FormData();
+formData.append('values', JSON.stringify({
+  displayName: 'John Doe',
+  bio: 'Software developer and tech enthusiast'
+}));
+formData.append('avatar', avatarFile);
+formData.append('userId', 'user-123');
+formData.append('oldAvatarKey', 'old-avatar-key');
+
+const response = await fetch('/api/users/profile', {
+  method: 'POST',
+  body: formData
+});
+
+const { user, avatar } = await response.json();
+```
+
+#### Implementation Details
+
+- **Avatar Upload**: Uses MinIO/S3 for storage via `uploadAvatar()`
+- **Cleanup**: Automatically deletes old avatar when new one is uploaded
+- **Validation**: Ensures user exists before updating
+- **Response**: Returns updated user data and avatar metadata
+
+```typescript
+// Upload new avatar if provided
+if (avatar) {
+  avatarResult = await uploadAvatar(avatar, userId);
+  
+  // Clean up old avatar
+  if (oldAvatarKey) {
+    await deleteAvatar(oldAvatarKey);
+  }
+}
+
+// Update user profile
+const updatedUser = await prisma.user.update({
+  where: { id: userId },
+  data: {
+    displayName: values.displayName,
+    bio: values.bio,
+    ...(avatarResult && {
+      avatarUrl: avatarResult.url,
+      avatarKey: avatarResult.key,
+    }),
+  },
+});
+```
+
+---
+
+## Avatar Management
+
+### Upload Avatar
+
+Uploads or updates a user's profile avatar image.
+
+```http
+POST /api/users/avatar
+```
+
+#### Request Body (FormData)
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `file` | File | Yes | Avatar image file |
+| `userId` | string | Yes | User ID |
+| `oldAvatarKey` | string | No | Previous avatar key |
+
+#### Response
+
+```typescript
+{
+  user: {
+    id: string;
+    avatarUrl: string;
+    avatarKey: string;
+  };
+  avatar: {
+    url: string;
+    key: string;
+    type: string;
+    mimeType: string;
+    size: number;
+  };
+}
+```
+
+#### Example
+
+```typescript
+const formData = new FormData();
+formData.append('file', avatarFile);
+formData.append('userId', 'user-123');
+formData.append('oldAvatarKey', 'old-key');
+
+const response = await fetch('/api/users/avatar', {
+  method: 'POST',
+  body: formData
+});
+
+const { user, avatar } = await response.json();
+```
+
+#### Implementation Details
+
+- **Storage**: Uploads to MinIO/S3 bucket
+- **Cleanup**: Deletes old avatar automatically
+- **Caching**: Updates avatar cache in Redis
+- **URL Protocol**: Forces HTTPS in production
+
+```typescript
+// Upload to MinIO
+const result = await uploadAvatar(file, userId);
+
+// Ensure HTTPS in production
+const avatarUrl = process.env.NODE_ENV === "production"
+  ? result.url.replace("http://", "https://")
+  : result.url;
+
+// Update cache
+await avatarCache.set(userId, {
+  url: avatarUrl,
+  key: result.key,
+  updatedAt: new Date().toISOString(),
+});
+```
+
+---
+
+### Delete Avatar
+
+Removes the user's profile avatar.
+
+```http
+DELETE /api/users/avatar
+```
+
+#### Request Body
+
+```typescript
+{
+  avatarKey: string;
+  userId: string;
+}
+```
+
+#### Response
+
+```typescript
+{
+  success: true;
+  user: {
+    id: string;
+    avatarUrl: null;
+    avatarKey: null;
+  };
+}
+```
+
+#### Example
+
+```typescript
+const response = await fetch('/api/users/avatar', {
+  method: 'DELETE',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    avatarKey: 'avatar-key-123',
+    userId: 'user-123'
+  })
+});
+
+const { success } = await response.json();
+```
+
+---
+
+## Search & Discovery
+
+### Search Users
+
+Searches for users by username or display name.
+
+```http
+GET /api/users/search
+```
+
+#### Query Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `q` | string | Yes | Search query |
+
+#### Response
+
+```typescript
+{
+  users: Array<{
+    id: string;
+    username: string;
+    displayName: string;
+    avatarUrl: string | null;
+  }>;
+}
+```
+
+#### Example
+
+```typescript
+const response = await fetch('/api/users/search?q=john');
+const { users } = await response.json();
+
+users.forEach(user => {
+  console.log(`@${user.username} - ${user.displayName}`);
+});
+```
+
+#### Implementation Details
+
+- **Search Fields**: Searches both username and displayName
+- **Case Insensitive**: Uses Prisma's `mode: "insensitive"`
+- **Limit**: Returns maximum 10 users
+- **Empty Query**: Returns empty array if no query provided
+
+```typescript
+const users = await prisma.user.findMany({
+  where: {
+    OR: [
+      { username: { contains: query, mode: "insensitive" } },
+      { displayName: { contains: query, mode: "insensitive" } },
+    ],
+  },
+  select: {
+    id: true,
+    username: true,
+    displayName: true,
+    avatarUrl: true,
+  },
+  take: 10,
+});
+```
+
+---
+
+### Get Suggested Users
+
+Retrieves personalized user suggestions for following.
+
+```http
+GET /api/users/suggested
+```
+
+#### Response
+
+```typescript
+Array<{
+  id: string;
+  username: string;
+  displayName: string;
+  avatarUrl: string | null;
+  bio: string;
+  aura: number;
+  mutualFollowers: Array<{
+    username: string;
+    displayName: string;
+    avatarUrl: string | null;
+  }>;
+}>
+```
+
+#### Example
+
+```typescript
+const response = await fetch('/api/users/suggested');
+const suggestedUsers = await response.json();
+
+suggestedUsers.forEach(user => {
+  console.log(user.displayName);
+  console.log(`Mutual followers: ${user.mutualFollowers.length}`);
+});
+```
+
+#### Implementation Details
+
+- **Caching**: Results are cached to improve performance
+- **Deduplication**: Recently shown users are excluded for diversity
+- **Sorting**: Randomly uses either aura score or follower count
+- **Mutual Followers**: Shows which of your follows also follow the suggested user
+- **Limit**: Returns 6 users per request
+- **Cache Duration**: Recently shown list expires after 1 hour
+
+```typescript
+// Suggestion algorithm
+const suggestedUsers = await prisma.user.findMany({
+  take: 15,
+  orderBy: Math.random() > 0.3
+    ? { aura: Prisma.SortOrder.desc }
+    : { followers: { _count: Prisma.SortOrder.desc } },
+  where: {
+    AND: [
+      { id: { not: user.id } },               // Not yourself
+      { id: { notIn: recentlyShown } },       // Not recently shown
+      { followers: { none: { followerId: user.id } } } // Not already following
+    ],
+  },
+});
+
+// Select 6 random users
+const selectedUsers = suggestedUsers
+  .sort(() => Math.random() - 0.5)
+  .slice(0, 6);
+```
+
+---
+
+## Follow System
+
+### Follow User
+
+Creates a follow relationship and sends a notification.
+
+```http
+POST /api/users/[userId]/followers
+```
+
+#### Response
+
+```typescript
+{
+  followers: number;
+  isFollowedByUser: true;
+  displayName: string;
+  username: string;
+}
+```
+
+#### Example
+
+```typescript
+const response = await fetch('/api/users/user-123/followers', {
+  method: 'POST'
+});
+
+const { followers, isFollowedByUser } = await response.json();
+console.log(`User now has ${followers} followers`);
+```
+
+#### Implementation Details
+
+- **Atomic Transaction**: Uses Prisma transaction for data consistency
+- **Notification**: Creates FOLLOW notification for the followed user
+- **Aura Reward**: Grants +5 aura to the followed user
+- **Aura Log**: Records aura change with type FOLLOW_GAINED
+- **Cache Invalidation**: Clears follower info cache
+
+```typescript
+await prisma.$transaction(async (tx) => {
+  // Create follow relationship
+  await tx.follow.upsert({
+    where: {
+      followerId_followingId: {
+        followerId: loggedInUser.id,
+        followingId: userId,
+      },
+    },
+    create: {
+      followerId: loggedInUser.id,
+      followingId: userId,
+    },
+    update: {},
+  });
+
+  // Create notification
+  await tx.notification.create({
+    data: {
+      issuerId: loggedInUser.id,
+      recipientId: userId,
+      type: "FOLLOW",
+    },
+  });
+
+  // Grant aura reward
+  await tx.user.update({
+    where: { id: userId },
+    data: { aura: { increment: 5 } },
+  });
+
+  // Log aura change
+  await tx.auraLog.create({
+    data: {
+      userId,
+      issuerId: loggedInUser.id,
+      amount: 5,
+      type: "FOLLOW_GAINED",
+    },
+  });
+});
+```
+
+---
+
+### Unfollow User
+
+Removes a follow relationship.
+
+```http
+DELETE /api/users/[userId]/followers
+```
+
+#### Response
+
+```typescript
+{
+  followers: number;
+  isFollowedByUser: false;
+}
+```
+
+#### Example
+
+```typescript
+await fetch('/api/users/user-123/followers', {
+  method: 'DELETE'
+});
+```
+
+#### Implementation Details
+
+- **Atomic Transaction**: Ensures data consistency
+- **Aura Deduction**: Removes the follow reward (-5 aura)
+- **Notification Cleanup**: Deletes the follow notification
+- **Cache Invalidation**: Updates follower info cache
+
+---
+
+## Error Responses
+
+| Status | Error | Description |
+|--------|-------|-------------|
+| 400 | Bad Request | Invalid input (e.g., username validation failed) |
+| 401 | Unauthorized | User not authenticated |
+| 404 | Not Found | User not found |
+| 500 | Internal Server Error | Server error occurred |
+
+---
+
+## Type Definitions
+
+### UserData
+
+```typescript
+type UserData = {
+  id: string;
+  username: string;
+  displayName: string;
+  bio: string;
+  avatarUrl: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+```
+
+### FollowerInfo
+
+```typescript
+type FollowerInfo = {
+  followers: number;
+  isFollowedByUser: boolean;
+};
+```
+
+---
+
+## Best Practices
+
+### Username Validation
+
+Always validate usernames on both client and server:
+
+```typescript
+const validateUsername = (username: string) => {
+  const errors: string[] = [];
+  
+  if (username.length < 3) {
+    errors.push('Username must be at least 3 characters');
+  }
+  
+  if (username.length > 20) {
+    errors.push('Username must be at most 20 characters');
+  }
+  
+  if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+    errors.push('Username can only contain letters, numbers, and underscores');
+  }
+  
+  return errors;
+};
+```
+
+### Profile Updates
+
+Handle profile updates with proper error handling:
+
+```typescript
+const updateProfile = async (data: ProfileData, avatarFile?: File) => {
+  const formData = new FormData();
+  formData.append('values', JSON.stringify({
+    displayName: data.displayName,
+    bio: data.bio
+  }));
+  
+  if (avatarFile) {
+    formData.append('avatar', avatarFile);
+    if (data.oldAvatarKey) {
+      formData.append('oldAvatarKey', data.oldAvatarKey);
+    }
+  }
+  
+  formData.append('userId', data.userId);
+  
+  try {
+    const response = await fetch('/api/users/profile', {
+      method: 'POST',
+      body: formData
+    });
+    
+    if (!response.ok) {
+      throw new Error('Profile update failed');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    throw error;
+  }
+};
+```
+
+### Follow State Management
+
+Implement optimistic updates for better UX:
+
+```typescript
+const toggleFollow = async (userId: string, isFollowing: boolean) => {
+  // Optimistically update UI
+  setIsFollowing(!isFollowing);
+  setFollowerCount(prev => prev + (isFollowing ? -1 : 1));
+  
+  try {
+    const method = isFollowing ? 'DELETE' : 'POST';
+    const response = await fetch(`/api/users/${userId}/followers`, {
+      method
+    });
+    
+    const data = await response.json();
+    
+    // Sync with server response
+    setFollowerCount(data.followers);
+    setIsFollowing(data.isFollowedByUser);
+  } catch (error) {
+    // Revert on error
+    setIsFollowing(isFollowing);
+    setFollowerCount(prev => prev + (isFollowing ? 1 : -1));
+    throw error;
+  }
+};
+```

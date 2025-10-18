@@ -1,27 +1,585 @@
 ---
-title: Code style
-description: TypeScript, React, and a11y conventions enforced in the repo.
+title: Code Style Guidelines
+description: TypeScript, React, accessibility conventions, and tooling standards for Zephyr.
 ---
 
-## TypeScript
+# Code Style Guidelines
 
-- Prefer explicit function signatures and narrow types
-- Avoid `any` and non‑null assertions; use safe refinements
-- Keep modules small and cohesive
+Zephyr enforces consistent code style through automated tooling and clear conventions. This document outlines our standards for TypeScript, React, accessibility, and general code organization.
 
-## React & JSX
+> **Good news!** You don't have to memorize all of this. Our automated tools (Ultracite/Biome) will catch most style issues and fix them automatically. This guide is here for when you want to understand the "why" behind the style choices. Think of it as your friendly reference, not a rulebook to stress over! 📚
 
-- Use accessible components and proper semantics
-- Avoid index keys and non‑interactive handlers on static elements
-- Keep hooks top‑level and dependencies correct
+## Tooling
 
-## Lint & format
+### Ultracite & Biome
 
-Use Ultracite and Biome:
+We use [Ultracite](https://github.com/luxass/ultracite) (which extends [Biome](https://biomejs.dev/)) for formatting and linting:
 
 ```bash
+# Check for issues (no changes)
+bun run check
+# or
 npx ultracite check
+
+# Fix issues automatically
+bun x ultracite fix
+# or
 npx ultracite fix
 ```
+
+**Pre-commit Hook**: Files are automatically formatted on commit via Husky. The hook:
+- Formats only staged files
+- Preserves unstaged changes
+- Re-stages formatted files
+- Prevents commits if formatting fails
+
+*Translation: Commit your code, and the tools will clean it up for you. It's like having a personal code butler!* 🎩
+
+### Configuration
+
+Our Biome configuration (`biome.jsonc`):
+```jsonc
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "extends": ["ultracite"],
+  "linter": {
+    "rules": {
+      "style": {
+        "noMagicNumbers": "off",
+        "useNamingConvention": "off"
+      },
+      "suspicious": {
+        "noConsole": "off",
+        "noUnknownAtRules": "off"
+      }
+    }
+  }
+}
+```
+
+## TypeScript Guidelines
+
+### General Principles
+
+1. **Explicit over Implicit**
+   ```typescript
+   // ❌ Bad - implicit any
+   function process(data) {
+     return data.map(item => item.value);
+   }
+
+   // ✅ Good - explicit types
+   function process(data: DataItem[]): number[] {
+     return data.map((item) => item.value);
+   }
+   ```
+
+2. **Avoid `any`**
+   ```typescript
+   // ❌ Bad
+   const data: any = await fetchData();
+
+   // ✅ Good - use unknown with type guards
+   const data: unknown = await fetchData();
+   if (isValidData(data)) {
+     // data is properly typed here
+   }
+
+   // ✅ Better - proper typing
+   const data: DataResponse = await fetchData();
+   ```
+
+3. **No Non-null Assertions Without Justification**
+   ```typescript
+   // ❌ Bad - risky
+   const user = users.find(u => u.id === id)!;
+
+   // ✅ Good - safe handling
+   const user = users.find(u => u.id === id);
+   if (!user) {
+     throw new Error(`User ${id} not found`);
+   }
+
+   // ⚠️ Acceptable with comment
+   // Safe: user is guaranteed to exist after auth check
+   const user = users.find(u => u.id === id)!;
+   ```
+
+4. **Prefer Type Over Interface** (for consistency)
+   ```typescript
+   // ✅ Good
+   type User = {
+     id: string;
+     name: string;
+     email: string;
+   };
+
+   // ✅ Also good for extension
+   type AdminUser = User & {
+     role: "admin";
+     permissions: string[];
+   };
+   ```
+
+5. **Use Discriminated Unions**
+   ```typescript
+   // ✅ Good - exhaustive checking
+   type Result<T> =
+     | { success: true; data: T }
+     | { success: false; error: string };
+
+   function handleResult<T>(result: Result<T>) {
+     if (result.success) {
+       return result.data; // TypeScript knows data exists
+     }
+     return result.error; // TypeScript knows error exists
+   }
+   ```
+
+6. **Utility Types**
+   ```typescript
+   // Use built-in utility types
+   type PartialUser = Partial<User>;
+   type RequiredUser = Required<User>;
+   type UserKeys = keyof User;
+   type UserValues = User[keyof User];
+   type ReadonlyUser = Readonly<User>;
+   ```
+
+### Naming Conventions
+
+- **Types/Interfaces**: PascalCase
+  ```typescript
+  type UserProfile = { ... };
+  ```
+
+- **Variables/Functions**: camelCase
+  ```typescript
+  const userName = "John";
+  function getUserProfile() { ... }
+  ```
+
+- **Constants**: UPPER_SNAKE_CASE (for true constants)
+  ```typescript
+  const MAX_FILE_SIZE = 25 * 1024 * 1024;
+  const API_ENDPOINTS = { ... };
+  ```
+
+- **Components**: PascalCase
+  ```typescript
+  function UserProfile() { ... }
+  const LoginForm = () => { ... };
+  ```
+
+- **Files**: kebab-case
+  ```
+  user-profile.tsx
+  auth-utils.ts
+  api-client.ts
+  ```
+
+## React & JSX Guidelines
+
+### Component Structure
+
+```tsx
+// ✅ Good component structure
+import { useState, useEffect } from "react";
+import type { FC } from "react";
+
+// Types first
+type UserCardProps = {
+  userId: string;
+  onSelect?: (id: string) => void;
+};
+
+// Component
+export const UserCard: FC<UserCardProps> = ({ userId, onSelect }) => {
+  // Hooks at the top
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Effect logic
+  }, [userId]);
+
+  // Event handlers
+  const handleClick = () => {
+    onSelect?.(userId);
+  };
+
+  // Conditional rendering
+  if (loading) return <LoadingSpinner />;
+  if (!user) return <ErrorMessage />;
+
+  // Main render
+  return (
+    <article className="user-card" onClick={handleClick}>
+      <h2>{user.name}</h2>
+      <p>{user.email}</p>
+    </article>
+  );
+};
+```
+
+### React Best Practices
+
+1. **Use Semantic HTML**
+   ```tsx
+   // ❌ Bad
+   <div onClick={handleClick}>Click me</div>
+
+   // ✅ Good
+   <button type="button" onClick={handleClick}>
+     Click me
+   </button>
+   ```
+
+2. **Avoid Index Keys**
+   ```tsx
+   // ❌ Bad
+   {items.map((item, index) => (
+     <div key={index}>{item.name}</div>
+   ))}
+
+   // ✅ Good
+   {items.map((item) => (
+     <div key={item.id}>{item.name}</div>
+   ))}
+   ```
+
+3. **Correct Hook Dependencies**
+   ```tsx
+   // ❌ Bad - missing dependency
+   useEffect(() => {
+     fetchUser(userId);
+   }, []); // eslint warning!
+
+   // ✅ Good
+   useEffect(() => {
+     fetchUser(userId);
+   }, [userId]);
+   ```
+
+4. **Use Memoization Appropriately**
+   ```tsx
+   // ✅ Good - memoize expensive calculations
+   const sortedItems = useMemo(
+     () => [...items].sort((a, b) => a.name.localeCompare(b.name)),
+     [items]
+   );
+
+   // ✅ Good - memoize callbacks passed to children
+   const handleClick = useCallback(() => {
+     doSomething(value);
+   }, [value]);
+   ```
+
+5. **Conditional Rendering Patterns**
+   ```tsx
+   // ✅ Good - early returns
+   if (loading) return <LoadingSpinner />;
+   if (error) return <ErrorMessage error={error} />;
+   if (!data) return null;
+
+   // ✅ Good - ternary for simple conditions
+   {isLoggedIn ? <Dashboard /> : <LoginPage />}
+
+   // ✅ Good - && for single condition
+   {showBanner && <PromotionBanner />}
+   ```
+
+## Accessibility Guidelines
+
+Accessibility isn't just a nice-to-have - it's essential for making Zephyr usable by everyone. Plus, accessible code is often better code overall!
+
+> **Why accessibility matters:** About 15% of the world's population has some form of disability. By making Zephyr accessible, we're not just checking boxes - we're ensuring everyone can use and enjoy what we're building. It feels good to build inclusively! 🌟
+
+### WCAG 2.1 AA Compliance
+
+1. **Semantic HTML**
+   ```tsx
+   // ✅ Good - semantic structure
+   <nav aria-label="Main navigation">
+     <ul>
+       <li><a href="/home">Home</a></li>
+       <li><a href="/about">About</a></li>
+     </ul>
+   </nav>
+
+   <main>
+     <article>
+       <h1>Article Title</h1>
+       <p>Content...</p>
+     </article>
+   </main>
+   ```
+
+2. **ARIA Labels**
+   ```tsx
+   // ✅ Good - proper labeling
+   <button
+     type="button"
+     aria-label="Close dialog"
+     onClick={onClose}
+   >
+     <XIcon />
+   </button>
+
+   <input
+     type="search"
+     aria-label="Search posts"
+     placeholder="Search..."
+   />
+   ```
+
+3. **Keyboard Navigation**
+   ```tsx
+   // ✅ Good - keyboard accessible
+   const handleKeyDown = (e: KeyboardEvent) => {
+     if (e.key === "Enter" || e.key === " ") {
+       e.preventDefault();
+       handleSelect();
+     }
+   };
+
+   <div
+     role="button"
+     tabIndex={0}
+     onClick={handleSelect}
+     onKeyDown={handleKeyDown}
+   >
+     Select me
+   </div>
+   ```
+
+4. **Color Contrast**
+   - Text: minimum 4.5:1 ratio
+   - Large text (18pt+): minimum 3:1 ratio
+   - Use tools like [WebAIM Contrast Checker](https://webaim.org/resources/contrastchecker/)
+
+5. **Focus Indicators**
+   ```css
+   /* ✅ Good - visible focus */
+   button:focus-visible {
+     outline: 2px solid var(--focus-color);
+     outline-offset: 2px;
+   }
+   ```
+
+### Testing Accessibility
+
+- Use browser DevTools accessibility inspector
+- Test with keyboard navigation only
+- Test with screen readers (NVDA, VoiceOver, JAWS)
+- Use automated tools (axe DevTools, Lighthouse)
+
+## File Organization
+
+### Monorepo Structure
+
+```
+zephyr/
+├── apps/
+│   ├── web/          # Main application
+│   ├── auth/         # Authentication service
+│   └── docs/         # Documentation site
+├── packages/
+│   ├── ui/           # Shared UI components
+│   ├── db/           # Database & Prisma
+│   ├── auth/         # Auth utilities
+│   ├── config/       # Shared configs
+│   └── ...
+```
+
+### Component Organization
+
+```
+component-name/
+├── index.tsx              # Component export
+├── component-name.tsx     # Component implementation
+├── component-name.test.tsx # Tests
+├── component-name.stories.tsx # Storybook (if applicable)
+├── types.ts               # Component-specific types
+└── utils.ts               # Component-specific utilities
+```
+
+### Import Order
+
+```typescript
+// 1. React/Next.js imports
+import { useState } from "react";
+import Link from "next/link";
+
+// 2. Third-party libraries
+import { motion } from "motion/react";
+import { useQuery } from "@tanstack/react-query";
+
+// 3. Internal packages
+import { Button } from "@zephyr/ui";
+import { prisma } from "@zephyr/db";
+
+// 4. Local imports (absolute)
+import { api } from "~/lib/api";
+import { formatDate } from "~/utils/date";
+
+// 5. Local imports (relative)
+import { UserCard } from "./user-card";
+import type { UserCardProps } from "./types";
+
+// 6. Styles
+import "./styles.css";
+```
+
+## Styling Guidelines
+
+### Tailwind CSS
+
+```tsx
+// ✅ Good - semantic class grouping
+<div className="
+  flex items-center justify-between gap-4
+  rounded-lg border border-gray-200
+  bg-white p-4
+  hover:shadow-md
+  dark:border-gray-700 dark:bg-gray-800
+">
+  Content
+</div>
+
+// ✅ Good - use cn() for conditional classes
+import { cn } from "@zephyr/ui/lib/utils";
+
+<button
+  className={cn(
+    "rounded-md px-4 py-2",
+    variant === "primary" && "bg-blue-500 text-white",
+    variant === "secondary" && "bg-gray-200 text-gray-900"
+  )}
+>
+  Button
+</button>
+```
+
+## Module Conventions
+
+### Exports
+
+```typescript
+// ✅ Good - named exports
+export function formatDate(date: Date): string { ... }
+export const API_URL = "https://api.example.com";
+
+// ✅ Good - default export for components
+export default function HomePage() { ... }
+
+// ⚠️ Avoid default exports for utilities
+```
+
+### Keep Modules Focused
+
+- Single Responsibility: Each module should have one clear purpose
+- Small Files: Aim for files under 200-300 lines
+- Extract Utilities: Move reusable logic to separate files
+- Avoid God Modules: Split large files into smaller, focused ones
+
+## Code Comments
+
+### When to Comment
+
+```typescript
+// ✅ Good - explain "why", not "what"
+// Debounce search to avoid excessive API calls
+const debouncedSearch = useDebouncedCallback(search, 300);
+
+// ✅ Good - document complex algorithms
+/**
+ * Calculates user Aura score based on:
+ * - Post engagement (likes, comments, shares)
+ * - Account age and activity
+ * - Community contributions
+ */
+function calculateAuraScore(user: User): number { ... }
+
+// ❌ Bad - obvious comment
+// Increment counter by 1
+counter += 1;
+```
+
+### JSDoc for Public APIs
+
+```typescript
+/**
+ * Fetches user profile data from the API.
+ *
+ * @param userId - The unique identifier for the user
+ * @param options - Optional fetch configuration
+ * @returns Promise resolving to user profile
+ * @throws {NotFoundError} If user doesn't exist
+ *
+ * @example
+ * ```ts
+ * const profile = await getUserProfile("user-123");
+ * console.log(profile.name);
+ * ```
+ */
+export async function getUserProfile(
+  userId: string,
+  options?: FetchOptions
+): Promise<UserProfile> { ... }
+```
+
+## Performance Best Practices
+
+1. **Lazy Load Components**
+   ```typescript
+   const HeavyComponent = lazy(() => import("./heavy-component"));
+   ```
+
+2. **Optimize Images**
+   ```tsx
+   import Image from "next/image";
+
+   <Image
+     src="/image.jpg"
+     alt="Description"
+     width={500}
+     height={300}
+     loading="lazy"
+   />
+   ```
+
+3. **Use Code Splitting**
+   ```typescript
+   // Next.js automatically splits by route
+   // Manually split heavy utilities
+   const { processLargeData } = await import("./heavy-utils");
+   ```
+
+4. **Memoize Expensive Operations**
+   ```typescript
+   const expensiveValue = useMemo(() => {
+     return computeExpensiveValue(data);
+   }, [data]);
+   ```
+
+## Checklist for Code Reviews
+
+- [ ] Follows TypeScript guidelines (no `any`, explicit types)
+- [ ] Uses semantic HTML and proper React patterns
+- [ ] Meets accessibility standards (WCAG 2.1 AA)
+- [ ] Formatted with Ultracite/Biome
+- [ ] No console.logs in production code
+- [ ] No hard-coded secrets or sensitive data
+- [ ] Proper error handling
+- [ ] Meaningful variable and function names
+- [ ] Appropriate comments and documentation
+- [ ] Performance implications considered
+
+> **Final thought:** Clean code isn't about being perfect - it's about being thoughtful and consistent. These guidelines exist to make our lives easier, not harder. When you follow them, you'll find that code becomes easier to read, maintain, and collaborate on. And that's what matters! 🎯
+
+---
+
+**Remember:** These guidelines exist to maintain code quality and consistency. When in doubt, look at existing code for examples or ask in your PR!
 
 

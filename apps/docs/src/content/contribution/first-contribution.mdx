@@ -1,0 +1,497 @@
+---
+title: Your First Contribution
+description: A beginner-friendly guide to making your first contribution to Zephyr.
+---
+
+# Your First Contribution
+
+Welcome! This guide will walk you through making your first contribution to Zephyr, from setup to submitting your first pull request.
+
+> **Hey, you're here!** 🎉 Making your first open source contribution is a big deal - it can feel nerve-wracking, but it's also super exciting! Everyone who contributes to Zephyr was once exactly where you are now. We're genuinely happy you're here, and we'll help you every step of the way. Let's do this!
+
+## Before You Start
+
+### What You'll Need
+
+- **Git** installed on your computer
+- **Bun** package manager (v1.3.0+)
+- **Docker** for running local services
+- **GitHub account**
+- **Code editor** (VS Code recommended)
+- **Basic knowledge** of TypeScript and React
+
+*Don't have everything yet? No worries! The setup process will help you get everything you need. Take it one step at a time.*
+
+### Time Commitment
+
+- **Setup**: 30-60 minutes (one-time)
+- **First contribution**: 1-3 hours
+- **Future contributions**: Much faster!
+
+*The first time is always the slowest because you're learning. But once you've done it once, the next contribution will be way easier!*
+
+## Step 1: Understand the Project
+
+Before diving in, familiarize yourself with Zephyr:
+
+1. **Read the [README](https://github.com/zephverse/zephyr)**
+   - Understand what Zephyr is
+   - See what it can do
+
+2. **Explore the live site** (if available)
+   - Create an account
+   - Try key features
+   - Note what you like and what could improve
+
+3. **Review the [project structure](/development/project-structure)**
+   - Understand the monorepo layout
+   - Know where different code lives
+
+## Step 2: Find Something to Work On
+
+### Option A: Good First Issues
+
+Look for issues labeled [`good first issue`](https://github.com/zephverse/zephyr/labels/good%20first%20issue):
+
+- These are beginner-friendly tasks
+- Usually well-documented
+- Perfect for learning the codebase
+
+### Option B: Fix a Typo or Improve Docs
+
+- Documentation improvements are always welcome
+- Great way to start without deep technical knowledge
+- Look for typos, unclear explanations, or missing examples
+
+### Option C: Report and Fix a Bug
+
+1. Use the application and find a bug
+2. [Search if it's already reported](https://github.com/zephverse/zephyr/issues)
+3. If not, [create a bug report](/contribution/issue-template)
+4. Ask if you can work on fixing it
+
+### Option D: Small Enhancement
+
+- Improve error messages
+- Add helpful comments
+- Improve accessibility
+- Optimize performance
+
+## Step 3: Fork and Clone
+
+### Fork the Repository
+
+1. Go to [https://github.com/zephverse/zephyr](https://github.com/zephverse/zephyr)
+2. Click the **Fork** button in the top right
+3. Wait for GitHub to create your fork
+
+### Clone Your Fork
+
+```bash
+# Clone your fork (replace YOUR_USERNAME)
+git clone https://github.com/YOUR_USERNAME/zephyr.git
+
+# Navigate into the directory
+cd zephyr
+
+# Add upstream remote
+git remote add upstream https://github.com/zephverse/zephyr.git
+
+# Verify remotes
+git remote -v
+# Should show:
+# origin    https://github.com/YOUR_USERNAME/zephyr.git (fetch)
+# origin    https://github.com/YOUR_USERNAME/zephyr.git (push)
+# upstream  https://github.com/zephverse/zephyr.git (fetch)
+# upstream  https://github.com/zephverse/zephyr.git (push)
+```
+
+## Step 4: Set Up Development Environment
+
+### Install Dependencies
+
+```bash
+# Install all dependencies
+bun install
+```
+
+### Start Docker Services
+
+```bash
+# Start required services (PostgreSQL, Redis, MinIO, etc.)
+bun run docker:dev
+
+# Wait for all services to start (1-2 minutes)
+# Check status with:
+docker ps
+```
+
+**Expected services:**
+- PostgreSQL (port 5433)
+- Redis (port 6379)
+- MinIO (port 9000)
+- Prisma Studio (port 5555)
+- RedisInsight (port 5540)
+- MeiliSearch (port 7700)
+
+### Set Up Environment Variables
+
+```bash
+# Automatically copy .env.example to .env
+bun run env:dev
+```
+
+**Verify environment files exist:**
+- `apps/web/.env`
+- `apps/auth/.env`
+
+### Run Database Migrations
+
+```bash
+# Generate Prisma client and push schema
+bun run db:up
+
+# Initialize search index (optional)
+bun run search:init
+```
+
+### Start Development Server
+
+```bash
+# Start all apps (web, auth, docs)
+bun run dev
+```
+
+**Access the applications:**
+- **Web**: http://localhost:3000
+- **Auth**: http://localhost:3001
+- **Docs**: http://localhost:3002
+
+**Troubleshooting?** See the [troubleshooting guide](https://github.com/zephverse/zephyr#-troubleshooting).
+
+## Step 5: Create a Branch
+
+Always create a branch for your changes:
+
+```bash
+# Make sure you're on main
+git checkout main
+
+# Get latest changes
+git pull upstream main
+
+# Create a new branch
+git checkout -b fix/my-first-fix
+
+# Or for a feature
+git checkout -b feature/my-first-feature
+```
+
+See [branching strategy](/contribution/branching-strategy) for naming conventions.
+
+## Step 6: Make Your Changes
+
+### Find the Right Files
+
+**Common locations:**
+
+- **UI Components**: `apps/web/src/components/`
+- **Pages**: `apps/web/src/app/`
+- **API Routes**: `apps/web/src/app/api/`
+- **Database Schema**: `packages/db/prisma/schema.prisma`
+- **Shared Components**: `packages/ui/components/`
+- **Authentication**: `packages/auth/src/`
+- **Documentation**: `apps/docs/src/content/`
+
+### Make Small, Focused Changes
+
+```typescript
+// Example: Fix a typo in a button component
+
+// Before
+<button>Sumbit</button>
+
+// After
+<button>Submit</button>
+```
+
+### Follow Code Style
+
+Code is automatically formatted when you commit, but you can run:
+
+```bash
+# Check formatting and linting
+bun run check
+
+# The pre-commit hook will auto-format on commit
+```
+
+### Test Your Changes
+
+1. **Run the app**: `bun run dev`
+2. **Verify your fix**: Test the feature you changed
+3. **Check for errors**: Look in browser console and terminal
+4. **Test edge cases**: Try different scenarios
+
+## Step 7: Commit Your Changes
+
+### Stage Your Changes
+
+```bash
+# See what changed
+git status
+
+# Stage specific files
+git add path/to/file1 path/to/file2
+
+# Or stage all changes
+git add .
+```
+
+### Write a Good Commit Message
+
+Follow [conventional commits](/contribution/guidelines#commit-conventions):
+
+```bash
+# Format: type(scope): description
+
+git commit -m "fix(web): correct typo in submit button"
+git commit -m "docs(readme): update installation instructions"
+git commit -m "feat(ui): add dark mode toggle component"
+```
+
+**Types:**
+- `fix`: Bug fix
+- `feat`: New feature
+- `docs`: Documentation
+- `style`: Formatting
+- `refactor`: Code improvement
+- `test`: Adding tests
+- `chore`: Maintenance
+
+**The pre-commit hook will:**
+- Auto-format your code
+- Re-stage formatted files
+- Prevent commit if formatting fails
+
+## Step 8: Push Your Changes
+
+```bash
+# Push to your fork
+git push origin fix/my-first-fix
+
+# If this is your first push, set upstream:
+git push -u origin fix/my-first-fix
+```
+
+## Step 9: Open a Pull Request
+
+### On GitHub
+
+1. Go to your fork: `https://github.com/YOUR_USERNAME/zephyr`
+2. Click **Compare & pull request** (should appear after push)
+3. Make sure base is `zephverse/zephyr:main` and compare is your branch
+4. Fill out the PR template:
+
+```markdown
+## Description
+Fixed a typo in the submit button text on the login page.
+
+## Related Issue
+Closes #123
+
+## Changes Made
+- Changed "Sumbit" to "Submit" in LoginForm component
+
+## Screenshots (if applicable)
+[Attach before/after screenshots]
+
+## Checklist
+- [x] Code follows style guidelines
+- [x] Tested locally
+- [x] No console errors
+- [x] PR description is clear
+```
+
+5. Click **Create pull request**
+
+### Request Review
+
+- Maintainers will be automatically notified
+- Be patient - reviews may take 1-2 days
+- Respond to feedback promptly
+
+> **While you wait:** It's totally normal to feel a mix of excitement and nervousness after submitting your first PR! Maintainers are volunteers who review in their free time, so responses might take a day or two. Use this time to explore the codebase more or start looking at your next contribution! 🕐
+
+## Step 10: Address Feedback
+
+Reviewers might request changes:
+
+*Getting feedback is awesome! It means someone took the time to look at your code carefully. Every piece of feedback is a learning opportunity - embrace it!*
+
+### Make Requested Changes
+
+```bash
+# Make the changes in your editor
+# Then commit them
+git add .
+git commit -m "refactor: address review feedback"
+
+# Push to update the PR
+git push origin fix/my-first-fix
+```
+
+### Keep Your Branch Updated
+
+If `main` changes while your PR is open:
+
+```bash
+# Fetch latest changes
+git fetch upstream
+
+# Rebase on main
+git rebase upstream/main
+
+# Force push (safe with --force-with-lease)
+git push --force-with-lease origin fix/my-first-fix
+```
+
+## Step 11: Celebrate!
+
+Once your PR is approved and merged:
+
+1. **Celebrate** 🎊 - You're a contributor!
+2. **Update your local main**:
+   ```bash
+   git checkout main
+   git pull upstream main
+   ```
+3. **Delete your branch**:
+   ```bash
+   git branch -d fix/my-first-fix
+   git push origin --delete fix/my-first-fix
+   ```
+4. **Find your next contribution!**
+
+## Tips for Success
+
+### Start Small
+
+- Don't try to refactor the entire codebase
+- Small PRs are easier to review and merge
+- Build confidence with small wins
+
+### Ask Questions
+
+- Not sure about something? Ask in the issue or PR
+- Join discussions
+- Don't be afraid to ask "silly" questions
+
+### Be Patient
+
+- Reviews take time
+- Maintainers are often busy
+- Polite follow-up is okay after a few days
+
+### Learn from Feedback
+
+- Code reviews are learning opportunities
+- Don't take feedback personally
+- Every developer was once a beginner
+
+### Read Other PRs
+
+- See what others are doing
+- Learn from good examples
+- Understand what reviewers look for
+
+## Common Issues
+
+### Docker Services Won't Start
+
+```bash
+# Clean everything and restart
+bun run docker:clean
+bun run docker:dev
+```
+
+### Port Already in Use
+
+```bash
+# Find what's using the port (example: 3000)
+# Windows PowerShell:
+Get-Process -Id (Get-NetTCPConnection -LocalPort 3000).OwningProcess
+
+# Kill the process or change the port in .env
+```
+
+### Prisma Errors
+
+```bash
+# Regenerate Prisma client
+cd packages/db
+bun prisma generate
+bun prisma db push
+```
+
+### Build Errors
+
+```bash
+# Clean and rebuild
+bun run clean
+bun install
+bun run build
+```
+
+### Pre-commit Hook Fails
+
+```bash
+# Manually run the formatter
+bun run check
+
+# If it still fails, check the error message
+```
+
+## Next Steps
+
+### After Your First Contribution
+
+1. **Find more issues** to work on
+2. **Help others** - answer questions, review PRs
+3. **Suggest improvements** based on your experience
+4. **Become a regular contributor**
+
+> **You did it!** 🎊 Seriously, submitting your first PR is a milestone worth celebrating. You're now officially an open source contributor! The next one will be easier, and the one after that even more so. Before you know it, you'll be helping guide others through their first contributions. How cool is that?
+
+### Deepen Your Knowledge
+
+- Read through the [development guides](/development)
+- Explore the [code style guidelines](/contribution/code-style)
+- Understand the [architecture](/development/project-structure)
+- Learn about [testing](/contribution/testing)
+
+### Join the Community
+
+- Star the repository ⭐
+- Watch for updates
+- Participate in discussions
+- Help newcomers like you once were
+
+*Paying it forward is what makes open source amazing. Remember how helpful this guide was? You can be that person for someone else!*
+
+## Thank You!
+
+Every contribution, no matter how small, helps make Zephyr better. Thank you for taking the time to contribute!
+
+**You're not just writing code - you're joining a community of people who believe in building better software together. Welcome aboard! We're genuinely excited to see what you'll build!** 🚀💙
+
+**Questions?** Ask in:
+- [GitHub Discussions](https://github.com/zephverse/zephyr/discussions)
+- [Issues](https://github.com/zephverse/zephyr/issues)
+- Your pull request
+
+*No question is too small or "stupid" - we've all been beginners, and we're all still learning!*
+
+---
+
+**You've got this! Welcome to the Zephyr community!** 🚀

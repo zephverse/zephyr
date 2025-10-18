@@ -1,0 +1,339 @@
+---
+title: Packages
+description: Shared libraries and packages in the Zephyr monorepo
+---
+
+## Packages
+
+### packages/db
+
+Database layer with Prisma ORM, Redis caching, and Meilisearch.
+
+**Key files:**
+- `prisma/schema.prisma` – Full schema (users, posts, comments, votes, etc.)
+- `index.ts` – Prisma client singleton
+- `cache/` – Redis utilities and Upstash client
+- `src/meilisearch/` – Search index setup
+
+**Scripts** (`scripts/`):
+`seed.ts`, `reset-db.ts`, `init-meilisearch.ts`
+
+### packages/ui
+
+Shared React components powered by shadcn/ui and Radix.
+
+**Components** (`components/`):
+Abstracted primitives like `post-card.tsx`, `user-avatar.tsx`, `infinite-scroll-container.tsx`
+
+**Providers** (`providers/`):
+`query.tsx` (React Query), `theme.tsx` (next-themes)
+
+**Hooks** (`hooks/`):
+`use-infinite-scroll.ts`, `use-debounce.ts`
+
+**Styles** (`styles/globals.css`):
+Global CSS with Tailwind layers and theme variables
+
+### packages/auth
+
+Authentication utilities and validation schemas.
+
+**Exports:**
+- `auth.ts` – Better Auth instance creation
+- `validation/` – Zod schemas for forms (`loginSchema`, `signUpSchema`, `createPostSchema`)
+- `src/core/password.ts` – Scrypt hashing and verification
+
+### packages/aggregator
+
+HackerNews API aggregation with caching and rate limiting.
+
+**Modules:**
+- `hackernews/api.ts` – Fetch top stories, item details
+- `hackernews/cache.ts` – Redis caching layer
+- `hackernews/rate-limiter.ts` – Token bucket limiter
+
+### packages/tailwind
+
+Shared Tailwind configuration for all apps.
+
+**Exports:**
+- `configs/config.ts` – Tailwind base config with theme tokens
+- `index.ts` – Re-exports for consumption
+
+### packages/config
+
+TypeScript configurations for different project types.
+
+**Files:**
+- `base.tsconfig.json` – Base compiler options
+- `library.tsconfig.json` – For packages
+- `nextjs.config.json` – For Next.js apps
+- `react.tsconfig.json` – For React libraries
+
+## Packages (Detailed)
+
+### packages/db
+
+Centralized database access layer.
+
+```
+packages/db/
+├── prisma/
+│   ├── schema.prisma       # Database schema
+│   └── migrations/         # Migration history
+├── src/
+│   ├── prisma.ts           # Prisma client setup
+│   ├── redis.ts            # Redis client setup
+│   ├── meilisearch.ts      # Meilisearch client
+│   ├── client.ts           # Unified export
+│   └── types.ts            # Shared types
+├── cache/                  # Redis caching utilities
+│   ├── user-cache.ts       # User data caching
+│   ├── followbutton-cache.ts  # Follow state caching
+│   ├── search-cache.ts     # Search result caching
+│   ├── avatar-cache.ts     # Avatar URL caching
+│   ├── tag-cache.ts        # Tag caching
+│   └── share-cache.ts      # Share stats caching
+├── constants/
+│   └── cache-keys.ts       # Redis key patterns
+├── scripts/
+│   ├── init-meilisearch.ts # Index initialization
+│   └── backup.ts           # Database backup
+├── index.ts                # Main export
+└── package.json
+```
+
+**Exports:**
+```typescript
+import { 
+  prisma,           // Prisma client
+  redis,            // Redis client
+  meilisearch,      // Meilisearch client
+  userCache,        // User caching utilities
+  CACHE_KEYS,       // Cache key constants
+  // ... and more
+} from "@zephyr/db";
+```
+
+**Usage example:**
+```typescript
+// Fetch user with caching
+const user = await prisma.user.findUnique({
+  where: { id: userId },
+  include: { followers: true },
+});
+
+// Cache the result
+await userCache.setUser(userId, user);
+```
+
+### packages/ui
+
+Shared UI components and design system.
+
+```
+packages/ui/
+├── shadui/                 # shadcn/ui components
+│   ├── button.tsx
+│   ├── dialog.tsx
+│   ├── input.tsx
+│   ├── avatar.tsx
+│   └── ... (47 components)
+├── components/
+│   ├── ui/                 # Custom UI components
+│   │   ├── cover.tsx       # Cover animations
+│   │   ├── sparkles.tsx    # Sparkle effect
+│   │   └── ...
+│   └── hackernews/         # HN-specific components
+│       ├── hn-feed.tsx
+│       ├── hn-story.tsx
+│       ├── hn-sidebar.tsx
+│       └── mutations.ts
+├── providers/              # React context providers
+│   ├── query.tsx           # React Query provider
+│   ├── theme.tsx           # Theme provider
+│   ├── design-system.tsx   # Design system provider
+│   └── verification.tsx    # Verification provider
+├── hooks/                  # Shared hooks
+│   ├── use-toast.ts
+│   ├── use-mobile.tsx
+│   ├── use-debounce.ts
+│   └── use-infinite-scroll.ts
+├── store/                  # Jotai stores
+│   └── hn-share-store.ts
+├── styles/                 # Global styles
+│   ├── globals.css
+│   ├── base.css
+│   ├── animations.css
+│   └── fonts.css
+├── fonts/                  # Font files
+├── meta/                   # Design tokens
+│   ├── colors.ts
+│   ├── icons.ts
+│   └── site.ts
+└── lib/
+    └── utils.ts            # cn() utility
+```
+
+**Usage example:**
+```tsx
+import { Button, Dialog, Avatar } from "@zephyr/ui/shadui";
+import { useToast } from "@zephyr/ui/hooks";
+import { QueryProvider } from "@zephyr/ui/providers";
+
+export function MyComponent() {
+  const { toast } = useToast();
+  
+  return (
+    <Button onClick={() => toast({ title: "Success!" })}>
+      Click me
+    </Button>
+  );
+}
+```
+
+### packages/auth
+
+Authentication utilities and validation schemas.
+
+```
+packages/auth/
+├── src/
+│   ├── core/
+│   │   ├── client.ts       # Auth client
+│   │   ├── config.ts       # Auth configuration
+│   │   ├── middleware.ts   # Auth middleware
+│   │   ├── jwt.ts          # JWT utilities
+│   │   ├── password.ts     # Password hashing
+│   │   ├── types.ts        # Type definitions
+│   │   ├── hybrid-session-store.ts  # Session management
+│   │   └── index.ts
+│   ├── validation/
+│   │   ├── schemas.ts      # Zod schemas
+│   │   ├── email-validator.ts  # Email validation
+│   │   ├── server-validation.ts  # Server-side validation
+│   │   └── index.ts
+│   └── index.ts
+├── auth.ts                 # Better Auth setup
+├── validation.ts           # Validation exports
+└── package.json
+```
+
+**Schemas available:**
+```typescript
+import {
+  signUpSchema,
+  loginSchema,
+  createPostSchema,
+  createCommentSchema,
+  updateProfileSchema,
+  // ... and more
+} from "@zephyr/auth/validation";
+```
+
+**Usage example:**
+```typescript
+import { createPostSchema } from "@zephyr/auth/validation";
+
+// Validate user input
+const result = createPostSchema.safeParse(formData);
+
+if (!result.success) {
+  return { error: result.error.flatten() };
+}
+
+// Create post with validated data
+const post = await createPost(result.data);
+```
+
+### packages/aggregator
+
+External content aggregation (currently HackerNews).
+
+```
+packages/aggregator/
+├── hackernews/
+│   ├── api.ts              # HN API client
+│   ├── cache.ts            # Story caching
+│   ├── rate-limiter.ts     # Rate limiting
+│   ├── types.ts            # HN types
+│   └── index.ts
+└── package.json
+```
+
+**Usage example:**
+```typescript
+import { fetchTopStories, fetchStoryById } from "@zephyr/aggregator/hackernews";
+
+// Fetch top stories (cached)
+const stories = await fetchTopStories(20);
+
+// Fetch individual story
+const story = await fetchStoryById(12345);
+```
+
+### packages/tailwind
+
+Shared Tailwind CSS configuration.
+
+```
+packages/tailwind/
+├── configs/
+│   ├── config.ts           # Main Tailwind config
+│   └── typography.config.ts  # Typography plugin
+├── index.ts
+└── package.json
+```
+
+**Usage in apps:**
+```typescript
+// tailwind.config.ts
+import baseConfig from "@zephyr/tailwind";
+
+export default {
+  ...baseConfig,
+  content: ["./src/**/*.{ts,tsx}"],
+};
+```
+
+### packages/config
+
+Shared TypeScript and tooling configuration.
+
+```
+packages/config/
+├── base.tsconfig.json      # Base TypeScript config
+├── library.tsconfig.json   # Library TypeScript config
+├── react.tsconfig.json     # React TypeScript config
+├── nextjs.config.json      # Next.js TypeScript config
+├── debug/
+│   ├── debug-logger.ts     # Debug logging utility
+│   └── index.ts
+└── package.json
+```
+
+**Usage example:**
+```json
+// tsconfig.json
+{
+  "extends": "@zephyr/config/react.tsconfig.json",
+  "include": ["src"],
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  }
+}
+```
+
+### packages/next
+
+Shared Next.js configuration and utilities.
+
+```
+packages/next/
+├── src/
+│   └── index.ts            # Next.js utilities
+└── package.json
+```

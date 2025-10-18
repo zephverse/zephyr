@@ -1,0 +1,659 @@
+# HackerNews API
+
+The HackerNews API aggregates and serves stories from HackerNews with caching, rate limiting, and bookmark functionality.
+
+## Endpoints Overview
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/hackernews` | GET | Fetch HackerNews stories |
+| `/api/hackernews` | POST | Refresh cache |
+| `/api/hackernews/bookmarked` | GET | Get bookmarked stories |
+| `/api/hackernews/[storyId]/bookmark` | GET, POST, DELETE | Manage story bookmarks |
+
+---
+
+## Fetch Stories
+
+### Get HackerNews Stories
+
+Retrieves stories from HackerNews with filtering, sorting, and pagination.
+
+```http
+GET /api/hackernews
+```
+
+#### Query Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `page` | number | 0 | Page number for pagination |
+| `limit` | number | 30 | Number of stories per page |
+| `search` | string | - | Search query for filtering stories |
+| `sort` | string | `"score"` | Sort order: `"score"`, `"time"`, or `"comments"` |
+| `type` | string | `"all"` | Story type: `"all"`, `"story"`, `"job"`, `"poll"` |
+
+#### Response
+
+```typescript
+{
+  stories: Array<{
+    id: number;
+    title: string;
+    url?: string;
+    score: number;
+    by: string;          // Author username
+    time: number;        // Unix timestamp
+    descendants?: number; // Comment count
+    type: string;        // "story", "job", "poll"
+  }>;
+  page: number;
+  limit: number;
+  total: number;
+  hasMore: boolean;
+}
+```
+
+#### Example
+
+```typescript
+const fetchHNStories = async (options = {}) => {
+  const params = new URLSearchParams({
+    page: options.page || '0',
+    limit: options.limit || '30',
+    sort: options.sort || 'score',
+    type: options.type || 'all',
+    ...(options.search && { search: options.search })
+  });
+  
+  const response = await fetch(`/api/hackernews?${params}`);
+  return await response.json();
+};
+
+// Usage examples
+const topStories = await fetchHNStories();
+
+const jobStories = await fetchHNStories({ 
+  type: 'job', 
+  limit: 20 
+});
+
+const searchResults = await fetchHNStories({ 
+  search: 'react', 
+  sort: 'time' 
+});
+
+const page2 = await fetchHNStories({ 
+  page: 1,
+  limit: 30
+});
+```
+
+---
+
+## Implementation Details
+
+### Story Fetching
+
+The endpoint uses the HackerNews aggregator package:
+
+```typescript
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const page = Number.parseInt(searchParams.get("page") || "0", 10);
+    const limit = Number.parseInt(searchParams.get("limit") || "30", 10);
+    const search = searchParams.get("search") || undefined;
+    const sort = searchParams.get("sort") || "score";
+    const type = searchParams.get("type") || "all";
+
+    const headersList = await headers();
+    const ip = headersList.get("x-forwarded-for") || "unknown";
+
+    const result = await hackerNewsAPI.fetchStories({
+      page,
+      limit,
+      search,
+      sort,
+      type,
+      identifier: ip,  // For rate limiting
+    });
+
+    return NextResponse.json(result);
+  } catch (error) {
+    if (error.statusCode === 429) {
+      return NextResponse.json(
+        { error: "Rate limit exceeded. Please try again later." },
+        { status: 429 }
+      );
+    }
+
+    return NextResponse.json(
+      { error: "Failed to fetch stories" },
+      { status: error.statusCode || 500 }
+    );
+  }
+}
+```
+
+### Rate Limiting
+
+Rate limiting is enforced per IP address:
+
+```typescript
+// Rate limiter configuration
+const rateLimiter = new RateLimiter({
+  interval: 60000,      // 1 minute window
+  maxRequests: 60,      // 60 requests per minute
+});
+
+// Applied in fetch operation
+await rateLimiter.check(ip);
+```
+
+If rate limit is exceeded, returns:
+```json
+{
+  "error": "Rate limit exceeded. Please try again later."
+}
+```
+
+### Caching
+
+Stories are cached for performance:
+
+```typescript
+// Cache configuration
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+// Cache is automatically used when fetching stories
+// Manual refresh available via POST endpoint
+```
+
+---
+
+## Refresh Cache
+
+### Manually Refresh Cache
+
+Forces a refresh of the HackerNews stories cache.
+
+```http
+POST /api/hackernews
+```
+
+#### Response
+
+```typescript
+{
+  success: true;
+}
+```
+
+#### Example
+
+```typescript
+const refreshHNCache = async () => {
+  const response = await fetch('/api/hackernews', {
+    method: 'POST'
+  });
+  
+  if (response.ok) {
+    console.log('Cache refreshed successfully');
+  }
+};
+
+// Usage
+await refreshHNCache();
+```
+
+#### Implementation
+
+```typescript
+export async function POST() {
+  try {
+    await hackerNewsAPI.refreshCache();
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    if (error.statusCode === 429) {
+      return NextResponse.json(
+        { error: "Rate limit exceeded. Please try again later." },
+        { status: 429 }
+      );
+    }
+
+    return NextResponse.json(
+      { error: "Failed to refresh cache" },
+      { status: error.statusCode || 500 }
+    );
+  }
+}
+```
+
+---
+
+## Bookmark Management
+
+### Get Bookmark Status
+
+Checks if a story is bookmarked by the user.
+
+```http
+GET /api/hackernews/[storyId]/bookmark
+```
+
+#### Response
+
+```typescript
+{
+  isBookmarked: boolean;
+}
+```
+
+#### Example
+
+```typescript
+const checkBookmark = async (storyId: number) => {
+  const response = await fetch(`/api/hackernews/${storyId}/bookmark`);
+  const { isBookmarked } = await response.json();
+  return isBookmarked;
+};
+
+// Usage
+const isBookmarked = await checkBookmark(34567890);
+```
+
+---
+
+### Add Bookmark
+
+Bookmarks a HackerNews story for the user.
+
+```http
+POST /api/hackernews/[storyId]/bookmark
+```
+
+#### Response
+
+```typescript
+{
+  success: true;
+}
+```
+
+#### Example
+
+```typescript
+const bookmarkStory = async (storyId: number) => {
+  await fetch(`/api/hackernews/${storyId}/bookmark`, {
+    method: 'POST'
+  });
+};
+
+// Usage
+await bookmarkStory(34567890);
+```
+
+#### Implementation
+
+```typescript
+export async function POST(
+  _req: Request,
+  ctx: { params: Promise<{ storyId: string }> }
+) {
+  const session = await getSessionFromApi();
+  const user = session?.user;
+  if (!user) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  
+  const { storyId } = await ctx.params;
+  await prisma.hNBookmark.create({
+    data: { 
+      userId: user.id, 
+      storyId: Number(storyId) 
+    },
+  });
+  
+  return Response.json({ success: true });
+}
+```
+
+---
+
+### Remove Bookmark
+
+Removes a bookmark from a HackerNews story.
+
+```http
+DELETE /api/hackernews/[storyId]/bookmark
+```
+
+#### Response
+
+```typescript
+{
+  success: true;
+}
+```
+
+#### Example
+
+```typescript
+const unbookmarkStory = async (storyId: number) => {
+  await fetch(`/api/hackernews/${storyId}/bookmark`, {
+    method: 'DELETE'
+  });
+};
+
+// Usage
+await unbookmarkStory(34567890);
+```
+
+---
+
+### Get Bookmarked Stories
+
+Retrieves all HackerNews stories bookmarked by the user.
+
+```http
+GET /api/hackernews/bookmarked
+```
+
+#### Response
+
+```typescript
+{
+  bookmarks: Array<{
+    storyId: number;
+    userId: string;
+    createdAt: Date;
+    // Story details fetched from HN API
+  }>;
+}
+```
+
+#### Example
+
+```typescript
+const getBookmarkedStories = async () => {
+  const response = await fetch('/api/hackernews/bookmarked');
+  const { bookmarks } = await response.json();
+  return bookmarks;
+};
+
+// Usage
+const bookmarks = await getBookmarkedStories();
+console.log(`You have ${bookmarks.length} bookmarked stories`);
+```
+
+---
+
+## Story Types
+
+### Available Types
+
+| Type | Description |
+|------|-------------|
+| `all` | All story types |
+| `story` | Regular stories with URLs |
+| `job` | Job postings |
+| `poll` | Poll stories |
+
+### Filtering by Type
+
+```typescript
+// Get only job postings
+const jobs = await fetchHNStories({ type: 'job' });
+
+// Get only stories
+const stories = await fetchHNStories({ type: 'story' });
+
+// Get all types
+const all = await fetchHNStories({ type: 'all' });
+```
+
+---
+
+## Sorting Options
+
+### Available Sort Orders
+
+| Sort | Description |
+|------|-------------|
+| `score` | Sort by story score (upvotes) |
+| `time` | Sort by submission time (newest first) |
+| `comments` | Sort by number of comments |
+
+### Sort Examples
+
+```typescript
+// Top stories by score
+const topStories = await fetchHNStories({ sort: 'score' });
+
+// Newest stories
+const newest = await fetchHNStories({ sort: 'time' });
+
+// Most discussed
+const discussed = await fetchHNStories({ sort: 'comments' });
+```
+
+---
+
+## Search Functionality
+
+### Text Search
+
+Search stories by title or content:
+
+```typescript
+const searchResults = await fetchHNStories({
+  search: 'artificial intelligence',
+  sort: 'score',
+  limit: 50
+});
+```
+
+### Combined Filters
+
+Combine search with other filters:
+
+```typescript
+const filtered = await fetchHNStories({
+  search: 'react',
+  type: 'story',
+  sort: 'time',
+  limit: 20
+});
+```
+
+---
+
+## Error Responses
+
+| Status | Error | Description |
+|--------|-------|-------------|
+| 401 | Unauthorized | User not authenticated (bookmark endpoints) |
+| 429 | Rate limit exceeded | Too many requests from IP |
+| 500 | Failed to fetch stories | HackerNews API error or server issue |
+
+---
+
+## Database Schema
+
+HackerNews bookmarks are stored in the database:
+
+```prisma
+model HNBookmark {
+  id        String   @id @default(cuid())
+  userId    String
+  storyId   Int
+  createdAt DateTime @default(now())
+  
+  user User @relation(fields: [userId], references: [id])
+  
+  @@unique([userId, storyId])
+  @@index([userId])
+  @@index([storyId])
+}
+```
+
+---
+
+## Best Practices
+
+### 1. Handle Rate Limiting
+
+Implement retry logic for rate limit errors:
+
+```typescript
+const fetchWithRetry = async (url: string, retries = 3) => {
+  for (let i = 0; i < retries; i++) {
+    const response = await fetch(url);
+    
+    if (response.status === 429) {
+      const delay = Math.pow(2, i) * 1000; // Exponential backoff
+      await new Promise(resolve => setTimeout(resolve, delay));
+      continue;
+    }
+    
+    return response;
+  }
+  
+  throw new Error('Rate limit exceeded after retries');
+};
+```
+
+### 2. Cache Stories Client-Side
+
+Reduce API calls by caching:
+
+```typescript
+const useCachedHNStories = (options) => {
+  const [stories, setStories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    const cacheKey = JSON.stringify(options);
+    const cached = sessionStorage.getItem(cacheKey);
+    
+    if (cached) {
+      setStories(JSON.parse(cached));
+      setLoading(false);
+      return;
+    }
+    
+    fetchHNStories(options).then(data => {
+      setStories(data.stories);
+      sessionStorage.setItem(cacheKey, JSON.stringify(data.stories));
+      setLoading(false);
+    });
+  }, [options]);
+  
+  return { stories, loading };
+};
+```
+
+### 3. Infinite Scroll
+
+Implement pagination with infinite scroll:
+
+```typescript
+const HNFeed = () => {
+  const [stories, setStories] = useState([]);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  
+  const loadMore = async () => {
+    const data = await fetchHNStories({ page, limit: 30 });
+    setStories([...stories, ...data.stories]);
+    setPage(page + 1);
+    setHasMore(data.hasMore);
+  };
+  
+  return (
+    <InfiniteScroll
+      dataLength={stories.length}
+      next={loadMore}
+      hasMore={hasMore}
+    >
+      {stories.map(story => (
+        <StoryCard key={story.id} story={story} />
+      ))}
+    </InfiniteScroll>
+  );
+};
+```
+
+### 4. Bookmark State Management
+
+Handle bookmark state optimistically:
+
+```typescript
+const useBookmark = (storyId: number) => {
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  
+  const toggleBookmark = async () => {
+    const prevState = isBookmarked;
+    setIsBookmarked(!isBookmarked);
+    
+    try {
+      if (isBookmarked) {
+        await fetch(`/api/hackernews/${storyId}/bookmark`, {
+          method: 'DELETE'
+        });
+      } else {
+        await fetch(`/api/hackernews/${storyId}/bookmark`, {
+          method: 'POST'
+        });
+      }
+    } catch (error) {
+      setIsBookmarked(prevState);
+      console.error('Bookmark toggle failed:', error);
+    }
+  };
+  
+  return { isBookmarked, toggleBookmark };
+};
+```
+
+---
+
+## HackerNews API Integration
+
+The aggregator uses the official HackerNews API:
+
+### Endpoints Used
+
+- **Top Stories**: `https://hacker-news.firebaseio.com/v0/topstories.json`
+- **New Stories**: `https://hacker-news.firebaseio.com/v0/newstories.json`
+- **Best Stories**: `https://hacker-news.firebaseio.com/v0/beststories.json`
+- **Story Details**: `https://hacker-news.firebaseio.com/v0/item/{id}.json`
+
+### Data Flow
+
+```
+HackerNews API → Aggregator Package → Cache → API Route → Client
+```
+
+---
+
+## Performance Optimization
+
+### Caching Strategy
+
+- **Server Cache**: 5-minute TTL for story lists
+- **Rate Limiting**: 60 requests per minute per IP
+- **Client Cache**: Session storage for user requests
+
+### Batch Requests
+
+Stories are fetched in batches to minimize API calls:
+
+```typescript
+const batchSize = 30;
+const storyIds = topStories.slice(page * batchSize, (page + 1) * batchSize);
+const stories = await Promise.all(
+  storyIds.map(id => fetchStory(id))
+);
+```

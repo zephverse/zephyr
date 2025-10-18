@@ -1,18 +1,236 @@
 ---
-title: API
-description: Where to find server APIs, types, and generated clients.
+title: API Reference
+description: Comprehensive REST API documentation for Zephyr platform endpoints.
 ---
 
-## Overview
+# API Overview
 
-Server logic lives primarily in `apps/web` and `apps/auth`, with shared types and clients in `packages/` (notably `@zephyr/db` and `@zephyr/auth`).
+Welcome to the Zephyr API documentation. This section provides comprehensive information about all the REST API endpoints available in the Zephyr platform.
 
-## Database access
+## Architecture
+
+Zephyr's API is built using **Next.js App Router** with route handlers, providing a modern, type-safe REST API. All endpoints follow RESTful conventions and return JSON responses.
+
+### Base URL
+
+```
+Production: https://your-domain.com/api
+Development: http://localhost:3000/api
+```
+
+## Authentication
+
+All API endpoints (except public health checks) require authentication using session-based cookies provided by Better Auth.
+
+### Session Management
+
+The authentication is handled through the Better Auth service, which runs on a separate auth server. The web application proxies auth requests to maintain secure session management.
+
+```typescript
+// Authentication is checked in each route
+const session = await getSessionFromApi();
+if (!session?.user) {
+  return Response.json({ error: "Unauthorized" }, { status: 401 });
+}
+```
+
+### Making Authenticated Requests
+
+When making requests from the client:
+
+```typescript
+// Cookies are automatically included with same-origin requests
+const response = await fetch('/api/posts/for-you');
+const data = await response.json();
+```
+
+## Response Format
+
+### Success Response
+
+```json
+{
+  "data": { /* Resource data */ },
+  "nextCursor": "optional-cursor-for-pagination"
+}
+```
+
+### Error Response
+
+```json
+{
+  "error": "Error message description",
+  "details": "Optional additional error details"
+}
+```
+
+## HTTP Status Codes
+
+The API uses standard HTTP status codes:
+
+| Status Code | Description |
+|------------|-------------|
+| `200` | OK - Request successful |
+| `201` | Created - Resource successfully created |
+| `400` | Bad Request - Invalid request parameters |
+| `401` | Unauthorized - Authentication required |
+| `403` | Forbidden - Insufficient permissions |
+| `404` | Not Found - Resource not found |
+| `429` | Too Many Requests - Rate limit exceeded |
+| `500` | Internal Server Error - Server error occurred |
+
+## Pagination
+
+List endpoints support cursor-based pagination for efficient data loading:
+
+```typescript
+// Request with pagination
+GET /api/posts/for-you?cursor=post-id-123
+
+// Response includes next cursor
+{
+  "posts": [...],
+  "nextCursor": "post-id-456"  // null if no more data
+}
+```
+
+### Pagination Parameters
+
+- **`cursor`** (optional): The ID of the last item from the previous page
+- **`pageSize`**: Varies by endpoint (typically 10-20 items)
+
+## Rate Limiting
+
+Rate limiting is implemented on certain endpoints, particularly the HackerNews aggregator:
+
+- Limits are enforced per IP address
+- Rate limit errors return HTTP 429
+- Retry-After header indicates when to retry
+
+## Common Headers
+
+### Request Headers
+
+```
+Content-Type: application/json
+Cookie: session-cookie (automatically included)
+```
+
+### Response Headers
+
+```
+Content-Type: application/json
+Set-Cookie: session-cookie (for auth endpoints)
+```
+
+## Error Handling
+
+Handle errors gracefully in your client code:
+
+```typescript
+try {
+  const response = await fetch('/api/posts/for-you');
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Request failed');
+  }
+  
+  const data = await response.json();
+  // Handle success
+} catch (error) {
+  console.error('API Error:', error);
+  // Handle error
+}
+```
+
+## API Endpoints Overview
+
+### Posts API
+- Feed endpoints (For You, Following)
+- Post operations (Create, Vote, Comment, Bookmark)
+- Post metadata (Views, Shares, Tags)
+
+### Users API
+- User profiles and data
+- User search
+- Follow/unfollow operations
+
+### Media API
+- File uploads to MinIO/S3
+- Image and video processing
+- Media metadata management
+
+### Search API
+- Full-text search across posts
+- Search history management
+- Search suggestions
+
+### Tags API
+- Popular tags retrieval
+- Tag-based filtering
+
+### HackerNews API
+- Story aggregation from HackerNews
+- Story filtering and search
+- Bookmark management for HN stories
+
+### Notifications API
+- User notifications with pagination
+- Real-time notification updates
+
+### System API
+- Health checks
+- Cache management
+- Email verification
+
+## Database Access
 
 Use Prisma clients exported from `@zephyr/db` for data access. Keep queries and mutations type‑safe and colocated with features.
 
 ## Validation
 
 Use `zod` schemas and shared validators to ensure input safety across boundaries.
+
+## Development Tools
+
+### Testing Endpoints
+
+Use tools like cURL, Postman, or Thunder Client:
+
+```bash
+# Health check (no auth required)
+curl http://localhost:3000/api/health
+
+# Authenticated request (requires valid session cookie)
+curl -X GET http://localhost:3000/api/posts/for-you \
+  -H "Cookie: session=your-session-cookie"
+```
+
+### TypeScript Support
+
+All API responses are fully typed using shared types from `@zephyr/db`:
+
+```typescript
+import type { PostData, PostsPage, UserData } from "@zephyr/db";
+
+// Type-safe API calls
+const response = await fetch('/api/posts/for-you');
+const data: PostsPage = await response.json();
+```
+
+## Next Steps
+
+Explore the detailed documentation for each API section:
+
+- [Posts API](/api/posts) - Social media posts and interactions
+- [Users API](/api/users) - User profiles and relationships
+- [Authentication](/api/authentication) - Auth flow and session management
+- [Media & Uploads](/api/media) - File upload handling
+- [Search API](/api/search) - Content search functionality
+- [Tags API](/api/tags) - Tag management
+- [HackerNews API](/api/hackernews) - News aggregation
+- [Notifications API](/api/notifications) - User notifications
+- [Health & Cache](/api/health) - System status and caching
 
 

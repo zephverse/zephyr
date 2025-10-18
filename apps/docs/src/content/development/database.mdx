@@ -1,0 +1,583 @@
+---
+title: Database Schema
+description: Detailed documentation of Zephyr's Prisma schema, models, and relationships.
+---
+
+import { Callout } from "nextra/components";
+
+## Overview
+
+Zephyr uses **PostgreSQL** as its primary database with **Prisma** as the ORM. The schema is defined in `packages/db/prisma/schema.prisma` and includes full-text search capabilities.
+
+<Callout type="info">
+All models use `cuid()` for IDs and include automatic timestamp management with `@default(now())` and `@updatedAt`.
+</Callout>
+
+## Core Models
+
+### User
+
+User accounts with authentication, profile data, and Aura scores.
+
+```prisma
+model User {
+  id              String    @id @default(cuid())
+  aura            Int       @default(0)
+  username        String    @unique
+  displayName     String
+  displayUsername String?
+  mentions        Mention[]
+  email           String?   @unique
+  passwordHash    String?
+  googleId        String?   @unique
+  githubId        String?   @unique
+  discordId       String?   @unique
+  twitterId       String?   @unique
+  redditId        String?   @unique
+  avatarUrl       String?
+  avatarKey       String?
+  bio             String?
+  emailVerified   Boolean   @default(false)
+  emailVerifiedAt DateTime?
+  image           String?
+  name            String?
+  role            String    @default("user")
+
+  // Relations
+  sessions              Session[]
+  accounts              Account[]
+  verifications         Verification[]
+  passwordResetTokens   PasswordResetToken[]
+  posts                 Post[]
+  following             Follow[]             @relation("Following")
+  followers             Follow[]             @relation("Followers")
+  bookmarks             Bookmark[]
+  comments              Comment[]
+  vote                  Vote[]
+  receivedNotifications Notification[]       @relation("Recipient")
+  issuedNotifications   Notification[]       @relation("Issuer")
+  hnbookmark            HNBookmark[]
+  auraReceived          AuraLog[]            @relation("AuraReceived")
+  auraIssued            AuraLog[]            @relation("AuraIssued")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+```
+
+**OAuth Support**: Google, GitHub, Discord, Twitter, Reddit  
+**Aura**: Reputation score earned through participation  
+**Relations**: Bidirectional follows, posts, comments, votes, notifications
+
+### Post
+
+User-generated posts with rich media attachments.
+
+```prisma
+model Post {
+  id                   String         @id @default(cuid())
+  content              String
+  userId               String
+  user                 User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  aura                 Int            @default(0)
+  viewCount            Int            @default(0)
+  lastAwardedViewCount Int            @default(0)
+  
+  // Relations
+  attachments          Media[]
+  bookmarks            Bookmark[]
+  comments             Comment[]
+  linkedNotifications  Notification[]
+  vote                 Vote[]
+  shareStats           ShareStats[]
+  auraLogs             AuraLog[]
+  tags                 Tag[]
+  mentions             Mention[]
+  hnStoryShare         HNStoryShare?
+
+  createdAt DateTime @default(now())
+
+  @@map("posts")
+}
+```
+
+**View Tracking**: `viewCount` and `lastAwardedViewCount` for Aura milestone rewards  
+**Aura**: Post-specific Aura from votes  
+**HN Integration**: Optional link to HackerNews story
+
+### Comment
+
+Threaded comments on posts.
+
+```prisma
+model Comment {
+  id        String    @id @default(cuid())
+  content   String
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  postId    String
+  post      Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+  auraLogs  AuraLog[]
+
+  @@map("comments")
+}
+```
+
+**Note**: Currently flat structure (no nested replies)
+
+### Vote
+
+Upvote/downvote system for posts.
+
+```prisma
+model Vote {
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  postId String
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  value  Int
+
+  @@unique([userId, postId])
+  @@map("votes")
+}
+```
+
+**Value**: Integer representing vote value (typically +1 or -1)  
+**Constraint**: One vote per user per post
+
+## Social Graph
+
+### Follow
+
+User following relationships.
+
+```prisma
+model Follow {
+  followerId  String
+  follower    User   @relation("Following", fields: [followerId], references: [id], onDelete: Cascade)
+  followingId String
+  following   User   @relation("Followers", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@map("follows")
+}
+```
+
+**Bidirectional**: Self-referential User relation with "Following" and "Followers"
+
+### Notification
+
+Real-time notifications for user interactions.
+
+```prisma
+model Notification {
+  id          String           @id @default(cuid())
+  recipientId String
+  recipient   User             @relation("Recipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  issuerId    String
+  issuer      User             @relation("Issuer", fields: [issuerId], references: [id], onDelete: Cascade)
+  postId      String?
+  post        Post?            @relation(fields: [postId], references: [id], onDelete: Cascade)
+  type        NotificationType
+  read        Boolean          @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@map("notifications")
+}
+
+enum NotificationType {
+  AMPLIFY
+  FOLLOW
+  COMMENT
+  MENTION
+}
+```
+
+**Types**: AMPLIFY (vote), FOLLOW, COMMENT, MENTION
+
+## Content & Tagging
+
+### Tag
+
+Hashtag-style post categorization.
+
+```prisma
+model Tag {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  posts     Post[]
+}
+```
+
+**Indexed**: Unique name for fast lookups  
+**Many-to-Many**: Posts can have multiple tags
+
+### Mention
+
+User mentions in posts.
+
+```prisma
+model Mention {
+  id        String   @id @default(cuid())
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([postId, userId])
+  @@map("mentions")
+}
+```
+
+**Constraint**: One mention per user per post
+
+### Media
+
+Uploaded files attached to posts.
+
+```prisma
+model Media {
+  id        String    @id @default(cuid())
+  postId    String?
+  post      Post?     @relation(fields: [postId], references: [id], onDelete: SetNull)
+  type      MediaType
+  url       String
+  key       String    @default("")
+  mimeType  String    @default("application/octet-stream")
+  size      Int       @default(0)
+  createdAt DateTime  @default(now())
+
+  @@map("post_media")
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  AUDIO
+  DOCUMENT
+  CODE
+}
+```
+
+**Storage**: Files stored in MinIO, referenced by URL and key  
+**Types**: Images, videos, audio, documents, code files  
+**Orphan Handling**: `onDelete: SetNull` preserves media when post deleted
+
+## Content Aggregation
+
+### HNStoryShare
+
+HackerNews story metadata linked to posts.
+
+```prisma
+model HNStoryShare {
+  id          String   @id @default(cuid())
+  postId      String   @unique
+  post        Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  storyId     Int
+  title       String
+  url         String?
+  by          String
+  time        Int
+  score       Int
+  descendants Int
+  createdAt   DateTime @default(now())
+
+  @@map("hn_story_shares")
+}
+```
+
+**One-to-One**: Each post can have at most one HN story  
+**Metadata**: Cached HN data (title, author, score, comment count)
+
+### HNBookmark
+
+User bookmarks for HackerNews stories.
+
+```prisma
+model HNBookmark {
+  id        String   @id @default(cuid())
+  userId    String
+  storyId   Int
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, storyId])
+  @@index([userId])
+}
+```
+
+**Separate from Post bookmarks**: Direct HN story saves
+
+### ShareStats
+
+Share tracking across platforms.
+
+```prisma
+model ShareStats {
+  id        String   @id @default(cuid())
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  platform  String
+  shares    Int      @default(0)
+  clicks    Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([postId, platform])
+  @@map("share_stats")
+}
+```
+
+**Platforms**: Twitter, Facebook, LinkedIn, Reddit, WhatsApp, Discord, Email, QR, Copy  
+**Metrics**: Share count and click-through tracking
+
+## Bookmarks
+
+### Bookmark
+
+User-saved posts.
+
+```prisma
+model Bookmark {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  postId String
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, postId])
+  @@map("bookmarks")
+}
+```
+
+## Reputation System
+
+### AuraLog
+
+Comprehensive audit log of all Aura changes.
+
+```prisma
+model AuraLog {
+  id        String   @id @default(cuid())
+  userId    String
+  issuerId  String
+  amount    Int
+  type      AuraType
+  postId    String?
+  commentId String?
+  createdAt DateTime @default(now())
+
+  user    User     @relation("AuraReceived", fields: [userId], references: [id])
+  issuer  User     @relation("AuraIssued", fields: [issuerId], references: [id])
+  post    Post?    @relation(fields: [postId], references: [id])
+  comment Comment? @relation(fields: [commentId], references: [id])
+
+  @@map("aura_logs")
+}
+
+enum AuraType {
+  POST_CREATION
+  POST_ATTACHMENT_BONUS
+  POST_VOTE
+  POST_VOTE_REMOVED
+  POST_VIEWS_MILESTONE
+  COMMENT_CREATION
+  COMMENT_RECEIVED
+  FOLLOW_GAINED
+  FOLLOW_GIVEN
+  POST_BOOKMARKED
+  POST_BOOKMARK_RECEIVED
+}
+```
+
+**Full Auditability**: Every Aura change is logged with type, amount, issuer, and context  
+**Types**: Creation, attachments, votes, views, comments, follows, bookmarks
+
+## Authentication & Sessions
+
+### Session
+
+User sessions managed by Better Auth.
+
+```prisma
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("sessions")
+}
+```
+
+**Tracking**: IP address and user agent for security  
+**Expiration**: Automatic cleanup via cron job
+
+### Account
+
+OAuth account linkages.
+
+```prisma
+model Account {
+  id                    String    @id @default(cuid())
+  userId                String
+  accountId             String
+  providerId            String
+  accessToken           String?
+  refreshToken          String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  idToken               String?
+  password              String?
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([providerId, accountId])
+  @@map("accounts")
+}
+```
+
+**Multi-Provider**: One user can link multiple OAuth providers
+
+### Verification
+
+Email verification tokens.
+
+```prisma
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("verification")
+}
+```
+
+### PasswordResetToken
+
+Password reset flow tokens.
+
+```prisma
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  @@index([token])
+  @@map("password_reset_tokens")
+}
+```
+
+**Expiration**: Time-limited tokens with automatic cleanup
+
+## Security
+
+### jwks
+
+JSON Web Key Sets for Better Auth.
+
+```prisma
+model jwks {
+  id         String   @id @default(cuid())
+  publicKey  String
+  privateKey String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+```
+
+**Purpose**: Stores cryptographic keys for JWT signing and verification
+
+## Database Configuration
+
+### Prisma Configuration
+
+```prisma
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearchPostgres"]
+  binaryTargets   = ["native", "linux-musl-arm64-openssl-3.0.x"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("POSTGRES_PRISMA_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING")
+}
+```
+
+**Features**: Full-text search support via PostgreSQL  
+**Deployment**: Multi-architecture binary support  
+**Connection**: Pooled and direct connection URLs
+
+## Indexes & Performance
+
+Current indexes are defined implicitly through:
+- `@unique` constraints (automatic unique indexes)
+- `@id` fields (automatic primary key indexes)
+- Foreign key relations (automatic FK indexes)
+
+<Callout type="warning">
+**Recommended Future Indexes**:
+- `Post.createdAt` - for feed sorting
+- `Notification.read` + `recipientId` - for unread queries
+- `Comment.postId` + `createdAt` - for comment loading
+- `AuraLog.userId` + `createdAt` - for Aura history
+</Callout>
+
+## Migrations
+
+Migrations are stored in `packages/db/prisma/migrations/` and managed via Prisma CLI:
+
+```bash
+# Generate Prisma Client
+bunx prisma generate --schema packages/db/prisma/schema.prisma
+
+# Push schema changes (dev)
+bunx prisma db push --schema packages/db/prisma/schema.prisma
+
+# Create migration (production)
+bunx prisma migrate dev --schema packages/db/prisma/schema.prisma
+
+# Apply migrations
+bunx prisma migrate deploy --schema packages/db/prisma/schema.prisma
+```
+
+## Summary
+
+**Total Models**: 18  
+**Total Enums**: 3 (MediaType, NotificationType, AuraType)  
+**Authentication**: Better Auth with OAuth support  
+**Reputation**: Comprehensive AuraLog tracking  
+**Content**: Posts, comments, media, tags, mentions  
+**Social**: Follows, notifications, bookmarks  
+**Aggregation**: HackerNews integration
+

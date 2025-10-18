@@ -1,19 +1,464 @@
 ---
-title: Branching strategy
-description: Branch naming and lifecycle for contributions.
+title: Branching Strategy
+description: Git workflow, branch naming conventions, and lifecycle management for Zephyr contributions.
 ---
 
-## Branch naming
+# Branching Strategy
 
-- `feature/<short-slug>`
-- `fix/<short-slug>`
-- `docs/<short-slug>`
+This document outlines our Git workflow and branching conventions to ensure smooth collaboration and maintainable history.
 
-## Lifecycle
+> **Git giving you anxiety?** Don't worry! Git can feel intimidating, but once you get the hang of the workflow, it becomes second nature. And hey, if you mess something up, Git is surprisingly forgiving - we can almost always fix it. Just reach out if you get stuck! 🌿
 
-1. Branch from `main`
-2. Keep up to date with `main` via rebase
-3. Open PR early for feedback if scope is large
-4. Merge via squash once approved and checks pass
+## Branch Types
+
+### Main Branch: `main`
+
+- **Purpose**: Production-ready code
+- **Protection**: Protected branch with required reviews
+- **Direct commits**: Not allowed (except for automated releases)
+- **Deployment**: Automatically deploys to production (when applicable)
+- **History**: Clean, linear history maintained through squash merges
+
+### Feature Branches
+
+For new features and enhancements:
+
+```bash
+# Format
+feature/<short-descriptive-name>
+
+# Examples
+feature/dark-mode-toggle
+feature/user-profile-edit
+feature/search-autocomplete
+feature/aura-system
+```
+
+**When to use:**
+- Adding new user-facing functionality
+- Implementing new APIs or services
+- Adding major components or pages
+
+### Fix Branches
+
+For bug fixes:
+
+```bash
+# Format
+fix/<short-descriptive-name>
+
+# Examples
+fix/login-redirect-bug
+fix/avatar-upload-error
+fix/memory-leak-posts
+fix/session-expiry
+```
+
+**When to use:**
+- Fixing bugs reported in issues
+- Resolving production errors
+- Correcting unintended behavior
+
+### Documentation Branches
+
+For documentation changes:
+
+```bash
+# Format
+docs/<short-descriptive-name>
+
+# Examples
+docs/api-endpoints
+docs/contribution-guide
+docs/setup-instructions
+docs/architecture-diagram
+```
+
+**When to use:**
+- Updating documentation files
+- Adding examples or guides
+- Improving code comments
+- Fixing typos in docs
+
+### Refactor Branches
+
+For code improvements without behavior changes:
+
+```bash
+# Format
+refactor/<short-descriptive-name>
+
+# Examples
+refactor/extract-auth-utils
+refactor/optimize-db-queries
+refactor/simplify-state-management
+refactor/component-structure
+```
+
+**When to use:**
+- Improving code structure
+- Optimizing performance
+- Reducing technical debt
+- Extracting reusable utilities
+
+### Chore Branches
+
+For maintenance and tooling:
+
+```bash
+# Format
+chore/<short-descriptive-name>
+
+# Examples
+chore/update-dependencies
+chore/configure-eslint
+chore/setup-ci-pipeline
+chore/cleanup-unused-files
+```
+
+**When to use:**
+- Updating dependencies
+- Configuring tools
+- Build system changes
+- CI/CD improvements
+
+## Branch Lifecycle
+
+### 1. Create a Branch
+
+Always branch from the latest `main`:
+
+```bash
+# Update main
+git checkout main
+git pull origin main
+
+# Create and switch to new branch
+git checkout -b feature/your-feature-name
+
+# Or in one command
+git switch -c feature/your-feature-name
+```
+
+### 2. Work on Your Branch
+
+Make commits following our [commit conventions](/contribution/guidelines#commit-conventions):
+
+```bash
+# Make changes
+git add .
+git commit -m "feat(web): add dark mode toggle"
+
+# Continue working
+git add .
+git commit -m "test(web): add dark mode toggle tests"
+```
+
+### 3. Keep Your Branch Up-to-Date
+
+**Use rebase to keep a clean history:**
+
+```bash
+# Fetch latest changes
+git fetch origin
+
+# Rebase on main (recommended)
+git rebase origin/main
+
+# If conflicts occur:
+# 1. Resolve conflicts in your editor
+# 2. Stage resolved files
+git add .
+# 3. Continue rebase
+git rebase --continue
+
+# If you need to abort
+git rebase --abort
+```
+
+**Why rebase instead of merge?**
+- Keeps linear history
+- Easier to review
+- Cleaner git log
+- Simplifies bisecting
+- No merge commit noise
+
+### 4. Push Your Branch
+
+```bash
+# First push
+git push origin feature/your-feature-name
+
+# After rebase (force push required)
+git push --force-with-lease origin feature/your-feature-name
+```
+
+**Use `--force-with-lease` instead of `--force`**
+- Safer than `--force`
+- Prevents accidentally overwriting others' work
+- Fails if remote has changes you don't have locally
+
+### 5. Open a Pull Request
+
+- Go to GitHub and open a PR from your branch to `main`
+- Fill out the PR template completely
+- Link related issues (e.g., "Closes #123")
+- Request review from maintainers
+- Mark as draft if work is in progress
+
+### 6. Address Review Feedback
+
+```bash
+# Make requested changes
+git add .
+git commit -m "refactor: address review feedback"
+
+# Keep up-to-date with main if needed
+git rebase origin/main
+git push --force-with-lease
+```
+
+### 7. Merge
+
+Once approved and CI passes:
+- Maintainers will **squash merge** your PR
+- All commits become one on `main`
+- Your branch will be automatically deleted
+- Clean, linear history maintained
+
+## Branch Naming Rules
+
+### DO ✅
+
+```bash
+# Short, descriptive, kebab-case
+feature/user-settings
+fix/session-bug
+docs/api-guide
+refactor/auth-flow
+
+# Include context when helpful
+feature/auth-oauth-providers
+fix/web-infinite-scroll
+docs/db-schema-guide
+```
+
+### DON'T ❌
+
+```bash
+# Too vague
+feature/update
+fix/bug
+docs/changes
+
+# Too long
+feature/add-new-user-profile-page-with-settings-and-preferences
+
+# Wrong case
+feature/userSettings
+fix/Session_Bug
+DOCS/API-GUIDE
+
+# Spaces or special characters
+feature/user settings
+fix/bug#123
+```
+
+## Merge Strategies
+
+### Squash Merge (Default)
+
+We use **squash merging** for all PRs:
+
+```bash
+# Your commits:
+feat(web): add user settings page
+test(web): add settings page tests
+fix(web): correct settings validation
+refactor(web): improve settings layout
+
+# Becomes one commit on main:
+feat(web): add user settings page (#123)
+```
+
+*What does this mean for you? Feel free to commit early and often on your branch! All your "WIP", "fix typo", and "debugging" commits will be squashed into one clean commit when merged. No one judges your commit history on feature branches - we've all been there!* 😄
+
+**Benefits:**
+- Clean, linear history on `main`
+- Easy to revert entire features
+- Simplifies changelog generation
+- Reduces noise in git log
+
+**PR requirements:**
+- Title follows conventional commits
+- Description is comprehensive
+- All commits are reviewed, but final squash uses PR title
+
+## Protected Branch Rules
+
+The `main` branch has the following protections:
+
+- ✅ Require pull request before merging
+- ✅ Require approvals (minimum 1)
+- ✅ Dismiss stale reviews when new commits are pushed
+- ✅ Require status checks to pass (build, lint, typecheck)
+- ✅ Require branches to be up-to-date before merging
+- ✅ Require conversation resolution before merging
+- ✅ Require signed commits (recommended)
+- ❌ Direct pushes not allowed (except automated releases)
+
+## 🎯 Best Practices
+
+### Keep Branches Short-Lived
+
+- Aim to merge within 1-3 days
+- Large features? Break into smaller PRs
+- Reduces merge conflicts
+- Faster feedback cycles
+- Easier to review
+
+### One Branch, One Purpose
+
+```bash
+# ✅ Good - focused branch
+feature/add-dark-mode
+
+# Bad - multiple concerns
+feature/add-dark-mode-and-refactor-auth-and-update-deps
+```
+
+### Regular Rebasing
+
+```bash
+# Rebase daily if main is active
+git fetch origin
+git rebase origin/main
+```
+
+### Clean Up Merged Branches
+
+```bash
+# Delete local branch after merge
+git branch -d feature/your-feature
+
+# Delete remote branch (if not auto-deleted)
+git push origin --delete feature/your-feature
+
+# Clean up stale remote-tracking branches
+git fetch --prune
+```
+
+### Handle Long-Running Branches
+
+If a branch must be long-lived:
+
+1. **Rebase frequently** to avoid large conflicts
+2. **Break into smaller PRs** if possible
+3. **Use draft PRs** for early feedback
+4. **Communicate with team** about dependencies
+
+## Troubleshooting
+
+### Merge Conflicts During Rebase
+
+```bash
+# Start rebase
+git rebase origin/main
+
+# If conflicts:
+# 1. Open conflicted files
+# 2. Resolve conflicts (remove <<<<, ====, >>>> markers)
+# 3. Stage resolved files
+git add <file>
+
+# 4. Continue rebase
+git rebase --continue
+
+# Or abort if needed
+git rebase --abort
+```
+
+### Accidentally Committed to `main`
+
+```bash
+# Create a branch from current state
+git branch feature/my-work
+
+# Reset main to match origin
+git checkout main
+git reset --hard origin/main
+
+# Switch to your branch
+git checkout feature/my-work
+```
+
+### Lost Commits After Force Push
+
+```bash
+# Find lost commits
+git reflog
+
+# Recover from reflog
+git cherry-pick <commit-hash>
+
+# Or reset to previous state
+git reset --hard <commit-hash>
+```
+
+## Workflow Diagram
+
+```
+┌─────────────┐
+│    main     │ ← Production-ready code
+└──────┬──────┘
+       │
+       │ git checkout -b feature/my-feature
+       │
+       ▼
+┌─────────────────┐
+│  feature branch │ ← Your work
+└─────────┬───────┘
+          │
+          │ commits
+          │
+          ▼
+    ┌──────────┐
+    │   Push   │
+    └────┬─────┘
+         │
+         ▼
+    ┌──────────┐
+    │ Open PR  │
+    └────┬─────┘
+         │
+         ▼
+    ┌──────────┐
+    │  Review  │
+    └────┬─────┘
+         │
+         ▼
+   ┌────────────┐
+   │ Squash &   │
+   │   Merge    │
+   └──────┬─────┘
+          │
+          ▼
+    ┌─────────────┐
+    │    main     │ ← Updated with your feature
+    └─────────────┘
+```
+
+## Additional Resources
+
+- [Git Rebase Tutorial](https://git-scm.com/book/en/v2/Git-Branching-Rebasing)
+- [Conventional Commits](https://www.conventionalcommits.org/)
+- [GitHub Flow](https://docs.github.com/en/get-started/quickstart/github-flow)
+- [Contribution Guidelines](/contribution/guidelines)
+
+> **One last thing:** Branching strategies can seem overly formal at first, but they exist to make collaboration easier, not harder. Once you've done a few PRs using this workflow, it'll feel like muscle memory. And remember - if you ever get your branches in a tangle, just ask for help. We've all been there, and git has tools to fix almost anything! 🚀
+
+---
+
+Following this branching strategy ensures a clean, maintainable history and smooth collaboration!
 
 

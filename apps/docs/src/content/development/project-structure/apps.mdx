@@ -1,0 +1,48 @@
+---
+title: Apps
+description: Detailed overview of Zephyr's deployable applications
+---
+
+## Apps
+
+### apps/web
+
+The core social platform with Next.js 15 App Router.
+
+**Route groups:**
+- `(auth)` – Login, signup, reset password, email verification
+- `(main)` – Home feed, posts, profiles, discover, HackerNews, bookmarks, notifications, settings
+- `(docs)` – Privacy, TOS, support
+
+**API routes** (`app/api/*`):
+`posts/`, `users/`, `notifications/`, `tags/`, `upload/`, `cron/`, `search/`, `auth/`, `hackernews/`
+
+**Components** (`src/components/*`):
+Organized by feature—`Posts/`, `Profile/`, `Home/`, `Search/`, `Auth/`, `Layouts/`
+
+**Server Actions** (`src/posts/actions.ts`, `src/app/(main)/users/[username]/actions.ts`):
+Post creation, user updates, bookmark mutations
+
+**Hooks** (`src/hooks/*`):
+Custom React Query hooks (`use-follower-info.ts`, `use-post-mutations.ts`) and utilities
+
+**Middleware** (`src/middleware.ts`):
+Session checks, HTTPS redirect, route protection
+
+### apps/auth
+
+Standalone auth service with tRPC API and Better Auth configuration.
+
+**Structure:**
+- `src/auth/config.ts` – Better Auth setup (OAuth providers, email, password hashing)
+- `src/email/` – Resend integration with React Email templates
+- `src/server/routers/` – tRPC procedures for user management
+
+Used by `apps/web` via tRPC client for admin-only operations.
+
+### apps/docs
+
+This documentation site built with Nextra.
+
+**Content:**
+All MDX files live in `src/content/` with automatic sidebar generation from `_meta.ts` files.

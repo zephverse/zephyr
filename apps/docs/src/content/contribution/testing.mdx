@@ -1,0 +1,643 @@
+---
+title: Testing Guidelines
+description: Testing strategies, best practices, and guidelines for ensuring code quality in Zephyr.
+---
+
+# Testing Guidelines
+
+Testing ensures code reliability, prevents regressions, and provides documentation through examples. This guide outlines testing strategies for Zephyr.
+
+> **Hot take:** Writing tests might feel like extra work at first, but future-you will be SO grateful! There's something deeply satisfying about confidently refactoring code knowing your tests have your back. Plus, tests are basically executable documentation - they show exactly how your code should be used! 🛡️
+
+## Testing Philosophy
+
+### Core Principles
+
+1. **Test Behavior, Not Implementation**
+   - Focus on what the code does, not how
+   - Tests should survive refactoring
+   - Avoid testing private methods directly
+
+2. **Write Tests First (When Possible)**
+   - TDD helps clarify requirements
+   - Ensures testable code design
+   - Provides instant feedback
+
+3. **Keep Tests Simple**
+   - One assertion per test (when practical)
+   - Clear arrange-act-assert structure
+   - Readable test names
+
+4. **Maintainable Tests**
+   - DRY principle applies to tests too
+   - Use test utilities and helpers
+   - Keep tests close to the code they test
+
+*Don't stress about achieving test perfection from day one. Start with testing the happy path, then gradually add edge cases as you learn. Every test you write makes the codebase more robust!*
+
+## Testing Strategy
+
+### Test Pyramid
+
+```
+        ┌─────────────┐
+        │   E2E Tests │  ← Few, critical paths
+        ├─────────────┤
+        │ Integration │  ← Some, key workflows
+        │    Tests    │
+        ├─────────────┤
+        │    Unit     │  ← Many, fast, isolated
+        │    Tests    │
+        └─────────────┘
+```
+
+**Unit Tests (70%)**
+- Test individual functions and components
+- Fast execution
+- Isolated from dependencies
+- Mock external dependencies
+
+**Integration Tests (20%)**
+- Test feature workflows
+- Multiple components working together
+- Database interactions
+- API routes
+
+**E2E Tests (10%)**
+- Test critical user journeys
+- Full application flow
+- Browser automation
+- Slower but comprehensive
+
+## Writing Unit Tests
+
+### Function Testing
+
+```typescript
+// utils/format-date.ts
+export function formatDate(date: Date): string {
+  return new Intl.DateTimeFormat('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  }).format(date);
+}
+
+// utils/format-date.test.ts
+import { describe, it, expect } from 'bun:test';
+import { formatDate } from './format-date';
+
+describe('formatDate', () => {
+  it('formats date in long format', () => {
+    const date = new Date('2024-01-15');
+    const result = formatDate(date);
+    expect(result).toBe('January 15, 2024');
+  });
+
+  it('handles leap year dates', () => {
+    const date = new Date('2024-02-29');
+    const result = formatDate(date);
+    expect(result).toBe('February 29, 2024');
+  });
+
+  it('formats first day of year', () => {
+    const date = new Date('2024-01-01');
+    const result = formatDate(date);
+    expect(result).toBe('January 1, 2024');
+  });
+});
+```
+
+### React Component Testing
+
+```tsx
+// components/button.tsx
+type ButtonProps = {
+  onClick?: () => void;
+  disabled?: boolean;
+  children: React.ReactNode;
+};
+
+export function Button({ onClick, disabled, children }: ButtonProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="btn"
+    >
+      {children}
+    </button>
+  );
+}
+
+// components/button.test.tsx
+import { describe, it, expect, mock } from 'bun:test';
+import { render, screen, fireEvent } from '@testing-library/react';
+import { Button } from './button';
+
+describe('Button', () => {
+  it('renders children', () => {
+    render(<Button>Click me</Button>);
+    expect(screen.getByText('Click me')).toBeInTheDocument();
+  });
+
+  it('calls onClick when clicked', () => {
+    const handleClick = mock();
+    render(<Button onClick={handleClick}>Click me</Button>);
+    
+    fireEvent.click(screen.getByText('Click me'));
+    
+    expect(handleClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not call onClick when disabled', () => {
+    const handleClick = mock();
+    render(
+      <Button onClick={handleClick} disabled>
+        Click me
+      </Button>
+    );
+    
+    const button = screen.getByText('Click me');
+    fireEvent.click(button);
+    
+    expect(handleClick).not.toHaveBeenCalled();
+    expect(button).toBeDisabled();
+  });
+});
+```
+
+### Custom Hook Testing
+
+```typescript
+// hooks/use-debounce.ts
+import { useState, useEffect } from 'react';
+
+export function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
+// hooks/use-debounce.test.ts
+import { describe, it, expect } from 'bun:test';
+import { renderHook, act } from '@testing-library/react';
+import { useDebounce } from './use-debounce';
+
+describe('useDebounce', () => {
+  it('returns initial value immediately', () => {
+    const { result } = renderHook(() => useDebounce('test', 500));
+    expect(result.current).toBe('test');
+  });
+
+  it('debounces value changes', async () => {
+    const { result, rerender } = renderHook(
+      ({ value, delay }) => useDebounce(value, delay),
+      { initialProps: { value: 'initial', delay: 500 } }
+    );
+
+    expect(result.current).toBe('initial');
+
+    // Update value
+    rerender({ value: 'updated', delay: 500 });
+    
+    // Value should not change immediately
+    expect(result.current).toBe('initial');
+
+    // Wait for debounce
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 600));
+    });
+
+    // Value should update after delay
+    expect(result.current).toBe('updated');
+  });
+});
+```
+
+## Integration Testing
+
+### API Route Testing
+
+```typescript
+// api/posts/route.ts
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const userId = searchParams.get('userId');
+
+  const posts = await prisma.post.findMany({
+    where: userId ? { userId } : {},
+    include: { author: true },
+  });
+
+  return Response.json(posts);
+}
+
+// api/posts/route.test.ts
+import { describe, it, expect, beforeEach, afterEach } from 'bun:test';
+import { GET } from './route';
+import { prisma } from '@zephyr/db';
+
+describe('GET /api/posts', () => {
+  beforeEach(async () => {
+    // Seed test data
+    await prisma.user.create({
+      data: {
+        id: 'test-user',
+        email: 'test@example.com',
+        displayName: 'Test User',
+      },
+    });
+  });
+
+  afterEach(async () => {
+    // Clean up
+    await prisma.post.deleteMany();
+    await prisma.user.deleteMany();
+  });
+
+  it('returns all posts', async () => {
+    await prisma.post.create({
+      data: {
+        id: 'post-1',
+        content: 'Test post',
+        userId: 'test-user',
+      },
+    });
+
+    const request = new Request('http://localhost:3000/api/posts');
+    const response = await GET(request);
+    const posts = await response.json();
+
+    expect(posts).toHaveLength(1);
+    expect(posts[0].content).toBe('Test post');
+  });
+
+  it('filters posts by userId', async () => {
+    await prisma.post.createMany({
+      data: [
+        { id: 'post-1', content: 'Post 1', userId: 'test-user' },
+        { id: 'post-2', content: 'Post 2', userId: 'other-user' },
+      ],
+    });
+
+    const request = new Request(
+      'http://localhost:3000/api/posts?userId=test-user'
+    );
+    const response = await GET(request);
+    const posts = await response.json();
+
+    expect(posts).toHaveLength(1);
+    expect(posts[0].id).toBe('post-1');
+  });
+});
+```
+
+### Database Testing
+
+```typescript
+// services/user-service.test.ts
+import { describe, it, expect, beforeEach, afterEach } from 'bun:test';
+import { prisma } from '@zephyr/db';
+import { createUser, getUserById } from './user-service';
+
+describe('UserService', () => {
+  afterEach(async () => {
+    await prisma.user.deleteMany();
+  });
+
+  describe('createUser', () => {
+    it('creates user with valid data', async () => {
+      const userData = {
+        email: 'test@example.com',
+        displayName: 'Test User',
+        username: 'testuser',
+      };
+
+      const user = await createUser(userData);
+
+      expect(user.id).toBeDefined();
+      expect(user.email).toBe(userData.email);
+      expect(user.displayName).toBe(userData.displayName);
+    });
+
+    it('throws error for duplicate email', async () => {
+      const userData = {
+        email: 'test@example.com',
+        displayName: 'Test User',
+        username: 'testuser',
+      };
+
+      await createUser(userData);
+
+      await expect(createUser(userData)).rejects.toThrow();
+    });
+  });
+
+  describe('getUserById', () => {
+    it('returns user when found', async () => {
+      const created = await createUser({
+        email: 'test@example.com',
+        displayName: 'Test User',
+        username: 'testuser',
+      });
+
+      const user = await getUserById(created.id);
+
+      expect(user).toBeDefined();
+      expect(user?.id).toBe(created.id);
+    });
+
+    it('returns null when not found', async () => {
+      const user = await getUserById('non-existent-id');
+      expect(user).toBeNull();
+    });
+  });
+});
+```
+
+## E2E Testing (Future)
+
+When E2E testing is implemented, follow these patterns:
+
+```typescript
+// e2e/login.spec.ts
+import { test, expect } from '@playwright/test';
+
+test.describe('User Login', () => {
+  test('successful login flow', async ({ page }) => {
+    await page.goto('/login');
+
+    await page.fill('input[name="email"]', 'test@example.com');
+    await page.fill('input[name="password"]', 'password123');
+    await page.click('button[type="submit"]');
+
+    await expect(page).toHaveURL('/dashboard');
+    await expect(page.locator('text=Welcome')).toBeVisible();
+  });
+
+  test('shows error for invalid credentials', async ({ page }) => {
+    await page.goto('/login');
+
+    await page.fill('input[name="email"]', 'wrong@example.com');
+    await page.fill('input[name="password"]', 'wrongpassword');
+    await page.click('button[type="submit"]');
+
+    await expect(page.locator('text=Invalid credentials')).toBeVisible();
+  });
+});
+```
+
+## Mocking
+
+### External API Mocking
+
+```typescript
+import { describe, it, expect, mock } from 'bun:test';
+import { fetchUserPosts } from './api-client';
+
+describe('fetchUserPosts', () => {
+  it('fetches posts from API', async () => {
+    // Mock fetch
+    global.fetch = mock(() =>
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve([
+          { id: '1', title: 'Post 1' },
+          { id: '2', title: 'Post 2' },
+        ]),
+      })
+    );
+
+    const posts = await fetchUserPosts('user-123');
+
+    expect(posts).toHaveLength(2);
+    expect(posts[0].title).toBe('Post 1');
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('user-123')
+    );
+  });
+
+  it('handles API errors', async () => {
+    global.fetch = mock(() =>
+      Promise.resolve({
+        ok: false,
+        status: 500,
+      })
+    );
+
+    await expect(fetchUserPosts('user-123')).rejects.toThrow();
+  });
+});
+```
+
+### Prisma Mocking
+
+```typescript
+import { describe, it, expect, mock } from 'bun:test';
+import { prismaMock } from './test-utils/prisma-mock';
+import { getUserPosts } from './post-service';
+
+describe('getUserPosts', () => {
+  it('returns user posts', async () => {
+    const mockPosts = [
+      { id: '1', content: 'Post 1', userId: 'user-1' },
+      { id: '2', content: 'Post 2', userId: 'user-1' },
+    ];
+
+    prismaMock.post.findMany.mockResolvedValue(mockPosts);
+
+    const posts = await getUserPosts('user-1');
+
+    expect(posts).toEqual(mockPosts);
+    expect(prismaMock.post.findMany).toHaveBeenCalledWith({
+      where: { userId: 'user-1' },
+    });
+  });
+});
+```
+
+## Testing Checklist
+
+Before submitting a PR:
+
+- [ ] **All tests pass** locally
+- [ ] **New code has tests** (aim for 80%+ coverage)
+- [ ] **Tests are meaningful** (not just for coverage)
+- [ ] **Edge cases covered** (null, undefined, empty, large values)
+- [ ] **Error cases tested** (not just happy path)
+- [ ] **Integration tests** for complex workflows
+- [ ] **Mocks are appropriate** (don't over-mock)
+- [ ] **Test names are descriptive**
+- [ ] **No flaky tests** (tests pass consistently)
+
+## Best Practices
+
+### 1. **Clear Test Names**
+
+```typescript
+// ❌ Bad
+it('works', () => { ... });
+it('test1', () => { ... });
+
+// ✅ Good
+it('returns null when user not found', () => { ... });
+it('throws error when email is invalid', () => { ... });
+```
+
+### 2. **Arrange-Act-Assert Pattern**
+
+```typescript
+it('creates user with valid data', () => {
+  // Arrange
+  const userData = {
+    email: 'test@example.com',
+    name: 'Test User',
+  };
+
+  // Act
+  const user = createUser(userData);
+
+  // Assert
+  expect(user.email).toBe(userData.email);
+  expect(user.id).toBeDefined();
+});
+```
+
+### 3. **Test One Thing**
+
+```typescript
+// ❌ Bad - testing multiple things
+it('user CRUD operations', () => {
+  const user = createUser(data);
+  expect(user).toBeDefined();
+  
+  const updated = updateUser(user.id, { name: 'New Name' });
+  expect(updated.name).toBe('New Name');
+  
+  deleteUser(user.id);
+  expect(getUser(user.id)).toBeNull();
+});
+
+// ✅ Good - separate tests
+describe('User operations', () => {
+  it('creates user', () => { ... });
+  it('updates user', () => { ... });
+  it('deletes user', () => { ... });
+});
+```
+
+### 4. **Use Test Utilities**
+
+```typescript
+// test-utils/user-factory.ts
+export function createTestUser(overrides = {}) {
+  return {
+    id: crypto.randomUUID(),
+    email: 'test@example.com',
+    displayName: 'Test User',
+    username: 'testuser',
+    ...overrides,
+  };
+}
+
+// Use in tests
+it('processes user data', () => {
+  const user = createTestUser({ email: 'custom@example.com' });
+  // ...
+});
+```
+
+### 5. **Clean Up After Tests**
+
+```typescript
+describe('Database tests', () => {
+  afterEach(async () => {
+    // Clean up test data
+    await prisma.post.deleteMany();
+    await prisma.user.deleteMany();
+  });
+
+  // Tests...
+});
+```
+
+## What to Avoid
+
+### Don't
+
+- ❌ Test implementation details
+- ❌ Write brittle tests (break on refactor)
+- ❌ Over-mock (test nothing real)
+- ❌ Under-test edge cases
+- ❌ Leave commented-out tests
+- ❌ Write flaky tests
+- ❌ Test framework code
+- ❌ Duplicate test coverage
+
+### Do
+
+- ✅ Test behavior and outcomes
+- ✅ Write resilient tests
+- ✅ Mock external dependencies only
+- ✅ Cover edge cases and errors
+- ✅ Remove or fix broken tests
+- ✅ Ensure tests are deterministic
+- ✅ Test your own code
+- ✅ Keep tests DRY
+
+## Coverage Goals
+
+Target coverage levels:
+
+- **Critical paths**: 100% (auth, payments, security)
+- **Business logic**: 90%+ (services, utilities)
+- **UI components**: 70%+ (components, pages)
+- **Overall**: 80%+
+
+**Note**: Coverage is a metric, not a goal. Focus on meaningful tests, not just numbers.
+
+## Running Tests
+
+```bash
+# Run all tests
+bun test
+
+# Run specific test file
+bun test path/to/file.test.ts
+
+# Run tests in watch mode
+bun test --watch
+
+# Run tests with coverage
+bun test --coverage
+
+# Run tests matching pattern
+bun test --filter="user"
+```
+
+> **Pro tip:** `bun test --watch` is your friend during development! It reruns tests automatically as you code, giving you instant feedback. It's like having a safety net that alerts you the moment something breaks. Game changer! 🔄
+
+## Additional Resources
+
+- [Bun Test Documentation](https://bun.sh/docs/cli/test)
+- [Testing Library](https://testing-library.com/)
+- [Testing Best Practices](https://github.com/goldbergyoni/javascript-testing-best-practices)
+- [Kent C. Dodds: Common Testing Mistakes](https://kentcdodds.com/blog/common-mistakes-with-react-testing-library)
+
+---
+
+Remember: Every test you write is an investment in the project's future. Happy testing! 🧪✨
+
+---
+
+Good tests give you confidence to ship. Write tests that matter! 🧪

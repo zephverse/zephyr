@@ -1,0 +1,260 @@
+---
+title: Styling
+description: Tailwind CSS, shadcn/ui components, and theming system.
+---
+
+import { Callout } from "nextra/components";
+
+## Overview
+
+Zephyr combines **Tailwind CSS** with **shadcn/ui** for a scalable, accessible design system.
+
+**Stack:**
+- **Tailwind CSS 4.0** – Utility-first framework
+- **shadcn/ui** – Accessible component primitives built on Radix UI
+- **CVA (class-variance-authority)** – Component variant management
+- **tailwind-merge** – Safe class merging
+
+## Tailwind Configuration
+
+Shared config in `packages/tailwind/configs/config.ts`:
+
+```typescript
+import type { Config } from "tailwindcss";
+
+export default {
+  darkMode: ["class"],
+  content: ["./src/**/*.{ts,tsx}", "../../packages/ui/**/*.{ts,tsx}"],
+  theme: {
+    extend: {
+      colors: {
+        border: "hsl(var(--border))",
+        background: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
+        primary: {
+          DEFAULT: "hsl(var(--primary))",
+          foreground: "hsl(var(--primary-foreground))",
+        },
+        // ...more colors
+      },
+      borderRadius: {
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)",
+      },
+    },
+  },
+  plugins: [require("@tailwindcss/typography")],
+} satisfies Config;
+```
+
+Colors reference CSS variables for easy theming.
+
+## CSS Variables
+
+Design tokens in `packages/ui/styles/globals.css`:
+
+```css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --radius: 0.5rem;
+    /* ...more tokens */
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    /* ...dark mode overrides */
+  }
+}
+```
+
+Toggle dark mode by adding/removing the `dark` class on `<html>`.
+
+## Utility Helper
+
+`cn()` merges classes safely, handling conflicts:
+
+```typescript
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+```
+
+**Usage:**
+
+```tsx
+import { cn } from "@/lib/utils";
+
+<div className={cn(
+  "px-4 py-2 rounded-lg",
+  isActive && "bg-primary text-primary-foreground",
+  isDisabled && "opacity-50 cursor-not-allowed",
+  props.className  // Allow external overrides
+)} />
+```
+
+`twMerge` ensures `bg-blue-500` overrides `bg-red-500` instead of applying both.
+
+## Common Patterns
+
+```tsx
+// Layout
+<div className="flex items-center justify-between gap-4">
+<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<div className="container mx-auto px-4 max-w-7xl">
+
+// Spacing
+<div className="space-y-4">  {/* Vertical spacing between children */}
+<div className="gap-2">      {/* Grid/flex gap */}
+
+// Typography
+<h1 className="text-2xl font-bold tracking-tight">
+<p className="text-sm text-muted-foreground leading-relaxed">
+
+// Responsive
+<div className="hidden md:block">  {/* Show on md+ */}
+<div className="text-sm md:text-base lg:text-lg">
+
+// States
+<button className="hover:bg-accent focus:ring-2 focus:ring-primary active:scale-95">
+<div className="dark:bg-slate-900 dark:border-slate-700">
+```
+
+## Component Variants with CVA
+
+shadcn/ui uses CVA to manage component variants:
+
+```typescript
+import { cva, type VariantProps } from "class-variance-authority";
+
+const buttonVariants = cva(
+  // Base styles
+  "inline-flex items-center justify-center rounded-md font-medium transition-colors",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+        outline: "border border-input hover:bg-accent",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+      },
+      size: {
+        default: "h-10 px-4 py-2",
+        sm: "h-9 px-3 text-sm",
+        lg: "h-11 px-8",
+        icon: "h-10 w-10",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  }
+);
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {}
+
+export function Button({ variant, size, className, ...props }: ButtonProps) {
+  return <button className={cn(buttonVariants({ variant, size }), className)} {...props} />;
+}
+```
+
+**Usage:**
+
+```tsx
+<Button variant="outline" size="sm">Click me</Button>
+<Button variant="destructive">Delete</Button>
+<Button size="icon"><TrashIcon /></Button>
+```
+
+## shadcn/ui Components
+
+All UI primitives live in `packages/ui/shadui/`. Examples:
+
+### Button
+```tsx
+import { Button } from "@zephyr/ui/shadui/button";
+<Button variant="default">Primary</Button>
+```
+
+### Dialog
+```tsx
+import { Dialog, DialogTrigger, DialogContent, DialogTitle } from "@zephyr/ui/shadui/dialog";
+
+<Dialog>
+  <DialogTrigger asChild><Button>Open</Button></DialogTrigger>
+  <DialogContent>
+    <DialogTitle>Confirm Action</DialogTitle>
+    <p>Are you sure?</p>
+  </DialogContent>
+</Dialog>
+```
+
+### Form
+```tsx
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@zephyr/ui/shadui/form";
+
+<Form {...form}>
+  <FormField name="username" render={({ field }) => (
+    <FormItem>
+      <FormLabel>Username</FormLabel>
+      <FormControl><Input {...field} /></FormControl>
+      <FormMessage />
+    </FormItem>
+  )} />
+</Form>
+```
+
+## Custom Styling
+
+### Extending Tailwind
+
+Add custom utilities in `tailwind.config.ts`:
+
+```typescript
+theme: {
+  extend: {
+    colors: {
+      brand: {
+        50: "#f0f9ff",
+        500: "#0ea5e9",
+        900: "#0c4a6e",
+      },
+    },
+    spacing: {
+      '128': '32rem',
+    },
+  },
+}
+```
+
+### Custom CSS
+
+For one-off styles, add to `globals.css`:
+
+```css
+@layer components {
+  .card-hover {
+    @apply transition-all hover:shadow-lg hover:-translate-y-1;
+  }
+}
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;

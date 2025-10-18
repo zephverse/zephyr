@@ -1,0 +1,620 @@
+---
+title: Documentation Guidelines
+description: Guidelines for contributing to code documentation, README files, and the documentation site.
+---
+
+# Documentation Guidelines
+
+Good documentation makes Zephyr accessible to everyone. This guide covers contributing to code comments, README files, and the documentation site.
+
+> **Confession time:** We've all skipped writing docs at some point, thinking "I'll remember what this does." Spoiler alert: you won't! Future-you (and your teammates) will thank you for taking a few extra minutes to document your code. Plus, writing good docs often helps you spot bugs and design issues before they become problems! 📝
+
+## Why Documentation Matters
+
+- **Onboarding**: Helps new contributors get started quickly
+- **Maintenance**: Makes code easier to understand and modify
+- **Discoverability**: Helps users find features they need
+- **Professionalism**: Shows care and attention to detail
+
+*Think of documentation as a love letter to future developers (who might be you in 6 months, confused about what past-you was thinking!).*
+
+## Code Documentation
+
+### JSDoc Comments
+
+Use JSDoc for all public APIs:
+
+```typescript
+/**
+ * Fetches a user's profile from the database.
+ *
+ * @param userId - The unique identifier of the user
+ * @param options - Optional fetch configuration
+ * @returns The user profile or null if not found
+ * @throws {DatabaseError} If database connection fails
+ *
+ * @example
+ * ```ts
+ * const profile = await getUserProfile("user-123");
+ * if (profile) {
+ *   console.log(profile.displayName);
+ * }
+ * ```
+ */
+export async function getUserProfile(
+  userId: string,
+  options?: FetchOptions
+): Promise<UserProfile | null> {
+  // Implementation...
+}
+```
+
+**JSDoc Tags to Use:**
+- `@param` - Parameter description
+- `@returns` - Return value description
+- `@throws` - Exceptions that may be thrown
+- `@example` - Usage examples
+- `@deprecated` - Mark deprecated APIs
+- `@see` - Link to related documentation
+- `@since` - Version when feature was added
+
+### Inline Comments
+
+Comment complex logic, not obvious code:
+
+```typescript
+// ❌ Bad - obvious comment
+// Increment counter by 1
+counter++;
+
+// ✅ Good - explains "why"
+// Debounce search to avoid excessive API calls during typing
+const debouncedSearch = useDebouncedCallback(search, 300);
+
+// ✅ Good - explains complex algorithm
+// Calculate Aura score using weighted factors:
+// - Post engagement: 40%
+// - Account age: 30%
+// - Community contributions: 30%
+const auraScore = calculateWeightedScore(metrics);
+```
+
+### Type Documentation
+
+Document complex types:
+
+```typescript
+/**
+ * Configuration options for post creation.
+ */
+type PostCreateOptions = {
+  /** The post content (max 5000 characters) */
+  content: string;
+  
+  /** Optional media attachments */
+  media?: MediaAttachment[];
+  
+  /** Post visibility setting */
+  visibility: 'public' | 'followers' | 'private';
+  
+  /** Enable comments on the post */
+  commentsEnabled?: boolean;
+};
+```
+
+### Component Documentation
+
+Document React components:
+
+```tsx
+/**
+ * A customizable button component with multiple variants and sizes.
+ *
+ * @example
+ * ```tsx
+ * <Button variant="primary" size="lg" onClick={handleClick}>
+ *   Click me
+ * </Button>
+ * ```
+ */
+type ButtonProps = {
+  /** Button variant style */
+  variant?: 'primary' | 'secondary' | 'ghost';
+  
+  /** Button size */
+  size?: 'sm' | 'md' | 'lg';
+  
+  /** Click handler */
+  onClick?: () => void;
+  
+  /** Disable button interaction */
+  disabled?: boolean;
+  
+  /** Button content */
+  children: React.ReactNode;
+};
+
+export function Button({
+  variant = 'primary',
+  size = 'md',
+  onClick,
+  disabled,
+  children,
+}: ButtonProps) {
+  // Implementation...
+}
+```
+
+## README Documentation
+
+### Project README
+
+When updating the main README (`README.md` or `.github/README.md`):
+
+**Structure:**
+1. Project banner/logo
+2. Brief description
+3. Key features
+4. Quick start guide
+5. Documentation links
+6. Contributing guide
+7. License information
+
+**Best Practices:**
+- Keep it concise (scannable in 2-3 minutes)
+- Use visuals (screenshots, diagrams)
+- Provide working code examples
+- Link to detailed docs
+- Keep up-to-date
+
+### Package README
+
+For packages in `packages/*`:
+
+```markdown
+# @zephyr/auth
+
+Authentication utilities for Zephyr.
+
+## Installation
+
+\`\`\`bash
+bun add @zephyr/auth
+\`\`\`
+
+## Usage
+
+\`\`\`typescript
+import { createAuthConfig } from '@zephyr/auth';
+
+const auth = createAuthConfig({
+  // Configuration...
+});
+\`\`\`
+
+## API Reference
+
+### `createAuthConfig(options)`
+
+Creates an authentication configuration.
+
+**Parameters:**
+- `options` (AuthOptions): Configuration options
+
+**Returns:** AuthConfig
+
+## License
+
+AGPL-3.0
+```
+
+## Documentation Site
+
+Zephyr's documentation lives in `apps/docs/src/content/`.
+
+### File Structure
+
+```
+content/
+├── index.mdx           # Homepage
+├── _meta.ts            # Navigation config
+├── setup/              # Setup guides
+├── development/        # Development docs
+└── contribution/       # Contribution guides
+```
+
+### Writing MDX
+
+Use MDX for documentation pages:
+
+```mdx
+---
+title: Feature Name
+description: Brief description for SEO and navigation
+---
+
+# Feature Name
+
+Introduction paragraph explaining what this feature is.
+
+## Installation
+
+Code example for setup:
+
+\`\`\`bash
+bun install package-name
+\`\`\`
+
+## Usage
+
+\`\`\`tsx
+import { Component } from 'package';
+
+export function Example() {
+  return <Component />;
+}
+\`\`\`
+
+## API Reference
+
+### `functionName(param: Type): ReturnType`
+
+Description of what the function does.
+
+**Parameters:**
+- `param` - Description
+
+**Returns:** Description
+
+## Examples
+
+Practical examples showing real use cases.
+
+## See Also
+
+- [Related Page](/path/to/page)
+- [External Resource](https://example.com)
+```
+
+### Navigation Configuration
+
+Update `_meta.ts` to add pages to navigation:
+
+```typescript
+import type { MetaRecord } from "nextra";
+
+const meta: MetaRecord = {
+  index: "Start here",
+  "feature-name": "Feature Name",
+  "another-feature": "Another Feature",
+};
+
+export default meta;
+```
+
+### Content Guidelines
+
+**DO ✅**
+- Use clear, concise language
+- Include code examples
+- Add screenshots for UI features
+- Link to related docs
+- Use proper heading hierarchy (H1 → H2 → H3)
+- Test all code examples
+- Keep pages focused on one topic
+
+**DON'T ❌**
+- Assume prior knowledge
+- Use jargon without explanation
+- Write walls of text
+- Include outdated information
+- Forget to update navigation
+- Leave broken links
+- Skip code formatting
+
+### Code Blocks
+
+Use proper syntax highlighting:
+
+````mdx
+```typescript
+// TypeScript code
+const example: string = "Hello";
+```
+
+```bash
+# Shell commands
+bun install
+```
+
+```tsx
+// React components
+export function Component() {
+  return <div>Hello</div>;
+}
+```
+````
+
+### Callouts and Admonitions
+
+Use callouts for important information:
+
+```mdx
+> [!NOTE]
+> This is informational content.
+
+> [!WARNING]
+> This is a warning about potential issues.
+
+> [!IMPORTANT]
+> This is critical information.
+
+> [!TIP]
+> This is a helpful tip.
+```
+
+### Tables
+
+Use tables for structured data:
+
+```mdx
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| variant | string | 'primary' | Button style |
+| size | string | 'md' | Button size |
+| disabled | boolean | false | Disable button |
+```
+
+### Images
+
+Add images with descriptive alt text:
+
+```mdx
+![Screenshot of the user dashboard](./images/dashboard.png)
+```
+
+Store images in `public/` or co-locate with docs.
+
+## Documentation Types
+
+### Tutorials
+
+**Purpose**: Teach users how to accomplish a specific task
+
+**Structure:**
+1. What you'll build
+2. Prerequisites
+3. Step-by-step instructions
+4. Verification/testing
+5. Next steps
+
+**Example:**
+```mdx
+# Building Your First Post
+
+Learn how to create and publish a post in Zephyr.
+
+## What You'll Build
+
+A simple post with text content and an image attachment.
+
+## Prerequisites
+
+- Zephyr account
+- Basic knowledge of the platform
+
+## Steps
+
+### 1. Navigate to Post Creator
+...
+
+### 2. Write Your Content
+...
+```
+
+### How-To Guides
+
+**Purpose**: Solve specific problems
+
+**Structure:**
+1. Problem statement
+2. Solution overview
+3. Detailed steps
+4. Troubleshooting
+
+**Example:**
+```mdx
+# How to Enable Dark Mode
+
+## Problem
+
+You want to switch the UI to dark mode.
+
+## Solution
+
+Navigate to Settings > Appearance > Theme and select "Dark".
+
+## Steps
+
+1. Click your avatar in the top right
+2. Select "Settings"
+3. Go to "Appearance"
+4. Click "Dark" under Theme
+5. Changes apply immediately
+
+## Troubleshooting
+
+**Theme not changing?**
+- Clear browser cache
+- Check browser compatibility
+```
+
+### Reference Documentation
+
+**Purpose**: Provide technical specifications
+
+**Structure:**
+1. Overview
+2. API/Component details
+3. Parameters/props
+4. Return values
+5. Examples
+
+**Example:**
+```mdx
+# API Reference: createPost
+
+Creates a new post in the database.
+
+## Signature
+
+\`\`\`typescript
+function createPost(data: PostData): Promise<Post>
+\`\`\`
+
+## Parameters
+
+- `data` (PostData): Post content and metadata
+  - `content` (string): Post text (max 5000 chars)
+  - `media` (MediaAttachment[]): Optional attachments
+  - `visibility` (Visibility): Post visibility
+
+## Returns
+
+Promise<Post>: The created post object
+
+## Throws
+
+- `ValidationError`: Invalid post data
+- `DatabaseError`: Database operation failed
+
+## Examples
+
+\`\`\`typescript
+const post = await createPost({
+  content: "Hello, world!",
+  visibility: "public"
+});
+\`\`\`
+```
+
+### Explanations
+
+**Purpose**: Explain concepts and design decisions
+
+**Structure:**
+1. Concept introduction
+2. Why it matters
+3. How it works
+4. When to use
+5. Related concepts
+
+**Example:**
+```mdx
+# Understanding the Aura System
+
+Aura is Zephyr's reputation and engagement scoring system.
+
+## What is Aura?
+
+Aura represents a user's contribution and standing in the community.
+
+## Why Aura Matters
+
+- Rewards quality content creation
+- Incentivizes community participation
+- Provides trust signals
+
+## How It Works
+
+Aura is calculated based on:
+1. Post engagement (40%)
+2. Account longevity (30%)
+3. Community contributions (30%)
+
+## When to Care About Aura
+
+As a user, higher Aura unlocks:
+- Increased visibility
+- Special badges
+- Enhanced features
+```
+
+## Documentation Checklist
+
+Before submitting documentation changes:
+
+- [ ] **Spelling and grammar** checked
+- [ ] **Code examples** tested and working
+- [ ] **Links** verified (no 404s)
+- [ ] **Images** optimized and have alt text
+- [ ] **Navigation** updated if new page
+- [ ] **Headings** follow hierarchy (H1 → H2 → H3)
+- [ ] **Formatting** consistent with other pages
+- [ ] **Technical accuracy** verified
+- [ ] **Audience-appropriate** (not too technical/simple)
+- [ ] **Build** passes (`bun run build`)
+
+## Style Guide
+
+### Voice and Tone
+
+- **Be conversational**: "You can configure this..." not "One can configure this..."
+- **Be direct**: "Click the button" not "The button should be clicked"
+- **Be positive**: "Use this approach" not "Don't use that approach"
+- **Be inclusive**: "they/them" for generic examples
+
+### Formatting
+
+- **Headings**: Sentence case (not Title Case)
+- **Lists**: Parallel structure (all start with verb or all nouns)
+- **Code**: Backticks for `inline code`, blocks for multi-line
+- **Emphasis**: **Bold** for UI elements, _italic_ for emphasis
+
+### Examples
+
+```mdx
+# ✅ Good
+
+To create a post:
+
+1. Click the **New Post** button
+2. Enter your content
+3. Click **Publish**
+
+# ❌ Bad
+
+How To Create A Post:
+
+1. The user should click on the "New Post" button
+2. Then they can enter content
+3. Finally, clicking "Publish" will publish it
+```
+
+## Keeping Docs Updated
+
+### When Code Changes
+
+- Update relevant docs in the same PR
+- Mark deprecated features
+- Add migration guides for breaking changes
+
+### Regular Maintenance
+
+- Review docs quarterly
+- Remove outdated content
+- Update screenshots
+- Fix broken links
+- Improve clarity based on user feedback
+
+> **Documentation truth bomb:** Outdated docs are worse than no docs at all! They mislead people and waste time. When you change code, updating the docs isn't "extra work" - it's part of the feature. Your fellow developers (and users!) will appreciate the accuracy. 💯
+
+## Thank You
+
+Great documentation helps everyone. Thank you for contributing! 📚
+
+*Remember: You're not just writing documentation - you're building bridges between the code and the people who use it. That's pretty awesome when you think about it!* 🌉✨
+
+---
+
+**Need help?** Ask in your PR or open a [discussion](https://github.com/zephverse/zephyr/discussions).

@@ -1,0 +1,199 @@
+---
+title: Components
+description: Component architecture, patterns, and best practices for building Zephyr UI.
+---
+
+import { Callout } from "nextra/components";
+
+## Component Architecture
+
+Zephyr separates Server Components (data fetching, DB queries) from Client Components (interactivity, hooks).
+
+### Server vs Client
+
+```tsx
+// Server Component (default) – async data, no interactivity
+export async function ProfileFeed({ userId }: { userId: string }) {
+  const posts = await getPosts(userId);
+  return posts.map(post => <PostCard key={post.id} post={post} />);
+}
+
+// Client Component – state, events, hooks
+"use client";
+export function VoteButton({ postId }: { postId: string }) {
+  const [voted, setVoted] = useState(false);
+  return <button onClick={() => setVoted(!voted)}>Vote</button>;
+}
+```
+
+**Use Client Components for:**  
+Clicks, state hooks (`useState`, `useEffect`), browser APIs, event listeners, React Context.
+
+**Use Server Components for:**  
+Data fetching, database calls, static content, SEO-critical rendering, smaller bundles.
+
+## Key Patterns
+
+### Composition
+
+Break large components into focused, reusable pieces:
+
+```tsx
+export function PostCard({ post }: { post: Post }) {
+  return (
+    <article>
+      <PostHeader author={post.author} createdAt={post.createdAt} />
+      <PostContent content={post.content} />
+      <PostMedia attachments={post.attachments} />
+      <PostActions postId={post.id} />
+    </article>
+  );
+}
+```
+
+Each sub-component (`PostHeader`, `PostContent`, etc.) is independently testable and reusable.
+
+### Container/Presenter
+
+Separate data logic (container) from UI rendering (presenter):
+
+```tsx
+"use client";
+export function CommentsContainer({ postId }: { postId: string }) {
+  const { data, isLoading } = useComments(postId);
+  if (isLoading) return <CommentsSkeleton />;
+  
+  return <CommentsPresenter comments={data} />;
+}
+
+function CommentsPresenter({ comments }: Props) {
+  return <CommentList comments={comments} />;
+}
+```
+
+### Compound Components
+
+shadcn/ui uses this pattern for related components that share context:
+
+```tsx
+<Dialog>
+  <DialogTrigger>Open</DialogTrigger>
+  <DialogContent>
+    <DialogHeader><DialogTitle>Title</DialogTitle></DialogHeader>
+    <DialogFooter><Button>Close</Button></DialogFooter>
+  </DialogContent>
+</Dialog>
+```
+
+## Essential Components
+
+### PostCard
+
+Central component for displaying posts—composes author info, content, media, and actions:
+
+```tsx
+export function PostCard({ post }: { post: Post }) {
+  return (
+    <article className="border rounded-lg p-4">
+      <UserAvatar user={post.author} />
+      <div className="prose">{post.content}</div>
+      <PostMedia attachments={post.attachments} />
+      <PostActions postId={post.id} />
+    </article>
+  );
+}
+```
+
+### PostEditor
+
+Form-backed editor with React Hook Form validation and file uploads:
+
+```tsx
+"use client";
+export function PostEditor() {
+  const form = useForm<CreatePostInput>({
+    resolver: zodResolver(createPostSchema),
+  });
+
+  const onSubmit = async (data: CreatePostInput) => {
+    const result = await createPostAction(data);
+    if (!result.error) router.push(`/posts/${result.post.id}`);
+  };
+
+  return (
+    <form onSubmit={form.handleSubmit(onSubmit)}>
+      <Textarea {...form.register("content")} placeholder="What's on your mind?" />
+      <Button type="submit">Post</Button>
+    </form>
+  );
+}
+```
+
+### UserCard & UserAvatar
+
+Reusable user profile displays across feeds and comments—`UserAvatar` accepts size variants and fallback initials:
+
+```tsx
+export function UserCard({ user }: { user: User }) {
+  return (
+    <div className="flex items-center gap-3">
+      <UserAvatar user={user} size="md" />
+      <div>
+        <p className="font-semibold">{user.displayName}</p>
+        <p className="text-sm text-muted-foreground">@{user.username}</p>
+      </div>
+    </div>
+  );
+}
+```
+
+### Interactive Buttons
+
+**FollowButton** and **BookmarkButton** handle optimistic updates, automatically rolling back on mutation errors:
+
+```tsx
+"use client";
+export function FollowButton({ userId }: { userId: string }) {
+  const { data } = useFollowerInfo(userId);
+  const mutation = useFollowMutation();
+
+  return (
+    <Button onClick={() => mutation.mutate(userId)} disabled={mutation.isPending}>
+      {data.isFollowing ? "Unfollow" : "Follow"}
+    </Button>
+  );
+}
+```
+
+### Loading & Error States
+
+**Skeleton components** show placeholders during data fetching; **ErrorBoundary** catches runtime errors and offers a retry:
+
+```tsx
+export function PostSkeleton() {
+  return (
+    <div className="border rounded-lg p-4 space-y-4">
+      <Skeleton className="h-10 w-10 rounded-full" />
+      <Skeleton className="h-4 w-full" />
+      <Skeleton className="h-4 w-3/4" />
+    </div>
+  );
+}
+```
+
+## Best Practices
+
+- **Clear naming** – `<PostCard />`, `<UserAvatar />` over generic `<Card />` or `<Avatar />`.
+- **Typed props** – Define explicit interfaces instead of `any`.
+- **Early returns** – Check edge cases (`!post`, `post.deleted`) before rendering.
+- **Handle all states** – Show loading, error, and empty states explicitly.
+- **Memoize expensive computations** – Use `useMemo` for derived stats or transformations.
+- **Accessibility** – Add ARIA labels, keyboard handlers (Escape key), and focus management.
+
+## Next Steps
+
+- **[Styling](/development/styling)** – Apply Tailwind and shadcn/ui theming
+- **[State Management](/development/state-management)** – Manage server state (React Query) and client state (Jotai)
+- **[File Uploads](/development/file-uploads)** – Integrate media uploads in forms
+
+

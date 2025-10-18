@@ -1,0 +1,404 @@
+---
+title: Workflows
+description: Common development tasks, debugging strategies, and productivity tips.
+---
+
+import { Callout } from "nextra/components";
+
+## Adding a New Feature
+
+Example: **Draft Posts**
+
+### 1. Plan
+
+**Requirements:**
+- Save posts as drafts
+- Drafts only visible to author
+- Publish drafts later
+
+**Affected:**
+- Database: `isDraft` field
+- API: Filter drafts from public queries
+- UI: Draft button, badge
+
+### 2. Update Schema
+
+```prisma
+// packages/db/prisma/schema.prisma
+model Post {
+  id       String  @id @default(cuid())
+  isDraft  Boolean @default(false)  // Add this
+  // ...
+}
+```
+
+```bash
+cd packages/db && bunx prisma migrate dev --name add_draft_posts
+```
+
+### 3. Update API
+
+```typescript
+// apps/web/src/app/api/posts/route.ts
+export async function GET() {
+  const session = await auth();
+  
+  const posts = await prisma.post.findMany({
+    where: {
+      OR: [
+        { isDraft: false },  // Public
+        ...(session?.user?.id ? [{ isDraft: true, authorId: session.user.id }] : []),
+      ],
+    },
+  });
+  
+  return NextResponse.json(posts);
+}
+```
+
+### 4. Server Action
+
+```typescript
+// apps/web/src/app/(protected)/posts/actions.ts
+"use server";
+
+import { revalidatePath } from "next/cache";
+
+export async function createPost(content: string, isDraft = false) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("Unauthorized");
+
+  const post = await prisma.post.create({
+    data: { content, isDraft, authorId: session.user.id },
+  });
+
+  revalidatePath("/");
+  return post;
+}
+```
+
+### 5. UI Component
+
+```tsx
+"use client";
+
+export function PostEditor() {
+  const [content, setContent] = useState("");
+  const mutation = useMutation({
+    mutationFn: (draft: boolean) => createPost(content, draft),
+  });
+
+  return (
+    <>
+      <textarea value={content} onChange={(e) => setContent(e.target.value)} />
+      <Button onClick={() => mutation.mutate(false)}>Publish</Button>
+      <Button variant="outline" onClick={() => mutation.mutate(true)}>Save Draft</Button>
+    </>
+  );
+}
+```
+
+### 6. Test
+
+- ✅ Create draft → `isDraft: true`
+- ✅ Only author sees their drafts
+- ✅ Publish draft → `isDraft: false`
+
+## Debugging
+
+### Server-Side
+
+```typescript
+// API Routes
+export async function GET(request: Request) {
+  console.log("Fetching posts...");
+  const session = await auth();
+  console.log("User ID:", session?.user?.id);
+  
+  const posts = await prisma.post.findMany();
+  console.log("Found posts:", posts.length);
+  
+  return NextResponse.json(posts);
+}
+```
+
+**Prisma Queries:**
+```typescript
+// packages/db/src/prisma.ts
+// ⚠️ Security: Query logging is disabled in production to prevent
+// exposure of sensitive data (PII, secrets) in logs. Only errors are logged.
+export const prisma = new PrismaClient({
+  log: process.env.NODE_ENV === "development"
+    ? ["query", "info", "warn", "error"]
+    : ["error"],
+});
+```
+
+**Redis Cache:**
+```bash
+# Open RedisInsight
+open http://localhost:5540
+
+# Or CLI
+docker exec -it zephyr-redis redis-cli
+> KEYS *
+> GET "user:123"
+> DEL "stale-key"
+```
+
+### Client-Side
+
+**React Query DevTools:**
+```tsx
+// apps/web/src/app/layout.tsx
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+
+<ReactQueryDevtools initialIsOpen={false} />
+```
+
+**Browser Console:**
+```typescript
+// Inspect cache
+useEffect(() => {
+  console.log("Posts data:", posts);
+}, [posts]);
+
+// Log mutations
+const mutation = useMutation({
+  mutationFn: createPost,
+  onError: (error) => console.error("Mutation failed:", error),
+  onSuccess: (data) => console.log("Created:", data),
+});
+```
+
+## Performance
+
+### Bundle Size
+
+Configure bundle analyzer in `next.config.js`:
+
+```javascript
+// apps/web/next.config.js
+const withBundleAnalyzer = require("@next/bundle-analyzer")({
+  enabled: process.env.ANALYZE === "true",
+});
+
+module.exports = withBundleAnalyzer({
+  // your config
+});
+```
+
+Run analysis:
+
+```bash
+cd apps/web && ANALYZE=true bunx next build
+```
+
+Lazy load heavy components:
+
+```typescript
+const Editor = dynamic(() => import("./Editor"), {
+  loading: () => <Skeleton />,
+  ssr: false,
+});
+```
+
+### Images
+
+```tsx
+import Image from "next/image";
+
+<Image
+  src="/photo.jpg"
+  alt="Description"
+  width={800}
+  height={600}
+  quality={85}
+  sizes="(max-width: 768px) 100vw, 50vw"
+/>
+```
+
+### Queries
+
+```typescript
+// ✅ Good: Include relations
+const posts = await prisma.post.findMany({
+  include: {
+    author: { select: { id: true, username: true } },
+    _count: { select: { comments: true } },
+  },
+});
+
+// ❌ Bad: N+1 queries
+const posts = await prisma.post.findMany();
+for (const post of posts) {
+  const author = await prisma.user.findUnique({ where: { id: post.authorId } });
+}
+```
+
+### React Query
+
+```typescript
+// Set staleTime to reduce refetches
+useQuery({
+  queryKey: ["posts"],
+  queryFn: fetchPosts,
+  staleTime: 60_000,  // 1 minute
+});
+
+// Prefetch on hover
+<Link
+  href={`/posts/${id}`}
+  onMouseEnter={() => queryClient.prefetchQuery({
+    queryKey: ["post", id],
+    queryFn: () => fetchPost(id),
+  })}
+>
+```
+
+## Database
+
+### Migrations
+
+```bash
+cd packages/db
+
+# Create migration
+bunx prisma migrate dev --name add_feature
+
+# Apply to production
+bunx prisma migrate deploy
+
+# Reset (dev only!)
+bunx prisma migrate reset
+```
+
+### Seeding
+
+```typescript
+// packages/db/prisma/seed.ts
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
+
+async function main() {
+  const user = await prisma.user.create({
+    data: {
+      email: "test@example.com",
+      username: "testuser",
+    },
+  });
+
+  await prisma.post.createMany({
+    data: [
+      { content: "First post", authorId: user.id },
+      { content: "Second post", authorId: user.id },
+    ],
+  });
+
+  console.log("Seeded!");
+}
+
+main().finally(() => prisma.$disconnect());
+```
+
+```bash
+bunx prisma db seed
+```
+
+### Backup
+
+```bash
+# Backup
+pg_dump -h localhost -p 5433 -U postgres -d zephyr > backup.sql
+
+# Restore
+psql -h localhost -p 5433 -U postgres -d zephyr < backup.sql
+```
+
+## Git Workflow
+
+```bash
+# Feature branch
+git checkout -b feature/draft-posts
+
+# Commit
+git add .
+git commit -m "feat: add draft posts"
+
+# Push and create PR
+git push origin feature/draft-posts
+```
+
+**Commit Convention:**
+- `feat:` New feature
+- `fix:` Bug fix
+- `docs:` Documentation
+- `refactor:` Code refactoring
+- `perf:` Performance
+- `test:` Tests
+- `chore:` Maintenance
+
+**Sync with main:**
+```bash
+git checkout main && git pull
+git checkout feature/draft-posts
+git rebase main
+git push --force-with-lease
+```
+
+## Troubleshooting
+
+### Port in Use
+
+```bash
+# Find process (macOS/Linux)
+lsof -i :3000
+
+# Kill process
+kill -9 <PID>
+
+# Windows
+netstat -ano | findstr :3000
+taskkill /PID <PID> /F
+```
+
+### Module Not Found
+
+```bash
+# Regenerate Prisma
+cd packages/db && bunx prisma generate
+
+# Clear cache
+bun run clean && bun install
+rm -rf .turbo
+```
+
+### Docker Issues
+
+```bash
+# Check containers
+docker ps -a
+
+# View logs
+docker compose -f docker/docker-compose.dev.yml logs postgres-dev
+
+# Restart
+bun run docker:down && bun run docker:dev
+
+# Nuclear option
+bun run docker:clean && docker volume prune -f
+```
+
+### Database Connection
+
+```bash
+# Check PostgreSQL
+docker ps | grep postgres
+
+# Test connection
+cd packages/db && bunx prisma db pull
+
+# Reset
+bunx prisma migrate reset
+```
