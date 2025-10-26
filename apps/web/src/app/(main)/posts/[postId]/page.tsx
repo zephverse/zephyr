@@ -3,6 +3,7 @@ import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cache, Suspense } from "react";
+import Comments from "@/components/Comments/comments"; // <-- IMPORTED COMMENTS
 import PostCard from "@/components/Home/feedview/post-card";
 import NavigationCard from "@/components/Home/sidebars/left/navigation-card";
 import ProfileCard from "@/components/Home/sidebars/right/profile-card";
@@ -84,6 +85,7 @@ export default async function Page(props: PageProps) {
 
       <div className="mt-5 w-full min-w-0 space-y-5">
         <PostCard post={post} />
+        <Comments post={post} /> {/* <-- ADDED THIS LINE */}
       </div>
 
       <div className="sticky top-[5.25rem] hidden h-fit w-80 flex-none lg:block">

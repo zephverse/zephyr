@@ -32,7 +32,8 @@ function initializeResend(): void {
   }
 }
 
-const SENDER = "zephyyrr.in";
+const _SENDER = "zephyyrr.in";
+
 const TRAILING_SLASH_REGEX = /\/$/;
 
 function getBaseUrl(): string {
@@ -130,7 +131,7 @@ export async function sendVerificationEmail(
 
   try {
     const { error } = await resend.emails.send({
-      from: `🪁 Zephyr <no-reply@${SENDER}>`,
+      from: "🪁 Zephyr <onboarding@resend.dev>",
       to: email,
       subject: emailConfig.templates.verification.subject,
       html: await getVerificationEmailHtml(verificationUrl),
@@ -217,7 +218,7 @@ export async function sendVerificationOTP(
 
   try {
     const { error } = await resend.emails.send({
-      from: `🪁 Zephyr <no-reply@${SENDER}>`,
+      from: "🪁 Zephyr <onboarding@resend.dev>",
       to: email,
       subject: "Your Verification Code - Zephyr",
       html: await getOTPVerificationEmailHtml(otp),
@@ -268,7 +269,7 @@ export async function sendPasswordResetEmail(
     }
 
     const { error } = await resend.emails.send({
-      from: `🔒 Zephyr <no-reply@${SENDER}>`,
+      from: "🔒 Zephyr <onboarding@resend.dev>",
       to: email,
       subject: emailConfig.templates.passwordReset.subject,
       html: await getPasswordResetEmailHtml(resetUrl),

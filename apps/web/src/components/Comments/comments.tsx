@@ -1,3 +1,5 @@
+"use client";
+
 import { useInfiniteQuery } from "@tanstack/react-query";
 import type { CommentsPage, PostData } from "@zephyr/db";
 import { Button } from "@zephyr/ui/shadui/button";
