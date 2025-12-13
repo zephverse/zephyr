@@ -3,9 +3,10 @@ import type { NextConfig } from "next";
 export const config: NextConfig = {
   transpilePackages: ["@zephyr/auth", "@zephyr/db", "@zephyr/config"],
   reactStrictMode: true,
+  reactCompiler: true,
   experimental: {
     staleTimes: { dynamic: 30 },
-    reactCompiler: true,
+    cssChunking: true,
   },
   images: {
     remotePatterns: [

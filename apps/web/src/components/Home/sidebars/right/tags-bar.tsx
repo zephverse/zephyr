@@ -1,7 +1,7 @@
 "use client";
 
-import type { Tag } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
+import type { Tag } from "@zephyr/db";
 import { Button } from "@zephyr/ui/shadui/button";
 import { Card, CardContent } from "@zephyr/ui/shadui/card";
 import { Hash, RefreshCw } from "lucide-react";
@@ -53,7 +53,7 @@ const TagsBar = () => {
   }
 
   return (
-    <Card className="relative overflow-hidden border-primary/20 bg-primary/[0.02] shadow-xs backdrop-blur-sm">
+    <Card className="relative overflow-hidden border-primary/20 bg-primary/2 shadow-xs backdrop-blur-sm">
       <CardContent className="p-3">
         <div className="mb-3 flex items-center justify-between">
           <div className="flex items-center gap-1.5">

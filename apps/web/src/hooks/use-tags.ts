@@ -1,5 +1,5 @@
-import type { Tag } from "@prisma/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { Tag } from "@zephyr/db";
 
 type TagResponse = {
   tags: string[];

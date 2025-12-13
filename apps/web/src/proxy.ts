@@ -13,7 +13,7 @@ function isProtectedPath(pathname: string): boolean {
   return pathname === "/";
 }
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
 
   if (

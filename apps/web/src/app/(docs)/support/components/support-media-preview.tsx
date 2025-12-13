@@ -1,4 +1,4 @@
-import type { Media } from "@prisma/client";
+import type { Media } from "@zephyr/db";
 import { MediaPreviews } from "@/components/Home/feedview/media-previews";
 import { AttachmentPreview } from "@/components/Posts/editor/attachment-preview";
 import type { Attachment } from "../types";

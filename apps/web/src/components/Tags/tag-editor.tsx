@@ -1,7 +1,6 @@
 "use client";
 
-import type { Tag } from "@prisma/client";
-import type { TagWithCount } from "@zephyr/db";
+import type { Tag, TagWithCount } from "@zephyr/db";
 import { useToast } from "@zephyr/ui/hooks/use-toast";
 import { Button } from "@zephyr/ui/shadui/button";
 import { Command } from "cmdk";
@@ -122,8 +121,7 @@ export function TagEditor({
       onCloseAction();
 
       await updateTags.mutateAsync(selectedTags);
-      // biome-ignore lint/correctness/noUnusedVariables: ignore
-    } catch (error) {
+    } catch {
       toast({
         title: "Error",
         description: "Failed to update tags. Please try again.",
@@ -147,7 +145,7 @@ export function TagEditor({
         initial="initial"
         variants={containerVariants}
       >
-        <div className="flex min-h-[40px] flex-wrap gap-2">
+        <div className="flex min-h-10 flex-wrap gap-2">
           <AnimatePresence mode="popLayout">
             {selectedTags.map((tagName) => (
               <motion.div
@@ -190,7 +188,7 @@ export function TagEditor({
                 value={search}
               />
             </div>
-            <Command.List className="max-h-[180px] overflow-y-auto p-2">
+            <Command.List className="max-h-45 overflow-y-auto p-2">
               {search && !suggestions?.includes(search) && (
                 <Command.Item
                   className="group flex cursor-pointer items-center gap-2 rounded-md p-2 text-sm hover:bg-accent"
@@ -233,7 +231,7 @@ export function TagEditor({
             Cancel
           </Button>
           <Button
-            className="min-w-[80px] bg-primary text-primary-foreground hover:bg-primary/90"
+            className="min-w-20 bg-primary text-primary-foreground hover:bg-primary/90"
             disabled={updateTags.isPending}
             onClick={handleSave}
           >

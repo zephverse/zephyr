@@ -1,7 +1,6 @@
 {
   "extends": "@zephyr/config/nextjs.config.json",
   "compilerOptions": {
-    "baseUrl": ".",
     "strictNullChecks": true
   },
   "include": ["**/*.ts", "**/*.tsx"],

@@ -3,7 +3,7 @@
 console.log("Initializing MeiliSearch user search index...");
 
 try {
-  // biome-ignore lint/correctness/noUnusedVariables: Used in try-catch
+  // biome-ignore lint/correctness/noUnusedVariables: required to test MeiliSearch import
   const { MeiliSearch } = require("meilisearch");
   console.log("MeiliSearch imported successfully");
   const host = process.env.MEILISEARCH_URL;

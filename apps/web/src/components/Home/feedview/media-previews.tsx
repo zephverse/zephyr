@@ -1,4 +1,4 @@
-import type { Media } from "@prisma/client";
+import type { Media } from "@zephyr/db";
 import { Button } from "@zephyr/ui/shadui/button";
 import { FileAudioIcon, FileCode, FileIcon } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
@@ -100,7 +100,7 @@ export function MediaPreviews({ attachments }: MediaPreviewsProps) {
       >
         <div className="relative">
           <div className="-inset-4 absolute">
-            <div className="absolute inset-0 rounded-full bg-white/10 group-hover:animate-[ping_1s_cubic-bezier(0,0,0.2,1)_infinite]" />
+            <div className="absolute inset-0 rounded-full bg-white/10 group-hover:animate-ping" />
             <div className="absolute inset-0 rounded-full bg-black/20 blur-xs group-hover:animate-pulse" />
           </div>
           <motion.div
@@ -120,7 +120,7 @@ export function MediaPreviews({ attachments }: MediaPreviewsProps) {
         </div>
         <FileTypeWatermark type={m.key.split(".").pop() || "FILE"} />
       </motion.div>
-      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-40 transition-all duration-300 group-hover:opacity-20" />
+      <div className="absolute inset-0 bg-linear-to-t from-black/50 via-transparent to-transparent opacity-40 transition-all duration-300 group-hover:opacity-20" />
     </div>
   );
 

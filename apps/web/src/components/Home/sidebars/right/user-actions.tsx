@@ -1,7 +1,6 @@
 "use server";
 
-import { Prisma } from "@prisma/client";
-import { prisma } from "@zephyr/db";
+import { Prisma, prisma } from "@zephyr/db";
 import { getSessionFromApi } from "@/lib/session";
 
 export async function getSuggestedConnections() {

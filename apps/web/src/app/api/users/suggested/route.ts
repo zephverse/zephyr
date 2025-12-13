@@ -1,10 +1,9 @@
-import { Prisma } from "@prisma/client";
 import { getSessionFromApi } from "@/lib/session";
 import { suggestedUsersCache } from "@/lib/suggested-users-cache";
 
 export type { UserData } from "@zephyr/db";
 
-import { getUserDataSelect, prisma, redis } from "@zephyr/db";
+import { getUserDataSelect, Prisma, prisma, redis } from "@zephyr/db";
 
 const RECENTLY_SHOWN_CACHE_KEY = (userId: string) =>
   `recently-shown-users:${userId}`;

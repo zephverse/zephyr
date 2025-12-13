@@ -1,5 +1,9 @@
-import type { Prisma } from "@prisma/client";
-import { getPostDataInclude, type PostsPage, prisma } from "@zephyr/db";
+import {
+  getPostDataInclude,
+  type PostsPage,
+  type Prisma,
+  prisma,
+} from "@zephyr/db";
 import { getSessionFromApi } from "@/lib/session";
 
 export async function GET(request: Request) {

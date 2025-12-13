@@ -1,4 +1,4 @@
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "../prisma/generated/prisma/client";
 
 export function getUserDataSelect(loggedInUserId: string) {
   return {
@@ -269,3 +269,6 @@ export type UnfollowUserDialogProps = {
   onClose: () => void;
   handleUnfollow: (userId: string) => void;
 };
+
+// biome-ignore lint/performance/noBarrelFile: reexport
+export * from "../prisma/generated/prisma/client";

@@ -1,8 +1,10 @@
 {
   "extends": "@zephyr/config/nextjs.config.json",
   "compilerOptions": {
-    "baseUrl": ".",
-    "strictNullChecks": true
+    "strictNullChecks": true,
+    "target": "ES2023",
+    "strict": true,
+    "esModuleInterop": true
   },
   "include": ["**/*.ts", "**/*.tsx"],
   "exclude": ["node_modules"]

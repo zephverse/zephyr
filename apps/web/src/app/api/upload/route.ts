@@ -1,5 +1,4 @@
-import type { MediaType } from "@prisma/client";
-import { prisma } from "@zephyr/db";
+import { type MediaType, prisma } from "@zephyr/db";
 import { NextResponse } from "next/server";
 import { uploadToMinio } from "@/lib/minio";
 import { getSessionFromApi } from "@/lib/session";

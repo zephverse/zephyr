@@ -1,7 +1,15 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
+import pg from "pg";
 import { keys } from "../keys";
+import { PrismaClient } from "../prisma/generated/prisma/client";
 
-const prismaClientSingleton = () => new PrismaClient();
+const adapter = new PrismaPg(
+  new pg.Pool({
+    connectionString: keys.DATABASE_URL,
+  })
+);
+
+const prismaClientSingleton = () => new PrismaClient({ adapter });
 
 declare global {
   var prismaGlobal: undefined | ReturnType<typeof prismaClientSingleton>;
