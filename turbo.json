@@ -13,6 +13,10 @@
     "dev": {
       "cache": false,
       "persistent": true
+    },
+    "//#check": {},
+    "//#fix": {
+      "cache": false
     }
   }
 }

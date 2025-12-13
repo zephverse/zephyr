@@ -1,45 +1,45 @@
 {
-	"name": "@zephyr/auth",
-	"description": "Zephyr's authentication & email service package",
-	"version": "1.0.1",
-	"license": "AGPL-3.0",
-	"private": true,
-	"scripts": {
-		"check-types": "tsc --noEmit"
-	},
-	"main": "./src/index.ts",
-	"types": "./src/index.ts",
-	"exports": {
-		".": {
-			"types": "./src/index.ts",
-			"default": "./src/index.ts"
-		},
-		"./core": {
-			"types": "./src/core/index.ts",
-			"default": "./src/core/index.ts"
-		},
-		"./validation": {
-			"types": "./src/validation/index.ts",
-			"default": "./src/validation/index.ts"
-		}
-	},
-	"dependencies": {
-		"@prisma/client": "^6.17.1",
-		"@t3-oss/env-nextjs": "^0.13.8",
-		"@zephyr/db": "workspace:*",
-		"better-auth": "^1.3.27",
-		"disposable-email-domains": "^1.0.62",
-		"email-validator": "^2.0.4",
-		"jose": "^6.1.0",
-		"next": "^15.5.5",
-		"node-email-verifier": "^3.4.1",
-		"pg": "^8.16.3",
-		"react": "^19.2.0",
-		"zod": "^4.1.12"
-	},
-	"devDependencies": {
-		"@types/disposable-email-domains": "^1.0.6",
-		"@zephyr/config": "workspace:*",
-		"typescript": "^5.9.3"
-	}
+  "name": "@zephyr/auth",
+  "description": "Zephyr's authentication & email service package",
+  "version": "1.0.1",
+  "license": "AGPL-3.0",
+  "private": true,
+  "scripts": {
+    "check-types": "tsc --noEmit"
+  },
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./core": {
+      "types": "./src/core/index.ts",
+      "default": "./src/core/index.ts"
+    },
+    "./validation": {
+      "types": "./src/validation/index.ts",
+      "default": "./src/validation/index.ts"
+    }
+  },
+  "dependencies": {
+    "@prisma/client": "^6.17.1",
+    "@t3-oss/env-nextjs": "^0.13.8",
+    "@zephyr/db": "workspace:*",
+    "better-auth": "^1.3.27",
+    "disposable-email-domains": "^1.0.62",
+    "email-validator": "^2.0.4",
+    "jose": "^6.1.0",
+    "next": "^15.5.5",
+    "node-email-verifier": "^3.4.1",
+    "pg": "^8.16.3",
+    "react": "^19.2.0",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@types/disposable-email-domains": "^1.0.6",
+    "@zephyr/config": "workspace:*",
+    "typescript": "^5.9.3"
+  }
 }
