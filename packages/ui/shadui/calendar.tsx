@@ -12,6 +12,7 @@ const IconLeft = ({
 }: {
   className?: string;
 } & React.SVGProps<SVGSVGElement>) => (
+  // @ts-expect-error
   <ChevronLeftIcon className={cn("h-4 w-4", className)} {...props} />
 );
 
@@ -21,6 +22,7 @@ const IconRight = ({
 }: {
   className?: string;
 } & React.SVGProps<SVGSVGElement>) => (
+  // @ts-expect-error
   <ChevronRightIcon className={cn("h-4 w-4", className)} {...props} />
 );
 
@@ -76,6 +78,7 @@ function Calendar({
         ...classNames,
       }}
       components={{
+        // @ts-expect-error
         IconLeft,
         IconRight,
       }}

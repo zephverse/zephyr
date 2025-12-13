@@ -212,20 +212,6 @@
         "@zephyr/config": "workspace:*",
       },
     },
-    "packages/tailwind": {
-      "name": "@zephyr/tailwind",
-      "version": "1.0.1",
-      "dependencies": {
-        "@tailwindcss/typography": "^0.5.19",
-        "tailwind-merge": "^3.3.1",
-        "tailwindcss-animate": "^1.0.7",
-      },
-      "devDependencies": {
-        "@tailwindcss/postcss": "^4.1.14",
-        "@zephyr/config": "workspace:*",
-        "tailwindcss": "^4.1.14",
-      },
-    },
     "packages/ui": {
       "name": "@zephyr/ui",
       "version": "1.0.1",
@@ -290,7 +276,6 @@
         "@tailwindcss/typography": "^0.5.19",
         "@tanstack/react-query-devtools": "^5.90.2",
         "@zephyr/config": "workspace:*",
-        "@zephyr/tailwind": "workspace:*",
         "tailwindcss": "^4.1.14",
         "typescript": "^5.9.3",
       },
@@ -1411,8 +1396,6 @@
     "@zephyr/docs": ["@zephyr/docs@workspace:apps/docs"],
 
     "@zephyr/next": ["@zephyr/next@workspace:packages/next"],
-
-    "@zephyr/tailwind": ["@zephyr/tailwind@workspace:packages/tailwind"],
 
     "@zephyr/ui": ["@zephyr/ui@workspace:packages/ui"],
 

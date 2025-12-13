@@ -9,10 +9,10 @@
 		"packages/*"
 	],
 	"scripts": {
-		"dev": "turbo dev",
-		"check-types": "tsc --noEmit",
+		"dev": "turbo check-types && turbo dev",
+		"check-types": "turbo check-types",
 		"postinstall": "cd packages/db && bunx prisma generate && cd ../..",
-		"build": "bun run check && turbo build",
+		"build": "turbo check-types && turbo build",
 		"dep:check": "bunx sherif@latest -f",
 		"env:dev": "bun -e \"const fs=require('fs');const path=require('path');fs.copyFileSync(path.join('apps','web','.env.example'),path.join('apps','web','.env'));fs.copyFileSync(path.join('apps','auth','.env.example'),path.join('apps','auth','.env'));console.log('✅ Environment files copied successfully');\"",
 		"clean": "bun -e \"const fs = require('fs'); const path = require('path'); function rm(dir) { if (fs.existsSync(dir)) { console.log('Deleting ' + dir); fs.rmSync(dir, { recursive: true, force: true }); } } function findAndDelete(folder) { const walk = (dir) => { const files = fs.readdirSync(dir); files.forEach(file => { const fullPath = path.join(dir, file); if (fs.statSync(fullPath).isDirectory()) { if (file === folder) { rm(fullPath); } else { walk(fullPath); } } }); }; walk(process.cwd()); } ['node_modules', '.next', '.turbo'].forEach(findAndDelete); console.log('✅ Cleanup completed');\"",
