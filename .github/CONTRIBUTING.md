@@ -10,7 +10,7 @@ Thank you for your interest in contributing to Zephyr! This guide will help you 
 
 #### _<div align="left"><sub>// Making Contributions</sub></div>_
 
-###### _<div align="left"><sub>// Workflow</sub></div>_
+##### _<div align="left"><sub>// Workflow</sub></div>_
 
 ```sh
 1. Fork the repository
@@ -24,34 +24,25 @@ Thank you for your interest in contributing to Zephyr! This guide will help you 
 
 ```
 
-###### _<div align="left"><sub>// Development Commands</sub></div>_
+##### _<div align="left"><sub>// Development Commands</sub></div>_
 
 ```sh
 # Start development server
-pnpm turbo dev
-
-# Start development backend server (docker services)
-pnpm run start
+bun turbo dev
 ```
 
 ```sh
 # Formatting check
-pnpm biome:check
+bun run check
 ```
 
 ```sh
-# Docker clean
-pnpm run docker:interactive
-```
-
-```sh
-# Formatting fix
-pnpm biome:fix
+# Type check
+bun run check-types
 ```
 
 #### _<div align="left"><sub>// Code Standards</sub></div>_
-
-###### _<div align="left"><sub>// Style rules</sub></div>_
+##### _<div align="left"><sub>// Style rules</sub></div>_
 
 - Use TypeScript
 - Follow Biome config
@@ -59,7 +50,7 @@ pnpm biome:fix
 - Comment complex logic
 - Use meaningful names
 
-###### _<div align="left"><sub>// Commit messages</sub></div>_
+##### _<div align="left"><sub>// Commit messages</sub></div>_
 
 - `feat`: New feature
 - `fix`: Bug fix
@@ -80,40 +71,21 @@ example: `feat[MODULE]: Add new module`
 
 **Having trouble?** [Open an issue](https://github.com/zephverse/zephyr/issues)
 
-
-###### _<div align="left"><sub>// Common Issues</sub></div>_
-
-1. Database Connection:
-  - Verify PostgreSQL is running
-  - Check port conflicts
-  - Validate connection string
-
-2. Environment:
-  - Confirm all variables set
-  - Check file locations
-  - Validate syntax
-
-3. Build Errors:
-  - Clear `node_modules`
-  - Rebuild dependencies
-  - Check Docker logs
-
 #### _<div align="left"><sub>// Community Guidelines</sub></div>_
-
-###### _<div align="left"><sub>// Code of Conduct</sub></div>_
+##### _<div align="left"><sub>// Code of Conduct</sub></div>_
 - Be respectful
 - Stay on topic
 - Help others
 - Follow code of conduct
 
-###### _<div align="left"><sub>// Reporting Issues</sub></div>_
+##### _<div align="left"><sub>// Reporting Issues</sub></div>_
 - Check existing issues
 - Provide reproduction
 - Be specific
 - Follow templates & labels
 - Include logs or screenshots if needed
 
-###### _<div align="left"><sub>// Pull Requests</sub></div>_
+##### _<div align="left"><sub>// Pull Requests</sub></div>_
 - Link related issues
 - Describe changes
 - Update docs
