@@ -1,0 +1,372 @@
+---
+title: State Management
+description: React Query for server state, Jotai for client state, and React Hook Form for forms.
+---
+
+import { Callout } from "nextra/components";
+
+## Overview
+
+Zephyr separates concerns across three state libraries:
+
+| Tool | Purpose | Use Cases |
+|------|---------|-----------|
+| **React Query** | Server state | Data fetching, caching, optimistic updates |
+| **Jotai** | Client state | Global UI (modals, menus), user preferences |
+| **React Hook Form** | Form state | Validation, submission |
+
+<Callout>
+Keep server data in React Query, minimal UI state in Jotai, form state in React Hook Form.
+</Callout>
+
+## React Query
+
+Handles all async server state—fetching, caching, synchronization, and background updates.
+
+### Setup
+
+`packages/ui/providers/query.tsx`:
+
+```tsx
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60 * 1000,        // 60s
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
+
+export function QueryProvider({ children }: { children: React.ReactNode }) {
+  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+}
+```
+
+### Queries
+
+Fetch data with `useQuery`:
+
+```typescript
+import { useQuery } from "@tanstack/react-query";
+
+export function useFollowerInfo(userId: string) {
+  return useQuery({
+    queryKey: ["follower-info", userId],
+    queryFn: async () => {
+      return await kyInstance.get(`/api/users/${userId}/followers`).json<FollowerInfo>();
+    },
+    staleTime: 30_000,
+  });
+}
+```
+
+```tsx
+"use client";
+export function FollowerCount({ userId }: Props) {
+  const { data } = useFollowerInfo(userId);
+  return <span>{data.followers} followers</span>;
+}
+```
+
+**Query keys** identify cached data. Use hierarchical patterns:
+
+```typescript
+["posts"]
+["posts", postId]
+["posts", postId, "comments"]
+```
+
+### Mutations
+
+Modify server data and invalidate affected queries:
+
+```typescript
+export function useFollowMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      return await kyInstance.post(`/api/users/${userId}/follow`).json();
+    },
+    onSuccess: (_, userId) => {
+      queryClient.invalidateQueries({ queryKey: ["follower-info", userId] });
+    },
+  });
+}
+```
+
+```tsx
+export function FollowButton({ userId }: { userId: string }) {
+  const mutation = useFollowMutation();
+  return (
+    <Button onClick={() => mutation.mutate(userId)} disabled={mutation.isPending}>
+      {mutation.isPending ? "Following..." : "Follow"}
+    </Button>
+  );
+}
+```
+
+### Optimistic Updates
+
+Update UI instantly, roll back on error:
+
+```typescript
+export function useVoteMutation(postId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (value: boolean) => {
+      return await kyInstance.post(`/api/posts/${postId}/votes`, { json: { value } }).json();
+    },
+    onMutate: async (value) => {
+      await queryClient.cancelQueries({ queryKey: ["post", postId] });
+      const previous = queryClient.getQueryData(["post", postId]);
+
+      queryClient.setQueryData(["post", postId], (old: any) => ({
+        ...old,
+        votes: old.votes + (value ? 1 : -1),
+      }));
+
+      return { previous };
+    },
+    onError: (err, value, context) => {
+      queryClient.setQueryData(["post", postId], context.previous);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["post", postId] });
+    },
+  });
+}
+```
+
+### Infinite Queries
+
+Paginated feeds with automatic cursor management:
+
+```typescript
+export function useInfinitePosts() {
+  return useInfiniteQuery<PostsPage>({
+    queryKey: ["posts", "for-you"],
+    queryFn: async ({ pageParam }) => {
+      return await kyInstance
+        .get("/api/posts/for-you", { searchParams: pageParam ? { cursor: pageParam } : {} })
+        .json<PostsPage>();
+    },
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
+  });
+}
+```
+
+```tsx
+export function ForYouFeed() {
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfinitePosts();
+  const { ref } = useInfiniteScroll({ hasMore: hasNextPage, onLoadMore: fetchNextPage });
+
+  const posts = data.pages.flatMap((page) => page.posts);
+
+  return (
+    <div>
+      {posts.map((post) => <PostCard key={post.id} post={post} />)}
+      {hasNextPage && <div ref={ref}>Loading...</div>}
+    </div>
+  );
+}
+```
+
+### DevTools
+
+Add React Query DevTools in development:
+
+```tsx
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+
+<QueryProvider>
+  {children}
+  {process.env.NODE_ENV === "development" && <ReactQueryDevtools />}
+</QueryProvider>
+```
+
+## Jotai
+
+Lightweight atomic state for client-side UI.
+
+### Basic Atoms
+
+```typescript
+import { atom } from "jotai";
+
+export const hnShareDialogOpenAtom = atom(false);
+export const selectedHnStoryAtom = atom<HNStory | null>(null);
+```
+
+```tsx
+"use client";
+import { useAtom, useSetAtom } from "jotai";
+
+export function HNShareButton({ story }: { story: HNStory }) {
+  const setOpen = useSetAtom(hnShareDialogOpenAtom);
+  const setStory = useSetAtom(selectedHnStoryAtom);
+
+  return (
+    <Button onClick={() => { setStory(story); setOpen(true); }}>
+      Share
+    </Button>
+  );
+}
+
+export function HNShareDialog() {
+  const [isOpen, setIsOpen] = useAtom(hnShareDialogOpenAtom);
+  const [story] = useAtom(selectedHnStoryAtom);
+
+  return <Dialog open={isOpen} onOpenChange={setIsOpen}>{story && <ShareForm story={story} />}</Dialog>;
+}
+```
+
+### Persistent Atoms
+
+Store to localStorage:
+
+```typescript
+import { atomWithStorage } from "jotai/utils";
+
+const themeAtom = atomWithStorage<"light" | "dark">("theme", "light");
+```
+
+```tsx
+export function ThemeToggle() {
+  const [theme, setTheme] = useAtom(themeAtom);
+  return <Button onClick={() => setTheme(theme === "light" ? "dark" : "light")}>{theme}</Button>;
+}
+```
+
+**When to use Jotai:**
+- ✅ UI state (modals, drawers, menus)
+- ✅ User preferences (theme, layout)
+- ❌ Server data (use React Query)
+- ❌ Form data (use React Hook Form)
+
+## React Hook Form
+
+Form state with Zod validation.
+
+### Basic Form
+
+```tsx
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { createPostSchema, type CreatePostInput } from "@zephyr/auth/validation";
+
+export function PostForm() {
+  const form = useForm<CreatePostInput>({
+    resolver: zodResolver(createPostSchema),
+    defaultValues: { content: "" },
+  });
+
+  const onSubmit = async (data: CreatePostInput) => {
+    const result = await createPost(data);
+    if (result.error) form.setError("root", { message: result.error });
+  };
+
+  return (
+    <form onSubmit={form.handleSubmit(onSubmit)}>
+      <textarea {...form.register("content")} />
+      {form.formState.errors.content && <p>{form.formState.errors.content.message}</p>}
+      <Button type="submit" disabled={form.formState.isSubmitting}>Post</Button>
+    </form>
+  );
+}
+```
+
+### Zod Schemas
+
+All schemas live in `packages/auth/src/validation/schemas.ts`:
+
+```typescript
+import { z } from "zod";
+
+export const createPostSchema = z.object({
+  content: z.string().min(1, "Content is required").max(5000, "Too long"),
+  attachments: z.array(z.object({ id: z.string(), type: z.enum(["IMAGE", "VIDEO"]) })).max(10),
+});
+
+export type CreatePostInput = z.infer<typeof createPostSchema>;
+```
+
+### shadcn/ui Integration
+
+```tsx
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@zephyr/ui/shadui/form";
+
+export function ProfileForm() {
+  const form = useForm<ProfileFormData>({ resolver: zodResolver(profileSchema) });
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)}>
+        <FormField
+          control={form.control}
+          name="displayName"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Display Name</FormLabel>
+              <FormControl><Input {...field} /></FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <Button type="submit">Save</Button>
+      </form>
+    </Form>
+  );
+}
+```
+
+### Watch Values
+
+Track form changes in real time:
+
+```tsx
+const content = form.watch("content");
+return <p>{content?.length || 0} / 5000</p>;
+```
+
+### Mutation Integration
+
+Combine forms with React Query mutations:
+
+```tsx
+export function CommentForm({ postId }: { postId: string }) {
+  const form = useForm<CreateCommentInput>({ resolver: zodResolver(createCommentSchema) });
+  const mutation = useMutation({
+    mutationFn: createComment,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["comments", postId] });
+      form.reset();
+    },
+  });
+
+  return (
+    <form onSubmit={form.handleSubmit((data) => mutation.mutate({ ...data, postId }))}>
+      <Input {...form.register("content")} />
+      <Button type="submit" disabled={mutation.isPending}>Comment</Button>
+    </form>
+  );
+}
+```
+
+## Best Practices
+
+- **Hierarchical query keys** – `["posts", postId]` over flat keys.
+- **Handle all states** – Show loading, error, and empty states.
+- **Optimistic updates with rollback** – Snapshot previous state in `onMutate`, restore in `onError`.
+- **Separate hooks** – Keep query hooks (`use-post.ts`), mutations (`use-post-mutations.ts`), and components independent.
+- **Jotai for UI only** – Avoid mixing server state into atoms.
+
+## Next Steps
+
+- **[Components](/development/components)** – Build UI with React Query hooks
+- **[Authentication](/development/authentication)** – Session state patterns

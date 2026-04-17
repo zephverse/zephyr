@@ -1,0 +1,747 @@
+---
+title: Troubleshooting
+description: Common deployment issues and how to resolve them.
+---
+
+import { Callout } from "nextra/components";
+
+## Overview
+
+This guide covers common deployment issues, their causes, and solutions.
+
+<Callout type="info">
+**Quick Debug**: Check logs first - most issues reveal themselves in error logs.
+</Callout>
+
+## Build Failures
+
+### Dependency Installation Fails
+
+**Error:**
+```
+error: package not found: @zephyr/ui
+```
+
+**Cause:** Workspace dependencies not installed or build order incorrect.
+
+**Solution:**
+```bash
+# Clean and reinstall
+rm -rf node_modules bun.lock
+bun install
+
+# Verify workspace structure
+bun run dep:check
+
+# Build in correct order
+bun run build
+```
+
+### Type Errors During Build
+
+**Error:**
+```
+Type error: Property 'id' does not exist on type 'User'
+```
+
+**Cause:** Prisma Client not generated or outdated.
+
+**Solution:**
+```bash
+# Generate Prisma Client
+cd packages/db
+bunx prisma generate
+
+# Rebuild
+cd ../..
+bun run build
+```
+
+### Out of Memory During Build
+
+**Error:**
+```
+FATAL ERROR: Reached heap limit Allocation failed - JavaScript heap out of memory
+```
+
+**Cause:** Large build, insufficient memory allocation.
+
+**Solution:**
+```bash
+# Increase Node memory limit
+export NODE_OPTIONS="--max-old-space-size=4096"
+bun run build
+
+# Or in Docker
+docker build --build-arg NODE_OPTIONS="--max-old-space-size=4096" .
+```
+
+### Environment Variables Not Found
+
+**Error:**
+```
+Error: Invalid environment variables: { DATABASE_URL: [ 'Required' ] }
+```
+
+**Cause:** Missing environment variables during build.
+
+**Solution:**
+```bash
+# Verify .env file exists
+ls -la apps/web/.env
+
+# Check environment variables
+cat apps/web/.env | grep DATABASE_URL
+
+# For Docker builds, pass build args
+docker build \
+  --build-arg NEXT_PUBLIC_URL=https://yourdomain.com \
+  -f apps/web/Dockerfile .
+```
+
+## Database Issues
+
+### Connection Refused
+
+**Error:**
+```
+Error: Can't reach database server at `localhost:5433`
+```
+
+**Cause:** Database not running or wrong connection string.
+
+**Solution:**
+```bash
+# Check if database is running
+docker ps | grep postgres
+
+# Start database
+bun run docker:dev
+
+# Test connection
+psql $DATABASE_URL
+
+# Verify connection string format
+DATABASE_URL=postgresql://user:pass@host:port/db?schema=public
+```
+
+### SSL/TLS Connection Error
+
+**Error:**
+```
+Error: SSL connection required
+```
+
+**Cause:** Production database requires SSL, but it's not configured.
+
+**Solution:**
+```bash
+# Add SSL mode to connection string
+DATABASE_URL=postgresql://user:pass@host/db?sslmode=require
+
+# For Neon/Supabase, always use SSL
+DATABASE_URL=postgresql://user:pass@ep-xxx.aws.neon.tech/db?sslmode=require
+```
+
+### Migration Failed
+
+**Error:**
+```
+Error: Migration failed to apply cleanly to the shadow database
+```
+
+**Cause:** Schema drift or conflicting migrations.
+
+**Solution:**
+```bash
+cd packages/db
+
+# Check migration status
+bunx prisma migrate status
+
+# Resolve migration
+bunx prisma migrate resolve --applied "migration_name"
+
+# Or reset (development only!)
+bunx prisma migrate reset
+
+# Production: restore from backup
+pg_restore -d $DATABASE_URL backup.sql
+```
+
+### Connection Pool Exhausted
+
+**Error:**
+```
+Error: Can't create new connection - pool is exhausted
+```
+
+**Cause:** Too many database connections, no connection pooling.
+
+**Solution:**
+```typescript
+// Use PgBouncer or Prisma connection pooling
+DATABASE_URL=postgresql://user:pass@host/db?pgbouncer=true
+
+// Limit connection pool size
+const prisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL,
+    },
+  },
+  pool: {
+    max: 10, // Limit connections
+  },
+});
+```
+
+## Redis Issues
+
+### Connection Timeout
+
+**Error:**
+```
+Error: Redis connection timeout
+```
+
+**Cause:** Redis not running or wrong connection string.
+
+**Solution:**
+```bash
+# Check Redis status
+docker ps | grep redis
+
+# Start Redis
+bun run docker:dev
+
+# Test connection
+redis-cli -u $REDIS_URL ping
+
+# Verify connection string
+REDIS_URL=redis://:password@host:6379/0
+```
+
+### Authentication Failed
+
+**Error:**
+```
+Error: NOAUTH Authentication required
+```
+
+**Cause:** Redis requires password, but none provided.
+
+**Solution:**
+```bash
+# Add password to connection string
+REDIS_URL=redis://:zephyrredis@localhost:6379/0
+
+# For Upstash
+REDIS_URL=rediss://default:password@host:6379
+```
+
+### Memory Limit Exceeded
+
+**Error:**
+```
+Error: OOM command not allowed when used memory > 'maxmemory'
+```
+
+**Cause:** Redis memory full, eviction policy not set.
+
+**Solution:**
+```bash
+# Configure eviction policy
+redis-cli CONFIG SET maxmemory-policy allkeys-lru
+
+# Or in docker-compose.yml
+services:
+  redis:
+    command: >
+      redis-server
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+```
+
+## Object Storage Issues
+
+### Access Denied
+
+**Error:**
+```
+Error: Access Denied (403)
+```
+
+**Cause:** Invalid credentials or bucket permissions.
+
+**Solution:**
+```bash
+# Verify credentials
+echo $MINIO_ROOT_USER
+echo $MINIO_ROOT_PASSWORD
+
+# Check bucket policy
+aws s3api get-bucket-policy --bucket $MINIO_BUCKET_NAME
+
+# Set correct permissions
+aws s3api put-bucket-policy --bucket uploads --policy '{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Effect": "Allow",
+    "Principal": "*",
+    "Action": "s3:GetObject",
+    "Resource": "arn:aws:s3:::uploads/*"
+  }]
+}'
+```
+
+### CORS Errors
+
+**Error:**
+```
+Error: CORS policy blocked request
+```
+
+**Cause:** CORS not configured for object storage.
+
+**Solution:**
+```typescript
+// Configure MinIO CORS
+import { Client } from "minio";
+
+const minioClient = new Client({
+  endPoint: process.env.MINIO_HOST!,
+  port: Number(process.env.MINIO_PORT),
+  useSSL: false,
+  accessKey: process.env.MINIO_ROOT_USER!,
+  secretKey: process.env.MINIO_ROOT_PASSWORD!,
+});
+
+await minioClient.setBucketCors("uploads", {
+  CORSRules: [
+    {
+      AllowedOrigins: ["https://yourdomain.com"],
+      AllowedMethods: ["GET", "PUT", "POST"],
+      AllowedHeaders: ["*"],
+    },
+  ],
+});
+```
+
+### File Upload Fails
+
+**Error:**
+```
+Error: File size exceeds maximum allowed
+```
+
+**Cause:** Upload size limit too small.
+
+**Solution:**
+```typescript
+// next.config.ts
+const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: "10mb", // Increase limit
+    },
+  },
+};
+
+// For Vercel, use Vercel Blob or external storage
+```
+
+## Authentication Issues
+
+### OAuth Callback Fails
+
+**Error:**
+```
+Error: redirect_uri_mismatch
+```
+
+**Cause:** OAuth redirect URI not configured correctly.
+
+**Solution:**
+```bash
+# Add correct callback URL in OAuth provider settings
+# Google: https://console.cloud.google.com
+# GitHub: https://github.com/settings/developers
+
+# Development
+http://localhost:3001/api/auth/callback/google
+
+# Production
+https://auth.yourdomain.com/api/auth/callback/google
+```
+
+### Session Not Persisting
+
+**Error:**
+```
+Error: Session cookie not set
+```
+
+**Cause:** Cookie settings incompatible with domain.
+
+**Solution:**
+```typescript
+// packages/auth/src/core/config.ts
+export const authConfig = {
+  advanced: {
+    cookieOptions: {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      domain: process.env.NODE_ENV === "production" 
+        ? ".yourdomain.com"  // Share across subdomains
+        : undefined,
+    },
+  },
+};
+```
+
+### Email Verification Not Sent
+
+**Error:**
+```
+Error: Failed to send verification email
+```
+
+**Cause:** Resend API key invalid or domain not verified.
+
+**Solution:**
+```bash
+# Verify Resend API key
+curl https://api.resend.com/emails \
+  -H "Authorization: Bearer $RESEND_API_KEY"
+
+# Check domain verification at https://resend.com/domains
+
+# Verify email sending
+bunx resend emails send \
+  --from "onboarding@yourdomain.com" \
+  --to "test@example.com" \
+  --subject "Test" \
+  --html "<p>Test email</p>"
+```
+
+## Deployment Issues
+
+### Vercel Build Timeout
+
+**Error:**
+```
+Error: Build exceeded maximum duration of 45 minutes
+```
+
+**Cause:** Build taking too long.
+
+**Solution:**
+```bash
+# Optimize build
+# 1. Use build cache
+# 2. Remove unnecessary dependencies
+# 3. Optimize images
+
+# Upgrade to Vercel Pro for longer build times
+# Or use Docker deployment
+```
+
+### Docker Image Too Large
+
+**Error:**
+```
+Image size: 2.5GB (exceeds 1GB limit)
+```
+
+**Cause:** Inefficient Dockerfile or unused dependencies.
+
+**Solution:**
+```dockerfile
+# Use multi-stage builds
+FROM oven/bun:alpine AS runtime  # Alpine is smaller
+
+# Remove dev dependencies
+RUN bun install --production
+
+# Use .dockerignore
+echo "node_modules
+.git
+.next
+*.md" > .dockerignore
+
+# Clean build artifacts
+RUN rm -rf /root/.bun/cache
+```
+
+### Container Health Check Failing
+
+**Error:**
+```
+Container unhealthy after 3 retries
+```
+
+**Cause:** Health check endpoint not responding or dependencies not ready.
+
+**Solution:**
+```dockerfile
+# Increase health check timeout
+HEALTHCHECK --interval=30s --timeout=30s --start-period=60s --retries=3 \
+  CMD curl -f http://localhost:3000/api/health || exit 1
+```
+
+```typescript
+// app/api/health/route.ts
+export async function GET() {
+  try {
+    // Quick health check
+    await prisma.$queryRaw`SELECT 1`;
+    return Response.json({ status: "ok" });
+  } catch (error) {
+    return Response.json(
+      { status: "error", message: error.message },
+      { status: 503 }
+    );
+  }
+}
+```
+
+### Port Already in Use
+
+**Error:**
+```
+Error: Port 3000 is already in use
+```
+
+**Cause:** Another process using the port.
+
+**Solution:**
+```bash
+# Find process using port
+lsof -i :3000
+
+# Kill process
+kill -9 <PID>
+
+# Or use different port
+PORT=3001 bun run dev
+
+# In Docker, map to different host port
+docker run -p 3001:3000 zephyr-web
+```
+
+## Performance Issues
+
+### Slow API Responses
+
+**Error:**
+```
+Warning: API response time > 5 seconds
+```
+
+**Cause:** Inefficient queries, missing indexes, or N+1 queries.
+
+**Solution:**
+```typescript
+// Add database indexes
+@@index([authorId])
+@@index([createdAt])
+
+// Use query optimization
+const posts = await prisma.post.findMany({
+  include: {
+    author: true,  // N+1 query
+  },
+});
+
+// Better: use select
+const posts = await prisma.post.findMany({
+  select: {
+    id: true,
+    title: true,
+    author: {
+      select: {
+        id: true,
+        name: true,
+      },
+    },
+  },
+});
+
+// Enable query logging
+const prisma = new PrismaClient({
+  log: ["query", "error", "warn"],
+});
+```
+
+### Memory Leaks
+
+**Error:**
+```
+Error: JavaScript heap out of memory
+```
+
+**Cause:** Unclosed database connections or event listeners.
+
+**Solution:**
+```typescript
+// Close Prisma connections
+await prisma.$disconnect();
+
+// Remove event listeners
+useEffect(() => {
+  const handler = () => {};
+  window.addEventListener("resize", handler);
+  
+  return () => {
+    window.removeEventListener("resize", handler);
+  };
+}, []);
+
+// Use connection pooling
+const prisma = new PrismaClient({
+  pool: {
+    max: 10,
+    min: 2,
+  },
+});
+```
+
+### High CPU Usage
+
+**Cause:** Inefficient code or infinite loops.
+
+**Solution:**
+```bash
+# Profile application
+node --prof apps/web/server.js
+
+# Analyze profile
+node --prof-process isolate-*.log > profile.txt
+
+# Monitor in production
+docker stats zephyr-web
+
+# Add rate limiting
+import { ratelimit } from "@/lib/rate-limit";
+
+await ratelimit.limit(userId);
+```
+
+## Search Issues
+
+### Meilisearch Not Indexing
+
+**Error:**
+```
+Error: Search returns no results
+```
+
+**Cause:** Indexes not created or documents not added.
+
+**Solution:**
+```bash
+# Initialize indexes
+cd packages/db
+bunx tsx scripts/init-meilisearch.ts
+
+# Verify indexes exist
+curl http://localhost:7700/indexes \
+  -H "Authorization: Bearer $MEILISEARCH_MASTER_KEY"
+
+# Check document count
+curl http://localhost:7700/indexes/posts/stats \
+  -H "Authorization: Bearer $MEILISEARCH_MASTER_KEY"
+```
+
+### Search Performance Slow
+
+**Cause:** Large index without optimization.
+
+**Solution:**
+```typescript
+// Configure searchable attributes
+await client.index("posts").updateSearchableAttributes([
+  "title",
+  "content",
+]);
+
+// Configure ranking rules
+await client.index("posts").updateRankingRules([
+  "words",
+  "typo",
+  "proximity",
+  "attribute",
+  "sort",
+  "exactness",
+]);
+
+// Use filters
+const results = await index.search("query", {
+  filter: "published = true",
+  limit: 20,
+});
+```
+
+## Next Steps
+
+- **[Monitoring](/deployment/monitoring)** - Set up monitoring to catch issues early
+- **[Docker Deployment](/deployment/docker)** - Review Docker setup
+- **[Database Migration](/deployment/database-migration)** - Database troubleshooting
+
+## Getting Help
+
+If you can't resolve an issue:
+
+1. **Check Logs**: Review application and service logs
+2. **GitHub Issues**: Search existing issues or create new one
+3. **Discord**: Join community for real-time help
+4. **Documentation**: Review relevant documentation sections
+
+<Callout type="warning">
+**Production Issues**: For critical production issues, always have a rollback plan ready before attempting fixes.
+</Callout>
+
+## Debug Checklist
+
+Before deploying:
+
+- [ ] All environment variables set correctly
+- [ ] Database migrations applied
+- [ ] Search indexes initialized
+- [ ] Health checks responding
+- [ ] Logs showing no errors
+- [ ] SSL certificates valid
+- [ ] Backup created
+- [ ] Rollback plan documented
+- [ ] Team notified of deployment
+- [ ] Monitoring alerts configured
+
+## Common Commands
+
+```bash
+# Check service status
+docker ps
+docker compose logs -f
+
+# Database
+bunx prisma migrate status
+bunx prisma studio
+
+# Redis
+redis-cli -u $REDIS_URL ping
+redis-cli -u $REDIS_URL INFO
+
+# Logs
+tail -f logs/error.log
+docker logs -f zephyr-web
+
+# Health checks
+curl http://localhost:3000/api/health
+curl http://localhost:3001/api/health
+
+# Restart services
+docker compose restart web
+systemctl restart nginx
+```

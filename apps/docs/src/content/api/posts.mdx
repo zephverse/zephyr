@@ -1,0 +1,824 @@
+# Posts API
+
+The Posts API provides comprehensive endpoints for managing social media posts, including creating, reading, and interacting with posts through votes, comments, bookmarks, and shares.
+
+## Endpoints Overview
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/posts/for-you` | GET | Get personalized feed |
+| `/api/posts/following` | GET | Get posts from followed users |
+| `/api/posts/bookmarked` | GET | Get user's bookmarked posts |
+| `/api/posts/[postId]/votes` | GET, POST, DELETE | Manage post votes |
+| `/api/posts/[postId]/comments` | GET, POST | Manage post comments |
+| `/api/posts/[postId]/bookmark` | GET, POST, DELETE | Manage post bookmarks |
+| `/api/posts/[postId]/views` | POST | Increment post view count |
+| `/api/posts/[postId]/share` | POST | Track post shares |
+| `/api/posts/[postId]/share/stats` | GET | Get share statistics |
+| `/api/posts/[postId]/tags` | POST | Update post tags |
+| `/api/posts/[postId]/mentions` | GET, POST | Manage user mentions |
+
+---
+
+## Feed Endpoints
+
+### Get For You Feed
+
+Retrieves a personalized feed of posts for the authenticated user.
+
+```http
+GET /api/posts/for-you
+```
+
+#### Query Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `cursor` | string | No | Cursor for pagination (last post ID) |
+
+#### Response
+
+```typescript
+{
+  posts: PostData[];
+  nextCursor: string | null;
+}
+```
+
+#### Example
+
+```typescript
+const response = await fetch('/api/posts/for-you?cursor=post-123');
+const data = await response.json();
+
+console.log(data.posts); // Array of posts
+console.log(data.nextCursor); // Next page cursor or null
+```
+
+#### Implementation Details
+
+- **Page Size**: 20 posts per page
+- **Ordering**: Most recent first (`createdAt: desc`)
+- **Includes**: User data, vote info, bookmark status, comments count, media attachments
+
+---
+
+### Get Following Feed
+
+Retrieves posts from users that the authenticated user follows.
+
+```http
+GET /api/posts/following
+```
+
+#### Response
+
+```typescript
+{
+  posts: Post[];
+}
+```
+
+#### Example
+
+```typescript
+const response = await fetch('/api/posts/following');
+const { posts } = await response.json();
+```
+
+#### Implementation Details
+
+```typescript
+// Filters posts from followed users
+where: { 
+  user: { 
+    followers: { 
+      some: { followerId: user.id } 
+    } 
+  } 
+}
+```
+
+---
+
+### Get Bookmarked Posts
+
+Retrieves all posts bookmarked by the authenticated user.
+
+```http
+GET /api/posts/bookmarked
+```
+
+#### Response
+
+```typescript
+{
+  posts: Bookmark[];
+}
+```
+
+Each bookmark includes the full post data.
+
+#### Example
+
+```typescript
+const response = await fetch('/api/posts/bookmarked');
+const { posts } = await response.json();
+```
+
+---
+
+## Vote Endpoints
+
+### Get Vote Information
+
+Retrieves the current vote status and aura (total votes) for a post.
+
+```http
+GET /api/posts/[postId]/votes
+```
+
+#### Response
+
+```typescript
+{
+  aura: number;        // Total vote count
+  userVote: number;    // User's vote: 1, -1, or 0
+  // ... full post data
+}
+```
+
+#### Example
+
+```typescript
+const response = await fetch('/api/posts/post-123/votes');
+const { aura, userVote } = await response.json();
+```
+
+---
+
+### Submit Vote
+
+Creates or updates a vote on a post.
+
+```http
+POST /api/posts/[postId]/votes
+```
+
+#### Request Body
+
+```typescript
+{
+  value: number; // 1 for upvote, -1 for downvote, 0 to remove vote
+}
+```
+
+#### Response
+
+```typescript
+{
+  aura: number;
+  userVote: number;
+}
+```
+
+#### Example
+
+```typescript
+// Upvote a post
+const response = await fetch('/api/posts/post-123/votes', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ value: 1 })
+});
+
+const { aura, userVote } = await response.json();
+```
+
+#### Implementation Details
+
+- **Vote Values**: `1` (upvote), `-1` (downvote), `0` (remove)
+- **Upsert Logic**: Updates existing vote or creates new one
+- **Removal**: Passing `0` deletes the vote record
+
+```typescript
+if (typeof value !== "number" || value === 0) {
+  await prisma.vote.deleteMany({ where: { userId: user.id, postId } });
+} else {
+  await prisma.vote.upsert({
+    where: { userId_postId: { userId: user.id, postId } },
+    create: { userId: user.id, postId, value },
+    update: { value },
+  });
+}
+```
+
+---
+
+### Delete Vote
+
+Removes the user's vote from a post.
+
+```http
+DELETE /api/posts/[postId]/votes
+```
+
+#### Response
+
+```typescript
+{
+  aura: number;
+  userVote: 0;
+}
+```
+
+#### Example
+
+```typescript
+await fetch('/api/posts/post-123/votes', {
+  method: 'DELETE'
+});
+```
+
+---
+
+## Comment Endpoints
+
+### Get Comments
+
+Retrieves all comments for a specific post.
+
+```http
+GET /api/posts/[postId]/comments
+```
+
+#### Response
+
+```typescript
+{
+  comments: Comment[];
+  previousCursor: null; // For future pagination
+}
+```
+
+Each comment includes:
+```typescript
+{
+  id: string;
+  content: string;
+  createdAt: Date;
+  user: {
+    id: string;
+    username: string;
+    displayName: string;
+    avatarUrl: string;
+  };
+}
+```
+
+#### Example
+
+```typescript
+const response = await fetch('/api/posts/post-123/comments');
+const { comments } = await response.json();
+```
+
+---
+
+### Create Comment
+
+Adds a new comment to a post.
+
+```http
+POST /api/posts/[postId]/comments
+```
+
+#### Request Body
+
+```typescript
+{
+  content: string;
+}
+```
+
+#### Response
+
+```typescript
+{
+  id: string;
+  postId: string;
+  userId: string;
+  content: string;
+  createdAt: Date;
+}
+```
+
+#### Example
+
+```typescript
+const response = await fetch('/api/posts/post-123/comments', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ 
+    content: 'Great post!' 
+  })
+});
+
+const comment = await response.json();
+```
+
+---
+
+## Bookmark Endpoints
+
+### Get Bookmark Status
+
+Checks if the authenticated user has bookmarked a post.
+
+```http
+GET /api/posts/[postId]/bookmark
+```
+
+#### Response
+
+```typescript
+{
+  isBookmarkedByUser: boolean;
+}
+```
+
+---
+
+### Create Bookmark
+
+Adds a post to the user's bookmarks.
+
+```http
+POST /api/posts/[postId]/bookmark
+```
+
+#### Response
+
+```typescript
+{
+  success: true;
+}
+```
+
+#### Example
+
+```typescript
+await fetch('/api/posts/post-123/bookmark', {
+  method: 'POST'
+});
+```
+
+---
+
+### Remove Bookmark
+
+Removes a post from the user's bookmarks.
+
+```http
+DELETE /api/posts/[postId]/bookmark
+```
+
+#### Response
+
+```typescript
+{
+  success: true;
+}
+```
+
+---
+
+## View Tracking
+
+### Increment Post Views
+
+Records a view for a post and increments the view counter.
+
+```http
+POST /api/posts/[postId]/views
+```
+
+#### Response
+
+```typescript
+{
+  success: true;
+  viewCount: number;
+}
+```
+
+#### Example
+
+```typescript
+const response = await fetch('/api/posts/post-123/views', {
+  method: 'POST'
+});
+
+const { viewCount } = await response.json();
+```
+
+#### Implementation Details
+
+- Uses **Redis caching** for performance via `postViewsCache`
+- Increments asynchronously to avoid blocking
+- View counts are eventually synced to the database
+
+```typescript
+const newCount = await postViewsCache.incrementView(postId);
+```
+
+---
+
+## Share Tracking
+
+### Track Share
+
+Records when a user shares a post on a specific platform.
+
+```http
+POST /api/posts/[postId]/share
+```
+
+#### Request Body
+
+```typescript
+{
+  platform: 'twitter' | 'facebook' | 'linkedin' | 'instagram' | 
+            'pinterest' | 'reddit' | 'whatsapp' | 'discord' | 
+            'email' | 'copy' | 'qr';
+}
+```
+
+#### Response
+
+```typescript
+{
+  shares: number; // Total shares for this platform
+}
+```
+
+#### Example
+
+```typescript
+const response = await fetch('/api/posts/post-123/share', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ platform: 'twitter' })
+});
+
+const { shares } = await response.json();
+```
+
+---
+
+### Get Share Statistics
+
+Retrieves share statistics across all platforms for a post.
+
+```http
+GET /api/posts/[postId]/share/stats
+```
+
+#### Response
+
+```typescript
+Array<{
+  platform: string;
+  shares: number;
+  lastShared: Date | null;
+}>
+```
+
+#### Example
+
+```typescript
+const response = await fetch('/api/posts/post-123/share/stats');
+const stats = await response.json();
+
+console.log(stats);
+// [
+//   { platform: 'twitter', shares: 45, lastShared: '2024-01-15T...' },
+//   { platform: 'facebook', shares: 23, lastShared: '2024-01-14T...' },
+//   ...
+// ]
+```
+
+---
+
+## Tag Management
+
+### Update Post Tags
+
+Updates the tags associated with a post. Only the post author can update tags.
+
+```http
+POST /api/posts/[postId]/tags
+```
+
+#### Request Body
+
+```typescript
+{
+  tags: string[]; // Array of tag names
+}
+```
+
+#### Response
+
+```typescript
+{
+  tags: Tag[];
+}
+```
+
+Each tag includes:
+```typescript
+{
+  id: string;
+  name: string;
+  _count: {
+    posts: number;
+  };
+}
+```
+
+#### Example
+
+```typescript
+const response = await fetch('/api/posts/post-123/tags', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ 
+    tags: ['javascript', 'react', 'nextjs'] 
+  })
+});
+
+const { tags } = await response.json();
+```
+
+#### Implementation Details
+
+- **Authorization**: Only post author can update tags
+- **Normalization**: All tags are converted to lowercase
+- **Atomic Updates**: Uses Prisma transactions to disconnect old tags and connect new ones
+- **Tag Creation**: Creates new tags if they don't exist
+- **Cache Updates**: Increments tag usage count in Redis cache
+
+```typescript
+// Disconnect existing tags
+await prisma.post.update({
+  where: { id: postId },
+  data: {
+    tags: {
+      disconnect: post.tags.map((tag) => ({ id: tag.id })),
+    },
+  },
+});
+
+// Connect or create new tags
+const updatedPost = await prisma.post.update({
+  where: { id: postId },
+  data: {
+    tags: {
+      connectOrCreate: normalizedTags.map((tag: string) => ({
+        where: { name: tag },
+        create: { name: tag },
+      })),
+    },
+  },
+  include: { tags: true },
+});
+```
+
+---
+
+## Mention Management
+
+### Get Post Mentions
+
+Retrieves all user mentions in a post.
+
+```http
+GET /api/posts/[postId]/mentions
+```
+
+#### Response
+
+```typescript
+{
+  mentions: Mention[];
+}
+```
+
+---
+
+### Update Post Mentions
+
+Updates user mentions in a post. Creates notifications for mentioned users.
+
+```http
+POST /api/posts/[postId]/mentions
+```
+
+#### Request Body
+
+```typescript
+{
+  userIds: string[]; // Array of user IDs to mention
+}
+```
+
+#### Response
+
+```typescript
+{
+  mentions: Array<{
+    id: string;
+    username: string;
+    displayName: string;
+    avatarUrl: string;
+  }>;
+}
+```
+
+#### Example
+
+```typescript
+const response = await fetch('/api/posts/post-123/mentions', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ 
+    userIds: ['user-1', 'user-2', 'user-3'] 
+  })
+});
+
+const { mentions } = await response.json();
+```
+
+#### Implementation Details
+
+- **Authorization**: Only post author can update mentions
+- **Self-Mention Prevention**: Automatically filters out the post author's ID
+- **Atomic Updates**: Uses Prisma transaction to update mentions and create notifications
+- **Notifications**: Creates MENTION type notifications for all mentioned users
+
+```typescript
+await prisma.$transaction(async (tx) => {
+  // Delete existing mentions
+  await tx.mention.deleteMany({ where: { postId } });
+
+  // Create new mentions
+  const mentionPromises = filteredUserIds.map((userId: string) =>
+    tx.mention.create({
+      data: { postId, userId },
+    })
+  );
+
+  // Create notifications
+  const notificationPromises = filteredUserIds.map((userId: string) =>
+    tx.notification.create({
+      data: {
+        type: NotificationType.MENTION,
+        recipientId: userId,
+        issuerId: user.id,
+        postId,
+      },
+    })
+  );
+
+  await Promise.all([...mentionPromises, ...notificationPromises]);
+});
+```
+
+---
+
+## Error Responses
+
+All endpoints return standard error responses:
+
+```typescript
+{
+  error: string; // Error message
+}
+```
+
+### Common Error Codes
+
+| Status | Error | Description |
+|--------|-------|-------------|
+| 401 | Unauthorized | User not authenticated |
+| 403 | Forbidden | User lacks permission (e.g., not post author) |
+| 404 | Post not found | Post with given ID doesn't exist |
+| 500 | Internal server error | Server-side error occurred |
+
+---
+
+## Type Definitions
+
+### PostData
+
+The complete post data structure returned by feed endpoints:
+
+```typescript
+type PostData = {
+  id: string;
+  content: string;
+  createdAt: Date;
+  updatedAt: Date;
+  userId: string;
+  aura: number;           // Total vote count
+  user: UserData;
+  attachments: Media[];
+  _count: {
+    comments: number;
+  };
+  bookmarks: Bookmark[];
+  votes: Vote[];
+};
+```
+
+### PostsPage
+
+Paginated posts response:
+
+```typescript
+type PostsPage = {
+  posts: PostData[];
+  nextCursor: string | null;
+};
+```
+
+---
+
+## Best Practices
+
+### Optimistic Updates
+
+For better UX, implement optimistic updates on the client:
+
+```typescript
+// Optimistically update UI
+setLocalVote(1);
+setLocalAura(aura + 1);
+
+// Submit to API
+try {
+  const response = await fetch('/api/posts/post-123/votes', {
+    method: 'POST',
+    body: JSON.stringify({ value: 1 })
+  });
+  const { aura: serverAura, userVote } = await response.json();
+  
+  // Sync with server response
+  setLocalAura(serverAura);
+  setLocalVote(userVote);
+} catch (error) {
+  // Revert on error
+  setLocalVote(0);
+  setLocalAura(aura);
+}
+```
+
+### Pagination
+
+Implement infinite scroll with cursor-based pagination:
+
+```typescript
+const [posts, setPosts] = useState([]);
+const [cursor, setCursor] = useState(null);
+
+const loadMore = async () => {
+  const url = cursor 
+    ? `/api/posts/for-you?cursor=${cursor}`
+    : '/api/posts/for-you';
+    
+  const response = await fetch(url);
+  const { posts: newPosts, nextCursor } = await response.json();
+  
+  setPosts([...posts, ...newPosts]);
+  setCursor(nextCursor);
+};
+```
+
+### View Tracking
+
+Track views when posts enter the viewport:
+
+```typescript
+const observer = new IntersectionObserver(
+  (entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        fetch(`/api/posts/${postId}/views`, { method: 'POST' });
+        observer.unobserve(entry.target);
+      }
+    });
+  },
+  { threshold: 0.5 }
+);
+```

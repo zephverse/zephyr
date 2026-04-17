@@ -1,18 +1,421 @@
 ---
-title: Review process
-description: Expectations for PR quality and reviewer responsibilities.
+title: Review Process
+description: Pull request quality expectations, reviewer responsibilities, and CI/CD requirements for Zephyr.
 ---
 
-## Author checklist
+# Review Process
 
-- Linked issue or rationale in PR description
-- Small, focused changes with tests and docs
-- CI green: build, typecheck, lint
+A thorough review process ensures code quality, knowledge sharing, and maintainability. This document outlines expectations for both authors and reviewers.
 
-## Reviewer checklist
+> **Here's a secret:** Code reviews are one of the best ways to learn and improve. Whether you're the author or the reviewer, you'll pick up new patterns, discover better approaches, and help make the codebase better. Don't be nervous - we're all learning together! 🤝
 
-- Correctness, clarity, and maintainability
-- A11y and performance considerations
-- Appropriate test coverage and docs updates
+## Author Checklist
+
+Before requesting a review, ensure your PR meets these standards:
+
+*This might look like a lot, but many of these items are handled automatically by our tooling. Just go through the list and tick things off - you'll be surprised how many are already done!* ✨
+
+### Pre-Submission Requirements
+
+- [ ] **Linked Issue or Rationale**
+  - Reference the issue number (e.g., "Closes #123")
+  - If no issue exists, provide clear context in the PR description
+  - Explain the "why" behind the changes
+
+- [ ] **Small, Focused Changes**
+  - PR addresses a single concern
+  - Under 500 lines of changes when possible
+  - Large features split into multiple PRs
+  - Each commit represents a logical unit
+
+- [ ] **Tests Included**
+  - Unit tests for new functions/utilities
+  - Integration tests for features
+  - Edge cases covered
+  - Existing tests still pass
+
+- [ ] **Documentation Updated**
+  - Code comments for complex logic
+  - JSDoc for public APIs
+  - README updates if needed
+  - Docs site updates for user-facing changes
+
+- [ ] **Code Quality**
+  - Follows [Code Style Guidelines](/contribution/code-style)
+  - No TypeScript errors (`bun run build`)
+  - No lint errors (`bun run check`)
+  - Formatted with Ultracite/Biome
+
+- [ ] **CI Checks Passing**
+  - Build succeeds
+  - Linter passes
+  - Type checker passes
+  - Tests pass
+  - No security vulnerabilities
+
+- [ ] **Up-to-Date with Main**
+  - Rebased on latest `main`
+  - Merge conflicts resolved
+  - No outdated files
+
+## Reviewer Checklist
+
+As a reviewer, evaluate PRs across these dimensions:
+
+### 1. **Correctness**
+
+- [ ] Does the code do what it claims to do?
+- [ ] Are edge cases handled properly?
+- [ ] Is error handling appropriate?
+- [ ] Are there any logical bugs?
+- [ ] Do tests adequately cover the changes?
+
+**Questions to ask:**
+- "What happens if this API call fails?"
+- "How does this handle empty/null/undefined inputs?"
+- "Are there race conditions or timing issues?"
+
+### 2. **Code Quality**
+
+- [ ] Is the code readable and maintainable?
+- [ ] Are names clear and descriptive?
+- [ ] Is there unnecessary complexity?
+- [ ] Can any code be simplified?
+- [ ] Are there code smells (duplication, long functions, etc.)?
+
+**Red flags:**
+- Magic numbers without explanation
+- Deeply nested conditionals
+- Functions longer than ~50 lines
+- Unclear variable names (`temp`, `data`, `x`)
+
+### 3. **Architecture & Design**
+
+- [ ] Does the solution fit the overall architecture?
+- [ ] Are patterns consistent with the codebase?
+- [ ] Is the abstraction level appropriate?
+- [ ] Could this be more reusable?
+- [ ] Are there better design alternatives?
+
+**Consider:**
+- Single Responsibility Principle
+- DRY (Don't Repeat Yourself)
+- Separation of concerns
+- Future extensibility
+
+### 4. **Performance**
+
+- [ ] Are there obvious performance issues?
+- [ ] Is database access optimized?
+- [ ] Are there unnecessary re-renders (React)?
+- [ ] Is memoization used appropriately?
+- [ ] Are large files/bundles handled efficiently?
+
+**Watch for:**
+- N+1 queries
+- Excessive API calls
+- Large bundle size increases
+- Memory leaks
+- Unnecessary re-computations
+
+### 5. **Security**
+
+- [ ] Are user inputs validated and sanitized?
+- [ ] Is authentication/authorization checked?
+- [ ] Are secrets handled properly?
+- [ ] Are there SQL injection risks?
+- [ ] Are there XSS vulnerabilities?
+
+**Critical checks:**
+- No hardcoded credentials
+- Proper input validation
+- SQL injection prevention (parameterized queries)
+- XSS prevention (sanitized outputs)
+- CSRF protection where needed
+
+### 6. **Accessibility**
+
+- [ ] Are semantic HTML elements used?
+- [ ] Are ARIA labels appropriate?
+- [ ] Is keyboard navigation supported?
+- [ ] Are color contrast ratios sufficient?
+- [ ] Are images/icons properly labeled?
+
+**For UI changes:**
+- Test with keyboard only
+- Check with browser a11y tools
+- Verify screen reader compatibility
+- Validate color contrast
+
+### 7. **Testing**
+
+- [ ] Are tests comprehensive?
+- [ ] Do tests actually test the behavior?
+- [ ] Are edge cases covered?
+- [ ] Are tests clear and maintainable?
+- [ ] Do tests avoid testing implementation details?
+
+**Good tests:**
+- Test behavior, not implementation
+- Clear arrange-act-assert structure
+- Meaningful test names
+- Cover happy path and edge cases
+
+### 8. **Documentation**
+
+- [ ] Are complex parts documented?
+- [ ] Are public APIs documented with JSDoc?
+- [ ] Are breaking changes clearly noted?
+- [ ] Is the PR description clear?
+- [ ] Are user-facing changes documented?
+
+## CI/CD Requirements
+
+All PRs must pass automated checks before merging:
+
+### Build Check
+
+```bash
+bun run build
+```
+
+**Validates:**
+- TypeScript compilation
+- No build errors
+- All dependencies resolve
+- Bundle size acceptable
+
+### Lint Check
+
+```bash
+bun run check
+```
+
+**Validates:**
+- Code style (Ultracite/Biome)
+- No lint errors
+- No deprecated APIs
+- Proper imports
+
+### Type Check
+
+```bash
+bun typecheck
+```
+
+**Validates:**
+- No TypeScript errors
+- Proper type annotations
+- No `any` types (with exceptions)
+- Type safety maintained
+
+### Tests (When Implemented)
+
+```bash
+bun test
+```
+
+**Validates:**
+- All tests pass
+- Coverage thresholds met
+- No flaky tests
+- Performance benchmarks
+
+## Review Workflow
+
+### For Authors
+
+1. **Open PR**
+   - Fill out the PR template completely
+   - Add appropriate labels
+   - Assign reviewers (or let maintainers assign)
+   - Mark as draft if work in progress
+
+2. **Respond to Feedback**
+   - Address comments promptly
+   - Ask questions if unclear
+   - Make requested changes
+   - Re-request review after updates
+
+3. **Keep Updated**
+   - Rebase on `main` if it changes
+   - Resolve merge conflicts quickly
+   - Keep CI passing
+
+4. **Be Patient**
+   - Reviews take time
+   - Follow up politely if delayed
+   - Be open to suggestions
+
+> **A word on feedback:** Getting a bunch of review comments doesn't mean your code is bad! It means someone cared enough to look carefully and help improve it. Every experienced developer has had PRs with dozens of comments. It's part of the process, and it makes us all better. 💪
+
+### For Reviewers
+
+1. **Review Promptly**
+   - Aim to review within 1-2 business days
+   - Prioritize small, focused PRs
+   - Communicate if you need more time
+
+2. **Be Constructive**
+   - Explain the "why" behind suggestions
+   - Offer alternatives, not just criticism
+   - Acknowledge good work
+   - Be respectful and kind
+
+3. **Use GitHub Features**
+   - Comment on specific lines
+   - Use "Request Changes" for blocking issues
+   - Use "Approve" when ready to merge
+   - Use "Comment" for non-blocking feedback
+
+4. **Types of Feedback**
+   - **Blocking**: Must be addressed before merge
+   - **Non-blocking**: Nice-to-have improvements
+   - **Question**: Asking for clarification
+   - **Praise**: Acknowledging good work
+
+## Effective Code Review Comments
+
+### Good Examples ✅
+
+```
+❓ Question: Could we use a Map instead of an object here for O(1) lookups?
+
+💡 Suggestion: Consider extracting this into a utility function since it's used in multiple places.
+
+🐛 Blocking: This could cause a race condition if the user navigates away before the API call completes.
+
+✨ Nice work on the accessibility improvements here!
+
+🤔 Non-blocking: The variable name `temp` is unclear. Maybe `filteredResults` would be more descriptive?
+```
+
+### Poor Examples ❌
+
+```
+❌ This is wrong.
+❌ Bad code.
+❌ Why did you do it this way?
+❌ This will never work.
+```
+
+## Merge Criteria
+
+A PR can be merged when:
+
+- ✅ At least one approval from a maintainer
+- ✅ All CI checks passing
+- ✅ All conversations resolved
+- ✅ Up-to-date with `main`
+- ✅ No merge conflicts
+- ✅ Appropriate labels added
+- ✅ Changeset added (for package changes)
+
+## Review Guidelines
+
+### Priority Levels
+
+1. **Critical** (Review within hours)
+   - Security fixes
+   - Production bugs
+   - Hotfixes
+
+2. **High** (Review within 1 day)
+   - Bug fixes
+   - Blocking features
+   - Breaking changes
+
+3. **Normal** (Review within 2 days)
+   - New features
+   - Refactoring
+   - Documentation
+
+4. **Low** (Review within 1 week)
+   - Minor improvements
+   - Typo fixes
+   - Style updates
+
+### Review Scope
+
+**Small PRs (&lt;100 lines)**
+- Quick review (15-30 minutes)
+- Focus on correctness and style
+
+**Medium PRs (100-300 lines)**
+- Thorough review (30-60 minutes)
+- Consider architecture and design
+
+**Large PRs (&gt;300 lines)**
+- In-depth review (1-2 hours)
+- May require multiple reviewers
+- Consider breaking into smaller PRs
+
+## 🔧 Handling Disagreements
+
+### If You Disagree with Feedback
+
+1. **Ask for Clarification**
+   - "Could you explain why this approach is better?"
+   - "What specific issues do you see with this?"
+
+2. **Provide Context**
+   - Explain your reasoning
+   - Share relevant documentation
+   - Offer alternatives
+
+3. **Escalate if Needed**
+   - Tag another maintainer for input
+   - Discuss in team chat
+   - Schedule a call for complex issues
+
+### If Feedback is Unclear
+
+1. **Ask Questions**
+   - "Could you provide an example?"
+   - "Which file/line are you referring to?"
+   - "What would you suggest instead?"
+
+2. **Suggest a Call**
+   - For complex discussions
+   - To resolve multiple issues
+   - To pair program a solution
+
+## Review Metrics (Internal)
+
+Maintainers track:
+- Average time to first review
+- Average time to merge
+- Number of review cycles
+- Merge rate (approved vs. closed)
+
+**Goals:**
+- First review within 48 hours
+- Merge within 1 week (for normal priority)
+- Minimize review cycles (aim for 1-2)
+
+## Thank Reviewers
+
+Remember to thank reviewers for their time and feedback:
+
+```
+Thanks for the thorough review! I've addressed all the feedback.
+
+Good catch on the edge case! Fixed in the latest commit.
+
+Appreciate the suggestion - the code is much cleaner now!
+```
+
+*A little gratitude goes a long way! Reviewers are volunteering their time to help improve your code - a simple thanks makes the open source world a friendlier place.* 💙
+
+## Additional Resources
+
+- [Conventional Comments](https://conventionalcomments.org/)
+- [Google Code Review Guidelines](https://google.github.io/eng-practices/review/)
+- [GitHub Code Review Best Practices](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/reviewing-changes-in-pull-requests/about-pull-request-reviews)
+- [Contribution Guidelines](/contribution/guidelines)
+
+---
+
+Great reviews lead to great code. Thank you for being a thoughtful reviewer! 🎯
 
 

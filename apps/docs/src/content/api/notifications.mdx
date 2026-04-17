@@ -1,0 +1,620 @@
+# Notifications API
+
+The Notifications API provides endpoints for retrieving user notifications with pagination support.
+
+## Endpoint
+
+```http
+GET /api/notifications
+```
+
+Retrieves notifications for the authenticated user.
+
+---
+
+## Get Notifications
+
+### Fetch User Notifications
+
+Retrieves paginated notifications for the current user.
+
+#### Request
+
+```http
+GET /api/notifications
+```
+
+#### Query Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `cursor` | string | No | Cursor for pagination (last notification ID) |
+
+#### Response
+
+```typescript
+{
+  notifications: Notification[];
+  nextCursor: string | null;
+}
+```
+
+Each notification includes:
+
+```typescript
+type Notification = {
+  id: string;
+  type: NotificationType;
+  recipientId: string;
+  issuerId: string;
+  postId?: string;
+  createdAt: Date;
+  read: boolean;
+  issuer: {
+    id: string;
+    username: string;
+    displayName: string;
+    avatarUrl: string | null;
+  };
+  post?: {
+    id: string;
+    content: string;
+  };
+};
+```
+
+#### Example
+
+```typescript
+const fetchNotifications = async (cursor?: string) => {
+  const params = cursor ? `?cursor=${cursor}` : '';
+  const response = await fetch(`/api/notifications${params}`);
+  return await response.json();
+};
+
+// Usage
+const { notifications, nextCursor } = await fetchNotifications();
+
+notifications.forEach(notif => {
+  console.log(`${notif.issuer.displayName} ${notif.type}`);
+});
+
+// Load more
+if (nextCursor) {
+  const more = await fetchNotifications(nextCursor);
+}
+```
+
+---
+
+## Implementation Details
+
+### Query Logic
+
+```typescript
+export async function GET(req: NextRequest) {
+  try {
+    const cursor = req.nextUrl.searchParams.get("cursor") || undefined;
+    const pageSize = 10;
+    
+    const session = await getSessionFromApi();
+    if (!session?.user) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    
+    const userId = session.user.id;
+    
+    const notifications = await prisma.notification.findMany({
+      where: {
+        recipientId: userId,
+      },
+      include: notificationsInclude,
+      orderBy: { createdAt: "desc" },
+      take: pageSize + 1,
+      cursor: cursor ? { id: cursor } : undefined,
+    });
+    
+    const nextCursor = notifications.length > pageSize && notifications[pageSize]
+      ? notifications[pageSize].id
+      : null;
+      
+    const data: NotificationsPage = {
+      notifications: notifications.slice(0, pageSize),
+      nextCursor,
+    };
+    
+    return Response.json(data);
+  } catch (error) {
+    console.error(error);
+    return Response.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+```
+
+### Included Relations
+
+The `notificationsInclude` configuration includes related data:
+
+```typescript
+const notificationsInclude = {
+  issuer: {
+    select: {
+      id: true,
+      username: true,
+      displayName: true,
+      avatarUrl: true,
+    },
+  },
+  post: {
+    select: {
+      id: true,
+      content: true,
+    },
+  },
+};
+```
+
+---
+
+## Notification Types
+
+Notifications are created for various user interactions:
+
+### Follow Notification
+
+Created when a user follows another user:
+
+```typescript
+await prisma.notification.create({
+  data: {
+    type: NotificationType.FOLLOW,
+    recipientId: followedUserId,
+    issuerId: followerId,
+  },
+});
+```
+
+### Mention Notification
+
+Created when a user is mentioned in a post:
+
+```typescript
+await prisma.notification.create({
+  data: {
+    type: NotificationType.MENTION,
+    recipientId: mentionedUserId,
+    issuerId: authorId,
+    postId: postId,
+  },
+});
+```
+
+### Comment Notification
+
+Created when someone comments on a user's post:
+
+```typescript
+await prisma.notification.create({
+  data: {
+    type: NotificationType.COMMENT,
+    recipientId: postAuthorId,
+    issuerId: commenterId,
+    postId: postId,
+  },
+});
+```
+
+### Like/Vote Notification
+
+Created when someone votes on a user's post:
+
+```typescript
+await prisma.notification.create({
+  data: {
+    type: NotificationType.LIKE,
+    recipientId: postAuthorId,
+    issuerId: voterId,
+    postId: postId,
+  },
+});
+```
+
+---
+
+## Notification Types Enum
+
+```prisma
+enum NotificationType {
+  FOLLOW
+  MENTION
+  COMMENT
+  LIKE
+  REPLY
+  SHARE
+}
+```
+
+---
+
+## Database Schema
+
+```prisma
+model Notification {
+  id          String           @id @default(cuid())
+  type        NotificationType
+  recipientId String
+  recipient   User             @relation("NotificationRecipient", fields: [recipientId], references: [id])
+  issuerId    String
+  issuer      User             @relation("NotificationIssuer", fields: [issuerId], references: [id])
+  postId      String?
+  post        Post?            @relation(fields: [postId], references: [id])
+  read        Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+  
+  @@index([recipientId])
+  @@index([createdAt])
+}
+```
+
+---
+
+## Pagination
+
+### Cursor-Based Pagination
+
+Notifications use cursor-based pagination for efficient loading:
+
+```typescript
+// First page (no cursor)
+const firstPage = await fetchNotifications();
+
+// Next page (use previous nextCursor)
+const secondPage = await fetchNotifications(firstPage.nextCursor);
+
+// Continue loading
+const thirdPage = await fetchNotifications(secondPage.nextCursor);
+```
+
+### Page Size
+
+- **Default**: 10 notifications per page
+- **Configurable**: Can be adjusted in the endpoint
+
+---
+
+## Response Format
+
+### Successful Response
+
+```json
+{
+  "notifications": [
+    {
+      "id": "notif-123",
+      "type": "FOLLOW",
+      "recipientId": "user-456",
+      "issuerId": "user-789",
+      "createdAt": "2024-01-15T10:30:00Z",
+      "read": false,
+      "issuer": {
+        "id": "user-789",
+        "username": "johndoe",
+        "displayName": "John Doe",
+        "avatarUrl": "https://..."
+      }
+    },
+    {
+      "id": "notif-124",
+      "type": "MENTION",
+      "recipientId": "user-456",
+      "issuerId": "user-111",
+      "postId": "post-222",
+      "createdAt": "2024-01-15T09:15:00Z",
+      "read": true,
+      "issuer": {
+        "id": "user-111",
+        "username": "janedoe",
+        "displayName": "Jane Doe",
+        "avatarUrl": "https://..."
+      },
+      "post": {
+        "id": "post-222",
+        "content": "Great post about @user..."
+      }
+    }
+  ],
+  "nextCursor": "notif-124"
+}
+```
+
+### Empty Response
+
+```json
+{
+  "notifications": [],
+  "nextCursor": null
+}
+```
+
+---
+
+## Client-Side Implementation
+
+### Notification Feed
+
+```typescript
+const NotificationFeed = () => {
+  const [notifications, setNotifications] = useState([]);
+  const [cursor, setCursor] = useState(null);
+  const [hasMore, setHasMore] = useState(true);
+  
+  const loadNotifications = async () => {
+    const data = await fetchNotifications(cursor);
+    setNotifications([...notifications, ...data.notifications]);
+    setCursor(data.nextCursor);
+    setHasMore(!!data.nextCursor);
+  };
+  
+  useEffect(() => {
+    loadNotifications();
+  }, []);
+  
+  return (
+    <div>
+      {notifications.map(notif => (
+        <NotificationItem key={notif.id} notification={notif} />
+      ))}
+      {hasMore && (
+        <button onClick={loadNotifications}>Load More</button>
+      )}
+    </div>
+  );
+};
+```
+
+### Notification Item
+
+```typescript
+const NotificationItem = ({ notification }) => {
+  const getMessage = () => {
+    switch (notification.type) {
+      case 'FOLLOW':
+        return `${notification.issuer.displayName} followed you`;
+      case 'MENTION':
+        return `${notification.issuer.displayName} mentioned you`;
+      case 'COMMENT':
+        return `${notification.issuer.displayName} commented on your post`;
+      case 'LIKE':
+        return `${notification.issuer.displayName} liked your post`;
+      default:
+        return 'New notification';
+    }
+  };
+  
+  return (
+    <div className={notification.read ? 'read' : 'unread'}>
+      <img src={notification.issuer.avatarUrl} alt="" />
+      <div>
+        <p>{getMessage()}</p>
+        <time>{formatDate(notification.createdAt)}</time>
+      </div>
+    </div>
+  );
+};
+```
+
+---
+
+## Real-Time Updates
+
+### Polling
+
+Implement polling to check for new notifications:
+
+```typescript
+const useNotificationPolling = (interval = 30000) => {
+  const [unreadCount, setUnreadCount] = useState(0);
+  
+  useEffect(() => {
+    const checkNotifications = async () => {
+      const { notifications } = await fetchNotifications();
+      const unread = notifications.filter(n => !n.read).length;
+      setUnreadCount(unread);
+    };
+    
+    checkNotifications();
+    const timer = setInterval(checkNotifications, interval);
+    
+    return () => clearInterval(timer);
+  }, [interval]);
+  
+  return unreadCount;
+};
+
+// Usage
+const unreadCount = useNotificationPolling();
+```
+
+### WebSocket (Future Enhancement)
+
+For real-time notifications, implement WebSocket:
+
+```typescript
+const ws = new WebSocket('wss://api.example.com/notifications');
+
+ws.onmessage = (event) => {
+  const notification = JSON.parse(event.data);
+  addNotification(notification);
+  showToast(notification);
+};
+```
+
+---
+
+## Mark as Read
+
+While not implemented in the current endpoint, marking notifications as read can be done:
+
+```typescript
+// Future endpoint
+PUT /api/notifications/[notificationId]/read
+
+// Implementation
+const markAsRead = async (notificationId: string) => {
+  await prisma.notification.update({
+    where: { id: notificationId },
+    data: { read: true },
+  });
+};
+```
+
+---
+
+## Notification Badge
+
+Display unread count:
+
+```typescript
+const NotificationBadge = () => {
+  const [count, setCount] = useState(0);
+  
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      const { notifications } = await fetchNotifications();
+      const unread = notifications.filter(n => !n.read).length;
+      setCount(unread);
+    };
+    
+    fetchUnreadCount();
+    const interval = setInterval(fetchUnreadCount, 30000);
+    
+    return () => clearInterval(interval);
+  }, []);
+  
+  return (
+    <button className="notification-button">
+      <BellIcon />
+      {count > 0 && (
+        <span className="badge">{count > 99 ? '99+' : count}</span>
+      )}
+    </button>
+  );
+};
+```
+
+---
+
+## Error Handling
+
+| Status | Error | Description |
+|--------|-------|-------------|
+| 401 | Unauthorized | User not authenticated |
+| 500 | Internal server error | Server error occurred |
+
+---
+
+## Best Practices
+
+### 1. Infinite Scroll
+
+Implement smooth infinite scroll:
+
+```typescript
+const NotificationList = () => {
+  const [notifications, setNotifications] = useState([]);
+  const [cursor, setCursor] = useState(null);
+  const observerRef = useRef();
+  
+  const loadMore = async () => {
+    if (!cursor) return;
+    
+    const data = await fetchNotifications(cursor);
+    setNotifications([...notifications, ...data.notifications]);
+    setCursor(data.nextCursor);
+  };
+  
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && cursor) {
+          loadMore();
+        }
+      },
+      { threshold: 1.0 }
+    );
+    
+    if (observerRef.current) {
+      observer.observe(observerRef.current);
+    }
+    
+    return () => observer.disconnect();
+  }, [cursor]);
+  
+  return (
+    <div>
+      {notifications.map(n => <NotificationItem key={n.id} {...n} />)}
+      <div ref={observerRef} />
+    </div>
+  );
+};
+```
+
+### 2. Grouping
+
+Group notifications by date:
+
+```typescript
+const groupByDate = (notifications) => {
+  const groups = {};
+  
+  notifications.forEach(notif => {
+    const date = new Date(notif.createdAt).toDateString();
+    if (!groups[date]) groups[date] = [];
+    groups[date].push(notif);
+  });
+  
+  return groups;
+};
+
+// Usage
+const grouped = groupByDate(notifications);
+Object.entries(grouped).map(([date, notifs]) => (
+  <div key={date}>
+    <h3>{date}</h3>
+    {notifs.map(n => <NotificationItem key={n.id} {...n} />)}
+  </div>
+));
+```
+
+### 3. Toast Notifications
+
+Show toast for new notifications:
+
+```typescript
+const showNotificationToast = (notification) => {
+  toast(getMessage(notification), {
+    icon: <Avatar src={notification.issuer.avatarUrl} />,
+    action: {
+      label: 'View',
+      onClick: () => navigateTo(getNotificationLink(notification))
+    }
+  });
+};
+```
+
+### 4. Sound/Visual Feedback
+
+Add notification sounds:
+
+```typescript
+const playNotificationSound = () => {
+  const audio = new Audio('/notification.mp3');
+  audio.play();
+};
+
+// When new notification arrives
+if (hasNewNotifications) {
+  playNotificationSound();
+  showNotificationToast(latestNotification);
+}
+```

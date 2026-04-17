@@ -1,0 +1,768 @@
+---
+title: Database Migration
+description: Strategies for database migrations and schema management in production.
+---
+
+import { Callout } from "nextra/components";
+
+## Overview
+
+Zephyr uses Prisma for database schema management and migrations. This guide covers deployment strategies, migration workflows, and rollback procedures.
+
+<Callout type="info">
+**Critical**: Always backup your database before running migrations in production.
+</Callout>
+
+## Prisma Setup
+
+### Schema Location
+
+Database schema is centralized in the `packages/db` package:
+
+```
+packages/db/
+├── prisma/
+│   ├── schema.prisma       # Main schema definition
+│   └── migrations/         # Migration history
+├── src/
+│   ├── index.ts           # Prisma client exports
+│   └── types.ts           # Generated types
+├── scripts/
+│   ├── init-meilisearch.ts # Search index initialization
+│   └── seed.ts             # Database seeding
+└── package.json
+```
+
+### Schema File
+
+`packages/db/prisma/schema.prisma`:
+
+```prisma
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  username      String   @unique
+  displayName   String?
+  avatarUrl     String?
+  aura          Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  posts         Post[]
+  comments      Comment[]
+  
+  @@map("users")
+}
+
+model Post {
+  id            String   @id @default(cuid())
+  title         String
+  content       String
+  authorId      String
+  published     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  author        User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  comments      Comment[]
+  
+  @@index([authorId])
+  @@map("posts")
+}
+```
+
+## Development Workflow
+
+### Local Development
+
+```bash
+# Navigate to db package
+cd packages/db
+
+# Generate Prisma Client
+bunx prisma generate
+
+# Create migration (development only)
+bunx prisma migrate dev --name add_user_bio
+
+# Push schema changes without migration
+bunx prisma db push
+
+# Open Prisma Studio
+bunx prisma studio
+```
+
+### Creating Migrations
+
+1. **Modify Schema**
+
+```prisma
+// Add new field
+model User {
+  id       String @id @default(cuid())
+  email    String @unique
+  bio      String? // New field
+}
+```
+
+2. **Generate Migration**
+
+```bash
+cd packages/db
+bunx prisma migrate dev --name add_user_bio
+```
+
+This creates:
+- Migration SQL file in `prisma/migrations/`
+- Updated Prisma Client
+
+3. **Review Migration**
+
+```sql
+-- CreateTable or AlterTable
+ALTER TABLE "users" ADD COLUMN "bio" TEXT;
+```
+
+4. **Test Locally**
+
+```bash
+# Run app to test changes
+cd ../..
+bun run dev
+```
+
+## Production Deployment
+
+### Pre-Deployment
+
+#### 1. Backup Database
+
+```bash
+# PostgreSQL backup
+pg_dump -h localhost -U postgres -d zephyr > backup_$(date +%Y%m%d_%H%M%S).sql
+
+# Or using Docker
+docker exec zephyr-postgres pg_dump -U postgres zephyr > backup.sql
+```
+
+#### 2. Review Migration SQL
+
+```bash
+cd packages/db
+
+# View pending migrations
+bunx prisma migrate status
+
+# Review migration SQL
+cat prisma/migrations/[timestamp]_add_user_bio/migration.sql
+```
+
+#### 3. Test in Staging
+
+```bash
+# Apply to staging environment
+DATABASE_URL=$STAGING_DATABASE_URL bunx prisma migrate deploy
+```
+
+### Deployment Methods
+
+#### Method 1: During Build (Recommended for Small DBs)
+
+Run migrations as part of the build process:
+
+```dockerfile
+# Dockerfile
+FROM oven/bun:slim AS builder
+WORKDIR /app
+COPY . .
+RUN bun install
+RUN cd packages/db && bunx prisma generate
+RUN cd packages/db && bunx prisma migrate deploy
+RUN bun run build
+```
+
+**Pros:**
+- Migrations run automatically
+- No manual intervention
+
+**Cons:**
+- Build fails if migration fails
+- Downtime during deployment
+
+#### Method 2: Pre-Deployment Script (Recommended for Large DBs)
+
+Run migrations before deploying new code:
+
+```bash
+# migration-script.sh
+#!/bin/bash
+set -e
+
+echo "Running database migrations..."
+cd packages/db
+bunx prisma migrate deploy
+
+echo "Migrations complete. Deploying application..."
+# Deploy your application
+docker compose up -d --no-deps web
+```
+
+**Pros:**
+- Controlled migration timing
+- Can rollback before code deployment
+- Better for zero-downtime
+
+**Cons:**
+- Requires manual execution
+
+#### Method 3: Separate Migration Job (Recommended for Production)
+
+Run migrations as a separate job:
+
+```yaml
+# docker-compose.prod.yml
+services:
+  migrate:
+    image: zephyr-web:latest
+    command: sh -c "cd packages/db && bunx prisma migrate deploy"
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+    restart: "no"
+    
+  web:
+    image: zephyr-web:latest
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+```
+
+**Kubernetes:**
+
+```yaml
+# migration-job.yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: prisma-migrate
+spec:
+  template:
+    spec:
+      containers:
+      - name: migrate
+        image: zephyr-web:latest
+        command: ["sh", "-c"]
+        args: ["cd packages/db && bunx prisma migrate deploy"]
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: db-credentials
+              key: url
+      restartPolicy: Never
+```
+
+### Migration Commands
+
+#### Deploy Migrations
+
+```bash
+# Production - applies all pending migrations
+cd packages/db
+bunx prisma migrate deploy
+```
+
+#### Check Migration Status
+
+```bash
+# View migration history
+bunx prisma migrate status
+
+# Output:
+# Database schema is up to date!
+# or
+# Following migrations have not been applied:
+# 20240101_add_user_bio
+```
+
+#### Resolve Migration Issues
+
+```bash
+# Mark migration as applied (use with caution)
+bunx prisma migrate resolve --applied "20240101_add_user_bio"
+
+# Mark migration as rolled back
+bunx prisma migrate resolve --rolled-back "20240101_add_user_bio"
+```
+
+## Zero-Downtime Migrations
+
+### Backward-Compatible Changes
+
+Safe migrations that don't break running code:
+
+#### Adding Nullable Columns
+
+```prisma
+// ✅ Safe - nullable field
+model User {
+  bio String? // Can be null
+}
+```
+
+```sql
+-- Generated migration
+ALTER TABLE "users" ADD COLUMN "bio" TEXT;
+```
+
+#### Adding New Tables
+
+```prisma
+// ✅ Safe - new table doesn't affect existing code
+model UserProfile {
+  id     String @id
+  userId String @unique
+  bio    String
+}
+```
+
+#### Adding Indexes
+
+```prisma
+// ✅ Safe - improves performance
+model Post {
+  authorId String
+  @@index([authorId])
+}
+```
+
+### Breaking Changes (Requires Multi-Step)
+
+#### Renaming Columns (3-Step Process)
+
+**Step 1: Add new column**
+
+```prisma
+model User {
+  displayName String? // Old
+  name        String? // New (nullable)
+}
+```
+
+Deploy and update code to write to both fields.
+
+**Step 2: Migrate data**
+
+```sql
+UPDATE users SET name = displayName WHERE name IS NULL;
+```
+
+**Step 3: Remove old column**
+
+```prisma
+model User {
+  name String // Keep only new field
+}
+```
+
+#### Making Columns Non-Nullable
+
+**Step 1: Add column as nullable**
+
+```prisma
+model User {
+  bio String? // Nullable first
+}
+```
+
+**Step 2: Populate data**
+
+```sql
+UPDATE users SET bio = '' WHERE bio IS NULL;
+```
+
+**Step 3: Make non-nullable**
+
+```prisma
+model User {
+  bio String @default("") // Now required
+}
+```
+
+#### Changing Column Types
+
+**Step 1: Add new column**
+
+```prisma
+model User {
+  aura     Int    // Old
+  auraNew  Float? // New type
+}
+```
+
+**Step 2: Migrate data**
+
+```sql
+UPDATE users SET "auraNew" = aura::float;
+```
+
+**Step 3: Swap columns**
+
+```prisma
+model User {
+  aura Float // Use new type
+}
+```
+
+## Rollback Procedures
+
+### Rolling Back Migrations
+
+#### Identify Migration to Rollback
+
+```bash
+cd packages/db
+
+# Check migration history
+bunx prisma migrate status
+
+# Migrations applied:
+# 20240101_add_user_bio
+# 20240102_add_user_profile  ← Need to rollback this
+```
+
+#### Create Rollback Migration
+
+Prisma doesn't have automatic rollback. Create reverse migration:
+
+```bash
+# Create new migration that reverses changes
+bunx prisma migrate dev --name rollback_user_profile
+```
+
+Edit the migration SQL:
+
+```sql
+-- prisma/migrations/[timestamp]_rollback_user_profile/migration.sql
+DROP TABLE "user_profiles";
+```
+
+Apply migration:
+
+```bash
+bunx prisma migrate deploy
+```
+
+#### Manual Rollback
+
+For immediate rollback:
+
+```bash
+# 1. Restore from backup
+pg_restore -h localhost -U postgres -d zephyr backup.sql
+
+# 2. Mark migrations as rolled back
+bunx prisma migrate resolve --rolled-back "20240102_add_user_profile"
+
+# 3. Regenerate client
+bunx prisma generate
+```
+
+## Database Seeding
+
+### Seed Script
+
+Create `packages/db/scripts/seed.ts`:
+
+```typescript
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
+
+async function main() {
+  console.log("Seeding database...");
+  
+  // Create admin user
+  const admin = await prisma.user.upsert({
+    where: { email: "admin@example.com" },
+    update: {},
+    create: {
+      email: "admin@example.com",
+      username: "admin",
+      displayName: "Admin User",
+      aura: 1000,
+    },
+  });
+  
+  console.log({ admin });
+  
+  // Create sample posts
+  const posts = await Promise.all([
+    prisma.post.create({
+      data: {
+        title: "Welcome to Zephyr",
+        content: "This is a sample post",
+        authorId: admin.id,
+        published: true,
+      },
+    }),
+  ]);
+  
+  console.log({ posts });
+}
+
+main()
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
+```
+
+### Running Seed
+
+```bash
+# Development
+cd packages/db
+bunx tsx scripts/seed.ts
+
+# Production (use with caution)
+DATABASE_URL=$PROD_DB_URL bunx tsx scripts/seed.ts
+```
+
+## Search Index Initialization
+
+### Meilisearch Setup
+
+`packages/db/scripts/init-meilisearch.ts`:
+
+```typescript
+import { MeiliSearch } from "meilisearch";
+
+const client = new MeiliSearch({
+  host: process.env.MEILISEARCH_URL!,
+  apiKey: process.env.MEILISEARCH_MASTER_KEY!,
+});
+
+async function main() {
+  console.log("Initializing search indexes...");
+  
+  // Create posts index
+  await client.createIndex("posts", { primaryKey: "id" });
+  
+  // Configure searchable attributes
+  await client.index("posts").updateSearchableAttributes([
+    "title",
+    "content",
+  ]);
+  
+  // Configure filterable attributes
+  await client.index("posts").updateFilterableAttributes([
+    "authorId",
+    "published",
+  ]);
+  
+  // Configure sortable attributes
+  await client.index("posts").updateSortableAttributes([
+    "createdAt",
+    "updatedAt",
+  ]);
+  
+  console.log("Search indexes initialized!");
+}
+
+main();
+```
+
+### Deploy Search Indexes
+
+```bash
+# After database migration
+cd packages/db
+bunx tsx scripts/init-meilisearch.ts
+```
+
+## CI/CD Integration
+
+### GitHub Actions
+
+```yaml
+# .github/workflows/deploy.yml
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+      
+      - name: Install dependencies
+        run: bun install
+      
+      - name: Run migrations
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          cd packages/db
+          bunx prisma migrate deploy
+      
+      - name: Initialize search
+        env:
+          MEILISEARCH_URL: ${{ secrets.MEILISEARCH_URL }}
+          MEILISEARCH_MASTER_KEY: ${{ secrets.MEILISEARCH_MASTER_KEY }}
+        run: |
+          cd packages/db
+          bunx tsx scripts/init-meilisearch.ts
+  
+  deploy:
+    needs: migrate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to production
+        run: |
+          # Your deployment commands
+```
+
+## Best Practices
+
+### 1. Always Backup Before Migrations
+
+```bash
+# Automated backup script
+#!/bin/bash
+BACKUP_DIR="/backups"
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+
+pg_dump $DATABASE_URL > "$BACKUP_DIR/backup_$TIMESTAMP.sql"
+echo "Backup created: $BACKUP_DIR/backup_$TIMESTAMP.sql"
+```
+
+### 2. Test Migrations in Staging
+
+```bash
+# Apply to staging first
+DATABASE_URL=$STAGING_DB_URL bunx prisma migrate deploy
+
+# Test application
+# Verify data integrity
+# Monitor for issues
+
+# Then apply to production
+DATABASE_URL=$PROD_DB_URL bunx prisma migrate deploy
+```
+
+### 3. Use Migration Locks
+
+Prevent concurrent migrations:
+
+```typescript
+// Custom migration script with lock
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
+
+async function migrate() {
+  // Acquire advisory lock
+  await prisma.$executeRaw`SELECT pg_advisory_lock(123456)`;
+  
+  try {
+    // Run migration
+    await prisma.$executeRaw`/* migration SQL */`;
+  } finally {
+    // Release lock
+    await prisma.$executeRaw`SELECT pg_advisory_unlock(123456)`;
+  }
+}
+```
+
+### 4. Monitor Migration Performance
+
+```bash
+# Time migrations
+time bunx prisma migrate deploy
+
+# Monitor database during migration
+# Watch for locks, slow queries
+```
+
+### 5. Document Breaking Changes
+
+```prisma
+// packages/db/prisma/schema.prisma
+
+/// BREAKING CHANGE (v2.0.0): Renamed displayName to name
+/// Migration: 20240101_rename_display_name
+/// Rollback: Run rollback_rename_display_name migration
+model User {
+  name String
+}
+```
+
+## Troubleshooting
+
+### Migration Failed
+
+```bash
+# Error: Migration failed to apply
+# Solution: Check database state
+
+# View failed migrations
+bunx prisma migrate status
+
+# Resolve manually
+bunx prisma migrate resolve --applied "migration_name"
+# or
+bunx prisma migrate resolve --rolled-back "migration_name"
+```
+
+### Schema Drift
+
+```bash
+# Error: Schema drift detected
+# Solution: Reset development database
+
+bunx prisma migrate reset  # Development only!
+bunx prisma migrate dev
+```
+
+### Connection Issues
+
+```bash
+# Error: Can't reach database server
+# Solution: Check connection string
+
+# Test connection
+bunx prisma db pull
+
+# Verify SSL mode for production
+DATABASE_URL="postgresql://...?sslmode=require"
+```
+
+## Next Steps
+
+- **[Docker Deployment](/deployment/docker)** - Deploy with migrations
+- **[Monitoring](/deployment/monitoring)** - Monitor migration health
+- **[Troubleshooting](/deployment/troubleshooting)** - Common issues
+
+<Callout type="warning">
+**Production Safety**: Never use `prisma migrate reset` or `prisma db push` in production. Always use `prisma migrate deploy`.
+</Callout>

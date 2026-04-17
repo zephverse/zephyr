@@ -1,0 +1,494 @@
+# Authentication API
+
+The Authentication API handles user authentication through Better Auth, a separate authentication service. The web application proxies authentication requests to maintain secure session management.
+
+## Overview
+
+Zephyr uses a **microservice architecture** for authentication:
+
+- **Auth Server**: Dedicated Better Auth service (`apps/auth`)
+- **Web App**: Proxies auth requests to the auth server (`apps/web`)
+- **Session Management**: Cookie-based sessions with cross-origin support
+
+## Architecture
+
+```
+Client Request
+     ↓
+Web App (/api/auth/*)
+     ↓
+Proxy Layer
+     ↓
+Auth Server (Better Auth)
+     ↓
+Session Cookie
+     ↓
+Client
+```
+
+## Endpoint
+
+```http
+* /api/auth/[...better-auth]
+```
+
+All authentication endpoints are handled through this catch-all route that proxies to the Better Auth server.
+
+---
+
+## How It Works
+
+### 1. Request Proxying
+
+The web application intercepts all `/api/auth/*` requests and forwards them to the dedicated auth server:
+
+```typescript
+const AUTH_BASE = process.env.NEXT_PUBLIC_AUTH_URL || "http://localhost:3001";
+
+async function proxy(request: NextRequest) {
+  const url = new URL(request.url);
+  const target = new URL(AUTH_BASE);
+  target.pathname = url.pathname;
+  target.search = url.search;
+  
+  // Forward request to auth server
+  const upstream = await fetch(target.toString(), {
+    method: request.method,
+    headers: modifiedHeaders,
+    body: requestBody,
+    credentials: "include",
+  });
+  
+  return upstream;
+}
+```
+
+### 2. Header Forwarding
+
+The proxy preserves important headers for proper authentication:
+
+```typescript
+const headers = new Headers(request.headers);
+headers.delete("host");
+
+const forwardedHost = request.headers.get("x-forwarded-host") || request.nextUrl.host;
+const forwardedProto = request.headers.get("x-forwarded-proto") || 
+                       request.nextUrl.protocol.replace(":", "");
+
+headers.set("x-forwarded-host", forwardedHost);
+headers.set("x-forwarded-proto", forwardedProto);
+```
+
+### 3. Cookie Rewriting
+
+Cookies are rewritten to work across domains in development and production:
+
+```typescript
+function rewriteCookieDomain(cookieStr: string): string {
+  const parts = cookieStr.split(/;\s*/);
+  
+  const rewritten = parts.map((attr) => {
+    const [k] = attr.split("=");
+    if (k.toLowerCase() === "domain") {
+      return `Domain=${hostForCookie}`;
+    }
+    return attr;
+  });
+  
+  return rewritten.join("; ");
+}
+
+// Apply to all Set-Cookie headers
+if (setCookieValues.length > 0) {
+  for (const c of setCookieValues) {
+    responseHeaders.append("set-cookie", rewriteCookieDomain(c));
+  }
+}
+```
+
+### 4. Redirect Handling
+
+Location headers are rewritten to maintain correct redirects:
+
+```typescript
+const location = upstream.headers.get("location");
+if (location) {
+  const locUrl = new URL(location, AUTH_BASE);
+  const webOrigin = `${request.nextUrl.protocol}//${request.nextUrl.host}`;
+  const authOrigin = new URL(AUTH_BASE).origin;
+  
+  if (locUrl.origin === authOrigin) {
+    const rewritten = locUrl.toString().replace(authOrigin, webOrigin);
+    responseHeaders.set("location", rewritten);
+  }
+}
+```
+
+---
+
+## Better Auth Endpoints
+
+The proxy forwards to all Better Auth endpoints. Common endpoints include:
+
+### Sign In
+
+```http
+POST /api/auth/sign-in/email
+```
+
+Authenticates a user with email and password.
+
+#### Request Body
+
+```typescript
+{
+  email: string;
+  password: string;
+}
+```
+
+---
+
+### Sign Up
+
+```http
+POST /api/auth/sign-up/email
+```
+
+Creates a new user account.
+
+#### Request Body
+
+```typescript
+{
+  email: string;
+  password: string;
+  name?: string;
+}
+```
+
+---
+
+### Sign Out
+
+```http
+POST /api/auth/sign-out
+```
+
+Ends the user's session and clears authentication cookies.
+
+---
+
+### Get Session
+
+```http
+GET /api/auth/get-session
+```
+
+Retrieves the current user's session data.
+
+#### Response
+
+```typescript
+{
+  user: {
+    id: string;
+    email: string;
+    name: string;
+    // ... other user fields
+  };
+  session: {
+    token: string;
+    expiresAt: Date;
+  };
+}
+```
+
+---
+
+### OAuth Providers
+
+Better Auth supports various OAuth providers:
+
+```http
+GET /api/auth/[provider]/authorize
+POST /api/auth/[provider]/callback
+```
+
+Supported providers may include:
+- Google
+- GitHub
+- Discord
+- And more (configured in auth server)
+
+---
+
+## Environment Configuration
+
+### Required Environment Variables
+
+```bash
+# Web App (.env)
+NEXT_PUBLIC_AUTH_URL=http://localhost:3001  # Auth server URL
+
+# Auth App (.env)
+DATABASE_URL=postgresql://...               # Database connection
+AUTH_SECRET=your-secret-key                 # Signing secret
+AUTH_URL=http://localhost:3001              # Auth server URL
+```
+
+---
+
+## Session Verification
+
+Server-side session verification is handled by the `getSessionFromApi` helper:
+
+```typescript
+import { getSessionFromApi } from "@/lib/session";
+
+export async function GET(request: Request) {
+  const session = await getSessionFromApi();
+  
+  if (!session?.user) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  
+  const user = session.user;
+  // ... protected route logic
+}
+```
+
+### Implementation
+
+The session helper retrieves the session cookie and validates it:
+
+```typescript
+export async function getSessionFromApi() {
+  try {
+    const response = await fetch(`${AUTH_BASE}/api/auth/get-session`, {
+      credentials: "include",
+      headers: {
+        Cookie: request.headers.get("cookie") || "",
+      },
+    });
+    
+    if (!response.ok) {
+      return null;
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error("Session validation error:", error);
+    return null;
+  }
+}
+```
+
+---
+
+## Client-Side Usage
+
+### Sign In
+
+```typescript
+const signIn = async (email: string, password: string) => {
+  const response = await fetch('/api/auth/sign-in/email', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ email, password })
+  });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message);
+  }
+  
+  return await response.json();
+};
+```
+
+### Sign Out
+
+```typescript
+const signOut = async () => {
+  await fetch('/api/auth/sign-out', {
+    method: 'POST',
+    credentials: 'include'
+  });
+  
+  // Redirect to login page
+  window.location.href = '/login';
+};
+```
+
+### Check Session
+
+```typescript
+const getSession = async () => {
+  const response = await fetch('/api/auth/get-session', {
+    credentials: 'include'
+  });
+  
+  if (!response.ok) {
+    return null;
+  }
+  
+  return await response.json();
+};
+```
+
+---
+
+## Security Features
+
+### Cookie Security
+
+- **HttpOnly**: Cookies are HTTP-only to prevent XSS attacks
+- **Secure**: HTTPS-only in production
+- **SameSite**: Configured for cross-site protection
+- **Domain Rewriting**: Ensures cookies work across auth and web domains
+
+### CSRF Protection
+
+Better Auth includes CSRF token validation for state-changing operations.
+
+### Session Expiration
+
+Sessions have configurable expiration times and can be refreshed automatically.
+
+---
+
+## Development vs Production
+
+### Development
+
+```bash
+# Auth Server
+AUTH_URL=http://localhost:3001
+
+# Web App
+NEXT_PUBLIC_AUTH_URL=http://localhost:3001
+```
+
+- Cookies use `.localhost` domain
+- HTTP is acceptable
+- Separate ports for auth (3001) and web (3000)
+
+### Production
+
+```bash
+# Auth Server
+AUTH_URL=https://auth.yourdomain.com
+
+# Web App
+NEXT_PUBLIC_AUTH_URL=https://auth.yourdomain.com
+```
+
+- Cookies use production domain
+- HTTPS required
+- Proper CORS configuration needed
+
+---
+
+## Error Handling
+
+### Common Errors
+
+| Status | Error | Description |
+|--------|-------|-------------|
+| 401 | Unauthorized | Invalid credentials or expired session |
+| 403 | Forbidden | Account locked or insufficient permissions |
+| 422 | Validation Error | Invalid input data |
+| 429 | Too Many Requests | Rate limit exceeded |
+| 500 | Server Error | Auth server error |
+
+### Example Error Response
+
+```typescript
+{
+  error: {
+    message: "Invalid email or password",
+    code: "INVALID_CREDENTIALS"
+  }
+}
+```
+
+---
+
+## Rate Limiting
+
+The auth server implements rate limiting to prevent abuse:
+
+- **Sign In**: Limited attempts per IP/email
+- **Sign Up**: Limited registrations per IP
+- **Password Reset**: Limited requests per email
+
+---
+
+## Best Practices
+
+### 1. Always Include Credentials
+
+```typescript
+fetch('/api/auth/endpoint', {
+  credentials: 'include'  // Required for cookies
+});
+```
+
+### 2. Handle Redirects
+
+```typescript
+const response = await fetch('/api/auth/sign-in/email', {
+  method: 'POST',
+  redirect: 'manual'  // Handle redirects manually
+});
+```
+
+### 3. Validate Sessions
+
+Always validate sessions on protected routes:
+
+```typescript
+const session = await getSessionFromApi();
+if (!session?.user) {
+  return redirect('/login');
+}
+```
+
+### 4. Secure Cookie Storage
+
+Never access auth cookies from client-side JavaScript. They are HTTP-only for security.
+
+---
+
+## Troubleshooting
+
+### Cookies Not Setting
+
+1. **Check Domain**: Ensure cookie domain matches your app domain
+2. **HTTPS Required**: Production requires HTTPS for secure cookies
+3. **SameSite**: Verify SameSite attribute is configured correctly
+
+### Session Not Persisting
+
+1. **Credentials**: Ensure `credentials: 'include'` is set
+2. **CORS**: Check CORS configuration on auth server
+3. **Cookie Path**: Verify cookie path allows access
+
+### Proxy Errors
+
+1. **AUTH_BASE**: Ensure `NEXT_PUBLIC_AUTH_URL` is correct
+2. **Network**: Verify auth server is accessible
+3. **Headers**: Check forwarded headers are preserved
+
+---
+
+## Migration Notes
+
+When moving from a different auth system:
+
+1. **Session Format**: Better Auth uses specific session format
+2. **Password Hashing**: Existing passwords may need migration
+3. **OAuth**: Reconfigure OAuth providers in auth server
+4. **Database Schema**: Align database schema with Better Auth requirements

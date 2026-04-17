@@ -1,0 +1,533 @@
+# Health & Cache API
+
+System health and cache management endpoints for monitoring and maintenance.
+
+## Endpoints Overview
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/health` | GET | System health check |
+| `/api/cache` | GET | Get cached data |
+
+---
+
+## Health Check
+
+### System Health Status
+
+Returns the health status of the web application.
+
+```http
+GET /api/health
+```
+
+#### Response
+
+```typescript
+{
+  status: "healthy" | "unhealthy";
+  timestamp: string;      // ISO 8601 timestamp
+  service: string;        // Service name
+  version: string;        // Application version
+}
+```
+
+#### Example
+
+```typescript
+const checkHealth = async () => {
+  const response = await fetch('/api/health');
+  const health = await response.json();
+  
+  console.log(health);
+  // {
+  //   status: "healthy",
+  //   timestamp: "2024-01-15T10:30:00.000Z",
+  //   service: "zephyr-web",
+  //   version: "1.0.0"
+  // }
+  
+  return health.status === 'healthy';
+};
+
+// Usage
+const isHealthy = await checkHealth();
+```
+
+#### Implementation
+
+```typescript
+export function GET() {
+  return NextResponse.json({
+    status: "healthy",
+    timestamp: new Date().toISOString(),
+    service: "zephyr-web",
+    version: process.env.npm_package_version || "1.0.0",
+  });
+}
+```
+
+---
+
+## Use Cases
+
+### Load Balancer Health Checks
+
+Configure your load balancer to ping `/api/health`:
+
+```yaml
+# Example: AWS Application Load Balancer
+HealthCheck:
+  Path: /api/health
+  Interval: 30
+  Timeout: 5
+  HealthyThreshold: 2
+  UnhealthyThreshold: 3
+  Matcher:
+    HttpCode: 200
+```
+
+### Monitoring Services
+
+Integrate with monitoring tools:
+
+```typescript
+// Uptime monitoring (e.g., UptimeRobot, Pingdom)
+const monitorHealth = async () => {
+  try {
+    const response = await fetch('https://yourapp.com/api/health');
+    if (response.status !== 200) {
+      alertTeam('Health check failed');
+    }
+  } catch (error) {
+    alertTeam('Health check error:', error);
+  }
+};
+```
+
+### Kubernetes Probes
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: zephyr-web
+spec:
+  containers:
+  - name: web
+    livenessProbe:
+      httpGet:
+        path: /api/health
+        port: 3000
+      initialDelaySeconds: 30
+      periodSeconds: 10
+    readinessProbe:
+      httpGet:
+        path: /api/health
+        port: 3000
+      initialDelaySeconds: 5
+      periodSeconds: 5
+```
+
+---
+
+## Cache Management
+
+### Get Cached Data
+
+Retrieves cached follower information for a user.
+
+```http
+GET /api/cache
+```
+
+#### Query Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `userId` | string | Yes | User ID to get cached data for |
+
+#### Response
+
+```typescript
+{
+  followers: number;
+  isFollowedByUser: boolean;
+  lastUpdated?: string;
+}
+```
+
+#### Example
+
+```typescript
+const getCachedFollowerInfo = async (userId: string) => {
+  const response = await fetch(`/api/cache?userId=${userId}`);
+  return await response.json();
+};
+
+// Usage
+const followerInfo = await getCachedFollowerInfo('user-123');
+console.log(`Followers: ${followerInfo.followers}`);
+console.log(`Following: ${followerInfo.isFollowedByUser}`);
+```
+
+#### Implementation
+
+```typescript
+export async function GET(req: Request) {
+  try {
+    const session = await getSessionFromApi();
+    const user = session?.user;
+    if (!user) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const url = new URL(req.url);
+    const userId = url.searchParams.get("userId");
+
+    if (!userId) {
+      return Response.json({ error: "Missing userId" }, { status: 400 });
+    }
+
+    const data = await followerInfoCache.get(userId);
+    return Response.json(data);
+  } catch (error) {
+    console.error("Cache GET error:", error);
+    return Response.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+```
+
+---
+
+## Caching Strategy
+
+### Redis Cache
+
+The application uses Redis for caching frequently accessed data:
+
+```typescript
+// Cache structure
+const cacheKeys = {
+  followerInfo: (userId: string) => `follower-info:${userId}`,
+  postViews: (postId: string) => `post-views:${postId}`,
+  shareStats: (postId: string, platform: string) => 
+    `share-stats:${postId}:${platform}`,
+  avatar: (userId: string) => `avatar:${userId}`,
+  suggestedUsers: (userId: string) => `suggested-users:${userId}`,
+  tagCount: (tagName: string) => `tag-count:${tagName}`,
+};
+```
+
+### Cache Implementations
+
+#### Follower Info Cache
+
+```typescript
+export const followerInfoCache = {
+  async get(userId: string): Promise<FollowerInfo> {
+    const cached = await redis.get(cacheKeys.followerInfo(userId));
+    if (cached) return JSON.parse(cached);
+    
+    // Fetch from database
+    const data = await fetchFollowerInfo(userId);
+    await this.set(userId, data);
+    return data;
+  },
+  
+  async set(userId: string, data: FollowerInfo): Promise<void> {
+    await redis.set(
+      cacheKeys.followerInfo(userId),
+      JSON.stringify(data),
+      'EX',
+      3600 // 1 hour TTL
+    );
+  },
+  
+  async invalidate(userId: string): Promise<void> {
+    await redis.del(cacheKeys.followerInfo(userId));
+  },
+};
+```
+
+#### Post Views Cache
+
+```typescript
+export const postViewsCache = {
+  async incrementView(postId: string): Promise<number> {
+    const count = await redis.incr(cacheKeys.postViews(postId));
+    
+    // Sync to database periodically (not on every increment)
+    if (count % 10 === 0) {
+      await syncViewsToDatabase(postId, count);
+    }
+    
+    return count;
+  },
+  
+  async getViewCount(postId: string): Promise<number> {
+    const count = await redis.get(cacheKeys.postViews(postId));
+    return count ? parseInt(count, 10) : 0;
+  },
+};
+```
+
+#### Share Stats Cache
+
+```typescript
+export const shareStatsCache = {
+  async incrementShare(postId: string, platform: string): Promise<number> {
+    const key = cacheKeys.shareStats(postId, platform);
+    const count = await redis.incr(key);
+    await redis.set(`${key}:lastShared`, Date.now());
+    return count;
+  },
+  
+  async getStats(postId: string, platform: string) {
+    const key = cacheKeys.shareStats(postId, platform);
+    const [shares, lastShared] = await Promise.all([
+      redis.get(key),
+      redis.get(`${key}:lastShared`),
+    ]);
+    
+    return {
+      shares: shares ? parseInt(shares, 10) : 0,
+      lastShared: lastShared ? new Date(parseInt(lastShared, 10)) : null,
+    };
+  },
+};
+```
+
+---
+
+## Cache Invalidation
+
+### Manual Invalidation
+
+Invalidate cache when data changes:
+
+```typescript
+// After following a user
+await followerInfoCache.invalidate(followedUserId);
+
+// After updating profile
+await avatarCache.del(userId);
+
+// After deleting a post
+await postViewsCache.del(postId);
+```
+
+### Automatic Expiration
+
+Caches use TTL (Time To Live) for automatic expiration:
+
+```typescript
+// 1 hour TTL
+await redis.set(key, value, 'EX', 3600);
+
+// 5 minutes TTL
+await redis.set(key, value, 'EX', 300);
+
+// 24 hours TTL
+await redis.set(key, value, 'EX', 86400);
+```
+
+---
+
+## Monitoring
+
+### Cache Hit Rate
+
+Monitor cache effectiveness:
+
+```typescript
+const cacheStats = {
+  hits: 0,
+  misses: 0,
+  
+  recordHit() {
+    this.hits++;
+  },
+  
+  recordMiss() {
+    this.misses++;
+  },
+  
+  getHitRate() {
+    const total = this.hits + this.misses;
+    return total > 0 ? (this.hits / total) * 100 : 0;
+  },
+};
+
+// In cache get method
+const cached = await redis.get(key);
+if (cached) {
+  cacheStats.recordHit();
+  return JSON.parse(cached);
+}
+
+cacheStats.recordMiss();
+const data = await fetchFromDatabase();
+```
+
+### Health Check with Dependencies
+
+Enhanced health check including cache:
+
+```typescript
+export async function GET() {
+  const checks = {
+    redis: false,
+    database: false,
+  };
+  
+  // Check Redis
+  try {
+    await redis.ping();
+    checks.redis = true;
+  } catch (error) {
+    console.error('Redis health check failed:', error);
+  }
+  
+  // Check Database
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    checks.database = true;
+  } catch (error) {
+    console.error('Database health check failed:', error);
+  }
+  
+  const isHealthy = checks.redis && checks.database;
+  
+  return NextResponse.json({
+    status: isHealthy ? "healthy" : "unhealthy",
+    checks,
+    timestamp: new Date().toISOString(),
+    service: "zephyr-web",
+    version: process.env.npm_package_version || "1.0.0",
+  }, {
+    status: isHealthy ? 200 : 503
+  });
+}
+```
+
+---
+
+## Error Responses
+
+| Status | Error | Description |
+|--------|-------|-------------|
+| 400 | Missing userId | Required parameter not provided |
+| 401 | Unauthorized | User not authenticated |
+| 500 | Internal server error | Redis or server error |
+| 503 | Service Unavailable | Health check failed |
+
+---
+
+## Best Practices
+
+### 1. Cache Warming
+
+Pre-populate cache for better performance:
+
+```typescript
+const warmCache = async () => {
+  const popularPosts = await getPopularPosts();
+  
+  await Promise.all(
+    popularPosts.map(post => 
+      postViewsCache.set(post.id, post.views)
+    )
+  );
+};
+```
+
+### 2. Stale-While-Revalidate
+
+Serve stale data while refreshing:
+
+```typescript
+const getCachedData = async (key: string, fetcher: () => Promise<any>) => {
+  const cached = await redis.get(key);
+  
+  if (cached) {
+    // Return cached data immediately
+    const data = JSON.parse(cached);
+    
+    // Refresh in background
+    fetcher().then(fresh => {
+      redis.set(key, JSON.stringify(fresh), 'EX', 3600);
+    });
+    
+    return data;
+  }
+  
+  // No cache, fetch fresh
+  const fresh = await fetcher();
+  await redis.set(key, JSON.stringify(fresh), 'EX', 3600);
+  return fresh;
+};
+```
+
+### 3. Cache Keys Namespacing
+
+Use consistent naming for cache keys:
+
+```typescript
+const CACHE_PREFIX = 'zephyr';
+const CACHE_VERSION = 'v1';
+
+const buildKey = (...parts: string[]) => {
+  return [CACHE_PREFIX, CACHE_VERSION, ...parts].join(':');
+};
+
+// Usage
+const key = buildKey('user', userId, 'profile');
+// Result: "zephyr:v1:user:123:profile"
+```
+
+### 4. Bulk Cache Operations
+
+Optimize with batch operations:
+
+```typescript
+const getCachedUsers = async (userIds: string[]) => {
+  const keys = userIds.map(id => cacheKeys.user(id));
+  const values = await redis.mget(...keys);
+  
+  return values.map((val, i) => 
+    val ? JSON.parse(val) : null
+  );
+};
+```
+
+---
+
+## Cache Configuration
+
+### Redis Setup
+
+```bash
+# Docker
+docker run -d -p 6379:6379 redis:alpine
+
+# Environment variables
+REDIS_URL=redis://localhost:6379
+REDIS_PASSWORD=your-password
+REDIS_TLS_ENABLED=false
+```
+
+### Connection Pooling
+
+```typescript
+import { Redis } from 'ioredis';
+
+export const redis = new Redis({
+  host: process.env.REDIS_HOST,
+  port: parseInt(process.env.REDIS_PORT || '6379'),
+  password: process.env.REDIS_PASSWORD,
+  maxRetriesPerRequest: 3,
+  enableReadyCheck: true,
+  lazyConnect: true,
+});
+```

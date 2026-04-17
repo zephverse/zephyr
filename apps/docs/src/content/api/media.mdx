@@ -1,0 +1,600 @@
+# Media & Uploads API
+
+The Media API handles file uploads to S3-compatible storage (MinIO) for user-generated content like images, videos, and avatars.
+
+## Endpoint
+
+```http
+POST /api/upload
+```
+
+Uploads a file to MinIO/S3 storage and creates a media record in the database.
+
+---
+
+## File Upload
+
+### Upload Media File
+
+Uploads a file (image, video, or document) to cloud storage.
+
+#### Request
+
+```http
+POST /api/upload
+Content-Type: multipart/form-data
+```
+
+#### Request Body (FormData)
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `file` | File | Yes | The file to upload |
+| `postId` | string | No | Associate file with a post |
+
+#### Response
+
+```typescript
+{
+  mediaId: string;    // Database media record ID
+  url: string;        // Public URL to access the file
+  key: string;        // Storage key for the file
+  type: MediaType;    // IMAGE, VIDEO, or DOCUMENT
+}
+```
+
+#### Example
+
+```typescript
+const uploadFile = async (file: File, postId?: string) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  
+  if (postId) {
+    formData.append('postId', postId);
+  }
+  
+  const response = await fetch('/api/upload', {
+    method: 'POST',
+    body: formData
+  });
+  
+  if (!response.ok) {
+    throw new Error('Upload failed');
+  }
+  
+  return await response.json();
+};
+
+// Usage
+const file = document.querySelector('input[type="file"]').files[0];
+const result = await uploadFile(file, 'post-123');
+
+console.log(result.url);      // https://cdn.example.com/uploads/...
+console.log(result.mediaId);  // media-abc123
+console.log(result.type);     // IMAGE
+```
+
+---
+
+## Implementation Details
+
+### File Processing
+
+The upload endpoint processes files through several steps:
+
+```typescript
+export async function POST(request: Request) {
+  // 1. Authenticate user
+  const session = await getSessionFromApi();
+  const user = session?.user;
+  if (!user) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // 2. Extract form data
+  const formData = await request.formData();
+  const file = formData.get("file") as File | null;
+  const postId = formData.get("postId") as string | null;
+
+  if (!file) {
+    return new NextResponse("No file provided", { status: 400 });
+  }
+
+  // 3. Upload to MinIO/S3
+  const upload = await uploadToMinio(file, user.id);
+
+  // 4. Create database record
+  const media = await prisma.media.create({
+    data: {
+      url: upload.url,
+      type: upload.type as MediaType,
+      key: upload.key,
+      mimeType: upload.mimeType,
+      size: upload.size,
+      postId,
+    },
+  });
+
+  // 5. Return metadata
+  return NextResponse.json({
+    mediaId: media.id,
+    url: upload.url,
+    key: upload.key,
+    type: media.type,
+  });
+}
+```
+
+### MinIO/S3 Upload
+
+The `uploadToMinio` function handles the actual file upload:
+
+```typescript
+interface UploadResult {
+  url: string;
+  key: string;
+  type: 'IMAGE' | 'VIDEO' | 'DOCUMENT';
+  mimeType: string;
+  size: number;
+}
+
+async function uploadToMinio(
+  file: File, 
+  userId: string
+): Promise<UploadResult> {
+  // Generate unique key
+  const timestamp = Date.now();
+  const randomString = Math.random().toString(36).substring(7);
+  const extension = file.name.split('.').pop();
+  const key = `uploads/${userId}/${timestamp}-${randomString}.${extension}`;
+  
+  // Convert file to buffer
+  const buffer = Buffer.from(await file.arrayBuffer());
+  
+  // Upload to S3
+  await s3Client.send(new PutObjectCommand({
+    Bucket: BUCKET_NAME,
+    Key: key,
+    Body: buffer,
+    ContentType: file.type,
+  }));
+  
+  // Determine media type
+  const type = determineMediaType(file.type);
+  
+  // Generate public URL
+  const url = `${CDN_URL}/${key}`;
+  
+  return {
+    url,
+    key,
+    type,
+    mimeType: file.type,
+    size: file.size,
+  };
+}
+```
+
+### Media Type Detection
+
+Files are categorized based on MIME type:
+
+```typescript
+function determineMediaType(mimeType: string): MediaType {
+  if (mimeType.startsWith('image/')) {
+    return 'IMAGE';
+  }
+  
+  if (mimeType.startsWith('video/')) {
+    return 'VIDEO';
+  }
+  
+  return 'DOCUMENT';
+}
+```
+
+---
+
+## Supported File Types
+
+### Images
+
+- **JPEG**: `.jpg`, `.jpeg`
+- **PNG**: `.png`
+- **GIF**: `.gif`
+- **WebP**: `.webp`
+- **SVG**: `.svg`
+
+**MIME Types**: `image/jpeg`, `image/png`, `image/gif`, `image/webp`, `image/svg+xml`
+
+### Videos
+
+- **MP4**: `.mp4`
+- **WebM**: `.webm`
+- **MOV**: `.mov`
+
+**MIME Types**: `video/mp4`, `video/webm`, `video/quicktime`
+
+### Documents
+
+- **PDF**: `.pdf`
+- **Text**: `.txt`
+- **Other**: Various document formats
+
+**MIME Types**: `application/pdf`, `text/plain`, etc.
+
+---
+
+## File Size Limits
+
+Default limits (configurable via environment variables):
+
+- **Images**: 10 MB
+- **Videos**: 100 MB
+- **Documents**: 25 MB
+
+Configure in your environment:
+
+```bash
+MAX_IMAGE_SIZE=10485760      # 10 MB
+MAX_VIDEO_SIZE=104857600     # 100 MB
+MAX_DOCUMENT_SIZE=26214400   # 25 MB
+```
+
+---
+
+## Avatar Upload
+
+Avatar uploads use a specialized endpoint with additional processing:
+
+```http
+POST /api/users/avatar
+```
+
+### Avatar-Specific Features
+
+- **Automatic Resizing**: Avatars are resized to standard dimensions
+- **Format Conversion**: Converted to WebP for optimal size
+- **Old Avatar Cleanup**: Previous avatar is automatically deleted
+- **Caching**: Avatar URLs are cached in Redis
+
+### Example
+
+```typescript
+const uploadAvatar = async (file: File, userId: string) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('userId', userId);
+  
+  const response = await fetch('/api/users/avatar', {
+    method: 'POST',
+    body: formData
+  });
+  
+  return await response.json();
+};
+```
+
+---
+
+## Storage Configuration
+
+### Environment Variables
+
+```bash
+# MinIO/S3 Configuration
+S3_ENDPOINT=https://s3.amazonaws.com
+S3_REGION=us-east-1
+S3_ACCESS_KEY_ID=your-access-key
+S3_SECRET_ACCESS_KEY=your-secret-key
+S3_BUCKET_NAME=zephyr-uploads
+
+# CDN Configuration (optional)
+CDN_URL=https://cdn.yourdomain.com
+```
+
+### MinIO Development Setup
+
+For local development with MinIO:
+
+```bash
+# Using Docker
+docker run -p 9000:9000 -p 9001:9001 \
+  -e "MINIO_ROOT_USER=minioadmin" \
+  -e "MINIO_ROOT_PASSWORD=minioadmin" \
+  minio/minio server /data --console-address ":9001"
+```
+
+Configure environment:
+
+```bash
+S3_ENDPOINT=http://localhost:9000
+S3_REGION=us-east-1
+S3_ACCESS_KEY_ID=minioadmin
+S3_SECRET_ACCESS_KEY=minioadmin
+S3_BUCKET_NAME=zephyr-uploads
+```
+
+---
+
+## Security
+
+### Authentication
+
+All upload endpoints require authentication:
+
+```typescript
+const session = await getSessionFromApi();
+if (!session?.user) {
+  return Response.json({ error: "Unauthorized" }, { status: 401 });
+}
+```
+
+### File Validation
+
+- **MIME Type Checking**: Validates file types
+- **Size Limits**: Enforces maximum file sizes
+- **Extension Validation**: Checks file extensions
+
+### Access Control
+
+- **User-Scoped Keys**: Files are stored with user ID in path
+- **Public Access**: Uploaded files are publicly accessible via URL
+- **Signed URLs**: Can implement signed URLs for temporary access
+
+---
+
+## Error Handling
+
+### Common Errors
+
+| Status | Error | Description |
+|--------|-------|-------------|
+| 400 | No file provided | File missing from request |
+| 401 | Unauthorized | User not authenticated |
+| 413 | Payload Too Large | File exceeds size limit |
+| 415 | Unsupported Media Type | File type not allowed |
+| 500 | Upload failed | S3/MinIO error |
+
+### Example Error Response
+
+```typescript
+{
+  error: "File size exceeds limit",
+  maxSize: 10485760,
+  receivedSize: 15728640
+}
+```
+
+---
+
+## Media Database Schema
+
+Media records are stored in the database:
+
+```prisma
+model Media {
+  id        String    @id @default(cuid())
+  url       String
+  type      MediaType
+  key       String    // S3 object key
+  mimeType  String
+  size      Int       // File size in bytes
+  postId    String?   // Optional post association
+  post      Post?     @relation(fields: [postId], references: [id])
+  createdAt DateTime  @default(now())
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  DOCUMENT
+}
+```
+
+---
+
+## Best Practices
+
+### 1. Client-Side Validation
+
+Validate files before uploading:
+
+```typescript
+const validateFile = (file: File) => {
+  const maxSize = 10 * 1024 * 1024; // 10 MB
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+  
+  if (file.size > maxSize) {
+    throw new Error('File too large');
+  }
+  
+  if (!allowedTypes.includes(file.type)) {
+    throw new Error('File type not supported');
+  }
+};
+```
+
+### 2. Progress Tracking
+
+Show upload progress to users:
+
+```typescript
+const uploadWithProgress = async (file: File, onProgress: (percent: number) => void) => {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    
+    xhr.upload.addEventListener('progress', (e) => {
+      if (e.lengthComputable) {
+        const percent = (e.loaded / e.total) * 100;
+        onProgress(percent);
+      }
+    });
+    
+    xhr.addEventListener('load', () => {
+      if (xhr.status === 200) {
+        resolve(JSON.parse(xhr.response));
+      } else {
+        reject(new Error('Upload failed'));
+      }
+    });
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    xhr.open('POST', '/api/upload');
+    xhr.send(formData);
+  });
+};
+```
+
+### 3. Image Optimization
+
+Optimize images before upload:
+
+```typescript
+const optimizeImage = async (file: File): Promise<File> => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    img.onload = () => {
+      // Resize if too large
+      let width = img.width;
+      let height = img.height;
+      const maxDimension = 2048;
+      
+      if (width > maxDimension || height > maxDimension) {
+        if (width > height) {
+          height = (height / width) * maxDimension;
+          width = maxDimension;
+        } else {
+          width = (width / height) * maxDimension;
+          height = maxDimension;
+        }
+      }
+      
+      canvas.width = width;
+      canvas.height = height;
+      ctx?.drawImage(img, 0, 0, width, height);
+      
+      canvas.toBlob((blob) => {
+        if (blob) {
+          resolve(new File([blob], file.name, { type: 'image/jpeg' }));
+        }
+      }, 'image/jpeg', 0.9);
+    };
+    
+    img.src = URL.createObjectURL(file);
+  });
+};
+```
+
+### 4. Error Recovery
+
+Implement retry logic for failed uploads:
+
+```typescript
+const uploadWithRetry = async (
+  file: File, 
+  maxRetries = 3
+): Promise<UploadResult> => {
+  let lastError: Error;
+  
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await uploadFile(file);
+    } catch (error) {
+      lastError = error as Error;
+      console.log(`Upload attempt ${i + 1} failed, retrying...`);
+      await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+    }
+  }
+  
+  throw lastError!;
+};
+```
+
+### 5. Multiple File Uploads
+
+Handle multiple file uploads:
+
+```typescript
+const uploadMultiple = async (files: FileList) => {
+  const uploads = Array.from(files).map(file => uploadFile(file));
+  
+  try {
+    const results = await Promise.all(uploads);
+    return results;
+  } catch (error) {
+    console.error('Some uploads failed:', error);
+    throw error;
+  }
+};
+```
+
+---
+
+## CDN Integration
+
+For production, use a CDN to serve uploaded files:
+
+1. **CloudFront** (AWS)
+2. **Cloudflare CDN**
+3. **Fastly**
+
+Configure CDN URL:
+
+```bash
+CDN_URL=https://cdn.yourdomain.com
+```
+
+Files will be accessible at:
+```
+https://cdn.yourdomain.com/uploads/user-123/timestamp-file.jpg
+```
+
+---
+
+## Cleanup
+
+### Delete Old Media
+
+Implement cleanup for unused media:
+
+```typescript
+// Delete media when post is deleted
+await prisma.media.delete({
+  where: { id: mediaId }
+});
+
+// Also delete from S3
+await s3Client.send(new DeleteObjectCommand({
+  Bucket: BUCKET_NAME,
+  Key: mediaKey,
+}));
+```
+
+### Scheduled Cleanup
+
+Run periodic cleanup jobs to remove orphaned files:
+
+```typescript
+// Find media not associated with any posts
+const orphanedMedia = await prisma.media.findMany({
+  where: {
+    postId: null,
+    createdAt: {
+      lt: new Date(Date.now() - 24 * 60 * 60 * 1000) // Older than 24 hours
+    }
+  }
+});
+
+// Delete from storage and database
+for (const media of orphanedMedia) {
+  await deleteFromS3(media.key);
+  await prisma.media.delete({ where: { id: media.id } });
+}
+```

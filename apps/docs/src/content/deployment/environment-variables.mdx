@@ -1,0 +1,653 @@
+---
+title: Environment Variables
+description: Complete reference for all environment variables across Zephyr apps.
+---
+
+import { Callout } from "nextra/components";
+
+## Overview
+
+Zephyr uses type-safe environment variables validated with Zod through `@t3-oss/env-nextjs`. Each app has its own `env.ts` and `keys.ts` files.
+
+<Callout type="info">
+**Type Safety**: All environment variables are validated at build time and runtime, preventing deployment with invalid configuration.
+</Callout>
+
+## Configuration Files
+
+### File Structure
+
+```
+apps/
+├── web/
+│   ├── env.ts          # App-specific env extension
+│   ├── keys.ts         # Shared environment variables
+│   └── .env.example    # Template for local development
+├── auth/
+│   ├── env.ts          # App-specific env extension
+│   ├── keys.ts         # Auth-specific variables
+│   └── .env.example    # Template for local development
+└── docs/
+    ├── env.ts
+    └── .env.example
+```
+
+### Environment Setup
+
+```bash
+# Copy example files for development
+bun run env:dev
+
+# Or manually
+cp apps/web/.env.example apps/web/.env
+cp apps/auth/.env.example apps/auth/.env
+```
+
+## Web App (`apps/web`)
+
+### Database
+
+```bash
+# PostgreSQL connection URL
+DATABASE_URL=postgresql://postgres:postgres@localhost:5433/zephyr?schema=public
+
+# Prisma-specific URLs (for Vercel/Neon)
+POSTGRES_PRISMA_URL=postgresql://user:pass@host/db?pgbouncer=true
+POSTGRES_URL_NON_POOLING=postgresql://user:pass@host/db
+```
+
+**Local Development:**
+```bash
+DATABASE_URL=postgresql://postgres:postgres@localhost:5433/zephyr?schema=public
+```
+
+**Production (Neon):**
+```bash
+DATABASE_URL=postgresql://user:pass@ep-xxx.us-east-2.aws.neon.tech/neondb?sslmode=require
+POSTGRES_PRISMA_URL=postgresql://user:pass@ep-xxx.us-east-2.aws.neon.tech/neondb?pgbouncer=true&sslmode=require
+POSTGRES_URL_NON_POOLING=postgresql://user:pass@ep-xxx.us-east-2.aws.neon.tech/neondb?sslmode=require
+```
+
+### Redis
+
+```bash
+# Redis connection URL
+REDIS_URL=redis://:zephyrredis@localhost:6379/0
+```
+
+**Local Development:**
+```bash
+REDIS_URL=redis://:zephyrredis@localhost:6379/0
+```
+
+**Production (Upstash):**
+```bash
+REDIS_URL=rediss://default:xxx@xxx.upstash.io:6379
+
+# Or use REST API
+UPSTASH_REDIS_REST_URL=https://xxx.upstash.io
+UPSTASH_REDIS_REST_TOKEN=xxx
+```
+
+### Object Storage (MinIO/S3)
+
+```bash
+# MinIO configuration
+MINIO_ROOT_USER=minioadmin
+MINIO_ROOT_PASSWORD=minioadmin
+MINIO_BUCKET_NAME=uploads
+MINIO_HOST=localhost
+MINIO_PORT=9000
+MINIO_CONSOLE_PORT=9001
+MINIO_ENDPOINT=http://localhost:9000
+MINIO_ENABLE_OBJECT_LOCKING=on
+
+# Public endpoint for client-side uploads
+NEXT_PUBLIC_MINIO_ENDPOINT=http://localhost:9000
+```
+
+**Local Development:**
+```bash
+MINIO_ROOT_USER=minioadmin
+MINIO_ROOT_PASSWORD=minioadmin
+MINIO_BUCKET_NAME=uploads
+MINIO_HOST=localhost
+MINIO_PORT=9000
+MINIO_ENDPOINT=http://localhost:9000
+NEXT_PUBLIC_MINIO_ENDPOINT=http://localhost:9000
+```
+
+**Production (Cloudflare R2):**
+```bash
+MINIO_ROOT_USER=<access-key-id>
+MINIO_ROOT_PASSWORD=<secret-access-key>
+MINIO_BUCKET_NAME=zephyr-uploads
+MINIO_HOST=<account-id>.r2.cloudflarestorage.com
+MINIO_PORT=443
+MINIO_ENDPOINT=https://<account-id>.r2.cloudflarestorage.com
+MINIO_ENABLE_OBJECT_LOCKING=off
+NEXT_PUBLIC_MINIO_ENDPOINT=https://cdn.yourdomain.com
+```
+
+**Production (AWS S3):**
+```bash
+MINIO_ROOT_USER=AKIA...
+MINIO_ROOT_PASSWORD=<secret-key>
+MINIO_BUCKET_NAME=zephyr-uploads
+MINIO_HOST=s3.amazonaws.com
+MINIO_PORT=443
+MINIO_ENDPOINT=https://s3.amazonaws.com
+NEXT_PUBLIC_MINIO_ENDPOINT=https://cdn.yourdomain.com
+```
+
+### Search (Meilisearch)
+
+```bash
+# Meilisearch connection
+MEILISEARCH_URL=http://localhost:7700
+MEILISEARCH_MASTER_KEY=masterKey123
+```
+
+**Local Development:**
+```bash
+MEILISEARCH_URL=http://localhost:7700
+MEILISEARCH_MASTER_KEY=masterKey123
+```
+
+**Production (Meilisearch Cloud):**
+```bash
+MEILISEARCH_URL=https://ms-xxx.meilisearch.io
+MEILISEARCH_MASTER_KEY=<master-key>
+```
+
+**Production (Self-hosted):**
+```bash
+MEILISEARCH_URL=https://search.yourdomain.com
+MEILISEARCH_MASTER_KEY=<secure-master-key>
+```
+
+### Message Queue (RabbitMQ)
+
+```bash
+# RabbitMQ connection URL
+RABBITMQ_URL=amqp://admin:admin123@localhost:5672
+```
+
+**Local Development:**
+```bash
+RABBITMQ_URL=amqp://admin:admin123@localhost:5672
+```
+
+**Production (CloudAMQP):**
+```bash
+RABBITMQ_URL=amqps://user:pass@xxx.cloudamqp.com/xxx
+```
+
+### Analytics Database (TimescaleDB)
+
+```bash
+# TimescaleDB for logs and analytics
+TIMESCALEDB_URL=postgresql://postgres:postgres@localhost:5434/zephyr-logs?schema=public
+```
+
+**Local Development:**
+```bash
+TIMESCALEDB_URL=postgresql://postgres:postgres@localhost:5434/zephyr-logs?schema=public
+```
+
+**Production (Timescale Cloud):**
+```bash
+TIMESCALEDB_URL=postgresql://user:pass@xxx.timescaledb.cloud:5432/tsdb?sslmode=require
+```
+
+### Cron Jobs
+
+```bash
+# Secret for cron job authentication
+CRON_SECRET=your-secret-key
+CRON_SECRET_KEY=your-secret-key
+```
+
+**Generation:**
+```bash
+# Generate secure secret
+openssl rand -hex 32
+```
+
+### Public URLs
+
+```bash
+# Application URLs (exposed to client)
+NEXT_PUBLIC_PORT=3000
+NEXT_PUBLIC_URL=http://localhost:3000
+NEXT_PUBLIC_AUTH_URL=http://localhost:3001
+```
+
+**Production:**
+```bash
+NEXT_PUBLIC_PORT=3000
+NEXT_PUBLIC_URL=https://yourdomain.com
+NEXT_PUBLIC_AUTH_URL=https://auth.yourdomain.com
+```
+
+### General Configuration
+
+```bash
+# Environment mode
+NODE_ENV=development  # or production
+
+# Disable telemetry
+NEXT_TELEMETRY_DISABLED=1
+TURBO_TELEMETRY_DISABLED=1
+BETTER_AUTH_TELEMETRY=0
+
+# Support email
+SUPPORT_EMAIL=info@zephyyrr.in
+```
+
+## Auth App (`apps/auth`)
+
+### Database
+
+Same as Web App:
+
+```bash
+DATABASE_URL=postgresql://postgres:postgres@localhost:5433/zephyr?schema=public
+POSTGRES_PRISMA_URL=postgresql://...
+POSTGRES_URL_NON_POOLING=postgresql://...
+```
+
+### Authentication
+
+```bash
+# Better Auth secret (min 32 characters)
+BETTER_AUTH_SECRET=your-secret-key-min-32-characters
+
+# Email service (Resend)
+RESEND_API_KEY=re_xxx
+```
+
+**Generate Secret:**
+```bash
+# Generate secure auth secret
+openssl rand -hex 32
+```
+
+**Resend Setup:**
+1. Sign up at https://resend.com
+2. Verify your domain
+3. Create API key
+4. Add to environment variables
+
+### OAuth Providers
+
+#### Google OAuth
+
+```bash
+GOOGLE_CLIENT_ID=xxx.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=GOCSPX-xxx
+```
+
+**Setup:**
+1. Go to [Google Cloud Console](https://console.cloud.google.com)
+2. Create OAuth 2.0 credentials
+3. Add authorized redirect URIs:
+   - `http://localhost:3001/api/auth/callback/google` (dev)
+   - `https://auth.yourdomain.com/api/auth/callback/google` (prod)
+
+#### GitHub OAuth
+
+```bash
+GITHUB_CLIENT_ID=Iv1.xxx
+GITHUB_CLIENT_SECRET=xxx
+```
+
+**Setup:**
+1. Go to [GitHub Developer Settings](https://github.com/settings/developers)
+2. Create new OAuth App
+3. Set callback URL: `https://auth.yourdomain.com/api/auth/callback/github`
+
+#### Discord OAuth
+
+```bash
+DISCORD_CLIENT_ID=xxx
+DISCORD_CLIENT_SECRET=xxx
+```
+
+**Setup:**
+1. Go to [Discord Developer Portal](https://discord.com/developers/applications)
+2. Create application
+3. Add redirect: `https://auth.yourdomain.com/api/auth/callback/discord`
+
+#### Twitter OAuth
+
+```bash
+TWITTER_CLIENT_ID=xxx
+TWITTER_CLIENT_SECRET=xxx
+```
+
+**Setup:**
+1. Go to [Twitter Developer Portal](https://developer.twitter.com/en/portal/dashboard)
+2. Create app
+3. Enable OAuth 2.0
+4. Add callback URL: `https://auth.yourdomain.com/api/auth/callback/twitter`
+
+#### Reddit OAuth
+
+```bash
+REDDIT_CLIENT_ID=xxx
+REDDIT_CLIENT_SECRET=xxx
+```
+
+**Setup:**
+1. Go to [Reddit Apps](https://www.reddit.com/prefs/apps)
+2. Create app (web app type)
+3. Set redirect URI: `https://auth.yourdomain.com/api/auth/callback/reddit`
+
+### Shared Services
+
+Auth app also uses:
+
+```bash
+# Same as web app
+RABBITMQ_URL=amqp://admin:admin123@localhost:5672
+MEILISEARCH_URL=http://localhost:7700
+MEILISEARCH_MASTER_KEY=masterKey123
+TIMESCALEDB_URL=postgresql://...
+```
+
+### Public URLs
+
+```bash
+NEXT_PUBLIC_AUTH_URL=http://localhost:3001
+NEXT_PUBLIC_URL=http://localhost:3000
+```
+
+## Docs App (`apps/docs`)
+
+Minimal configuration required:
+
+```bash
+# Environment
+NODE_ENV=development
+
+# Public URL
+NEXT_PUBLIC_URL=http://localhost:3002
+```
+
+## Package Environment Variables
+
+### Database Package (`packages/db`)
+
+Uses environment variables from apps:
+
+```bash
+# For Prisma CLI
+DATABASE_URL=postgresql://postgres:postgres@localhost:5433/zephyr?schema=public
+```
+
+### Auth Package (`packages/auth`)
+
+Configured through apps, no separate env file needed.
+
+## Environment Templates
+
+### Development `.env`
+
+```bash
+# Database
+DATABASE_URL=postgresql://postgres:postgres@localhost:5433/zephyr?schema=public
+
+# Redis
+REDIS_URL=redis://:zephyrredis@localhost:6379/0
+
+# MinIO
+MINIO_ROOT_USER=minioadmin
+MINIO_ROOT_PASSWORD=minioadmin
+MINIO_BUCKET_NAME=uploads
+MINIO_HOST=localhost
+MINIO_PORT=9000
+MINIO_ENDPOINT=http://localhost:9000
+
+# Meilisearch
+MEILISEARCH_URL=http://localhost:7700
+MEILISEARCH_MASTER_KEY=masterKey123
+
+# RabbitMQ
+RABBITMQ_URL=amqp://admin:admin123@localhost:5672
+
+# TimescaleDB
+TIMESCALEDB_URL=postgresql://postgres:postgres@localhost:5434/zephyr-logs?schema=public
+
+# Auth
+BETTER_AUTH_SECRET=dev-secret-key-change-in-production-min-32-chars
+RESEND_API_KEY=re_xxx
+
+# Public URLs
+NEXT_PUBLIC_URL=http://localhost:3000
+NEXT_PUBLIC_AUTH_URL=http://localhost:3001
+NEXT_PUBLIC_MINIO_ENDPOINT=http://localhost:9000
+
+# OAuth (optional for development)
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GITHUB_CLIENT_ID=
+GITHUB_CLIENT_SECRET=
+
+# Configuration
+NODE_ENV=development
+NEXT_TELEMETRY_DISABLED=1
+TURBO_TELEMETRY_DISABLED=1
+```
+
+### Production `.env`
+
+```bash
+# Database (Neon)
+DATABASE_URL=postgresql://user:pass@ep-xxx.us-east-2.aws.neon.tech/neondb?sslmode=require
+POSTGRES_PRISMA_URL=postgresql://user:pass@ep-xxx.us-east-2.aws.neon.tech/neondb?pgbouncer=true&sslmode=require
+POSTGRES_URL_NON_POOLING=postgresql://user:pass@ep-xxx.us-east-2.aws.neon.tech/neondb?sslmode=require
+
+# Redis (Upstash)
+REDIS_URL=rediss://default:xxx@xxx.upstash.io:6379
+
+# Object Storage (Cloudflare R2)
+MINIO_ROOT_USER=<access-key>
+MINIO_ROOT_PASSWORD=<secret-key>
+MINIO_BUCKET_NAME=zephyr-uploads
+MINIO_HOST=<account-id>.r2.cloudflarestorage.com
+MINIO_PORT=443
+MINIO_ENDPOINT=https://<account-id>.r2.cloudflarestorage.com
+
+# Meilisearch Cloud
+MEILISEARCH_URL=https://ms-xxx.meilisearch.io
+MEILISEARCH_MASTER_KEY=<master-key>
+
+# RabbitMQ (CloudAMQP)
+RABBITMQ_URL=amqps://user:pass@xxx.cloudamqp.com/xxx
+
+# TimescaleDB
+TIMESCALEDB_URL=postgresql://user:pass@xxx.timescaledb.cloud:5432/tsdb?sslmode=require
+
+# Auth
+BETTER_AUTH_SECRET=<generated-with-openssl-rand-hex-32>
+RESEND_API_KEY=re_xxx
+
+# OAuth
+GOOGLE_CLIENT_ID=xxx.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=GOCSPX-xxx
+GITHUB_CLIENT_ID=Iv1.xxx
+GITHUB_CLIENT_SECRET=xxx
+DISCORD_CLIENT_ID=xxx
+DISCORD_CLIENT_SECRET=xxx
+TWITTER_CLIENT_ID=xxx
+TWITTER_CLIENT_SECRET=xxx
+REDDIT_CLIENT_ID=xxx
+REDDIT_CLIENT_SECRET=xxx
+
+# Public URLs
+NEXT_PUBLIC_URL=https://yourdomain.com
+NEXT_PUBLIC_AUTH_URL=https://auth.yourdomain.com
+NEXT_PUBLIC_MINIO_ENDPOINT=https://cdn.yourdomain.com
+
+# Cron
+CRON_SECRET=<generated-secret>
+
+# Configuration
+NODE_ENV=production
+SUPPORT_EMAIL=support@yourdomain.com
+```
+
+## Validation
+
+### Type Safety
+
+Environment variables are validated using Zod:
+
+```typescript
+// apps/web/keys.ts
+export const keys = createEnv({
+  server: {
+    DATABASE_URL: z.url(),
+    REDIS_URL: z.url(),
+    BETTER_AUTH_SECRET: z.string().min(32),
+  },
+  client: {
+    NEXT_PUBLIC_URL: z.url(),
+  },
+  runtimeEnv: {
+    DATABASE_URL: process.env.DATABASE_URL,
+    // ... other mappings
+  },
+});
+```
+
+### Build-time Validation
+
+Invalid configuration fails the build:
+
+```bash
+# Missing required variable
+❌ Invalid environment variables: {
+  DATABASE_URL: [ 'Required' ]
+}
+
+# Invalid format
+❌ Invalid environment variables: {
+  REDIS_URL: [ 'Invalid url' ]
+}
+```
+
+### Runtime Access
+
+Use validated env object:
+
+```typescript
+import { env } from "@/env";
+
+// Type-safe access
+const dbUrl = env.DATABASE_URL; // string
+const port = env.NEXT_PUBLIC_PORT; // number
+```
+
+## Security Best Practices
+
+### 1. Never Commit Secrets
+
+```bash
+# .gitignore
+.env
+.env.local
+.env.*.local
+.vercel
+```
+
+### 2. Rotate Secrets
+
+Rotate production secrets regularly:
+
+```bash
+# Generate new secrets
+openssl rand -hex 32  # AUTH_SECRET
+openssl rand -hex 32  # CRON_SECRET
+
+# Update in production
+vercel env rm BETTER_AUTH_SECRET production
+vercel env add BETTER_AUTH_SECRET production
+```
+
+### 3. Use Different Values Per Environment
+
+```bash
+# Development
+BETTER_AUTH_SECRET=dev-secret-not-for-production
+
+# Production
+BETTER_AUTH_SECRET=<secure-generated-secret>
+```
+
+### 4. Limit Public Variables
+
+Only expose what's necessary to the client:
+
+```typescript
+// ❌ Bad - exposing server secret
+NEXT_PUBLIC_API_SECRET=xxx
+
+// ✅ Good - only public URL
+NEXT_PUBLIC_API_URL=https://api.yourdomain.com
+```
+
+### 5. Use Secret Management
+
+For production:
+
+- **Vercel**: Use environment variables UI
+- **Docker**: Use Docker secrets
+- **Kubernetes**: Use Kubernetes secrets
+- **Vault**: Use HashiCorp Vault
+
+## Troubleshooting
+
+### Missing Variables
+
+```bash
+# Error
+Error: Invalid environment variables: { DATABASE_URL: [ 'Required' ] }
+
+# Solution
+# Add missing variable to .env
+echo 'DATABASE_URL=postgresql://...' >> .env
+```
+
+### Invalid Format
+
+```bash
+# Error
+Error: Invalid environment variables: { REDIS_URL: [ 'Invalid url' ] }
+
+# Solution
+# Fix URL format (must include protocol)
+REDIS_URL=redis://localhost:6379  # ✅
+REDIS_URL=localhost:6379           # ❌
+```
+
+### Build vs Runtime
+
+```bash
+# Some variables needed at build time
+NEXT_PUBLIC_URL=https://yourdomain.com  # Build-time
+
+# Others needed at runtime
+DATABASE_URL=postgresql://...            # Runtime
+```
+
+## Next Steps
+
+- **[Docker Deployment](/deployment/docker)** - Deploy with environment variables
+- **[Vercel Deployment](/deployment/vercel)** - Configure Vercel environment
+- **[Database Migration](/deployment/database-migration)** - Database setup
+
+<Callout type="warning">
+**Production Secrets**: Always use strong, randomly generated secrets in production. Never use default development values.
+</Callout>

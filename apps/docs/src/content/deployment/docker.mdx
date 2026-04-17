@@ -1,0 +1,625 @@
+---
+title: Docker Deployment
+description: Deploy Zephyr using Docker containers for production environments.
+---
+
+import { Callout } from "nextra/components";
+
+## Overview
+
+Docker deployment provides complete control over your infrastructure. This guide covers building, optimizing, and deploying Zephyr apps using Docker.
+
+<Callout type="info">
+**Best for**: Self-hosted deployments, VPS, dedicated servers, or Kubernetes clusters.
+</Callout>
+
+## Architecture
+
+Zephyr's Docker setup includes:
+
+- **Multi-stage builds** for optimized image sizes
+- **Docker Bake** for parallel builds and caching
+- **Docker Compose** for local and production orchestration
+- **Health checks** for reliability
+- **Standalone Next.js** output for minimal runtime
+
+## Quick Start
+
+### Production Deployment
+
+```bash
+# 1. Build production images
+docker buildx bake --file docker-bake.hcl
+
+# 2. Start infrastructure
+docker compose -f docker/docker-compose.dev.yml up -d postgres redis minio meilisearch
+
+# 3. Run migrations
+docker exec -it zephyr-prisma bunx prisma migrate deploy
+
+# 4. Start applications
+docker compose -f docker/docker-compose.prod.yml up -d
+```
+
+## Building Images
+
+### Using Docker Bake (Recommended)
+
+Docker Bake builds all images in parallel with optimal caching:
+
+```bash
+# Build all apps (auth, web, docs)
+docker buildx bake --file docker-bake.hcl
+
+# Build specific app
+docker buildx bake --file docker-bake.hcl web
+
+# Build for multiple platforms
+docker buildx bake --file docker-bake.hcl --set "*.platform=linux/amd64,linux/arm64"
+
+# Build with custom tag
+TAG=v1.2.3 docker buildx bake --file docker-bake.hcl
+
+# Build and push to registry
+REGISTRY=ghcr.io/yourorg/ docker buildx bake --file docker-bake.hcl --push
+```
+
+### Docker Bake Configuration
+
+`docker-bake.hcl` defines build targets:
+
+```hcl
+variable "TAG" {
+  default = "latest"
+}
+
+variable "REGISTRY" {
+  default = ""
+}
+
+variable "REPO" {
+  default = "zephyr"
+}
+
+group "default" {
+  targets = ["auth", "web", "docs"]
+}
+
+target "web" {
+  context    = "."
+  dockerfile = "apps/web/Dockerfile"
+  tags       = ["${REGISTRY}${REPO}-web:${TAG}"]
+  platforms  = ["linux/amd64", "linux/arm64"]
+  cache-from = ["type=registry,ref=${REGISTRY}${REPO}-web:cache"]
+  cache-to   = ["type=registry,ref=${REGISTRY}${REPO}-web:cache,mode=max"]
+  labels = {
+    "org.opencontainers.image.title" = "Zephyr Web App"
+    "org.opencontainers.image.version" = "${TAG}"
+  }
+}
+```
+
+### Build Arguments
+
+Pass build-time configuration:
+
+```bash
+# Web app with public URLs
+docker build \
+  --build-arg NEXT_PUBLIC_URL=https://yourdomain.com \
+  --build-arg NEXT_PUBLIC_AUTH_URL=https://auth.yourdomain.com \
+  --build-arg NEXT_PUBLIC_MINIO_ENDPOINT=https://cdn.yourdomain.com \
+  -f apps/web/Dockerfile \
+  -t zephyr-web:latest \
+  .
+```
+
+## Dockerfile Structure
+
+### Multi-Stage Build
+
+Each app uses a three-stage build:
+
+```dockerfile
+# Stage 1: Builder
+FROM oven/bun:slim AS builder
+WORKDIR /app
+COPY package.json bun.lock ./
+COPY packages/ ./packages/
+COPY apps/web/package.json ./apps/web/
+RUN bun install
+COPY apps/web/ ./apps/web/
+WORKDIR /app/apps/web
+RUN bun run build
+
+# Stage 2: Dependencies
+FROM oven/bun:slim AS deps
+WORKDIR /app
+COPY package.json bun.lock ./
+COPY packages/ ./packages/
+RUN bun install --production
+
+# Stage 3: Runtime
+FROM oven/bun:alpine AS runtime
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/packages ./packages
+COPY --from=builder /app/apps/web ./apps/web
+WORKDIR /app/apps/web
+USER nextjs
+EXPOSE 3000
+CMD ["bun", "start"]
+```
+
+### Optimization Features
+
+- **Bun base image**: Faster installs and smaller size
+- **Layer caching**: Dependencies cached separately
+- **Production deps only**: Runtime stage excludes dev dependencies
+- **Non-root user**: Security best practice
+- **Multi-platform**: Supports AMD64 and ARM64
+
+## Docker Compose
+
+### Development Setup
+
+`docker/docker-compose.dev.yml` for local development:
+
+```yaml
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: zephyr
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:latest
+    command: redis-server --requirepass zephyrredis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+
+  meilisearch:
+    image: getmeili/meilisearch:latest
+    environment:
+      MEILI_ENV: production
+      MEILI_MASTER_KEY: zephyrsearchkey
+    ports:
+      - "7700:7700"
+    volumes:
+      - meilisearch-data:/meili_data
+```
+
+### Production Setup
+
+Create `docker-compose.prod.yml`:
+
+```yaml
+version: "3.8"
+
+services:
+  web:
+    image: zephyr-web:latest
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT}
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  auth:
+    image: zephyr-auth:latest
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+    ports:
+      - "3001:3001"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  docs:
+    image: zephyr-docs:latest
+    environment:
+      NODE_ENV: production
+    ports:
+      - "3002:3002"
+    restart: unless-stopped
+```
+
+## Environment Variables
+
+### Build-time Variables
+
+Required during image build:
+
+```bash
+# apps/web/Dockerfile
+NEXT_PUBLIC_URL=https://yourdomain.com
+NEXT_PUBLIC_AUTH_URL=https://auth.yourdomain.com
+NEXT_PUBLIC_MINIO_ENDPOINT=https://cdn.yourdomain.com
+```
+
+### Runtime Variables
+
+Required when running containers:
+
+```bash
+# Database
+DATABASE_URL=postgresql://user:pass@host:5432/db
+DIRECT_URL=postgresql://user:pass@host:5432/db
+
+# Redis
+REDIS_URL=redis://:password@host:6379/0
+
+# Authentication
+BETTER_AUTH_SECRET=your-secret-key
+BETTER_AUTH_URL=https://auth.yourdomain.com
+
+# OAuth Providers
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
+GITHUB_CLIENT_ID=...
+GITHUB_CLIENT_SECRET=...
+
+# Object Storage
+MINIO_ENDPOINT=cdn.yourdomain.com
+MINIO_PORT=443
+MINIO_USE_SSL=true
+MINIO_ACCESS_KEY=...
+MINIO_SECRET_KEY=...
+
+# Search
+MEILISEARCH_HOST=https://search.yourdomain.com
+MEILISEARCH_KEY=...
+
+# Email
+RESEND_API_KEY=...
+```
+
+## Production Deployment
+
+### VPS/Dedicated Server
+
+Deploy to a single server:
+
+```bash
+# 1. Install Docker and Docker Compose
+curl -fsSL https://get.docker.com | sh
+sudo usermod -aG docker $USER
+
+# 2. Clone repository
+git clone https://github.com/yourorg/zephyr.git
+cd zephyr
+
+# 3. Build images
+docker buildx bake --file docker-bake.hcl
+
+# 4. Create .env file
+cat > .env <<EOF
+DATABASE_URL=postgresql://...
+REDIS_URL=redis://...
+BETTER_AUTH_SECRET=$(openssl rand -hex 32)
+EOF
+
+# 5. Start services
+docker compose -f docker-compose.prod.yml up -d
+
+# 6. Run migrations
+docker exec -it zephyr-web bunx prisma migrate deploy
+
+# 7. Verify deployment
+curl http://localhost:3000/api/health
+```
+
+### With Nginx Reverse Proxy
+
+Route traffic through Nginx:
+
+```nginx
+# /etc/nginx/sites-available/zephyr
+server {
+    listen 80;
+    server_name yourdomain.com;
+    return 301 https://$server_name$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name yourdomain.com;
+
+    ssl_certificate /etc/letsencrypt/live/yourdomain.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/yourdomain.com/privkey.pem;
+
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
+server {
+    listen 443 ssl http2;
+    server_name auth.yourdomain.com;
+
+    ssl_certificate /etc/letsencrypt/live/yourdomain.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/yourdomain.com/privkey.pem;
+
+    location / {
+        proxy_pass http://localhost:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+Enable the site:
+
+```bash
+sudo ln -s /etc/nginx/sites-available/zephyr /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+### Container Registry
+
+Push images to a registry:
+
+```bash
+# GitHub Container Registry
+echo $GITHUB_TOKEN | docker login ghcr.io -u USERNAME --password-stdin
+
+# Build and push
+REGISTRY=ghcr.io/yourorg/ TAG=v1.0.0 docker buildx bake --push
+
+# Pull on production server
+docker pull ghcr.io/yourorg/zephyr-web:v1.0.0
+docker pull ghcr.io/yourorg/zephyr-auth:v1.0.0
+```
+
+### Docker Swarm
+
+For multi-node deployments:
+
+```yaml
+# docker-stack.yml
+version: "3.8"
+
+services:
+  web:
+    image: ghcr.io/yourorg/zephyr-web:latest
+    deploy:
+      replicas: 3
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+    networks:
+      - zephyr-network
+    secrets:
+      - database_url
+      - redis_url
+
+networks:
+  zephyr-network:
+    driver: overlay
+
+secrets:
+  database_url:
+    external: true
+  redis_url:
+    external: true
+```
+
+Deploy the stack:
+
+```bash
+docker stack deploy -c docker-stack.yml zephyr
+```
+
+## Optimization Tips
+
+### Image Size
+
+Reduce image sizes:
+
+```dockerfile
+# Use alpine base
+FROM oven/bun:alpine AS runtime
+
+# Remove build tools
+RUN apk del build-base
+
+# Use .dockerignore
+echo ".git
+.next
+node_modules
+*.md" > .dockerignore
+```
+
+### Build Cache
+
+Optimize build caching:
+
+```bash
+# Local cache
+docker buildx bake --cache-from type=local,src=/tmp/.buildx-cache
+
+# Registry cache
+docker buildx bake --cache-from type=registry,ref=yourregistry/cache
+
+# GitHub Actions cache
+docker buildx bake --cache-from type=gha --cache-to type=gha,mode=max
+```
+
+### Multi-Platform Builds
+
+Build for different architectures:
+
+```bash
+# Set up builder
+docker buildx create --name multiplatform --driver docker-container --use
+
+# Build for multiple platforms
+docker buildx bake --file docker-bake.hcl \
+  --set "*.platform=linux/amd64,linux/arm64" \
+  --push
+```
+
+## Health Checks
+
+Implement health checks for reliability:
+
+```dockerfile
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD curl -f http://localhost:3000/api/health || exit 1
+```
+
+Health check endpoint:
+
+```typescript
+// app/api/health/route.ts
+export async function GET() {
+  try {
+    // Check database
+    await prisma.$queryRaw`SELECT 1`;
+    
+    // Check Redis
+    await redis.ping();
+    
+    return Response.json({ status: "healthy" });
+  } catch (error) {
+    return Response.json(
+      { status: "unhealthy", error: error.message },
+      { status: 503 }
+    );
+  }
+}
+```
+
+## Monitoring
+
+### Container Logs
+
+View application logs:
+
+```bash
+# All containers
+docker compose logs -f
+
+# Specific service
+docker compose logs -f web
+
+# Last 100 lines
+docker compose logs --tail=100 web
+```
+
+### Resource Usage
+
+Monitor resource consumption:
+
+```bash
+# Real-time stats
+docker stats
+
+# Specific container
+docker stats zephyr-web
+```
+
+## Troubleshooting
+
+### Build Failures
+
+```bash
+# Clear build cache
+docker buildx prune -af
+
+# Build with no cache
+docker buildx bake --no-cache
+
+# Verbose output
+docker buildx bake --progress=plain
+```
+
+### Container Issues
+
+```bash
+# Check container status
+docker ps -a
+
+# View logs
+docker logs zephyr-web
+
+# Inspect container
+docker inspect zephyr-web
+
+# Execute commands
+docker exec -it zephyr-web sh
+```
+
+### Network Problems
+
+```bash
+# List networks
+docker network ls
+
+# Inspect network
+docker network inspect zephyr_default
+
+# Test connectivity
+docker exec zephyr-web ping postgres
+```
+
+## Next Steps
+
+- **[Environment Variables](/deployment/environment-variables)** - Complete configuration reference
+- **[Database Migration](/deployment/database-migration)** - Migration strategies
+- **[Monitoring](/deployment/monitoring)** - Production monitoring setup
+
+<Callout type="warning">
+**Security**: Always use secrets management for sensitive data. Never hardcode credentials in Dockerfiles or compose files.
+</Callout>

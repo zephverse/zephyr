@@ -1,0 +1,436 @@
+# Search API
+
+The Search API provides full-text search functionality for posts with query-based filtering and pagination.
+
+## Endpoint
+
+```http
+GET /api/search
+POST /api/search
+DELETE /api/search
+```
+
+---
+
+## Search Posts
+
+### Search for Posts
+
+Searches for posts containing specific text with pagination support.
+
+```http
+GET /api/search
+```
+
+#### Query Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `q` | string | Yes | Search query text |
+| `cursor` | string | No | Pagination cursor (last post ID) |
+
+#### Response
+
+```typescript
+{
+  posts: PostData[];
+  nextCursor: string | null;
+}
+```
+
+#### Example
+
+```typescript
+const searchPosts = async (query: string, cursor?: string) => {
+  const params = new URLSearchParams({ q: query });
+  if (cursor) {
+    params.append('cursor', cursor);
+  }
+  
+  const response = await fetch(`/api/search?${params}`);
+  return await response.json();
+};
+
+// Usage
+const results = await searchPosts('javascript tutorial');
+console.log(results.posts);      // Array of matching posts
+console.log(results.nextCursor); // Next page cursor
+```
+
+#### Implementation Details
+
+- **Search Mode**: Case-insensitive text search
+- **Page Size**: 10 posts per page
+- **Ordering**: Most recent first (`createdAt: desc`)
+- **Includes**: Full post data with user info, votes, comments, bookmarks
+
+```typescript
+const posts = await prisma.post.findMany({
+  where: {
+    content: { contains: q, mode: "insensitive" },
+  },
+  include: getPostDataInclude(user.id),
+  orderBy: { createdAt: "desc" },
+  take: pageSize + 1,
+  cursor: cursor ? { id: cursor } : undefined,
+});
+```
+
+---
+
+## Search History
+
+### Add to Search History
+
+Records a search query in the user's search history.
+
+```http
+POST /api/search
+```
+
+#### Request Body
+
+```typescript
+{
+  query: string;
+}
+```
+
+#### Response
+
+```typescript
+{
+  success: true;
+}
+```
+
+#### Example
+
+```typescript
+const saveSearchQuery = async (query: string) => {
+  await fetch('/api/search', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query })
+  });
+};
+
+// Save search when user searches
+await saveSearchQuery('react hooks');
+```
+
+#### Implementation Details
+
+The endpoint saves search queries to both:
+1. **User's search history** - Personal history for the user
+2. **Global suggestions** - Popular search terms across platform
+
+```typescript
+await Promise.all([
+  searchSuggestionsCache.addToHistory(user.id, query),
+  searchSuggestionsCache.addSuggestion(query),
+]);
+```
+
+---
+
+### Clear Search History
+
+Removes search queries from user's history.
+
+```http
+DELETE /api/search
+```
+
+#### Query Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `type` | string | Yes | Must be `"history"` |
+| `query` | string | No | Specific query to remove (omit to clear all) |
+
+#### Response
+
+```typescript
+{
+  success: true;
+}
+```
+
+#### Examples
+
+```typescript
+// Clear single search query
+const clearSearchItem = async (query: string) => {
+  const params = new URLSearchParams({
+    type: 'history',
+    query: query
+  });
+  
+  await fetch(`/api/search?${params}`, {
+    method: 'DELETE'
+  });
+};
+
+// Clear all search history
+const clearAllHistory = async () => {
+  const params = new URLSearchParams({ type: 'history' });
+  
+  await fetch(`/api/search?${params}`, {
+    method: 'DELETE'
+  });
+};
+
+// Usage
+await clearSearchItem('old search');
+await clearAllHistory();
+```
+
+---
+
+## Search Features
+
+### Case-Insensitive Search
+
+All searches are case-insensitive for better user experience:
+
+```typescript
+where: {
+  content: { 
+    contains: query, 
+    mode: "insensitive" 
+  }
+}
+```
+
+### Pagination
+
+Cursor-based pagination for efficient loading:
+
+```typescript
+// First page
+const firstPage = await fetch('/api/search?q=javascript');
+
+// Next page
+const nextPage = await fetch(
+  `/api/search?q=javascript&cursor=${firstPage.nextCursor}`
+);
+```
+
+---
+
+## Search Suggestions Cache
+
+The search system uses Redis caching for search history and suggestions:
+
+```typescript
+const searchSuggestionsCache = {
+  // Add query to user's history
+  addToHistory(userId: string, query: string) {
+    return redis.zadd(
+      `search:history:${userId}`,
+      Date.now(),
+      query
+    );
+  },
+  
+  // Add to global suggestions
+  addSuggestion(query: string) {
+    return redis.zincrby(
+      'search:suggestions',
+      1,
+      query
+    );
+  },
+  
+  // Remove specific history item
+  removeHistoryItem(userId: string, query: string) {
+    return redis.zrem(
+      `search:history:${userId}`,
+      query
+    );
+  },
+  
+  // Clear all user history
+  clearHistory(userId: string) {
+    return redis.del(`search:history:${userId}`);
+  }
+};
+```
+
+---
+
+## Error Responses
+
+| Status | Error | Description |
+|--------|-------|-------------|
+| 400 | Query is required | Search query missing from request |
+| 400 | Invalid operation | Invalid delete operation type |
+| 401 | Unauthorized | User not authenticated |
+| 500 | Internal server error | Server error occurred |
+
+---
+
+## Best Practices
+
+### 1. Debounce Search Input
+
+Prevent excessive API calls while typing:
+
+```typescript
+import { useState, useEffect } from 'react';
+
+const useSearchDebounce = (query: string, delay = 500) => {
+  const [debouncedQuery, setDebouncedQuery] = useState(query);
+  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(query);
+    }, delay);
+    
+    return () => clearTimeout(timer);
+  }, [query, delay]);
+  
+  return debouncedQuery;
+};
+
+// Usage
+const SearchComponent = () => {
+  const [query, setQuery] = useState('');
+  const debouncedQuery = useSearchDebounce(query);
+  
+  useEffect(() => {
+    if (debouncedQuery) {
+      searchPosts(debouncedQuery);
+    }
+  }, [debouncedQuery]);
+  
+  return <input value={query} onChange={(e) => setQuery(e.target.value)} />;
+};
+```
+
+### 2. Highlight Search Terms
+
+Highlight matching terms in results:
+
+```typescript
+const highlightText = (text: string, query: string) => {
+  const parts = text.split(new RegExp(`(${query})`, 'gi'));
+  
+  return parts.map((part, i) => 
+    part.toLowerCase() === query.toLowerCase() 
+      ? <mark key={i}>{part}</mark>
+      : part
+  );
+};
+```
+
+### 3. Search Suggestions
+
+Show popular searches and user history:
+
+```typescript
+const getSearchSuggestions = async (query: string) => {
+  // Get from cache
+  const history = await redis.zrevrange(
+    `search:history:${userId}`,
+    0,
+    4
+  );
+  
+  const popular = await redis.zrevrange(
+    'search:suggestions',
+    0,
+    4
+  );
+  
+  return {
+    history,
+    popular: popular.filter(s => 
+      s.toLowerCase().includes(query.toLowerCase())
+    )
+  };
+};
+```
+
+### 4. Empty State Handling
+
+Handle no results gracefully:
+
+```typescript
+const SearchResults = ({ results }) => {
+  if (!results || results.posts.length === 0) {
+    return (
+      <div className="empty-state">
+        <p>No results found</p>
+        <p>Try different keywords or check spelling</p>
+      </div>
+    );
+  }
+  
+  return <PostList posts={results.posts} />;
+};
+```
+
+### 5. Search Analytics
+
+Track search performance:
+
+```typescript
+const trackSearch = async (query: string, resultsCount: number) => {
+  await fetch('/api/analytics', {
+    method: 'POST',
+    body: JSON.stringify({
+      event: 'search',
+      properties: {
+        query,
+        resultsCount,
+        timestamp: Date.now()
+      }
+    })
+  });
+};
+```
+
+---
+
+## Advanced Search (Future Enhancement)
+
+Future versions may include:
+
+### Filters
+
+```typescript
+{
+  q: 'javascript',
+  filters: {
+    tags: ['tutorial', 'beginner'],
+    dateRange: {
+      from: '2024-01-01',
+      to: '2024-12-31'
+    },
+    author: 'user-123'
+  }
+}
+```
+
+### Full-Text Search Engine
+
+Integration with search engines like:
+- **MeiliSearch**: Fast, typo-tolerant search
+- **Elasticsearch**: Advanced full-text search
+- **Algolia**: Hosted search service
+
+### Search Analytics
+
+```typescript
+{
+  query: 'javascript',
+  analytics: {
+    totalResults: 1234,
+    avgResponseTime: 45,
+    topResults: [...],
+    relatedQueries: [...]
+  }
+}
+```

@@ -1,0 +1,316 @@
+---
+title: Cron Jobs
+description: Background tasks and scheduled jobs in Zephyr.
+---
+
+import { Callout } from "nextra/components";
+
+## Overview
+
+Zephyr implements cron jobs as protected API routes in `apps/web/src/app/api/cron/`. These routes are designed to be triggered by external cron services like Vercel Cron, GitHub Actions, or cron-job.org.
+
+## Authentication
+
+All cron routes require the `CRON_SECRET` header for authentication:
+
+```typescript
+const cronSecret = request.headers.get("x-cron-secret");
+if (cronSecret !== process.env.CRON_SECRET) {
+  return Response.json({ error: "Unauthorized" }, { status: 401 });
+}
+```
+
+<Callout type="warning">
+Never expose `CRON_SECRET` in client-side code. Only use it in server-side cron triggers.
+</Callout>
+
+## Available Cron Jobs
+
+### `/api/cron/sync-share-stats`
+
+**Purpose:** Aggregate share statistics from Redis to PostgreSQL
+
+**Frequency:** Every 15 minutes recommended
+
+**What it does:**
+- Reads share counts from Redis cache (`share-cache:{postId}:{platform}`)
+- Aggregates counts by platform (Twitter, Facebook, LinkedIn, etc.)
+- Syncs to `ShareStats` table in PostgreSQL
+- Cleans up stale Redis keys for posts older than 30 days
+
+**Platforms tracked:**
+- `twitter`, `facebook`, `linkedin`, `instagram`, `pinterest`
+- `reddit`, `whatsapp`, `discord`, `email`, `copy`, `qr`
+
+### `/api/cron/sync-view-aura`
+
+**Purpose:** Award Aura for view milestones
+
+**Frequency:** Every 30 minutes recommended
+
+**What it does:**
+- Checks posts that have gained views since last sync
+- Awards Aura bonuses at view milestones:
+  - 100 views: +5 Aura
+  - 500 views: +10 Aura
+  - 1000 views: +20 Aura
+  - 5000 views: +50 Aura
+  - 10000 views: +100 Aura
+- Creates `AuraLog` entries with type `POST_VIEWS_MILESTONE`
+- Updates user's total Aura score
+
+### `/api/cron/sync-views`
+
+**Purpose:** Sync view counts from Redis to PostgreSQL
+
+**Frequency:** Every 10 minutes recommended
+
+**What it does:**
+- Reads view counts from Redis (`post:views:{postId}`)
+- Bulk updates `Post.viewCount` in PostgreSQL
+- Maintains Redis as source of truth for real-time view counts
+- Only syncs posts with pending view updates
+
+### `/api/cron/sync-all-cache`
+
+**Purpose:** Rebuild all caches from database
+
+**Frequency:** Daily or on-demand
+
+**What it does:**
+- Rebuilds follower info cache for all users
+- Regenerates suggested users cache
+- Refreshes user profile caches
+- Updates avatar URL caches
+- Useful for cache consistency after database migrations
+
+<Callout type="info">
+This job can be resource-intensive. Run during off-peak hours.
+</Callout>
+
+### `/api/cron/aggregate-analytics`
+
+**Purpose:** Generate analytics and aggregate metrics
+
+**Frequency:** Hourly or daily
+
+**What it does:**
+- Aggregates user activity metrics
+- Calculates trending scores
+- Updates leaderboard data
+- Generates platform-wide statistics
+
+### `/api/cron/cleanup-inactive`
+
+**Purpose:** Clean up inactive user sessions and data
+
+**Frequency:** Daily
+
+**What it does:**
+- Removes expired sessions from database
+- Cleans up orphaned session cache entries
+- Identifies inactive users (no activity in 90+ days)
+- Marks accounts for potential archival
+
+### `/api/cron/cleanup-media`
+
+**Purpose:** Remove orphaned media files
+
+**Frequency:** Daily
+
+**What it does:**
+- Finds `Media` records not attached to any post
+- Removes files from MinIO storage
+- Deletes database records for orphaned media
+- Reclaims storage space
+
+**Grace period:** 24 hours after creation
+
+### `/api/cron/cleanup-reset-tokens`
+
+**Purpose:** Clean up expired password reset tokens
+
+**Frequency:** Hourly
+
+**What it does:**
+- Removes expired `PasswordResetToken` records
+- Removes expired `Verification` records
+- Prevents token table bloat
+
+### `/api/cron/clear-uploads`
+
+**Purpose:** Clear temporary upload staging area
+
+**Frequency:** Every 6 hours
+
+**What it does:**
+- Removes files in MinIO `temp` bucket older than 24 hours
+- Cleans up failed/abandoned uploads
+- Frees staging storage
+
+## Scheduling with Vercel Cron
+
+If deploying to Vercel, use `vercel.json`:
+
+```json
+{
+  "crons": [
+    {
+      "path": "/api/cron/sync-views",
+      "schedule": "*/10 * * * *"
+    },
+    {
+      "path": "/api/cron/sync-share-stats",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/cron/sync-view-aura",
+      "schedule": "*/30 * * * *"
+    },
+    {
+      "path": "/api/cron/cleanup-reset-tokens",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/cleanup-media",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/cleanup-inactive",
+      "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/clear-uploads",
+      "schedule": "0 */6 * * *"
+    },
+    {
+      "path": "/api/cron/aggregate-analytics",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/sync-all-cache",
+      "schedule": "0 4 * * *"
+    }
+  ]
+}
+```
+
+## Scheduling with GitHub Actions
+
+Create `.github/workflows/cron.yml`:
+
+```yaml
+name: Cron Jobs
+
+on:
+  schedule:
+    # Run every 10 minutes
+    - cron: '*/10 * * * *'
+
+jobs:
+  sync-views:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger sync-views
+        run: |
+          curl -X POST \
+            -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" \
+            https://your-domain.com/api/cron/sync-views
+```
+
+## Manual Trigger
+
+For testing or emergency runs:
+
+```bash
+curl -X POST \
+  -H "x-cron-secret: your_secret_here" \
+  https://your-domain.com/api/cron/sync-view-aura
+```
+
+## Monitoring
+
+Each cron job returns execution details:
+
+```json
+{
+  "success": true,
+  "processed": 150,
+  "duration": 1234,
+  "message": "Synced 150 view counts in 1.2s"
+}
+```
+
+Failed jobs return error details:
+
+```json
+{
+  "error": "Database connection failed",
+  "code": "DB_ERROR"
+}
+```
+
+<Callout type="info">
+Set up monitoring alerts for cron job failures using your deployment platform's logging/alerting features.
+</Callout>
+
+## Performance Considerations
+
+### Batching
+
+All cron jobs use batching to avoid overwhelming the database:
+
+```typescript
+const BATCH_SIZE = 100;
+
+for (let i = 0; i < items.length; i += BATCH_SIZE) {
+  const batch = items.slice(i, i + BATCH_SIZE);
+  await processBatch(batch);
+}
+```
+
+### Timeouts
+
+Most cron jobs have a 5-minute timeout. For long-running tasks, implement checkpointing:
+
+```typescript
+const checkpoint = await redis.get('cron:sync-cache:checkpoint');
+const startFrom = checkpoint ? parseInt(checkpoint) : 0;
+
+// Process and update checkpoint
+await redis.set('cron:sync-cache:checkpoint', lastProcessedId);
+```
+
+### Idempotency
+
+All cron jobs are idempotent - running them multiple times produces the same result:
+
+```typescript
+// Use upsert patterns
+await prisma.shareStats.upsert({
+  where: { postId_platform: { postId, platform } },
+  update: { shares, clicks },
+  create: { postId, platform, shares, clicks }
+});
+```
+
+## Development
+
+Test cron jobs locally:
+
+```bash
+# Start the dev server
+bun run dev
+
+# Trigger cron job
+curl -X POST \
+  -H "x-cron-secret: dev_secret" \
+  http://localhost:3000/api/cron/sync-views
+```
+
+Set `CRON_SECRET=dev_secret` in your `.env.local` for local testing.
+
+<Callout type="warning">
+Use a different `CRON_SECRET` for production to prevent unauthorized access.
+</Callout>
+

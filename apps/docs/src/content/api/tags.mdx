@@ -1,0 +1,472 @@
+# Tags API
+
+The Tags API provides endpoints for retrieving popular tags used across the platform.
+
+## Endpoint
+
+```http
+GET /api/tags/popular
+```
+
+Retrieves the most popular tags based on usage count.
+
+---
+
+## Get Popular Tags
+
+### Retrieve Popular Tags
+
+Gets the top tags by post count.
+
+#### Request
+
+```http
+GET /api/tags/popular
+```
+
+#### Response
+
+```typescript
+{
+  tags: Array<{
+    id: string;
+    name: string;
+    _count: {
+      posts: number;
+    };
+  }>;
+}
+```
+
+#### Example
+
+```typescript
+const getPopularTags = async () => {
+  const response = await fetch('/api/tags/popular');
+  const { tags } = await response.json();
+  
+  return tags;
+};
+
+// Usage
+const tags = await getPopularTags();
+
+tags.forEach(tag => {
+  console.log(`#${tag.name} - ${tag._count.posts} posts`);
+});
+
+// Output:
+// #javascript - 1234 posts
+// #react - 987 posts
+// #typescript - 756 posts
+```
+
+---
+
+## Implementation Details
+
+### Query Logic
+
+The endpoint retrieves tags that have at least one associated post, ordered by post count:
+
+```typescript
+export async function GET() {
+  try {
+    const tags = await prisma.tag.findMany({
+      where: {
+        posts: {
+          some: {},  // Only tags with at least one post
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+        _count: {
+          select: {
+            posts: true,
+          },
+        },
+      },
+      orderBy: {
+        posts: {
+          _count: "desc",  // Most used tags first
+        },
+      },
+      take: 10,  // Top 10 tags
+    });
+
+    return NextResponse.json({ tags });
+  } catch (error) {
+    console.error("Error fetching popular tags:", error);
+    return NextResponse.json({ tags: [] }, { status: 500 });
+  }
+}
+```
+
+### Caching
+
+Tag counts are cached in Redis for performance:
+
+```typescript
+// Increment tag usage when tag is added to post
+await tagCache.incrementTagCount(tagName);
+
+// Get cached tag count
+const count = await tagCache.getTagCount(tagName);
+```
+
+---
+
+## Response Format
+
+### Successful Response
+
+```json
+{
+  "tags": [
+    {
+      "id": "tag-123",
+      "name": "javascript",
+      "_count": {
+        "posts": 1234
+      }
+    },
+    {
+      "id": "tag-456",
+      "name": "react",
+      "_count": {
+        "posts": 987
+      }
+    },
+    {
+      "id": "tag-789",
+      "name": "typescript",
+      "_count": {
+        "posts": 756
+      }
+    }
+  ]
+}
+```
+
+### Error Response
+
+```json
+{
+  "tags": []
+}
+```
+
+Note: On error, the endpoint returns an empty array with 500 status rather than failing completely.
+
+---
+
+## Tag Usage
+
+### Adding Tags to Posts
+
+Tags are added when creating or updating posts:
+
+```http
+POST /api/posts/[postId]/tags
+```
+
+```typescript
+const updatePostTags = async (postId: string, tags: string[]) => {
+  const response = await fetch(`/api/posts/${postId}/tags`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tags })
+  });
+  
+  return await response.json();
+};
+
+// Usage
+await updatePostTags('post-123', ['javascript', 'tutorial', 'webdev']);
+```
+
+### Tag Normalization
+
+All tags are normalized to lowercase:
+
+```typescript
+const normalizedTags = tags.map(tag => tag.toLowerCase());
+```
+
+---
+
+## Database Schema
+
+Tags are stored with a many-to-many relationship to posts:
+
+```prisma
+model Tag {
+  id    String @id @default(cuid())
+  name  String @unique
+  posts Post[]
+  
+  @@index([name])
+}
+
+model Post {
+  id   String @id @default(cuid())
+  tags Tag[]
+  // ... other fields
+}
+```
+
+---
+
+## Display Patterns
+
+### Tag Cloud
+
+Display popular tags as a tag cloud:
+
+```typescript
+const TagCloud = ({ tags }) => {
+  const maxCount = Math.max(...tags.map(t => t._count.posts));
+  
+  return (
+    <div className="tag-cloud">
+      {tags.map(tag => {
+        const size = (tag._count.posts / maxCount) * 2 + 1; // 1-3em
+        
+        return (
+          <a
+            key={tag.id}
+            href={`/tags/${tag.name}`}
+            style={{ fontSize: `${size}em` }}
+            className="tag"
+          >
+            #{tag.name}
+          </a>
+        );
+      })}
+    </div>
+  );
+};
+```
+
+### Tag List
+
+Display as a simple list with counts:
+
+```typescript
+const TagList = ({ tags }) => {
+  return (
+    <ul className="tag-list">
+      {tags.map(tag => (
+        <li key={tag.id}>
+          <a href={`/tags/${tag.name}`}>
+            #{tag.name}
+          </a>
+          <span className="count">{tag._count.posts}</span>
+        </li>
+      ))}
+    </ul>
+  );
+};
+```
+
+### Trending Tags Widget
+
+```typescript
+const TrendingTags = () => {
+  const [tags, setTags] = useState([]);
+  
+  useEffect(() => {
+    const fetchTags = async () => {
+      const { tags } = await fetch('/api/tags/popular').then(r => r.json());
+      setTags(tags);
+    };
+    
+    fetchTags();
+  }, []);
+  
+  return (
+    <div className="trending-tags">
+      <h3>Trending Tags</h3>
+      <div className="tags">
+        {tags.slice(0, 5).map(tag => (
+          <span key={tag.id} className="tag">
+            #{tag.name}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+};
+```
+
+---
+
+## Error Handling
+
+The endpoint is designed to be resilient:
+
+```typescript
+try {
+  const tags = await prisma.tag.findMany({ /* ... */ });
+  return NextResponse.json({ tags });
+} catch (error) {
+  console.error("Error fetching popular tags:", error);
+  return NextResponse.json({ tags: [] }, { status: 500 });
+}
+```
+
+Even on error, it returns an empty tags array to prevent breaking the UI.
+
+---
+
+## Best Practices
+
+### 1. Cache Tags Client-Side
+
+Cache popular tags to reduce API calls:
+
+```typescript
+const useCachedTags = () => {
+  const [tags, setTags] = useState(() => {
+    const cached = localStorage.getItem('popular-tags');
+    return cached ? JSON.parse(cached) : null;
+  });
+  
+  useEffect(() => {
+    const fetchTags = async () => {
+      const { tags: freshTags } = await fetch('/api/tags/popular')
+        .then(r => r.json());
+      
+      setTags(freshTags);
+      localStorage.setItem('popular-tags', JSON.stringify(freshTags));
+    };
+    
+    if (!tags) {
+      fetchTags();
+    }
+  }, [tags]);
+  
+  return tags || [];
+};
+```
+
+### 2. Auto-Complete Tag Input
+
+Implement tag suggestions:
+
+```typescript
+const TagInput = () => {
+  const [input, setInput] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
+  
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+      const { tags } = await fetch('/api/tags/popular').then(r => r.json());
+      const filtered = tags.filter(tag => 
+        tag.name.toLowerCase().includes(input.toLowerCase())
+      );
+      setSuggestions(filtered);
+    };
+    
+    if (input.length > 0) {
+      fetchSuggestions();
+    }
+  }, [input]);
+  
+  return (
+    <div>
+      <input 
+        value={input} 
+        onChange={(e) => setInput(e.target.value)}
+        placeholder="Add tags..."
+      />
+      {suggestions.length > 0 && (
+        <ul>
+          {suggestions.map(tag => (
+            <li key={tag.id} onClick={() => selectTag(tag)}>
+              #{tag.name}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+};
+```
+
+### 3. Tag Validation
+
+Validate tags before submission:
+
+```typescript
+const validateTag = (tag: string): string | null => {
+  if (tag.length < 2) {
+    return 'Tag must be at least 2 characters';
+  }
+  
+  if (tag.length > 30) {
+    return 'Tag must be less than 30 characters';
+  }
+  
+  if (!/^[a-zA-Z0-9_]+$/.test(tag)) {
+    return 'Tag can only contain letters, numbers, and underscores';
+  }
+  
+  return null;
+};
+```
+
+---
+
+## Future Enhancements
+
+Potential improvements to the Tags API:
+
+### Tag Categories
+
+```typescript
+{
+  tags: [
+    {
+      id: "tag-1",
+      name: "javascript",
+      category: "programming-language",
+      _count: { posts: 1234 }
+    }
+  ]
+}
+```
+
+### Trending Tags
+
+Tags trending in the last 24 hours:
+
+```http
+GET /api/tags/trending
+```
+
+### Tag Search
+
+Search for specific tags:
+
+```http
+GET /api/tags/search?q=java
+```
+
+### Tag Statistics
+
+Detailed tag analytics:
+
+```typescript
+{
+  id: "tag-123",
+  name: "javascript",
+  stats: {
+    totalPosts: 1234,
+    postsToday: 45,
+    postsThisWeek: 234,
+    topContributors: [...]
+  }
+}
+```
