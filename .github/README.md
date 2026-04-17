@@ -1,35 +1,65 @@
 <div align="center">
 
+  <a href="#about---the-whats--whys"><kbd> <br> What? <br> </kbd></a>&ensp;&ensp;
+  <a href="#aura-"><kbd> <br> Aura!?  <br> </kbd></a>&ensp;&ensp;
+  <a href="#the-algorithm-"><kbd> <br> Algorithm!  <br> </kbd></a>&ensp;&ensp;
+  <a href="#zeph-"><kbd> <br> The Big Idea?  <br> </kbd></a>&ensp;&ensp;
+  <a href="#the-big-idea-"><kbd> <br> References  <br> </kbd></a>&ensp;&ensp;
+
+</div>
+
+---
+
+<div align="center">
+  
   <a href="https://github.com/zephverse/zephyr">
     <img src="https://storage-r2.zephyyrr.in/Assets/zephyr-githubanner.jpg" alt="Zephyr Banner" width="90%"/>
   </a>
+  
+  <br>
+  <br>
+
+  <h3><strong>Z E P H Y R</strong> <sub><em> zeh · pha · yer </em></sub></h3>
+  <sub><em>"Your entire internet, finally yours."</em></sub>
+
 </div>
 <br>
+<br>
+
+### _<div align="center"><sub>About - The What's & Why's?</sub></div>_ 
+
+It's a social platform but not in the "here's another place to doom scroll" way. Zephyr is built around the idea that your online life is fragmented across too many places, and that a single intelligent platform should be able to hold all of it together without making you feel like you're using a Swiss Army knife that's also on fire.
+
+You post. You discover. You engage. You build a reputation. And the longer you're here, the more Zephyr understands you what you care about, what you create, what kind of chaos you enjoy at 2am. It's a living, breathing feed that grows with you, not against you.
+
+Oh, and it's open source. Because the audacity of building this should be public.
+
 <br>
 
 <div align="center">
 
-  <a href="#-local-development-setup"><kbd> <br> Development <br> </kbd></a>&ensp;&ensp;
-  <a href="https://github.com/zephverse/zephyr/blob/main/.github/CONTRIBUTING.md"><kbd> <br> Contributing <br> </kbd></a>&ensp;&ensp;
-  <a href="https://github.com/zephverse/zephyr/issues"><kbd> <br> Roadmap <br> </kbd></a>&ensp;&ensp;
-  <a href="https://github.com/singularityworks-xyz"><kbd> <br> Singularity Works <br> </kbd></a>&ensp;&ensp;
-  <a href="#-troubleshooting"><kbd> <br> Troubleshoot <br> </kbd></a>&ensp;&ensp;
+| Logo | About |
+| -- | -- |
+| <img src="https://storage-r2.zephyyrr.in/Assets/zephyr-logo.png" alt="Zephyr Logo" width="120px"/> | **Zephyr ✦ Zephverse**<br><br>- Your entire internet in one cozy feed<br>- Open source & built in public<br>- Aggregate, bookmark & reshare from anywhere<br>- Earn Aura your reputation across the Zephverse<br>- A unified algorithm that actually learns *you* |
+| <img src="https://storage-r2.zephyyrr.in/Assets/zeph.png" alt="Zeph AI Logo" width="120px"/> | **Zeph ✦ Companion**<br><br>- Your AI companion that lives inside the Zephverse<br>- Remembers everything across the entire platform<br>- Helps you write, refine, and post better<br>- Knows your context wherever you go<br>- Not a chatbot. A companion. |
+
+<sub><em>Logos that you will see frequently</em></sub>
 
 </div>
 
-#### _<div align="left"><sub>// About 🌿</sub></div>_
+<br>
 
-Zephyr is a social platform designed for seamless interaction, privacy, and speed. Built with modern web technologies, Zephyr redefines how users connect, share, and engage in a clutter-free digital space. Whether it's real-time conversations, media sharing, or a smooth user experience, Zephyr is crafted for the future of social networking.
+#### _<div align="right"><sub>Aura !?</sub></div>_
+Most platforms have likes. Zephyr has **Aura**.
 
-|  |  |
-| -- | -- |
-| **About Zephyr**<br><br>- Aggregate social posts in one place<br>- Open Source & contributor friendly<br>- Supports diverse file formats<br>- Bookmark posts from other platforms<br>- Earn & grow Aura (reputation / token system) | <img src="https://storage-r2.zephyyrr.in/Assets/zephyr-logo.png" alt="Zephyr Logo" width="30%"/> |
-| <img src="https://storage-r2.zephyyrr.in/Assets/zeph.png" alt="Zeph AI Logo" width="30%"/> | **Zeph AI (WIP)**<br><br>- Context‑aware assistant mascot<br>- Chat + post generation & refinement<br>- Smart summaries & replies<br>- Helpful guidance & interactions |
+Aura is your unified reputation score across everything you do on the platform. Post something brilliant? Aura goes up. Get tipped on a piece of content? Aura goes up. Contribute meaningfully to a community? You guessed it. Aura is not just a vanity number it's a living record of your presence, your contributions, and your credibility on Zephyr.
 
-#### _<div align="left"><sub>// Rebranding & Info 🦕</sub></div>_
-With Zephyr's enhancement from Singularity Works, we are excited to announce a renewed focus on enhancing user experience & performance.
+Think of it like XP in a game, except the game is the internet and the leaderboard is your entire social identity.
+The more you do, the more it reflects who you actually are. Not who an algorithm decided to boost on a Tuesday.
 
-btw here are some cool artworks for our collaboration:
+<br>
+
+#### *<div align="center"><sub>With Zephyr's enhancement from Singularity Works, we are excited to announce a renewed focus on enhancing user experience & idea.</sub></div>*
 
 <p align="center">
   <img src="https://storage-r2.zephyyrr.in/Assets/singxzephyr-banner.jpg"
@@ -39,93 +69,36 @@ btw here are some cool artworks for our collaboration:
   <br>
   <sub><em>Artwork by the Singularity Works team</em></sub>
 </p>
-<br>
-
-#### _<div align="left"><sub>// Local Development Setup 📐</sub></div>_
-
-> [!NOTE]
-> **Zephyr** is a monorepo project, which means that it is composed of multiple packages that are managed together. The project uses [bun](https://bun.sh/) for workspace management and [Docker](https://www.docker.com/) for containerization. Make sure you have the following prerequisites installed before setting up the development environment.
-
-###### _<div align="center"><sub>Manual Installation</sub></div>_
-
-```bash
-# 1. Clone the repository
-git clone https://github.com/zephverse/zephyr && cd zephyr
-
-# 2. Install the dependencies
-bun install
-
-# 3. First time setup or after clean
-# This will start required containers and run migration containers required for prisma schema & minio buckets
-bun run docker:dev
-# Clean everything and start fresh if you encounter any issues
-bun run docker:clean && bun run docker:dev
-
-# 4. Setup the environment variables automatically
-bun run env:dev
-
-# 5. Start the development server
-bun run dev
-# or
-turbo dev
-
-# If you encounter any issues, refer to the troubleshooting section below or report the issue on the Issues page
-```
-
-#### What a sucessful docker setup looks like after running ```bun run docker:dev```:
-
-<div align="center">
-
-  <img src="https://github.com/zephverse/zephyr/blob/main/.github/assets/docker.png?raw=true" alt="Docker setup" width="95%"/>
-
-</div>
-
-###### _<div align="left"><sub>// Ports:</sub></div>_
-If everything goes well, you should be able to access the following services:
-
-- Zephyr web: http://localhost:3000
-- Zephyr auth: http://localhost:3001
-- PostgreSQL: http://localhost:5433
-- Redis: http://localhost:6379
-- RedisInsight: http://localhost:5540
-- Prisma Studio: http://localhost:5555
-- MinIO Console: http://localhost:9001
-
-#### _<div align="left"><sub>// Troubleshooting 🍋‍🟩</sub></div>_
-
-###### _<div align="left"><sub>// pre commit hooks</sub></div>_
-
-If you encounter any issues with the pre-commit hooks, try running the following commands:
-
-```bash
-# Ensure that your code is formatted and linted
-bun run check
-```
-
-If you encounter any issues with the development setup, try the following steps:
-
-###### _<div align="left"><sub>// Database</sub></div>_
-
-If you encounter any issues with Prisma or the migrations failed, try running the following commands:
-
-```bash
-# Navigate to the db package
-cd packages/db && bun prisma generate
-```
-
-If you still encounter any issues with the development server, report the issue on the [Issues](https://github.com/zephverse/zephyr/issues) page.
-
-#### _<div align="left"><sub>// Contributors</sub></div>_
 
 <br>
-<a href="https://github.com/zephverse/zephyr/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=zephverse/zephyr" />
-</a>
 
-<br>
-<br>
+#### _<div align="right"><sub>The Algorithm ?</sub></div>_
+Here's the thing about most recommendation algorithms: they optimize for engagement, which is a polite word for "we figured out what makes you anxious and we're leaning into it."
 
-#### _<div align="left"><sub>// Our Services 🚀</sub></div>_
+Zephyr's algorithm is different not because we're morally superior (we're not, we're just developers), but because it has more to work with. Every interaction you have across every feature posts, communities, bookmarks, content you engage with, content you skip feeds a single unified recommendation layer.
+
+It's not "here are things similar to the last thing you clicked." It's "here is a picture of what you actually care about, assembled from everything you've done here." The algorithm learns across contexts, not just within one. Which means the more you use Zephyr, the more eerily accurate it gets. You've been warned.
+
+#### _<div align="right"><sub>Zeph !</sub></div>_
+Every platform has an AI assistant now. Most of them have the memory of a goldfish with a concussion.
+
+**Zeph** is Zephyr's AI companion, and the key difference is context. Zeph is woven into the entire platform not bolted on as an afterthought. It remembers what you've posted, what you've bookmarked, what communities you're in, what you've been working on. It retains memory across every corner of Zephyr.
+
+Ask Zeph to help you write a post it knows your voice. Ask it to summarize a community thread it knows what you've already read. Ask it for recommendations it knows what you actually like, not what the algorithm thinks you should like.
+
+It's not a chatbot. It's a companion that's been paying attention.
+
+#### _<div align="right"><sub>The Big Idea ?</sub></div>_
+The internet has a fragmentation problem. Great content, great people, and great conversations are scattered across dozens of platforms that don't talk to each other and don't care about you as a whole person. You're a user ID on each of them. A data point. A retention metric.
+
+Zephyr is built on the premise that one platform, done right, with a smart enough layer underneath, can make all of that irrelevant. Not by replacing everything but by becoming the place where everything makes sense together.
+
+Aura gives you identity. The algorithm gives you signal. Zeph gives you memory. The platform gives you everything else.
+
+This isn't a feature list. It's a different way of thinking about what social software should actually do for the people who use it.
+
+### _<div align="center"><sub>Who - Know Us.</sub></div>_
+#### *<div align="center"><sub><strong>Zephyr</strong> & everything it dares to be is made possible with <a href=https://github.com/singularityworks-xyz>Singularity Works</a>. Some ideas are too big to build alone.</sub></div>*
 
 <table align="center">
   <tr>
@@ -143,13 +116,14 @@ If you still encounter any issues with the development server, report the issue 
         <sub>Your Companion for Zephyr</sub>
       </a>
     </td>
+    <td align="center">
+      <a href="https://itssingularity.com">
+        <img src="https://storage-r2.singularityworks.xyz/brand-icons/sw-logo.png" alt="SW Logo" width="80px"/><br>
+        <strong>Singularity Works</strong><br>
+        <sub>A product studio engineering agency</sub>
+      </a>
+    </td>
   </tr>
 </table>
 
-##### *<div align="center"><sub>Copyright © 2025 Parazeeknova</sub></div>*
-
-<p align="center">
-<strong>Zephyr</strong> is licensed under the <a href="https://github.com/zephverse/zephyr/blob/main/LICENSE">AGPL License</a>.
-</p>
-
-
+#### *<div align="center"><sub>Copyright © 2026 Singularity Works | <strong>Zephyr</strong> is licensed under the <a href="https://github.com/zephverse/zephyr/blob/main/LICENSE">AGPL License</a>.</sub></div>*
