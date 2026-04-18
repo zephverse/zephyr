@@ -1,7 +1,7 @@
 pre-commit:
   commands:
     bump:
-      run: bun scripts/bump-versions.ts
+      run: bun scripts/hooks/bump-versions.ts
     lint:
       run: bun run check
     types:
