@@ -4,7 +4,8 @@
     "strictNullChecks": true,
     "target": "ES2023",
     "strict": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "types": ["bun"]
   },
   "include": ["**/*.ts", "**/*.tsx"],
   "exclude": ["node_modules"]

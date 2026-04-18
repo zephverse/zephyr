@@ -1,6 +1,7 @@
 import IoRedis, { type RedisOptions } from "ioredis";
 import type { JSONWebKeySet } from "jose";
 import { keys } from "../keys";
+import { createRedisConnectionOptions } from "./redis-options";
 
 const createRedisConfig = (): RedisOptions => {
   const config: RedisOptions = {
@@ -31,7 +32,9 @@ const createRedisConfig = (): RedisOptions => {
 let redis: IoRedis;
 
 try {
-  redis = new IoRedis(keys.REDIS_URL, createRedisConfig());
+  redis = new IoRedis(
+    createRedisConnectionOptions(keys.REDIS_URL, createRedisConfig())
+  );
 } catch (error) {
   console.error("Failed to initialize Redis client:", error);
   throw error;

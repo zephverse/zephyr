@@ -1,4 +1,3 @@
-/** biome-ignore-all lint/nursery/noShadow: it's required for username */
 import { prisma } from "@zephyr/db";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
@@ -60,6 +59,7 @@ export interface EmailService {
 }
 
 export interface AuthConfig {
+  baseURL?: string;
   emailService?: EmailService;
   environment?: "development" | "production";
   /**
@@ -74,14 +74,140 @@ export interface AuthConfig {
   }) => Promise<void>;
 }
 
+type SocialProviderName =
+  | "google"
+  | "github"
+  | "discord"
+  | "twitter"
+  | "reddit";
+
+interface UsernameMapping {
+  username: string;
+}
+
+interface SocialProvidersConfig {
+  discord?: {
+    clientId: string;
+    clientSecret: string;
+    redirectURI: string;
+    mapProfileToUser: (profile: DiscordProfile) => UsernameMapping;
+  };
+  github?: {
+    clientId: string;
+    clientSecret: string;
+    redirectURI: string;
+    mapProfileToUser: (profile: GithubProfile) => UsernameMapping;
+  };
+  google?: {
+    clientId: string;
+    clientSecret: string;
+    redirectURI: string;
+    mapProfileToUser: (profile: GoogleProfile) => UsernameMapping;
+  };
+  reddit?: {
+    clientId: string;
+    clientSecret: string;
+    redirectURI: string;
+    mapProfileToUser: (profile: RedditProfile) => UsernameMapping;
+  };
+  twitter?: {
+    clientId: string;
+    clientSecret: string;
+    redirectURI: string;
+    mapProfileToUser: (profile: TwitterProfile) => UsernameMapping;
+  };
+}
+
+function buildSocialProviderConfig(authBaseUrl: string): {
+  socialProviders: SocialProvidersConfig;
+  trustedProviders: SocialProviderName[];
+} {
+  const socialProviders: SocialProvidersConfig = {};
+  const trustedProviders: SocialProviderName[] = [];
+
+  if (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET) {
+    socialProviders.google = {
+      clientId: env.GOOGLE_CLIENT_ID,
+      clientSecret: env.GOOGLE_CLIENT_SECRET,
+      redirectURI: `${authBaseUrl}/api/auth/callback/google`,
+      mapProfileToUser(profile: GoogleProfile): UsernameMapping {
+        const username = deriveUsernameFromProfile(profile);
+        return { username };
+      },
+    };
+    trustedProviders.push("google");
+  }
+
+  if (env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET) {
+    socialProviders.github = {
+      clientId: env.GITHUB_CLIENT_ID,
+      clientSecret: env.GITHUB_CLIENT_SECRET,
+      redirectURI: `${authBaseUrl}/api/auth/callback/github`,
+      mapProfileToUser(profile: GithubProfile): UsernameMapping {
+        const username = deriveUsernameFromProfile(profile);
+        return { username };
+      },
+    };
+    trustedProviders.push("github");
+  }
+
+  if (env.DISCORD_CLIENT_ID && env.DISCORD_CLIENT_SECRET) {
+    socialProviders.discord = {
+      clientId: env.DISCORD_CLIENT_ID,
+      clientSecret: env.DISCORD_CLIENT_SECRET,
+      redirectURI: `${authBaseUrl}/api/auth/callback/discord`,
+      mapProfileToUser(profile: DiscordProfile): UsernameMapping {
+        const username = deriveUsernameFromProfile(profile);
+        return { username };
+      },
+    };
+    trustedProviders.push("discord");
+  }
+
+  if (env.TWITTER_CLIENT_ID && env.TWITTER_CLIENT_SECRET) {
+    socialProviders.twitter = {
+      clientId: env.TWITTER_CLIENT_ID,
+      clientSecret: env.TWITTER_CLIENT_SECRET,
+      redirectURI: `${authBaseUrl}/api/auth/callback/twitter`,
+      mapProfileToUser(profile: TwitterProfile): UsernameMapping {
+        const username = deriveUsernameFromProfile(profile);
+        return { username };
+      },
+    };
+    trustedProviders.push("twitter");
+  }
+
+  if (env.REDDIT_CLIENT_ID && env.REDDIT_CLIENT_SECRET) {
+    socialProviders.reddit = {
+      clientId: env.REDDIT_CLIENT_ID,
+      clientSecret: env.REDDIT_CLIENT_SECRET,
+      redirectURI: `${authBaseUrl}/api/auth/callback/reddit`,
+      mapProfileToUser(profile: RedditProfile): UsernameMapping {
+        const username = deriveUsernameFromProfile(profile);
+        return { username };
+      },
+    };
+    trustedProviders.push("reddit");
+  }
+
+  return { socialProviders, trustedProviders };
+}
+
 export function createAuthConfig(config: AuthConfig = {}) {
   const {
+    baseURL,
     emailService,
     environment = env.NODE_ENV || "development",
     sendVerificationOTP,
   } = config;
 
+  const authBaseUrl =
+    baseURL || process.env.BETTER_AUTH_URL || env.NEXT_PUBLIC_AUTH_URL;
+  const { socialProviders, trustedProviders } =
+    buildSocialProviderConfig(authBaseUrl);
+
   return betterAuth({
+    baseURL: authBaseUrl,
     database: prismaAdapter(prisma, {
       provider: "postgresql",
     }),
@@ -220,58 +346,12 @@ export function createAuthConfig(config: AuthConfig = {}) {
           },
     },
 
-    socialProviders: {
-      google: {
-        clientId: env.GOOGLE_CLIENT_ID || "",
-        clientSecret: env.GOOGLE_CLIENT_SECRET || "",
-        redirectURI: `${env.NEXT_PUBLIC_AUTH_URL}/api/auth/callback/google`,
-        mapProfileToUser(profile: GoogleProfile): { username: string } {
-          const username = deriveUsernameFromProfile(profile);
-          return { username };
-        },
-      },
-      github: {
-        clientId: env.GITHUB_CLIENT_ID || "",
-        clientSecret: env.GITHUB_CLIENT_SECRET || "",
-        redirectURI: `${env.NEXT_PUBLIC_AUTH_URL}/api/auth/callback/github`,
-        mapProfileToUser(profile: GithubProfile): { username: string } {
-          const username = deriveUsernameFromProfile(profile);
-          return { username };
-        },
-      },
-      discord: {
-        clientId: env.DISCORD_CLIENT_ID || "",
-        clientSecret: env.DISCORD_CLIENT_SECRET || "",
-        redirectURI: `${env.NEXT_PUBLIC_AUTH_URL}/api/auth/callback/discord`,
-        mapProfileToUser(profile: DiscordProfile): { username: string } {
-          const username = deriveUsernameFromProfile(profile);
-          return { username };
-        },
-      },
-      twitter: {
-        clientId: env.TWITTER_CLIENT_ID || "",
-        clientSecret: env.TWITTER_CLIENT_SECRET || "",
-        redirectURI: `${env.NEXT_PUBLIC_AUTH_URL}/api/auth/callback/twitter`,
-        mapProfileToUser(profile: TwitterProfile): { username: string } {
-          const username = deriveUsernameFromProfile(profile);
-          return { username };
-        },
-      },
-      reddit: {
-        clientId: env.REDDIT_CLIENT_ID || "",
-        clientSecret: env.REDDIT_CLIENT_SECRET || "",
-        redirectURI: `${env.NEXT_PUBLIC_AUTH_URL}/api/auth/callback/reddit`,
-        mapProfileToUser(profile: RedditProfile): { username: string } {
-          const username = deriveUsernameFromProfile(profile);
-          return { username };
-        },
-      },
-    },
+    ...(trustedProviders.length > 0 ? { socialProviders } : {}),
 
     account: {
       accountLinking: {
-        enabled: true,
-        trustedProviders: ["google", "github", "discord", "reddit", "twitter"],
+        enabled: trustedProviders.length > 0,
+        trustedProviders,
       },
     },
 

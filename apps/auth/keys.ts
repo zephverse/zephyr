@@ -7,7 +7,10 @@ export const keys = createEnv({
     DATABASE_URL: z.url(),
     POSTGRES_PRISMA_URL: z.url(),
     POSTGRES_URL_NON_POOLING: z.url(),
-    RESEND_API_KEY: z.string().min(1),
+    RESEND_API_KEY: z.preprocess(
+      (value) => (value === "" ? undefined : value),
+      z.string().min(1).optional()
+    ),
     GOOGLE_CLIENT_ID: z.string().optional(),
     GOOGLE_CLIENT_SECRET: z.string().optional(),
     GITHUB_CLIENT_ID: z.string().optional(),
