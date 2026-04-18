@@ -32,7 +32,9 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ userData }) => {
         <div
           className="absolute inset-0 bg-center bg-cover transition-opacity duration-300"
           style={{
-            backgroundImage: `url(${userData.avatarUrl})`,
+            backgroundImage: userData.avatarUrl
+              ? `url(${userData.avatarUrl})`
+              : "none",
             filter: "blur(8px) brightness(0.7)",
             transform: "scale(1.1)",
             opacity: isHovered ? 0.15 : 0,

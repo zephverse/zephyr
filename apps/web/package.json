@@ -1,7 +1,7 @@
 {
   "name": "@zephyr/web",
   "description": "Zephyr Web App",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "license": "AGPL-3.0",
   "private": true,
   "scripts": {

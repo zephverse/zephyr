@@ -12,7 +12,7 @@ export const keys = createEnv({
     MEILISEARCH_URL: z.url().default("http://localhost:7700"),
     MEILISEARCH_MASTER_KEY: z.string().default("masterKey123"),
     NODE_ENV: z.enum(["development", "production"]).default("development"),
-    CHECKPOINT_DISABLE: z.number().default(1),
+    CHECKPOINT_DISABLE: z.coerce.number().default(1),
   },
 
   client: {

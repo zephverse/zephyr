@@ -234,7 +234,9 @@ const ProfileHeader: React.FC<{ userData: UserData }> = ({ userData }) => {
           <div
             className="h-full w-full bg-center bg-cover"
             style={{
-              backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.1)), url(${avatarData?.url})`,
+              backgroundImage: avatarData?.url
+                ? `linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.1)), url(${avatarData.url})`
+                : "none",
               filter: "blur(8px)",
               transform: "scale(1.1)",
             }}

@@ -76,7 +76,9 @@ const TrendingUsers = () => {
                 <div
                   className="absolute inset-0 bg-center bg-cover transition-transform duration-300 group-hover:scale-105"
                   style={{
-                    backgroundImage: `url(${user.avatarUrl})`,
+                    backgroundImage: user.avatarUrl
+                      ? `url(${user.avatarUrl})`
+                      : "none",
                     filter: "blur(8px) brightness(0.7)",
                   }}
                 />
