@@ -11,7 +11,7 @@
   "scripts": {
     "dev": "turbo check-types && turbo dev",
     "check": "ultracite fix --unsafe",
-    "check-types": "turbo check-types",
+    "check-types": "tsc --project scripts/tsconfig.json && turbo check-types",
     "postinstall": "bun run --filter=@zephyr/db db:generate",
     "db:gen": "bun run --filter=@zephyr/db generate",
     "db:push": "bun run --filter=@zephyr/db push",
@@ -24,6 +24,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.12",
+    "@changesets/cli": "^2.31.0",
     "@types/bun": "^1.3.12",
     "@types/node": "^25.6.0",
     "@types/react": "^19.2.14",

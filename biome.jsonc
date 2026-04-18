@@ -8,5 +8,8 @@
         "noUnknownAtRules": "off"
       }
     }
+  },
+  "javascript": {
+    "globals": ["Bun"]
   }
 }
