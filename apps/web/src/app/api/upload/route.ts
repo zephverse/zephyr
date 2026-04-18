@@ -1,6 +1,6 @@
 import { type MediaType, prisma } from "@zephyr/db";
 import { NextResponse } from "next/server";
-import { uploadToMinio } from "@/lib/minio";
+import { uploadToZephob } from "@/lib/object-storage";
 import { getSessionFromApi } from "@/lib/session";
 
 export async function POST(request: Request) {
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
     postId,
   });
 
-  const upload = await uploadToMinio(file, user.id);
+  const upload = await uploadToZephob(file, user.id);
 
   const media = await prisma.media.create({
     data: {

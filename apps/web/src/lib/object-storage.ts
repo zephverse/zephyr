@@ -13,15 +13,16 @@ import { uploadToasts } from "./utils/upload-messages";
 
 const isClient = typeof window !== "undefined";
 
-export const minioClient = new S3Client({
+export const zephobClient = new S3Client({
   region: "ap-south-1",
   endpoint:
     process.env.NODE_ENV === "production"
-      ? "https://minio-objectstorage.zephyyrr.in"
-      : process.env.MINIO_ENDPOINT || "http://localhost:9000",
+      ? process.env.ZEPHOB_PRODUCTION_ENDPOINT ||
+        "https://objectstorage.zephyyrr.in"
+      : process.env.ZEPHOB_ENDPOINT || "http://localhost:9090",
   credentials: {
-    accessKeyId: process.env.MINIO_ROOT_USER || "minioadmin",
-    secretAccessKey: process.env.MINIO_ROOT_PASSWORD || "minioadmin",
+    accessKeyId: process.env.ZEPHOB_ROOT_USER || "zephob-admin",
+    secretAccessKey: process.env.ZEPHOB_ROOT_PASSWORD || "zephob-admin",
   },
   forcePathStyle: true,
   maxAttempts: 3,
@@ -36,7 +37,7 @@ export const minioClient = new S3Client({
         }),
 });
 
-export const MINIO_BUCKET = process.env.MINIO_BUCKET_NAME || "uploads";
+export const ZEPHOB_BUCKET = process.env.ZEPHOB_BUCKET_NAME || "uploads";
 
 export const getPublicUrl = (key: string) => {
   if (!key) {
@@ -44,27 +45,29 @@ export const getPublicUrl = (key: string) => {
   }
 
   const endpoint =
-    typeof window !== "undefined"
-      ? process.env.NEXT_PUBLIC_MINIO_ENDPOINT
-      : process.env.MINIO_ENDPOINT;
+    typeof window === "undefined"
+      ? process.env.ZEPHOB_ENDPOINT
+      : process.env.NEXT_PUBLIC_ZEPHOB_ENDPOINT;
 
-  const productionEndpoint = "https://minio-objectstorage.zephyyrr.in";
+  const productionEndpoint =
+    process.env.ZEPHOB_PRODUCTION_ENDPOINT ||
+    "https://objectstorage.zephyyrr.in";
 
   const finalEndpoint =
     process.env.NODE_ENV === "production"
       ? productionEndpoint
-      : endpoint || "http://localhost:9000";
+      : endpoint || "http://localhost:9090";
 
-  return `${finalEndpoint}/${MINIO_BUCKET}/${encodeURIComponent(key)}`;
+  return `${finalEndpoint}/${ZEPHOB_BUCKET}/${encodeURIComponent(key)}`;
 };
 
 export const validateBucket = async () => {
   try {
     const { HeadBucketCommand } = await import("@aws-sdk/client-s3");
 
-    await minioClient.send(
+    await zephobClient.send(
       new HeadBucketCommand({
-        Bucket: MINIO_BUCKET,
+        Bucket: ZEPHOB_BUCKET,
       })
     );
     return true;
@@ -75,7 +78,7 @@ export const validateBucket = async () => {
       (error as { $metadata?: { httpStatusCode: number } }).$metadata
         ?.httpStatusCode === 404
     ) {
-      console.warn(`Bucket "${MINIO_BUCKET}" does not exist`);
+      console.warn(`Bucket "${ZEPHOB_BUCKET}" does not exist`);
       return false;
     }
     console.error("Error validating bucket:", error);
@@ -85,14 +88,14 @@ export const validateBucket = async () => {
 
 export const generatePresignedUrl = async (key: string) => {
   const command = new GetObjectCommand({
-    Bucket: MINIO_BUCKET,
+    Bucket: ZEPHOB_BUCKET,
     Key: key,
   });
 
-  return await getSignedUrl(minioClient, command, { expiresIn: 3600 });
+  return await getSignedUrl(zephobClient, command, { expiresIn: 3600 });
 };
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: This function is complex by nature
-export const uploadToMinio = async (file: File, userId: string) => {
+
+export const uploadToZephob = async (file: File, userId: string) => {
   if (!(file && userId)) {
     throw new Error("File and userId are required");
   }
@@ -112,7 +115,9 @@ export const uploadToMinio = async (file: File, userId: string) => {
 
     const bucketOk = await validateBucket();
     if (!bucketOk) {
-      throw new Error(`MinIO bucket "${MINIO_BUCKET}" does not exist`);
+      throw new Error(
+        `Object storage bucket "${ZEPHOB_BUCKET}" does not exist`
+      );
     }
 
     const fileConfig = getFileConfigFromMime(file.type);
@@ -130,9 +135,9 @@ export const uploadToMinio = async (file: File, userId: string) => {
       throw new Error("Failed to process file data");
     }
 
-    await minioClient.send(
+    await zephobClient.send(
       new PutObjectCommand({
-        Bucket: MINIO_BUCKET,
+        Bucket: ZEPHOB_BUCKET,
         Key: key,
         Body: buffer,
         ContentType: getContentType(file.name),
@@ -167,7 +172,7 @@ export const uploadToMinio = async (file: File, userId: string) => {
       tag: fileConfig?.tag,
     };
   } catch (error) {
-    console.error("MinIO upload error:", error);
+    console.error("Object storage upload error:", error);
     const errorMessage =
       error instanceof Error ? error.message : "Failed to upload file";
 
@@ -183,12 +188,12 @@ export const uploadToMinio = async (file: File, userId: string) => {
 export const checkFileExists = async (key: string) => {
   try {
     const command = new GetObjectCommand({
-      Bucket: MINIO_BUCKET,
+      Bucket: ZEPHOB_BUCKET,
       Key: key,
     });
-    await minioClient.send(command);
+    await zephobClient.send(command);
     return true;
-  } catch (_error) {
+  } catch {
     return false;
   }
 };
@@ -239,9 +244,9 @@ export const uploadAvatar = async (file: File, userId: string) => {
       throw new Error("Failed to process avatar image");
     }
 
-    await minioClient.send(
+    await zephobClient.send(
       new PutObjectCommand({
-        Bucket: MINIO_BUCKET,
+        Bucket: ZEPHOB_BUCKET,
         Key: key,
         Body: buffer,
         ContentType: file.type,
@@ -320,9 +325,9 @@ export const deleteAvatar = async (key: string) => {
 
     const { DeleteObjectCommand } = await import("@aws-sdk/client-s3");
 
-    await minioClient.send(
+    await zephobClient.send(
       new DeleteObjectCommand({
-        Bucket: MINIO_BUCKET,
+        Bucket: ZEPHOB_BUCKET,
         Key: key,
       })
     );

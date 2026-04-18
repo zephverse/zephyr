@@ -40,11 +40,11 @@ import { getSecureImageUrl } from "@/lib/utils/image-url";
 import CropImageDialog from "./crop-image-dialog";
 import GifCenteringDialog from "./gif-centering-dialog";
 
-type EditProfileDialogProps = {
-  user: UserData;
-  open: boolean;
+interface EditProfileDialogProps {
   onOpenChange: (open: boolean) => void;
-};
+  open: boolean;
+  user: UserData;
+}
 
 const regex = /\s+/;
 
@@ -224,14 +224,14 @@ export default function EditProfileDialog({
   );
 }
 
-type AvatarInputProps = {
-  src: string | StaticImageData;
-  onImageCropped: (blob: Blob | null) => void;
-  onGifSelected: (file: File | null) => void;
+interface AvatarInputProps {
   form: UseFormReturn<UpdateUserProfileValues>;
   isUploading: boolean;
+  onGifSelected: (file: File | null) => void;
+  onImageCropped: (blob: Blob | null) => void;
+  src: string | StaticImageData;
   user: UserData;
-};
+}
 
 function AvatarInput({
   src,
@@ -337,7 +337,7 @@ function AvatarInput({
             src={avatarSrc}
             unoptimized={
               typeof avatarSrc === "string" &&
-              (avatarSrc.endsWith(".gif") || avatarSrc.includes("minio"))
+              (avatarSrc.endsWith(".gif") || avatarSrc.includes("zephob"))
             }
             width={150}
           />

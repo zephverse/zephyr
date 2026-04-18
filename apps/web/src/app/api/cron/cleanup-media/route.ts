@@ -1,9 +1,9 @@
 import { DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { prisma } from "@zephyr/db";
 import { NextResponse } from "next/server";
-import { minioClient } from "@/lib/minio";
+import { zephobClient } from "@/lib/object-storage";
 
-const MINIO_BUCKET = process.env.MINIO_BUCKET_NAME || "uploads";
+const ZEPHOB_BUCKET = process.env.ZEPHOB_BUCKET_NAME || "uploads";
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Media cleanup requires multiple storage operations and batch processing
 async function cleanupUnusedMedia() {
@@ -17,7 +17,7 @@ async function cleanupUnusedMedia() {
 
   const results = {
     foundFiles: 0,
-    deletedFromMinio: 0,
+    deletedFromZephob: 0,
     deletedFromDb: 0,
     errors: [] as string[],
   };
@@ -68,20 +68,20 @@ async function cleanupUnusedMedia() {
         );
 
         try {
-          const minioResults = await Promise.allSettled(
+          const zephobResults = await Promise.allSettled(
             batch.map((media) =>
-              minioClient.send(
+              zephobClient.send(
                 new DeleteObjectCommand({
-                  Bucket: MINIO_BUCKET,
+                  Bucket: ZEPHOB_BUCKET,
                   Key: media.key,
                 })
               )
             )
           );
 
-          minioResults.forEach((result, index) => {
+          zephobResults.forEach((result, index) => {
             if (result.status === "fulfilled") {
-              results.deletedFromMinio++;
+              results.deletedFromZephob++;
               if (batch[index]) {
                 log(`✅ Deleted from storage: ${batch[index].key}`);
               }
@@ -129,7 +129,7 @@ async function cleanupUnusedMedia() {
     log(`\n✨ Media cleanup completed successfully:
     Duration: ${summary.duration}ms
     Files Found: ${results.foundFiles}
-    Deleted from Storage: ${results.deletedFromMinio}
+    Deleted from Storage: ${results.deletedFromZephob}
     Deleted from Database: ${results.deletedFromDb}
     Errors: ${results.errors.length}`);
 
@@ -154,7 +154,7 @@ async function cleanupUnusedMedia() {
     try {
       await prisma.$disconnect();
       log("👋 Database connection closed");
-    } catch (_error) {
+    } catch {
       log("❌ Error closing database connection");
     }
   }

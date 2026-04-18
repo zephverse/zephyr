@@ -1,9 +1,9 @@
-name: zephyr-dev
+name: zephdev
 
 services:
   postgres-dev:
-    container_name: zephyr-dev-postgres
-    image: postgres:18-alpine
+    container_name: zephdb
+    image: postgres:18.3
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -11,9 +11,12 @@ services:
     ports:
       - "5433:5432"
     volumes:
-      - postgres_data_dev:/var/lib/postgresql/data
+      - postgres_data_dev:/var/lib/postgresql
     command: >
-      postgres -c listen_addresses='*' -c max_connections=50 -c shared_buffers=128MB -c work_mem=4MB -c maintenance_work_mem=32MB -c effective_cache_size=256MB -c wal_level=replica -c max_wal_senders=4 -c log_statement=none -c timezone=UTC
+      postgres -c listen_addresses='*' -c max_connections=50 -c
+      shared_buffers=128MB -c work_mem=4MB -c maintenance_work_mem=32MB -c
+      effective_cache_size=256MB -c wal_level=replica -c max_wal_senders=4 -c
+      log_statement=none -c timezone=UTC
     networks:
       - dev_network
     healthcheck:
@@ -26,8 +29,8 @@ services:
 
   postgres-init:
     profiles: [ "init" ]
-    container_name: zephyr-dev-postgres-init
-    image: postgres:18-alpine
+    container_name: zephdev-db-init
+    image: postgres:18.3
     environment:
       PGPASSWORD: postgres
     networks:
@@ -49,10 +52,10 @@ services:
 
   prisma-migrate:
     profiles: [ "init" ]
-    container_name: zephyr-dev-prisma-migrate
+    container_name: zephdev-schema-init
     build:
       context: ..
-      dockerfile: docker/Dockerfile.prisma
+      dockerfile: docker/prisma.dockerfile
     environment:
       DATABASE_URL: postgresql://postgres:postgres@postgres-dev:5432/zephyr?schema=public
       POSTGRES_PRISMA_URL: postgresql://postgres:postgres@postgres-dev:5432/zephyr?schema=public
@@ -62,14 +65,17 @@ services:
     depends_on:
       postgres-dev:
         condition: service_healthy
-    command: [ "sh", "-c", "bunx prisma generate --schema packages/db/prisma/schema.prisma && bunx prisma db push --accept-data-loss --schema packages/db/prisma/schema.prisma" ]
+    command:
+      [
+        "/usr/local/bin/prisma-bootstrap.sh",
+      ]
 
   prisma-studio:
     profiles: [ "studio", "init" ]
-    container_name: zephyr-dev-prisma-studio
+    container_name: zephdev-prisma-studio
     build:
       context: ..
-      dockerfile: docker/Dockerfile.prisma
+      dockerfile: docker/prisma.dockerfile
     environment:
       DATABASE_URL: postgresql://postgres:postgres@postgres-dev:5432/zephyr?schema=public
       POSTGRES_PRISMA_URL: postgresql://postgres:postgres@postgres-dev:5432/zephyr?schema=public
@@ -81,16 +87,21 @@ services:
     depends_on:
       postgres-dev:
         condition: service_healthy
-    command: [ "sh", "-c", "bunx prisma studio --port 5555 --hostname 0.0.0.0 --schema packages/db/prisma/schema.prisma" ]
+    command:
+      [
+        "/usr/local/bin/prisma-studio.sh",
+      ]
     restart: unless-stopped
 
   redis-dev:
-    container_name: zephyr-dev-redis
-    image: redis:latest
+    container_name: zephdev-redis
+    image: redis:8.6.2
     ports:
       - "${REDIS_PORT:-6379}:6379"
     command: >
-      redis-server --requirepass zephyrredis --maxmemory 256mb --maxmemory-policy allkeys-lru --appendonly yes --appendfsync everysec --loglevel notice --save 900 1
+      redis-server --requirepass zephyrredis --maxmemory 256mb
+      --maxmemory-policy allkeys-lru --appendonly yes --appendfsync everysec
+      --loglevel notice --save 900 1
     volumes:
       - redis_data_dev:/data
     networks:
@@ -104,7 +115,7 @@ services:
 
   redis-insight:
     profiles: [ "studio" ]
-    container_name: zephyr-dev-redis-insight
+    container_name: zephdev-redis-insight
     image: redislabs/redisinsight:latest
     ports:
       - "5540:5540"
@@ -122,44 +133,67 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
-  minio-dev:
-    container_name: zephyr-dev-minio
-    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+  zephob-dev:
+    container_name: zephdev-zephob
+    image: rustfs/rustfs:latest
     ports:
-      - "9000:9000"
+      - "9090:9000"
       - "9001:9001"
     environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
+      RUSTFS_ACCESS_KEY: ${ZEPHOB_ROOT_USER:-zephob-admin}
+      RUSTFS_SECRET_KEY: ${ZEPHOB_ROOT_PASSWORD:-zephob-admin}
+      RUSTFS_CONSOLE_ENABLE: true
+      RUSTFS_CONSOLE_ADDRESS: 0.0.0.0:9001
+      RUSTFS_REGION: ${ZEPHOB_REGION:-ap-south-1}
     volumes:
-      - minio_data_dev:/data
+      - zephob_data_dev:/data
     networks:
       - dev_network
-    command: minio server /data --console-address ":9001"
+    command: rustfs --address 0.0.0.0:9000 /data
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
+      test: [ "CMD-SHELL", "curl -s http://localhost:9000 >/dev/null || exit 1" ]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 10s
     restart: unless-stopped
 
-  minio-init:
+  zephob-init:
     profiles: [ "init" ]
-    container_name: zephyr-dev-minio-init
-    image: alpine:latest
+    container_name: zephdev-zephob-init
+    image: amazon/aws-cli:2.17.53
     depends_on:
-      minio-dev:
+      zephob-dev:
         condition: service_healthy
     environment:
-      MC_HOST_minio: http://minioadmin:minioadmin@minio-dev:9000
+      AWS_ACCESS_KEY_ID: ${ZEPHOB_ROOT_USER:-zephob-admin}
+      AWS_SECRET_ACCESS_KEY: ${ZEPHOB_ROOT_PASSWORD:-zephob-admin}
+      AWS_DEFAULT_REGION: ${ZEPHOB_REGION:-ap-south-1}
+      ZEPHOB_ENDPOINT: http://zephob-dev:9000
     networks:
       - dev_network
-    command: [ "/bin/sh", "-c", " apk add --no-cache curl && curl -O https://dl.min.io/client/mc/release/linux-amd64/mc && chmod +x mc && echo 'Creating MinIO buckets...' && ./mc mb minio/uploads || true && ./mc mb minio/avatars || true && ./mc mb minio/temp || true && ./mc mb minio/backups || true && echo 'Setting bucket policies...' && ./mc anonymous set download minio/uploads || true && ./mc anonymous set download minio/avatars || true && ./mc anonymous set download minio/temp || true && ./mc anonymous set download minio/backups || true && echo 'Enabling versioning...' && ./mc version enable minio/uploads || true && ./mc version enable minio/avatars || true && ./mc version enable minio/temp || true && ./mc version enable minio/backups || true && echo 'MinIO initialization complete!' " ]
+    entrypoint: [ "/bin/sh", "-c" ]
+    command: >
+      echo 'Creating object storage buckets...' &&
+      aws --endpoint-url "$${ZEPHOB_ENDPOINT}" s3api create-bucket --bucket uploads || true &&
+      aws --endpoint-url "$${ZEPHOB_ENDPOINT}" s3api create-bucket --bucket avatars || true &&
+      aws --endpoint-url "$${ZEPHOB_ENDPOINT}" s3api create-bucket --bucket temp || true &&
+      aws --endpoint-url "$${ZEPHOB_ENDPOINT}" s3api create-bucket --bucket backups || true &&
+      echo 'Setting bucket policies...' &&
+      aws --endpoint-url "$${ZEPHOB_ENDPOINT}" s3api put-bucket-policy --bucket uploads --policy '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":"*","Action":"s3:GetObject","Resource":"arn:aws:s3:::uploads/*"}]}' || true &&
+      aws --endpoint-url "$${ZEPHOB_ENDPOINT}" s3api put-bucket-policy --bucket avatars --policy '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":"*","Action":"s3:GetObject","Resource":"arn:aws:s3:::avatars/*"}]}' || true &&
+      aws --endpoint-url "$${ZEPHOB_ENDPOINT}" s3api put-bucket-policy --bucket temp --policy '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":"*","Action":"s3:GetObject","Resource":"arn:aws:s3:::temp/*"}]}' || true &&
+      aws --endpoint-url "$${ZEPHOB_ENDPOINT}" s3api put-bucket-policy --bucket backups --policy '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":"*","Action":"s3:GetObject","Resource":"arn:aws:s3:::backups/*"}]}' || true &&
+      echo 'Enabling versioning...' &&
+      aws --endpoint-url "$${ZEPHOB_ENDPOINT}" s3api put-bucket-versioning --bucket uploads --versioning-configuration Status=Enabled || true &&
+      aws --endpoint-url "$${ZEPHOB_ENDPOINT}" s3api put-bucket-versioning --bucket avatars --versioning-configuration Status=Enabled || true &&
+      aws --endpoint-url "$${ZEPHOB_ENDPOINT}" s3api put-bucket-versioning --bucket temp --versioning-configuration Status=Enabled || true &&
+      aws --endpoint-url "$${ZEPHOB_ENDPOINT}" s3api put-bucket-versioning --bucket backups --versioning-configuration Status=Enabled || true &&
+      echo 'Object storage initialization complete!'
 
   rabbitmq-dev:
-    container_name: zephyr-dev-rabbitmq
-    image: rabbitmq:4.1-management
+    container_name: zephdev-rabbitmq
+    image: rabbitmq:4.2.5
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -179,7 +213,7 @@ services:
     restart: unless-stopped
 
   meilisearch-dev:
-    container_name: zephyr-dev-meilisearch
+    container_name: zephdev-meilisearch
     image: getmeili/meilisearch:latest
     ports:
       - "7700:7700"
@@ -200,12 +234,12 @@ services:
 
   meilisearch-init:
     profiles: [ "init" ]
-    container_name: zephyr-dev-meilisearch-init
+    container_name: zephdev-meilisearch-init
     build:
       context: ..
-      dockerfile: docker/Dockerfile.prisma
+      dockerfile: docker/prisma.dockerfile
     environment:
-      MEILISEARCH_URL: http://zephyr-dev-meilisearch:7700
+      MEILISEARCH_URL: http://meilisearch-dev:7700
       MEILISEARCH_MASTER_KEY: masterKey123
       DATABASE_URL: postgresql://postgres:postgres@postgres-dev:5432/zephyr?schema=public
     networks:
@@ -217,11 +251,14 @@ services:
         condition: service_healthy
       prisma-migrate:
         condition: service_completed_successfully
-    command: [ "sh", "-c", "echo 'Initializing MeiliSearch user search index...' && bunx tsx packages/db/scripts/init-meilisearch.ts && echo 'MeiliSearch initialization complete!'" ]
+    command:
+      [
+        "/usr/local/bin/meilisearch-init.sh",
+      ]
 
   timescaledb-dev:
-    container_name: zephyr-dev-timescaledb
-    image: timescale/timescaledb:latest-pg17
+    container_name: zephdev-timescaledb
+    image: timescale/timescaledb:latest-pg18
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -231,7 +268,10 @@ services:
     volumes:
       - timescaledb_data_dev:/var/lib/postgresql/data
     command: >
-      postgres -c listen_addresses='*' -c max_connections=50 -c shared_buffers=128MB -c work_mem=4MB -c maintenance_work_mem=32MB -c effective_cache_size=256MB -c wal_level=replica -c max_wal_senders=4 -c log_statement=none -c timezone=UTC
+      postgres -c listen_addresses='*' -c max_connections=50 -c
+      shared_buffers=128MB -c work_mem=4MB -c maintenance_work_mem=32MB -c
+      effective_cache_size=256MB -c wal_level=replica -c max_wal_senders=4 -c
+      log_statement=none -c timezone=UTC
     networks:
       - dev_network
     healthcheck:
@@ -242,96 +282,23 @@ services:
       start_period: 10s
     restart: unless-stopped
 
-  web:
-    profiles: [ "apps" ]
-    build:
-      context: ..
-      dockerfile: ./apps/web/Dockerfile
-    container_name: zephyr-dev-web
-    ports:
-      - "3000:3000"
-    environment:
-      - NODE_ENV=production
-      - NEXT_PUBLIC_APP_URL=http://localhost:3000
-      - NEXT_PUBLIC_AUTH_URL=http://localhost:3001
-      - DATABASE_URL=postgresql://postgres:postgres@zephyr-dev-postgres:5432/zephyr?schema=public
-      - REDIS_URL=redis://:zephyrredis@zephyr-dev-redis:6379/0
-      - MINIO_ENDPOINT=http://zephyr-dev-minio:9000
-      - MINIO_ACCESS_KEY=minioadmin
-      - MINIO_SECRET_KEY=minioadmin
-      - RABBITMQ_URL=amqp://admin:admin123@zephyr-dev-rabbitmq:5672
-      - MEILISEARCH_URL=http://zephyr-dev-meilisearch:7700
-      - MEILISEARCH_MASTER_KEY=masterKey123
-      - TIMESCALEDB_URL=postgresql://postgres:postgres@zephyr-dev-timescaledb:5432/zephyr-logs?schema=public
-    depends_on:
-      postgres-dev:
-        condition: service_healthy
-      redis-dev:
-        condition: service_healthy
-      minio-dev:
-        condition: service_healthy
-    networks:
-      - dev_network
-    restart: unless-stopped
-
-  auth:
-    profiles: [ "apps" ]
-    build:
-      context: ..
-      dockerfile: ./apps/auth/Dockerfile
-    container_name: zephyr-dev-auth
-    ports:
-      - "3001:3001"
-    environment:
-      - NODE_ENV=production
-      - NEXT_PUBLIC_APP_URL=http://localhost:3000
-      - NEXT_PUBLIC_AUTH_URL=http://localhost:3001
-      - DATABASE_URL=postgresql://postgres:postgres@zephyr-dev-postgres:5432/zephyr?schema=public
-      - REDIS_URL=redis://:zephyrredis@zephyr-dev-redis:6379/0
-      - RABBITMQ_URL=amqp://admin:admin123@zephyr-dev-rabbitmq:5672
-      - MEILISEARCH_URL=http://zephyr-dev-meilisearch:7700
-      - MEILISEARCH_MASTER_KEY=masterKey123
-      - TIMESCALEDB_URL=postgresql://postgres:postgres@zephyr-dev-timescaledb:5432/zephyr-logs?schema=public
-    depends_on:
-      postgres-dev:
-        condition: service_healthy
-      redis-dev:
-        condition: service_healthy
-    networks:
-      - dev_network
-    restart: unless-stopped
-
-  docs:
-    profiles: [ "apps" ]
-    build:
-      context: ..
-      dockerfile: ./apps/docs/Dockerfile
-    container_name: zephyr-dev-docs
-    ports:
-      - "3002:3002"
-    environment:
-      - NODE_ENV=production
-    networks:
-      - dev_network
-    restart: unless-stopped
-
 networks:
   dev_network:
     driver: bridge
-    name: zephyr-dev-network
+    name: zephdev-network
 
 volumes:
   postgres_data_dev:
-    name: zephyr-dev-postgres-data
+    name: zephdev-postgres18-data
   redis_data_dev:
-    name: zephyr-dev-redis-data
-  minio_data_dev:
-    name: zephyr-dev-minio-data
+    name: zephdev-redis-data
+  zephob_data_dev:
+    name: zephdev-zephob-data
   redisinsight:
-    name: zephyr-dev-redisinsight-data
+    name: zephdev-redisinsight-data
   rabbitmq_data_dev:
-    name: zephyr-dev-rabbitmq-data
+    name: zephdev-rabbitmq-data
   meilisearch_data_dev:
-    name: zephyr-dev-meilisearch-data
+    name: zephdev-meilisearch-data
   timescaledb_data_dev:
-    name: zephyr-dev-timescaledb-data
+    name: zephdev-timescaledb-data

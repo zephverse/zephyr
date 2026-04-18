@@ -1,6 +1,6 @@
 import { avatarCache, prisma } from "@zephyr/db";
 import { NextResponse } from "next/server";
-import { deleteAvatar, uploadAvatar } from "@/lib/minio"; // Add deleteAvatar import
+import { deleteAvatar, uploadAvatar } from "@/lib/object-storage";
 
 export async function POST(request: Request) {
   try {
