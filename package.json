@@ -1,6 +1,6 @@
 {
   "name": "zephyr",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "license": "AGPL-3.0",
   "homepage": "https://zephyyrr.in",
   "private": true,
@@ -17,6 +17,7 @@
     "db:push": "bun run --filter=@zephyr/db push",
     "db:up": "bun run --filter=@zephyr/db generate && bun run --filter=@zephyr/db push",
     "build": "turbo check-types && turbo build",
+    "test": "bun test",
     "dep:check": "bunx sherif -f",
     "search:init": "cd packages/db && bunx tsx scripts/init-meilisearch.ts",
     "docker:dev": "docker compose -f docker/docker-compose.dev.yml --profile init --profile studio up -d",
