@@ -1,0 +1,15 @@
+pre-commit:
+  commands:
+    lint:
+      run: bun run check
+    types:
+      run: bun run check-types
+
+pre-push:
+  commands:
+    tests:
+      run: echo "Skipping tests as they are not defined in this configuration."
+    lint:
+      run: bun run check
+    types:
+      run: bun run check-types
