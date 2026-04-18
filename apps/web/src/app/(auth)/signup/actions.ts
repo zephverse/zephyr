@@ -31,20 +31,20 @@ function handleRateLimitError(
   };
 }
 
-type SignUpResponse = {
-  error?: string;
-  success: boolean;
-  message?: string;
+interface SignUpResponse {
   emailVerification?: {
     email: string;
     isNewToken: boolean;
   };
+  error?: string;
+  message?: string;
   rateLimited?: boolean;
   rateLimitInfo?: {
     remaining: number;
     resetTime: number;
   };
-};
+  success: boolean;
+}
 
 export async function signUp(credentials: {
   username: string;

@@ -1,9 +1,9 @@
 import { GitPullRequest } from "lucide-react";
 import Link from "next/link";
 
-type FossBannerProps = {
+interface FossBannerProps {
   className?: string;
-};
+}
 
 export function FossBanner({ className }: FossBannerProps) {
   return (

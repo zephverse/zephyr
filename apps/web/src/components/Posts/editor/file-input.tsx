@@ -9,31 +9,31 @@ import { FileAudioIcon, FileCode, FileIcon, ImageIcon } from "lucide-react";
 import { type RefObject, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
-type FileInputProps = {
-  onFilesSelected: (files: File[]) => void;
+interface FileInputProps {
   disabled: boolean;
-};
+  onFilesSelected: (files: File[]) => void;
+}
 
 type FileButtonType = "image" | "audio" | "document" | "code";
 
-type FileButtonProps = {
+interface FileButtonProps {
+  accept: string;
+  buttonType: FileButtonType;
+  capture?: boolean | "user" | "environment";
+  disabled: boolean;
+  handleFileSelect: (files: FileList | null) => void;
+  hoveredButton: FileButtonType | null;
   icon:
     | typeof ImageIcon
     | typeof FileAudioIcon
     | typeof FileIcon
     | typeof FileCode;
-  label: string;
-  type: FileButtonType;
-  accept: string;
   inputRef: RefObject<HTMLInputElement | null>;
-  buttonType: FileButtonType;
-  capture?: boolean | "user" | "environment";
-  hoveredButton: FileButtonType | null;
-  setHoveredButton: (button: FileButtonType | null) => void;
   isMobile: boolean;
-  disabled: boolean;
-  handleFileSelect: (files: FileList | null) => void;
-};
+  label: string;
+  setHoveredButton: (button: FileButtonType | null) => void;
+  type: FileButtonType;
+}
 
 const useIsMobile = () => {
   const [isMobile, setIsMobile] = useState(false);

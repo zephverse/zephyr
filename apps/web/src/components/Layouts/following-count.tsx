@@ -4,10 +4,10 @@ import { UserPlus } from "lucide-react";
 import { motion } from "motion/react";
 import { formatNumber } from "@/lib/utils";
 
-type FollowingCountProps = {
+interface FollowingCountProps {
   count: number;
   onClick?: () => void;
-};
+}
 
 export default function FollowingCount({
   count,

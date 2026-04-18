@@ -13,9 +13,9 @@ import PostsLoadingSkeleton from "@/components/Layouts/skeletons/post-only-loadi
 import kyInstance from "@/lib/ky";
 import UserSearchResults from "./user-search-result";
 
-type SearchResultsProps = {
+interface SearchResultsProps {
   query: string;
-};
+}
 
 export default function SearchResults({ query }: SearchResultsProps) {
   const {

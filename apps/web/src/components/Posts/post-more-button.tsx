@@ -14,11 +14,11 @@ import { MentionTags } from "@/components/Tags/mention-tags";
 import { Tags as TagsComponent } from "@/components/Tags/tags";
 import DeletePostDialog from "./delete-post-dialog";
 
-type PostMoreButtonProps = {
-  post: PostData;
+interface PostMoreButtonProps {
   className?: string;
   onUpdate?: (updatedPost: PostData) => void;
-};
+  post: PostData;
+}
 
 export default function PostMoreButton({
   post,

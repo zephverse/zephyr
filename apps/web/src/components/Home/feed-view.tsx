@@ -14,9 +14,9 @@ import { motion } from "motion/react";
 import React, { useEffect, useMemo, useState } from "react";
 import PostCard from "./feedview/post-card";
 
-type FeedViewProps = {
+interface FeedViewProps {
   posts: PostData[];
-};
+}
 
 export const FeedView: React.FC<FeedViewProps> = ({ posts: initialPosts }) => {
   const MemoizedPostCard = useMemo(() => React.memo(PostCard), []);
@@ -138,7 +138,7 @@ export const FeedView: React.FC<FeedViewProps> = ({ posts: initialPosts }) => {
                     <div className="w-full max-w-3xl space-y-1.5 sm:space-y-4">
                       {sortedPosts[tab.value as keyof typeof sortedPosts].map(
                         (post, index) => (
-                          <React.Fragment key={`${tab.value}-${index}`}>
+                          <React.Fragment key={`${tab.value}-${post.id}`}>
                             {index > 0 && (
                               <Separator className="my-1.5 sm:my-4" />
                             )}

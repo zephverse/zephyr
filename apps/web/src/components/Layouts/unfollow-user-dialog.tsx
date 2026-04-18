@@ -13,11 +13,11 @@ import { useState } from "react";
 import LoadingButton from "@/components/Auth/loading-button";
 import { useUnfollowUserMutation } from "@/hooks/user-mutations";
 
-type UnfollowUserDialogProps = {
-  user: UserData;
-  open: boolean;
+interface UnfollowUserDialogProps {
   onClose: () => void;
-};
+  open: boolean;
+  user: UserData;
+}
 
 export default function UnfollowUserDialog({
   user,

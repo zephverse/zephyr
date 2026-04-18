@@ -13,10 +13,10 @@ import {
 } from "lucide-react";
 import { motion } from "motion/react";
 
-type HnStoryPreviewProps = {
-  story: HNStoryType;
+interface HnStoryPreviewProps {
   onRemoveAction: () => void;
-};
+  story: HNStoryType;
+}
 
 export function HNStoryPreview({ story, onRemoveAction }: HnStoryPreviewProps) {
   const domain = story.url ? new URL(story.url).hostname : null;

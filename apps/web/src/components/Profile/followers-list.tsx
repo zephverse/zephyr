@@ -15,24 +15,24 @@ import { useState } from "react";
 import FollowButton from "@/components/Layouts/follow-button";
 import UserAvatar from "@/components/Layouts/user-avatar";
 
-type FollowersListProps = {
-  userId: string;
+interface FollowersListProps {
   isOpen: boolean;
-  onCloseAction: () => void;
   loggedInUserId: string;
-};
+  onCloseAction: () => void;
+  userId: string;
+}
 
-type Follower = {
-  id: string;
-  username: string;
-  displayName: string;
-  avatarUrl: string | null;
-  bio: string | null;
+interface Follower {
   _count: {
     followers: number;
   };
+  avatarUrl: string | null;
+  bio: string | null;
+  displayName: string;
+  id: string;
   isFollowing: boolean;
-};
+  username: string;
+}
 
 const emptyStateMessages = [
   "No followers yet! Time to shine! ✨",
@@ -40,6 +40,14 @@ const emptyStateMessages = [
   "Looking for your first follower? 👀",
   "Your future followers are out there somewhere! 🌟",
   "Empty follower list? Challenge accepted! 💪",
+];
+
+const FOLLOWER_SKELETON_IDS = [
+  "follower-skeleton-1",
+  "follower-skeleton-2",
+  "follower-skeleton-3",
+  "follower-skeleton-4",
+  "follower-skeleton-5",
 ];
 
 export default function FollowersList({
@@ -92,7 +100,7 @@ export default function FollowersList({
           initial={{ opacity: 0 }}
           transition={{ delay: 0.1 }}
         >
-          <SearchIcon className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 text-muted-foreground" />
+          <SearchIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             className="border-accent/20 bg-background/50 pl-9 backdrop-blur-xs focus:border-primary/50"
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -105,12 +113,12 @@ export default function FollowersList({
           <AnimatePresence mode="wait">
             {isLoading ? (
               <div className="space-y-4">
-                {[...new Array(5)].map((_, i) => (
+                {FOLLOWER_SKELETON_IDS.map((skeletonId, i) => (
                   <motion.div
                     animate={{ opacity: 1, y: 0 }}
                     className="flex animate-pulse items-center space-x-4"
                     initial={{ opacity: 0, y: 20 }}
-                    key={`followers-skeleton-${i + 1}`}
+                    key={skeletonId}
                     transition={{ delay: i * 0.1 }}
                   >
                     <div className="h-10 w-10 rounded-full bg-muted" />

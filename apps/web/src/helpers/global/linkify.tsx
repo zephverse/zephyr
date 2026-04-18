@@ -3,9 +3,9 @@ import type React from "react";
 import { LinkIt, LinkItUrl } from "react-linkify-it";
 import UserLinkWithTooltip from "@/components/Layouts/user-link-with-tooltip";
 
-type LinkifyProps = {
+interface LinkifyProps {
   children: React.ReactNode;
-};
+}
 const usernameRegex = /(@[a-zA-Z0-9_-]+)/;
 const hashtagRegex = /(#[a-zA-Z0-9]+)/;
 

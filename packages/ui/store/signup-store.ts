@@ -1,13 +1,25 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 
-type RateLimitInfo = {
+interface RateLimitInfo {
+  isLimited: boolean;
   remaining: number;
   resetTime: number;
-  isLimited: boolean;
-};
+}
 
-type SignupState = {
+interface SignupState {
+  canCreate: () => boolean;
+  canResend: () => boolean;
+
+  canStartSignup: () => boolean;
+  canVerify: () => boolean;
+  clearRateLimit: (action: keyof SignupState["rateLimits"]) => void;
+  currentEmail: string | null;
+  isCreating: boolean;
+  isResending: boolean;
+
+  isStarting: boolean;
+  isVerifying: boolean;
   rateLimits: {
     start: RateLimitInfo;
     resend: RateLimitInfo;
@@ -15,37 +27,25 @@ type SignupState = {
     create: RateLimitInfo;
   };
 
-  isStarting: boolean;
-  isResending: boolean;
-  isVerifying: boolean;
-  isCreating: boolean;
-
-  showOTPPanel: boolean;
-  showEmailVerification: boolean;
-  currentEmail: string | null;
+  reset: () => void;
+  setCreating: (creating: boolean) => void;
+  setCurrentEmail: (email: string | null) => void;
 
   setRateLimit: (
     action: keyof SignupState["rateLimits"],
     info: Partial<RateLimitInfo>
   ) => void;
-  clearRateLimit: (action: keyof SignupState["rateLimits"]) => void;
-
-  setStarting: (starting: boolean) => void;
   setResending: (resending: boolean) => void;
-  setVerifying: (verifying: boolean) => void;
-  setCreating: (creating: boolean) => void;
+  setShowEmailVerification: (show: boolean) => void;
 
   setShowOTPPanel: (show: boolean) => void;
-  setShowEmailVerification: (show: boolean) => void;
-  setCurrentEmail: (email: string | null) => void;
 
-  canStartSignup: () => boolean;
-  canResend: () => boolean;
-  canVerify: () => boolean;
-  canCreate: () => boolean;
+  setStarting: (starting: boolean) => void;
+  setVerifying: (verifying: boolean) => void;
+  showEmailVerification: boolean;
 
-  reset: () => void;
-};
+  showOTPPanel: boolean;
+}
 
 const initialRateLimit: RateLimitInfo = {
   remaining: 0,

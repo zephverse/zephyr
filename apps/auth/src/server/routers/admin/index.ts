@@ -25,19 +25,7 @@ const rateLimitedAdminProcedure = adminProcedure.use(async ({ ctx, next }) => {
   return next();
 });
 
-export type AdminUser = {
-  id: string;
-  username: string;
-  displayName: string;
-  displayUsername: string | null;
-  email: string | null;
-  emailVerified: boolean;
-  avatarUrl: string | null;
-  bio: string | null;
-  aura: number;
-  role: string;
-  createdAt: Date;
-  updatedAt: Date;
+export interface AdminUser {
   _count: {
     posts: number;
     followers: number;
@@ -47,23 +35,35 @@ export type AdminUser = {
     vote: number;
     sessions: number;
   };
-};
+  aura: number;
+  avatarUrl: string | null;
+  bio: string | null;
+  createdAt: Date;
+  displayName: string;
+  displayUsername: string | null;
+  email: string | null;
+  emailVerified: boolean;
+  id: string;
+  role: string;
+  updatedAt: Date;
+  username: string;
+}
 
-export type UserListFilters = {
-  role?: "user" | "admin";
+export interface UserListFilters {
   emailVerified?: boolean;
   hasEmail?: boolean;
+  role?: "user" | "admin";
   search?: string;
   sortBy?: "createdAt" | "aura" | "username" | "displayName";
   sortOrder?: "asc" | "desc";
-};
+}
 
-export type UserListResult = {
-  users: User[];
-  totalCount: number;
+export interface UserListResult {
   hasMore: boolean;
   nextCursor?: string;
-};
+  totalCount: number;
+  users: User[];
+}
 
 async function syncUsersWithMeiliSearch(
   userIds: string[],

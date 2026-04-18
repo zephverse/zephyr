@@ -16,15 +16,15 @@ const ClientFollowButton = dynamic(
   }
 );
 
-type FollowButtonProps = {
-  userId: string;
+interface FollowButtonProps {
+  className?: string;
   initialState: {
     followers: number;
     isFollowedByUser: boolean;
   };
-  className?: string;
   onFollowed?: () => void;
-};
+  userId: string;
+}
 
 const WrappedClientFollowButton: React.FC<FollowButtonProps> = (props) => (
   <ErrorBoundary

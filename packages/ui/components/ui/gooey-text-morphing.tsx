@@ -3,13 +3,13 @@
 import { useEffect, useRef } from "react";
 import { cn } from "../../lib/utils";
 
-type GooeyTextProps = {
-  texts: string[];
-  morphTime?: number;
-  cooldownTime?: number;
+interface GooeyTextProps {
   className?: string;
+  cooldownTime?: number;
+  morphTime?: number;
   textClassName?: string;
-};
+  texts: string[];
+}
 
 export function GooeyText({
   texts,

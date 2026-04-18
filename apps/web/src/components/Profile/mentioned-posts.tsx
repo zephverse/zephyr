@@ -8,9 +8,9 @@ import { motion } from "motion/react";
 import React, { useMemo } from "react";
 import PostCard from "../Home/feedview/post-card";
 
-type MentionedPostsProps = {
+interface MentionedPostsProps {
   userId: string;
-};
+}
 
 const MemoizedPostCard = React.memo(PostCard);
 

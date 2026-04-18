@@ -5,11 +5,11 @@ import type { JSX } from "react";
 import UserAvatar from "@/components/Layouts/user-avatar";
 import { cn } from "@/lib/utils";
 
-type NotificationProps = {
+interface NotificationProps {
   notification: NotificationData & {
     type: NotificationType;
   };
-};
+}
 
 export default function Notification({ notification }: NotificationProps) {
   const notificationTypeMap: Record<

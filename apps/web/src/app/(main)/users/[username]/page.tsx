@@ -4,9 +4,9 @@ import { cache } from "react";
 import { getSessionFromApi } from "@/lib/session";
 import ClientProfile from "./client-profile";
 
-type PageProps = {
+interface PageProps {
   params: Promise<{ username: string }>;
-};
+}
 
 const getUser = cache(async (username: string, loggedInUserId: string) => {
   const user = await prisma.user.findFirst({

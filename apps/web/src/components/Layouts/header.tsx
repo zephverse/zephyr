@@ -36,12 +36,12 @@ import UserButtonWrapper from "./user-button-wrapper";
 
 const playwriteCa = Playwrite_CA({ weight: "400" });
 
-type MobileMoreMenuProps = {
+interface MobileMoreMenuProps {
+  hideTrigger?: boolean;
   open: boolean;
   setOpen: (open: boolean) => void;
-  hideTrigger?: boolean;
   unreadMessageCount?: number;
-};
+}
 
 const MobileMoreMenu = ({
   open,
@@ -157,12 +157,12 @@ const MobileMoreMenu = ({
   );
 };
 
-type MobileNavLinkProps = {
+interface MobileNavLinkProps {
+  badge?: number;
   href: string;
   icon: React.ReactNode;
   label: string;
-  badge?: number;
-};
+}
 
 const MobileNavLink = ({
   href,
@@ -192,7 +192,7 @@ const MobileNavLink = ({
           {badge > 0 && (
             <motion.div
               animate={{ scale: 1 }}
-              className="-top-1.5 -right-1.5 absolute"
+              className="absolute -top-1.5 -right-1.5"
               initial={{ scale: 0 }}
               transition={{ type: "spring" }}
             >
@@ -208,7 +208,7 @@ const MobileNavLink = ({
         <span className="mt-0.5 font-medium text-[10px]">{label}</span>
         {isActive && (
           <motion.div
-            className="-bottom-1.5 absolute h-[2px] w-4 bg-primary"
+            className="absolute -bottom-1.5 h-[2px] w-4 bg-primary"
             layoutId="activeIndicator"
             transition={{ type: "spring", stiffness: 380, damping: 30 }}
           />
@@ -218,10 +218,10 @@ const MobileNavLink = ({
   );
 };
 
-type HeaderProps = {
+interface HeaderProps {
   bookmarkCount: number;
   unreadNotificationCount: number;
-};
+}
 
 const Header: React.FC<HeaderProps> = ({
   bookmarkCount,
@@ -245,7 +245,7 @@ const Header: React.FC<HeaderProps> = ({
         <div className="flex shrink-0 items-center gap-3">
           <Link href="/">
             <motion.h1
-              className="-rotate-6 md:-rotate-10 mr-1 font-bold text-xl"
+              className="mr-1 -rotate-6 font-bold text-xl md:-rotate-10"
               whileHover={{ scale: 1.05 }}
             >
               <span className={playwriteCa.className}>
@@ -262,7 +262,7 @@ const Header: React.FC<HeaderProps> = ({
           <MobileSearchButton />
         </div>
 
-        <div className="-translate-x-1/2 -translate-y-1/2 absolute top-1/2 left-1/2 z-10 hidden items-center gap-12 md:flex">
+        <div className="absolute top-1/2 left-1/2 z-10 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-12 md:flex">
           {isActivePath("/") && (
             <Tabs
               className="contents"
@@ -291,7 +291,7 @@ const Header: React.FC<HeaderProps> = ({
                           />
                           <span
                             className={cn(
-                              "-bottom-2 -translate-x-1/2 pointer-events-none absolute left-1/2 h-1 w-1 rounded-full bg-primary transition-opacity",
+                              "pointer-events-none absolute -bottom-2 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-primary transition-opacity",
                               tab === "for-you" ? "opacity-100" : "opacity-0"
                             )}
                           />
@@ -321,7 +321,7 @@ const Header: React.FC<HeaderProps> = ({
                           />
                           <span
                             className={cn(
-                              "-bottom-2 -translate-x-1/2 pointer-events-none absolute left-1/2 h-1 w-1 rounded-full bg-primary transition-opacity",
+                              "pointer-events-none absolute -bottom-2 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-primary transition-opacity",
                               tab === "following" ? "opacity-100" : "opacity-0"
                             )}
                           />

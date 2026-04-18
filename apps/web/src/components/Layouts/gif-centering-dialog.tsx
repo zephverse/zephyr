@@ -20,16 +20,16 @@ import { useRef, useState } from "react";
 import { useUpdateAvatarMutation } from "@/app/(main)/users/[username]/avatar-mutations";
 import LoadingButton from "@/components/Auth/loading-button";
 
-type GifCenteringDialogProps = {
-  gifFile: File;
-  onClose: () => void;
+interface GifCenteringDialogProps {
   currentValues: {
     displayName: string;
     bio: string;
     userId: string;
     oldAvatarKey?: string | null;
   };
-};
+  gifFile: File;
+  onClose: () => void;
+}
 
 export default function GifCenteringDialog({
   gifFile,

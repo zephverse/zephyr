@@ -4,7 +4,8 @@ import {
   DotsHorizontalIcon,
 } from "@radix-ui/react-icons";
 import { type ButtonProps, buttonVariants } from "@zephyr/ui/shadui/button";
-import { type ComponentProps, forwardRef } from "react";
+import type * as React from "react";
+import type { ComponentProps } from "react";
 import { cn } from "../lib/utils";
 
 const Pagination = ({ className, ...props }: ComponentProps<"nav">) => (
@@ -16,21 +17,25 @@ const Pagination = ({ className, ...props }: ComponentProps<"nav">) => (
 );
 Pagination.displayName = "Pagination";
 
-const PaginationContent = forwardRef<HTMLUListElement, ComponentProps<"ul">>(
-  ({ className, ...props }, ref) => (
-    <ul
-      className={cn("flex flex-row items-center gap-1", className)}
-      ref={ref}
-      {...props}
-    />
-  )
+const PaginationContent = ({
+  className,
+  ref,
+  ...props
+}: ComponentProps<"ul"> & { ref?: React.Ref<HTMLUListElement | null> }) => (
+  <ul
+    className={cn("flex flex-row items-center gap-1", className)}
+    ref={ref}
+    {...props}
+  />
 );
 PaginationContent.displayName = "PaginationContent";
 
-const PaginationItem = forwardRef<HTMLLIElement, ComponentProps<"li">>(
-  ({ className, ...props }, ref) => (
-    <li className={cn("", className)} ref={ref} {...props} />
-  )
+const PaginationItem = ({
+  className,
+  ref,
+  ...props
+}: ComponentProps<"li"> & { ref?: React.Ref<HTMLLIElement | null> }) => (
+  <li className={cn("", className)} ref={ref} {...props} />
 );
 PaginationItem.displayName = "PaginationItem";
 
@@ -112,9 +117,9 @@ PaginationEllipsis.displayName = "PaginationEllipsis";
 export {
   Pagination,
   PaginationContent,
-  PaginationLink,
-  PaginationItem,
-  PaginationPrevious,
-  PaginationNext,
   PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
 };

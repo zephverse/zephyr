@@ -132,7 +132,7 @@ export default function ClientSignupPage() {
           variants={slideIn}
         >
           <div className="relative">
-            <h1 className="vertical-right -translate-y-1/2 absolute top-1/2 right-0 select-none whitespace-nowrap font-bold text-6xl text-primary/20 tracking-wider xl:text-8xl 2xl:text-9xl">
+            <h1 className="vertical-right absolute top-1/2 right-0 -translate-y-1/2 select-none whitespace-nowrap font-bold text-6xl text-primary/20 tracking-wider xl:text-8xl 2xl:text-9xl">
               SIGN UP
             </h1>
           </div>

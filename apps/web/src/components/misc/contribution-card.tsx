@@ -7,9 +7,9 @@ import { motion } from "motion/react";
 import Link from "next/link";
 import { FaGithub } from "react-icons/fa";
 
-type ContributeCardProps = {
+interface ContributeCardProps {
   isCollapsed: boolean;
-};
+}
 
 export default function ContributeCard({ isCollapsed }: ContributeCardProps) {
   if (isCollapsed) {

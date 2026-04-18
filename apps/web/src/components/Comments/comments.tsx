@@ -6,9 +6,9 @@ import kyInstance from "@/lib/ky";
 import Comment from "./comment";
 import CommentInput from "./comment-input";
 
-type CommentsProps = {
+interface CommentsProps {
   post: PostData;
-};
+}
 
 export default function Comments({ post }: CommentsProps) {
   const { data, fetchNextPage, hasNextPage, isFetching, status } =

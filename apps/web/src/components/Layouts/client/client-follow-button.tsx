@@ -16,15 +16,15 @@ import {
 import { cn } from "@/lib/utils";
 import { followStateAtom } from "./follow-state";
 
-type ClientFollowButtonProps = {
-  userId: string;
+interface ClientFollowButtonProps {
+  className?: string;
   initialState: {
     followers: number;
     isFollowedByUser: boolean;
   };
-  className?: string;
   onFollowed?: () => void;
-};
+  userId: string;
+}
 
 const LoadingPulse = () => (
   <div className="flex items-center justify-center space-x-1">
@@ -224,7 +224,7 @@ const ClientFollowButton: React.FC<ClientFollowButtonProps> = ({
         ? await handleFollow()
         : await handleUnfollow();
       updateState(result);
-    } catch (_error) {
+    } catch {
       revertOptimisticUpdate(previousState);
     }
   };

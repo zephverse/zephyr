@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 export default function SupportPage() {
   return (
     <div className="relative min-h-screen overflow-hidden">
-      <div className="-z-10 fixed inset-0">
+      <div className="fixed inset-0 -z-10">
         <Image
           alt="Background"
           className="object-cover object-center"

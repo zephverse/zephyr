@@ -12,7 +12,7 @@ import {
 import { motion } from "motion/react";
 import Link from "next/link";
 
-type HnStoryCardProps = {
+interface HnStoryCardProps {
   hnStory: {
     storyId: number;
     title: string;
@@ -22,7 +22,7 @@ type HnStoryCardProps = {
     score: number;
     descendants: number;
   };
-};
+}
 
 export function HNStoryCard({ hnStory }: HnStoryCardProps) {
   const domain = hnStory.url ? new URL(hnStory.url).hostname : null;

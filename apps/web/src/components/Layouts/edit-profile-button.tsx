@@ -6,10 +6,10 @@ import { useState } from "react";
 import EditProfileDialog from "@/components/Layouts/edit-profile-dialog";
 import { cn } from "@/lib/utils";
 
-type EditProfileButtonProps = {
-  user: UserData;
+interface EditProfileButtonProps {
   className?: string;
-};
+  user: UserData;
+}
 
 export default function EditProfileButton({
   user,

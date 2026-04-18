@@ -6,9 +6,9 @@ import { motion } from "motion/react";
 import type React from "react";
 import { useId } from "react";
 
-type ScrollUpButtonProps = {
+interface ScrollUpButtonProps {
   isVisible: boolean;
-};
+}
 
 const ScrollUpButton: React.FC<ScrollUpButtonProps> = ({ isVisible }) => {
   const circleId = useId();
@@ -34,7 +34,7 @@ const ScrollUpButton: React.FC<ScrollUpButtonProps> = ({ isVisible }) => {
           size="icon"
           variant="outline"
         >
-          <ArrowUp className="-translate-x-1/2 -translate-y-1/2 absolute top-1/2 left-1/2 h-6 w-6 transform text-primary-foreground transition-all duration-300 group-hover:translate-y-[-200%]" />
+          <ArrowUp className="absolute top-1/2 left-1/2 h-6 w-6 -translate-x-1/2 -translate-y-1/2 transform text-primary-foreground transition-all duration-300 group-hover:translate-y-[-200%]" />
           <div className="absolute inset-0 flex items-center justify-center">
             <motion.div
               animate={{ rotate: 360 }}

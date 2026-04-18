@@ -7,9 +7,9 @@ import Linkify from "@/helpers/global/linkify";
 import { formatRelativeDate } from "@/lib/utils";
 import CommentMoreButton from "./comment-more-button";
 
-type CommentProps = {
+interface CommentProps {
   comment: CommentData;
-};
+}
 
 export default function Comment({ comment }: CommentProps) {
   const { user } = useSession();

@@ -5,11 +5,11 @@ import type React from "react";
 import ContributeCard from "@/components/misc/contribution-card";
 import UserDetails from "@/components/Profile/sidebars/right/user-details";
 
-type ProfileRightSideBarProps = {
-  username: string;
-  userData: UserData;
+interface ProfileRightSideBarProps {
   loggedInUserId: string;
-};
+  userData: UserData;
+  username: string;
+}
 
 const ProfileRightSideBar: React.FC<ProfileRightSideBarProps> = ({
   userData,

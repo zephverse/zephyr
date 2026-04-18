@@ -7,10 +7,10 @@ import { usePathname } from "next/navigation";
 import { HeaderIconButton } from "@/components/Styles/header-buttons";
 import kyInstance from "@/lib/ky";
 
-type NotificationsButtonProps = {
+interface NotificationsButtonProps {
   initialState: NotificationCountInfo;
   mode?: "desktop" | "mobile";
-};
+}
 
 export default function NotificationsButton({
   initialState,
@@ -41,7 +41,7 @@ export default function NotificationsButton({
             className={`h-5 w-5 ${isActive ? "text-primary" : "text-muted-foreground"}`}
           />
           {data.unreadCount > 0 && (
-            <span className="-right-1 -top-1 absolute flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
+            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
               {data.unreadCount}
             </span>
           )}
@@ -58,7 +58,7 @@ export default function NotificationsButton({
         <>
           <Bell className={`h-5 w-5 ${isActive ? "text-primary" : ""}`} />
           {isActive && (
-            <span className="-bottom-2 -translate-x-1/2 pointer-events-none absolute left-1/2 h-1 w-1 rounded-full bg-primary" />
+            <span className="pointer-events-none absolute -bottom-2 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-primary" />
           )}
         </>
       }

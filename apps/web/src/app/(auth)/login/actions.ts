@@ -19,8 +19,8 @@ export async function login(values: LoginValues) {
         },
       });
     } else {
-      await authClient.signIn.username({
-        username: values.username,
+      await authClient.signIn.email({
+        email: values.username,
         password: values.password,
         fetchOptions: {
           onError: () => {

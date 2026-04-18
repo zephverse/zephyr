@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
-import type React from "react";
+import type * as React from "react";
 import { useRef, useState } from "react";
 import { cn } from "../../lib/utils";
 

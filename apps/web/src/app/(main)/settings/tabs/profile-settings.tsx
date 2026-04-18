@@ -23,9 +23,9 @@ import { useForm } from "react-hook-form";
 import { LoadingButton } from "@/components/Auth/loading-button";
 import { useUpdateProfileMutation } from "../../users/[username]/avatar-mutations";
 
-type ProfileSettingsProps = {
+interface ProfileSettingsProps {
   user: UserData;
-};
+}
 
 export default function ProfileSettings({ user }: ProfileSettingsProps) {
   const { toast } = useToast();
@@ -148,7 +148,7 @@ export default function ProfileSettings({ user }: ProfileSettingsProps) {
         </Form>
 
         {/* Gradient background effect */}
-        <div className="-z-10 absolute inset-0 bg-gradient-to-br from-primary/5 via-secondary/5 to-background blur-3xl" />
+        <div className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/5 via-secondary/5 to-background blur-3xl" />
       </div>
     </motion.div>
   );

@@ -35,9 +35,9 @@ const identifierSchema = z.object({
 
 type FormValues = z.infer<typeof identifierSchema>;
 
-type SecuritySettingsProps = {
+interface SecuritySettingsProps {
   user: UserData;
-};
+}
 
 export default function SecuritySettings({ user }: SecuritySettingsProps) {
   const [isPending, startTransition] = useTransition();
@@ -142,11 +142,11 @@ export default function SecuritySettings({ user }: SecuritySettingsProps) {
               </form>
             </Form>
 
-            <div className="-z-10 absolute inset-0 bg-gradient-to-br from-primary/5 via-secondary/5 to-background blur-xl" />
+            <div className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/5 via-secondary/5 to-background blur-xl" />
           </div>
         </motion.div>
 
-        <div className="-z-20 absolute inset-0 bg-gradient-to-br from-primary/5 via-secondary/5 to-background blur-3xl" />
+        <div className="absolute inset-0 -z-20 bg-gradient-to-br from-primary/5 via-secondary/5 to-background blur-3xl" />
       </div>
     </motion.div>
   );

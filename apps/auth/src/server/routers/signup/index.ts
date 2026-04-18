@@ -326,13 +326,13 @@ async function _sendVerificationEmailSafe(
   }
 }
 
-type PendingSignup = {
-  email: string;
-  username: string;
-  passwordHash: string;
+interface PendingSignup {
   displayName: string;
+  email: string;
   password: string;
-};
+  passwordHash: string;
+  username: string;
+}
 
 export const signupRouter = router({
   pendingSignupStart: procedure
@@ -613,7 +613,6 @@ export const signupRouter = router({
           }
 
           try {
-            // biome-ignore lint/nursery/noShadow: who cares it works
             const emailLower = input.email.toLowerCase();
             const betterAuthIdentifier = `email-verification-otp-${emailLower}`;
             const deletedCount = await prisma.verification.deleteMany({

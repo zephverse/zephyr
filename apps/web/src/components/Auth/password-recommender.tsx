@@ -12,17 +12,17 @@ import {
   uppercaseRegex,
 } from "./password-strength-checker";
 
-type Requirement = {
+interface Requirement {
   text: string;
   validator: (password: string) => boolean;
-};
+}
 
-type PasswordRecommenderProps = {
+interface PasswordRecommenderProps {
   password: string;
   requirements: Requirement[];
-  setValue: UseFormSetValue<SignUpValues>;
   setPassword: (value: string) => void;
-};
+  setValue: UseFormSetValue<SignUpValues>;
+}
 
 export function PasswordRecommender({
   password,

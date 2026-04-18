@@ -5,10 +5,10 @@ import Image from "next/image";
 import { useState } from "react";
 import { LoadingButton } from "@/components/Auth/loading-button";
 
-type LinkedAccountsProps = {
-  user: UserData;
+interface LinkedAccountsProps {
   onLink: (provider: string) => void;
-};
+  user: UserData;
+}
 
 const getStatusText = (isComingSoon: boolean, isConnected?: boolean) => {
   if (isComingSoon) {
@@ -24,15 +24,15 @@ const getButtonText = (isComingSoon: boolean, isConnected?: boolean) => {
   return isConnected ? "Disconnect" : "Connect";
 };
 
-type AccountCardProps = {
-  provider: string;
+interface AccountCardProps {
   icon: string;
-  isConnected?: boolean;
   isComingSoon?: boolean;
+  isConnected?: boolean;
   isLoading?: boolean;
   onConnect: () => void;
   onDisconnect: () => void;
-};
+  provider: string;
+}
 
 const AccountCard = ({
   provider,
@@ -78,7 +78,7 @@ const AccountCard = ({
         {getButtonText(isComingSoon, isConnected)}
       </LoadingButton>
     </div>
-    <div className="-z-10 absolute inset-0 animate-gradient bg-gradient-to-r from-primary/5 via-secondary/5 to-primary/5 opacity-0 transition-opacity group-hover:opacity-100" />
+    <div className="absolute inset-0 -z-10 animate-gradient bg-gradient-to-r from-primary/5 via-secondary/5 to-primary/5 opacity-0 transition-opacity group-hover:opacity-100" />
   </motion.div>
 );
 

@@ -44,16 +44,16 @@ import { getSecureImageUrl } from "@/lib/utils/image-url";
 import { getRandomJoke } from "./constants/logout-messages";
 import { MobileUserMenu } from "./mobile/mobile-user-menu";
 
-type UserButtonProps = {
-  className?: string;
+interface UserButtonProps {
   asChild?: boolean;
   children?: React.ReactNode | ((open: boolean) => React.ReactNode);
-};
+  className?: string;
+}
 
-type UserTriggerProps = {
+interface UserTriggerProps {
   avatarUrl?: string | null;
   className?: string;
-};
+}
 
 const UserTrigger = ({ avatarUrl, className }: UserTriggerProps) => (
   <motion.div
@@ -61,7 +61,7 @@ const UserTrigger = ({ avatarUrl, className }: UserTriggerProps) => (
     whileHover={{ scale: 1.05 }}
     whileTap={{ scale: 0.95 }}
   >
-    <div className="-inset-[2px] absolute rounded-full bg-gradient-to-r from-primary/20 via-primary/30 to-primary/20 opacity-0 blur-md transition-opacity duration-300 group-hover:opacity-100" />
+    <div className="absolute -inset-[2px] rounded-full bg-gradient-to-r from-primary/20 via-primary/30 to-primary/20 opacity-0 blur-md transition-opacity duration-300 group-hover:opacity-100" />
     <Button
       className={cn(
         "relative flex-none cursor-pointer rounded-full border border-border/50 bg-background/40 p-0 shadow-xs backdrop-blur-md transition-all duration-200 hover:border-border/80 hover:bg-background/60 hover:shadow-md",
@@ -104,7 +104,7 @@ export default function UserButton({
           url: getSecureImageUrl(data.url),
           key: data.key,
         };
-      } catch (_error) {
+      } catch {
         return {
           url: user.image ? getSecureImageUrl(user.image) : null,
           key: null,

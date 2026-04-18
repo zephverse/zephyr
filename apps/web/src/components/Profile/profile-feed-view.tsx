@@ -21,11 +21,16 @@ import MentionedPosts from "./mentioned-posts";
 import UserDetails from "./sidebars/right/user-details";
 import UserPosts from "./user-post";
 
-type ProfileFeedViewProps = {
-  username: string;
-  userData: UserData;
+interface ReactErrorBoundaryFallbackProps {
+  error: unknown;
+  resetErrorBoundary: (...args: unknown[]) => void;
+}
+
+interface ProfileFeedViewProps {
   loggedInUserId: string;
-};
+  userData: UserData;
+  username: string;
+}
 
 const ProfileFeedView: React.FC<ProfileFeedViewProps> = ({
   userData: initialUserData,
@@ -47,7 +52,7 @@ const ProfileFeedView: React.FC<ProfileFeedViewProps> = ({
           throw new Error("Failed to fetch user data");
         }
         return response.json();
-      } catch (_err) {
+      } catch {
         toast({
           title: "Error",
           description: "Failed to load user data. Using cached data.",
@@ -74,7 +79,14 @@ const ProfileFeedView: React.FC<ProfileFeedViewProps> = ({
   }
 
   return (
-    <ErrorBoundary FallbackComponent={ErrorFallback}>
+    <ErrorBoundary
+      FallbackComponent={(props: ReactErrorBoundaryFallbackProps) => (
+        <ErrorFallback
+          error={props.error instanceof Error ? props.error : null}
+          resetErrorBoundary={() => props.resetErrorBoundary()}
+        />
+      )}
+    >
       <div className="flex-1 bg-background p-4 text-foreground md:p-8">
         <motion.main
           animate={{ opacity: 1 }}
@@ -100,7 +112,7 @@ const ProfileFeedView: React.FC<ProfileFeedViewProps> = ({
                 <div className="mb-6 flex justify-center">
                   <TabsList className="relative flex gap-2 rounded-full border bg-muted/30 p-0 shadow-inner shadow-white/5 ring-1 ring-white/10 backdrop-blur-xl dark:shadow-black/10 dark:ring-black/20">
                     <div
-                      className="-z-10 absolute inset-0 rounded-full bg-gradient-to-r from-primary/20 via-secondary/20 to-accent/20 opacity-30 blur-md"
+                      className="absolute inset-0 -z-10 rounded-full bg-gradient-to-r from-primary/20 via-secondary/20 to-accent/20 opacity-30 blur-md"
                       style={{
                         background:
                           "radial-gradient(circle at top left, rgba(var(--primary-rgb), 0.15), transparent 70%), radial-gradient(circle at bottom right, rgba(var(--accent-rgb), 0.15), transparent 70%)",
@@ -191,7 +203,7 @@ const ProfileHeader: React.FC<{ userData: UserData }> = ({ userData }) => {
           throw new Error("Failed to fetch avatar");
         }
         return response.json();
-      } catch (_error) {
+      } catch {
         return {
           url: userData?.avatarUrl,
           key: userData?.avatarKey,

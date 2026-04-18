@@ -6,9 +6,9 @@ import { useSession } from "@/app/(main)/session-provider";
 import UserButton from "@/components/Layouts/user-button";
 import { cn } from "@/lib/utils";
 
-type UserButtonWrapperProps = {
+interface UserButtonWrapperProps {
   className?: string;
-};
+}
 
 const UserButtonWrapper: React.FC<UserButtonWrapperProps> = ({ className }) => {
   const { user } = useSession();

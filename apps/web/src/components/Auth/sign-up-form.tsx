@@ -67,9 +67,9 @@ const OTP_SLOT_IDS = [
   "slot-5",
 ];
 
-type ErrorWithMessage = {
+interface ErrorWithMessage {
   message: string;
-};
+}
 
 function isErrorWithMessage(error: unknown): error is ErrorWithMessage {
   return (
@@ -541,7 +541,7 @@ export default function SignUpForm() {
                               onMouseEnter={() => setHoveredField("username")}
                               onMouseLeave={() => setHoveredField(null)}
                             />
-                            <User className="-translate-y-1/2 absolute top-1/2 right-3 h-4 w-4 text-muted-foreground" />
+                            <User className="absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                           </div>
                         </FormControl>
                         <FormMessage />
@@ -570,7 +570,7 @@ export default function SignUpForm() {
                               onMouseEnter={() => setHoveredField("email")}
                               onMouseLeave={() => setHoveredField(null)}
                             />
-                            <Mail className="-translate-y-1/2 absolute top-1/2 right-3 h-4 w-4 text-muted-foreground" />
+                            <Mail className="absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                           </div>
                         </FormControl>
                         <FormMessage />
@@ -714,13 +714,13 @@ export default function SignUpForm() {
                   transition={{ duration: 0.3 }}
                 >
                   <button
-                    className="group -ml-2 -mt-2 mb-2 flex items-center gap-2 text-muted-foreground text-sm transition-colors hover:text-foreground"
+                    className="group -mt-2 mb-2 -ml-2 flex items-center gap-2 text-muted-foreground text-sm transition-colors hover:text-foreground"
                     onClick={() => {
                       setOTPState(currentEmail || form.getValues("email"));
                     }}
                     type="button"
                   >
-                    <ArrowLeft className="group-hover:-translate-x-1 h-4 w-4 transition-transform" />
+                    <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
                     <span>Back to Code Entry</span>
                   </button>
                   <div className="flex flex-col items-center space-y-2 pt-2 text-center">
@@ -926,7 +926,7 @@ export default function SignUpForm() {
                           type="button"
                         >
                           <svg
-                            className="-rotate-90 h-full w-full transform"
+                            className="h-full w-full -rotate-90 transform"
                             viewBox="0 0 100 100"
                           >
                             <title>Resend verification code timer</title>
@@ -974,7 +974,7 @@ export default function SignUpForm() {
                                 Code expired! Click the button to resend a new
                                 verification code.
                               </p>
-                              <div className="-top-2 absolute right-4 h-4 w-4 rotate-45 border-border border-t border-l bg-popover" />
+                              <div className="absolute -top-2 right-4 h-4 w-4 rotate-45 border-border border-t border-l bg-popover" />
                             </motion.div>
                           )}
                         </AnimatePresence>

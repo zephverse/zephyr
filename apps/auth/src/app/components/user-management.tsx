@@ -7,23 +7,23 @@ import ActionModal from "./action-modal";
 import UserTable from "./user-table";
 import UserUpdateModal from "./user-update-modal";
 
-type UserManagementProps = {
-  users: User[];
-  onAction: (user: User, action: ModalAction) => void;
-  onSearchChangeAction: (query: string) => void;
-  searchQuery: string;
-  totalCount?: number;
-  hasMore?: boolean;
-  onLoadMoreAction?: () => void;
+interface UserManagementProps {
   filters?: UserFilters;
+  hasMore?: boolean;
+  onAction: (user: User, action: ModalAction) => void;
   onFiltersChangeAction?: (filters: UserFilters) => void;
-  sortBy?: "createdAt" | "aura" | "username" | "displayName";
-  sortOrder?: "asc" | "desc";
+  onLoadMoreAction?: () => void;
+  onSearchChangeAction: (query: string) => void;
   onSortChangeAction?: (
     sortBy: "createdAt" | "aura" | "username" | "displayName",
     sortOrder: "asc" | "desc"
   ) => void;
-};
+  searchQuery: string;
+  sortBy?: "createdAt" | "aura" | "username" | "displayName";
+  sortOrder?: "asc" | "desc";
+  totalCount?: number;
+  users: User[];
+}
 
 export default function UserManagement({
   users,

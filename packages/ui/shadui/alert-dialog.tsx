@@ -12,7 +12,7 @@ import {
   Trigger,
 } from "@radix-ui/react-alert-dialog";
 import { buttonVariants } from "@zephyr/ui/shadui/button";
-import { forwardRef } from "react";
+import type * as React from "react";
 import { cn } from "../lib/utils";
 
 const AlertDialog = Root;
@@ -21,10 +21,13 @@ const AlertDialogTrigger = Trigger;
 
 const AlertDialogPortal = Portal;
 
-const AlertDialogOverlay = forwardRef<
-  React.ElementRef<typeof Overlay>,
-  React.ComponentPropsWithoutRef<typeof Overlay>
->(({ className, ...props }, ref) => (
+const AlertDialogOverlay = ({
+  className,
+  ref,
+  ...props
+}: React.ComponentPropsWithoutRef<typeof Overlay> & {
+  ref?: React.Ref<React.ElementRef<typeof Overlay> | null>;
+}) => (
   <Overlay
     className={cn(
       "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/80 data-[state=closed]:animate-out data-[state=open]:animate-in",
@@ -33,13 +36,16 @@ const AlertDialogOverlay = forwardRef<
     {...props}
     ref={ref}
   />
-));
+);
 AlertDialogOverlay.displayName = Overlay.displayName;
 
-const AlertDialogContent = forwardRef<
-  React.ElementRef<typeof Content>,
-  React.ComponentPropsWithoutRef<typeof Content>
->(({ className, ...props }, ref) => (
+const AlertDialogContent = ({
+  className,
+  ref,
+  ...props
+}: React.ComponentPropsWithoutRef<typeof Content> & {
+  ref?: React.Ref<React.ElementRef<typeof Content> | null>;
+}) => (
   <AlertDialogPortal>
     <AlertDialogOverlay />
     <Content
@@ -51,7 +57,7 @@ const AlertDialogContent = forwardRef<
       {...props}
     />
   </AlertDialogPortal>
-));
+);
 AlertDialogContent.displayName = Content.displayName;
 
 const AlertDialogHeader = ({
@@ -82,42 +88,54 @@ const AlertDialogFooter = ({
 );
 AlertDialogFooter.displayName = "AlertDialogFooter";
 
-const AlertDialogTitle = forwardRef<
-  React.ElementRef<typeof Title>,
-  React.ComponentPropsWithoutRef<typeof Title>
->(({ className, ...props }, ref) => (
+const AlertDialogTitle = ({
+  className,
+  ref,
+  ...props
+}: React.ComponentPropsWithoutRef<typeof Title> & {
+  ref?: React.Ref<React.ElementRef<typeof Title> | null>;
+}) => (
   <Title
     className={cn("font-semibold text-lg", className)}
     ref={ref}
     {...props}
   />
-));
+);
 AlertDialogTitle.displayName = Title.displayName;
 
-const AlertDialogDescription = forwardRef<
-  React.ElementRef<typeof Description>,
-  React.ComponentPropsWithoutRef<typeof Description>
->(({ className, ...props }, ref) => (
+const AlertDialogDescription = ({
+  className,
+  ref,
+  ...props
+}: React.ComponentPropsWithoutRef<typeof Description> & {
+  ref?: React.Ref<React.ElementRef<typeof Description> | null>;
+}) => (
   <Description
     className={cn("text-muted-foreground text-sm", className)}
     ref={ref}
     {...props}
   />
-));
+);
 AlertDialogDescription.displayName = Description.displayName;
 
-const AlertDialogAction = forwardRef<
-  React.ElementRef<typeof Action>,
-  React.ComponentPropsWithoutRef<typeof Action>
->(({ className, ...props }, ref) => (
+const AlertDialogAction = ({
+  className,
+  ref,
+  ...props
+}: React.ComponentPropsWithoutRef<typeof Action> & {
+  ref?: React.Ref<React.ElementRef<typeof Action> | null>;
+}) => (
   <Action className={cn(buttonVariants(), className)} ref={ref} {...props} />
-));
+);
 AlertDialogAction.displayName = Action.displayName;
 
-const AlertDialogCancel = forwardRef<
-  React.ElementRef<typeof Cancel>,
-  React.ComponentPropsWithoutRef<typeof Cancel>
->(({ className, ...props }, ref) => (
+const AlertDialogCancel = ({
+  className,
+  ref,
+  ...props
+}: React.ComponentPropsWithoutRef<typeof Cancel> & {
+  ref?: React.Ref<React.ElementRef<typeof Cancel> | null>;
+}) => (
   <Cancel
     className={cn(
       buttonVariants({ variant: "outline" }),
@@ -127,19 +145,19 @@ const AlertDialogCancel = forwardRef<
     ref={ref}
     {...props}
   />
-));
+);
 AlertDialogCancel.displayName = Cancel.displayName;
 
 export {
   AlertDialog,
-  AlertDialogPortal,
-  AlertDialogOverlay,
-  AlertDialogTrigger,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogFooter,
-  AlertDialogTitle,
-  AlertDialogDescription,
   AlertDialogAction,
   AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogOverlay,
+  AlertDialogPortal,
+  AlertDialogTitle,
+  AlertDialogTrigger,
 };

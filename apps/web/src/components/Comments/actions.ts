@@ -28,8 +28,9 @@ export async function submitComment({
       },
       include: getCommentDataInclude(sessionData.user.id),
     }),
-    ...(post.user.id !== sessionData.user.id
-      ? [
+    ...(post.user.id === sessionData.user.id
+      ? []
+      : [
           prisma.notification.create({
             data: {
               issuerId: sessionData.user.id,
@@ -38,8 +39,7 @@ export async function submitComment({
               type: "COMMENT",
             },
           }),
-        ]
-      : []),
+        ]),
   ]);
 
   return newComment;

@@ -380,10 +380,10 @@ export default function PostEditor() {
   );
 }
 
-type AttachmentPreviewsProps = {
+interface AttachmentPreviewsProps {
   attachments: Attachment[];
   removeAttachment: (fileName: string) => void;
-};
+}
 
 function AttachmentPreviews({
   attachments,

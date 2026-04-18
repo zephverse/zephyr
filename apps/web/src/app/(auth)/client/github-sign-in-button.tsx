@@ -3,12 +3,12 @@ import { Loader2 } from "lucide-react";
 import { useId } from "react";
 import { authClient } from "@/lib/auth";
 
-type Props = {
+interface Props {
   disabled?: boolean;
   loading?: boolean;
-  onStart?: () => void;
   onEnd?: () => void;
-};
+  onStart?: () => void;
+}
 
 export default function GithubSignInButton({
   disabled,

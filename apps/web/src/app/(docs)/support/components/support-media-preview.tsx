@@ -3,11 +3,11 @@ import { MediaPreviews } from "@/components/Home/feedview/media-previews";
 import { AttachmentPreview } from "@/components/Posts/editor/attachment-preview";
 import type { Attachment } from "../types";
 
-type SupportMediaPreviewProps = {
+interface SupportMediaPreviewProps {
   attachments: Attachment[];
   onRemove: (index: number) => void;
   uploadedMedia?: Media[];
-};
+}
 
 export function SupportMediaPreview({
   attachments,

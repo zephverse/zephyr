@@ -112,7 +112,7 @@ export function TrendingTabs() {
               <span className="relative z-10">{tab.label}</span>
               {activeTab === tab.id && (
                 <motion.div
-                  className="-z-10 absolute inset-0 rounded-md bg-primary/10"
+                  className="absolute inset-0 -z-10 rounded-md bg-primary/10"
                   layoutId="activeTab"
                   transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                 />
@@ -122,7 +122,7 @@ export function TrendingTabs() {
         </div>
 
         {isAutoSwitching && (
-          <div className="-bottom-2 absolute left-0 mt-1 mb-1 h-[2px] w-full overflow-hidden rounded-full bg-muted/30">
+          <div className="absolute -bottom-2 left-0 mt-1 mb-1 h-[2px] w-full overflow-hidden rounded-full bg-muted/30">
             <motion.div
               animate={{
                 width: `${progress}%`,

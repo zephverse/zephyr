@@ -1,13 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import type { UserData } from "@zephyr/db";
 
-type MentionedUsersResponse = {
+interface MentionedUsersResponse {
   users: (UserData & {
     _count: {
       mentions: number;
     };
   })[];
-};
+}
 
 export function useMentionedUsers() {
   const { data, isLoading } = useQuery<MentionedUsersResponse>({

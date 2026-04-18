@@ -12,9 +12,9 @@ import { cn } from "@/lib/utils";
 import { FileTypeWatermark } from "./file-type-watermark";
 import MediaViewer from "./media-viewer";
 
-type MediaPreviewsProps = {
+interface MediaPreviewsProps {
   attachments: Media[];
-};
+}
 
 export function MediaPreviews({ attachments }: MediaPreviewsProps) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
@@ -99,7 +99,7 @@ export function MediaPreviews({ attachments }: MediaPreviewsProps) {
         whileHover="hover"
       >
         <div className="relative">
-          <div className="-inset-4 absolute">
+          <div className="absolute -inset-4">
             <div className="absolute inset-0 rounded-full bg-white/10 group-hover:animate-ping" />
             <div className="absolute inset-0 rounded-full bg-black/20 blur-xs group-hover:animate-pulse" />
           </div>
@@ -207,7 +207,7 @@ export function MediaPreviews({ attachments }: MediaPreviewsProps) {
       <motion.div
         animate={{ opacity: 1, y: 0 }}
         className={cn(
-          "hover:-translate-y-0.5 relative cursor-pointer overflow-hidden rounded-lg shadow-xs transition-all duration-300 hover:shadow-md",
+          "relative cursor-pointer overflow-hidden rounded-lg shadow-xs transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md",
           isSmall ? "h-20" : "h-48"
         )}
         exit={{ opacity: 0, y: -20 }}

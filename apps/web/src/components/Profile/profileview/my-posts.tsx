@@ -20,7 +20,7 @@ import { BookOpen, Edit, Plus, Settings, Upload } from "lucide-react";
 import { motion } from "motion/react";
 import type React from "react";
 
-type MyPostsProps = {
+interface MyPostsProps {
   data: {
     blogs: Array<{
       title: string;
@@ -35,7 +35,7 @@ type MyPostsProps = {
       citations: number;
     }>;
   };
-};
+}
 
 const MyPosts: React.FC<MyPostsProps> = ({ data }) => (
   <Card className="bg-card text-card-foreground">

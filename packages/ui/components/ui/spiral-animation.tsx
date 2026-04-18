@@ -118,7 +118,6 @@ class AnimationController {
     return 2 ** (-8 * x) * Math.sin((x * 8 - 0.75) * c4) + 1;
   }
 
-  // biome-ignore lint/nursery/useMaxParams: Utility function for value mapping, all parameters are required
   map(
     value: number,
     start1: number,

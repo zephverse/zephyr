@@ -4,9 +4,9 @@ import { Bookmark } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { HeaderIconButton } from "@/components/Styles/header-buttons";
 
-type HeaderBookmarksButtonProps = {
+interface HeaderBookmarksButtonProps {
   count: number;
-};
+}
 
 export default function HeaderBookmarksButton({
   count,
@@ -22,7 +22,7 @@ export default function HeaderBookmarksButton({
         <>
           <Bookmark className={`h-5 w-5 ${isActive ? "text-primary" : ""}`} />
           {isActive && (
-            <span className="-bottom-2 -translate-x-1/2 pointer-events-none absolute left-1/2 h-1 w-1 rounded-full bg-primary" />
+            <span className="pointer-events-none absolute -bottom-2 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-primary" />
           )}
         </>
       }

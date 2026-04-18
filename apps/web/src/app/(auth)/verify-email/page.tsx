@@ -40,7 +40,7 @@ const VerificationAnimation = () => {
 
         <motion.div
           animate={{ scaleX: 1 }}
-          className="-translate-x-1/2 absolute top-8 left-1/2 h-1 w-20"
+          className="absolute top-8 left-1/2 h-1 w-20 -translate-x-1/2"
           initial={{ scaleX: 0 }}
           transition={{ duration: 1.5, repeat: Number.POSITIVE_INFINITY }}
         >
@@ -267,9 +267,9 @@ export default function VerifyEmailPage() {
         initial={{ opacity: 0 }}
       >
         <div className="absolute inset-0 overflow-hidden">
-          <div className="-left-4 absolute top-0 h-[500px] w-[500px] rounded-full bg-blue-500/10 blur-[100px]" />
+          <div className="absolute top-0 -left-4 h-[500px] w-[500px] rounded-full bg-blue-500/10 blur-[100px]" />
           <div className="absolute top-1/2 right-0 h-[400px] w-[400px] rounded-full bg-purple-500/10 blur-[100px]" />
-          <div className="-translate-x-1/2 absolute bottom-0 left-1/2 h-[300px] w-[300px] rounded-full bg-pink-500/10 blur-[100px]" />
+          <div className="absolute bottom-0 left-1/2 h-[300px] w-[300px] -translate-x-1/2 rounded-full bg-pink-500/10 blur-[100px]" />
         </div>
 
         <div className="relative flex min-h-screen items-center justify-center p-4">
@@ -352,7 +352,7 @@ export default function VerifyEmailPage() {
 
           <motion.div
             animate={{ opacity: 1 }}
-            className="-translate-x-1/2 absolute bottom-8 left-1/2"
+            className="absolute bottom-8 left-1/2 -translate-x-1/2"
             initial={{ opacity: 0 }}
             transition={{ delay: 0.5 }}
           >

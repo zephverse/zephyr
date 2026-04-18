@@ -10,12 +10,12 @@ import "cropperjs/dist/cropper.css";
 import { useRef } from "react";
 import { Cropper, type ReactCropperElement } from "react-cropper";
 
-type CropImageDialogProps = {
-  src: string;
+interface CropImageDialogProps {
   cropAspectRatio: number;
-  onCropped: (blob: Blob | null) => void;
   onClose: () => void;
-};
+  onCropped: (blob: Blob | null) => void;
+  src: string;
+}
 
 export default function CropImageDialog({
   src,

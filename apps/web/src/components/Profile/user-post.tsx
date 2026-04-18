@@ -9,10 +9,10 @@ import InfiniteScrollContainer from "@/components/Layouts/infinite-scroll-contai
 import PostsOnlyLoadingSkeleton from "@/components/Layouts/skeletons/post-only-loading-skeleton";
 import kyInstance from "@/lib/ky";
 
-type UserPostsProps = {
-  userId: string;
+interface UserPostsProps {
   filter?: "all" | "scribbles" | "snapshots" | "media" | "files";
-};
+  userId: string;
+}
 
 const UserPosts: React.FC<UserPostsProps> = ({ userId, filter = "all" }) => {
   const {

@@ -2,9 +2,9 @@
 
 import { Loader2 } from "lucide-react";
 
-type LoadingStateProps = {
+interface LoadingStateProps {
   message?: string;
-};
+}
 
 export function LoadingState({
   message = "Loading users...",

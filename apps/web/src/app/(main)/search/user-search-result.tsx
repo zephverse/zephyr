@@ -15,10 +15,10 @@ import kyInstance from "@/lib/ky";
 import { cn } from "@/lib/utils";
 import { useSession } from "../session-provider";
 
-type UsersResponse = {
-  users: UserData[];
+interface UsersResponse {
   nextCursor: string | null;
-};
+  users: UserData[];
+}
 
 const container = {
   hidden: { opacity: 0 },

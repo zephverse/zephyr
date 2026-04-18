@@ -3,19 +3,10 @@
   "extends": ["ultracite/core", "ultracite/react", "ultracite/next"],
   "linter": {
     "rules": {
-      "style": {
-        "noMagicNumbers": "off"
-      },
       "suspicious": {
         "noConsole": "off",
         "noUnknownAtRules": "off"
       }
     }
-  },
-  "files": {
-    "includes": [
-      "!packages/ui/styles/",
-      "!apps/web/src/components/Messages/Theme.css"
-    ]
   }
 }

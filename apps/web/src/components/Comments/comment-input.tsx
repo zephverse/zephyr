@@ -6,9 +6,9 @@ import type React from "react";
 import { useState } from "react";
 import { useSubmitCommentMutation } from "./mutations";
 
-type CommentInputProps = {
+interface CommentInputProps {
   post: PostData;
-};
+}
 
 export default function CommentInput({ post }: CommentInputProps) {
   const [input, setInput] = useState("");

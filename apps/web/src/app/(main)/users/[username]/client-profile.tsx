@@ -9,11 +9,11 @@ import ProfileFeedView from "@/components/Profile/profile-feed-view";
 import LeftSidebar from "@/components/Profile/sidebars/profile-left-side-bar";
 import RightSidebar from "@/components/Profile/sidebars/profile-right-side-bar";
 
-type ProfilePageProps = {
-  username: string;
-  userData: UserData;
+interface ProfilePageProps {
   loggedInUserId: string;
-};
+  userData: UserData;
+  username: string;
+}
 
 const ClientProfile: React.FC<ProfilePageProps> = ({
   username,

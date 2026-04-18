@@ -20,20 +20,20 @@ function getMeiliSearchClient(): MeiliSearch {
 
 export { getMeiliSearchClient as meilisearch };
 
-export type UserSearchDocument = {
-  id: string;
-  username: string;
+export interface UserSearchDocument {
+  aura: number;
+  avatarUrl: string | null;
+  bio: string | null;
+  createdAt: string;
   displayName: string;
   displayUsername: string | null;
   email: string | null;
-  role: string;
-  aura: number;
   emailVerified: boolean;
-  createdAt: string;
+  id: string;
+  role: string;
   updatedAt: string;
-  bio: string | null;
-  avatarUrl: string | null;
-};
+  username: string;
+}
 
 export const userSearchIndex = {
   name: "users",

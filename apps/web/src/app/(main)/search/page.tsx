@@ -8,9 +8,9 @@ import { getUserData } from "@/hooks/use-user-data";
 import { getSessionFromApi } from "@/lib/session";
 import SearchResults from "./search-result";
 
-type PageProps = {
+interface PageProps {
   searchParams: Promise<{ q: string }>;
-};
+}
 
 export async function generateMetadata(props: PageProps): Promise<Metadata> {
   const searchParams = await props.searchParams;

@@ -75,13 +75,13 @@ const glowVariants: Variants = {
 const baseTagClass =
   "flex items-center gap-1.5 rounded-full border px-3 py-1 shadow-xs h-7";
 
-type MentionTagsProps = {
-  mentions: UserData[];
-  isOwner: boolean;
+interface MentionTagsProps {
   className?: string;
-  postId?: string;
+  isOwner: boolean;
+  mentions: UserData[];
   onMentionsChange?: (mentions: UserData[]) => void;
-};
+  postId?: string;
+}
 
 export function MentionTags({
   mentions: initialMentions,
@@ -168,7 +168,7 @@ export function MentionTags({
                     {hoveredTag === user.id && (
                       <motion.div
                         animate="animate"
-                        className="-z-10 absolute inset-0 rounded-full bg-blue-500/20"
+                        className="absolute inset-0 -z-10 rounded-full bg-blue-500/20"
                         initial="initial"
                         variants={glowVariants}
                       />
@@ -231,7 +231,7 @@ export function MentionTags({
                     <span className="text-blue-600 text-xs">Add mention</span>
                   </Button>
                   <motion.div
-                    className="-z-10 absolute inset-0 rounded-full bg-blue-500/20 blur-md"
+                    className="absolute inset-0 -z-10 rounded-full bg-blue-500/20 blur-md"
                     initial={{ opacity: 0 }}
                     whileHover={{
                       opacity: 1,

@@ -6,17 +6,17 @@ import { motion, useAnimation } from "motion/react";
 import { useEffect, useId, useState } from "react";
 import { cn } from "../../lib/utils";
 
-type ParticlesProps = {
-  id?: string;
-  className?: string;
+interface ParticlesProps {
   background?: string;
-  particleSize?: number;
-  minSize?: number;
+  className?: string;
+  id?: string;
   maxSize?: number;
-  speed?: number;
+  minSize?: number;
   particleColor?: string;
   particleDensity?: number;
-};
+  particleSize?: number;
+  speed?: number;
+}
 export const SparklesCore = (props: ParticlesProps) => {
   const {
     id,

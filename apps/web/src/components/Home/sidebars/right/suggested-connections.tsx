@@ -23,22 +23,22 @@ import UserAvatar from "@/components/Layouts/user-avatar";
 import UserTooltip from "@/components/Layouts/user-tooltip";
 import { getSuggestedConnections } from "./user-actions";
 
-type SerializableUserData = {
+interface SerializableUserData {
+  _count: {
+    followers: number;
+  };
+  aura: number;
+  avatarUrl: string | null;
+  bio?: string;
+  displayName: string;
+  followers: { followerId: string }[];
   followState: {
     followers: number;
     isFollowedByUser: false;
   };
   id: string;
   username: string;
-  displayName: string;
-  avatarUrl: string | null;
-  bio?: string;
-  followers: { followerId: string }[];
-  _count: {
-    followers: number;
-  };
-  aura: number;
-};
+}
 
 const SuggestedConnections: React.FC = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -87,8 +87,7 @@ const SuggestedConnections: React.FC = () => {
         description: "Suggestions have been updated.",
         duration: 3000,
       });
-      // biome-ignore lint/correctness/noUnusedVariables: unused error variable
-    } catch (refreshError) {
+    } catch {
       toast({
         title: "Error",
         description: "Failed to refresh suggestions. Please try again.",
@@ -177,11 +176,11 @@ const SuggestedConnections: React.FC = () => {
                       <div className="min-w-0 flex-1">
                         <Link href={`/users/${connection.username}`}>
                           <div className="flex flex-col leading-tight">
-                            <p className="max-w-[120px] truncate font-medium text-foreground text-sm transition-colors hover:text-primary">
+                            <p className="max-w-30 truncate font-medium text-foreground text-sm transition-colors hover:text-primary">
                               {connection.displayName}
                             </p>
                             <div className="flex items-center gap-1">
-                              <p className="max-w-[120px] truncate text-[11px] text-muted-foreground hover:text-muted-foreground/80">
+                              <p className="max-w-30 truncate text-[11px] text-muted-foreground hover:text-muted-foreground/80">
                                 @{connection.username}
                               </p>
                               {connection.aura > 0 && (

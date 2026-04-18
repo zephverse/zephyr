@@ -14,9 +14,9 @@ import Linkify from "@/helpers/global/linkify";
 import { getUserData } from "@/hooks/use-user-data";
 import { authClient } from "@/lib/auth";
 
-type PageProps = {
+interface PageProps {
   params: Promise<{ postId: string }>;
-};
+}
 
 const getPost = cache(async (postId: string, loggedInUser: string) => {
   const post = await prisma.post.findUnique({
@@ -98,9 +98,9 @@ export default async function Page(props: PageProps) {
   );
 }
 
-type UserInfoSidebarProps = {
+interface UserInfoSidebarProps {
   user: UserData;
-};
+}
 
 async function UserInfoSidebar({ user }: UserInfoSidebarProps) {
   const session = await authClient.getSession();

@@ -17,12 +17,12 @@ import { useEffect, useRef, useState } from "react";
 import { useMediaQuery } from "usehooks-ts";
 import { cn } from "@/lib/utils";
 
-type SvgViewerProps = {
-  url: string;
+interface SvgViewerProps {
   className?: string;
-  onLoad?: () => void;
   onDownload?: () => void;
-};
+  onLoad?: () => void;
+  url: string;
+}
 
 export function SVGViewer({
   url,

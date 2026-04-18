@@ -5,14 +5,14 @@ import { getLanguageFromFileName } from "@/lib/codefile-extensions";
 import { formatFileName } from "@/lib/format-file-name";
 import { cn } from "@/lib/utils";
 
-type AttachmentPreviewProps = {
+interface AttachmentPreviewProps {
   attachment: {
     file: File;
     isUploading: boolean;
     previewUrl?: string;
   };
   onRemoveClick: () => void;
-};
+}
 
 export const AttachmentPreview = memo(function AttachmentPreviewComponent({
   attachment: { file, isUploading, previewUrl: existingPreviewUrl },

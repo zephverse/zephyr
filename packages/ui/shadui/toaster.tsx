@@ -13,10 +13,10 @@ import {
   ToastViewport,
 } from "./toast";
 
-type ToasterProps = {
-  position?: "top-right" | "top-left" | "bottom-right" | "bottom-left";
+interface ToasterProps {
   containerClassName?: string;
-};
+  position?: "top-right" | "top-left" | "bottom-right" | "bottom-left";
+}
 
 export function Toaster({
   position = "bottom-right",

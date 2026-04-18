@@ -7,14 +7,14 @@ import { ChevronRight } from "lucide-react";
 import { motion } from "motion/react";
 import type React from "react";
 
-type RecommendationsProps = {
+interface RecommendationsProps {
   people: Array<{
     name: string;
     role: string;
     comment: string;
     avatar: string;
   }>;
-};
+}
 
 const Recommendations: React.FC<RecommendationsProps> = ({ people }) => (
   <Card className="bg-card text-card-foreground">

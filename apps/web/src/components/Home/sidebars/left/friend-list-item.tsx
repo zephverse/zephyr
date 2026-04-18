@@ -17,11 +17,11 @@ import { useState } from "react";
 import UserAvatar from "@/components/Layouts/user-avatar";
 import { getAvatarUrl } from "@/lib/utils/get-avatar-url";
 
-type FriendListItemProps = {
-  user: UserData;
+interface FriendListItemProps {
   onUnfollow: (user: UserData) => void;
+  user: UserData;
   viewType: "grid" | "list";
-};
+}
 
 const PreviewImage = ({
   isHovered,
@@ -108,7 +108,7 @@ export const FriendListItem: React.FC<FriendListItemProps> = ({
       {isHovered && !bgImageError && (
         <motion.div
           animate={{ opacity: 0.3 }}
-          className="-z-10 absolute inset-0 rounded-xl opacity-30 blur-2xl"
+          className="absolute inset-0 -z-10 rounded-xl opacity-30 blur-2xl"
           exit={{ opacity: 0 }}
           initial={{ opacity: 0 }}
         >

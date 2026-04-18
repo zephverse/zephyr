@@ -5,9 +5,9 @@ import { Card, CardContent } from "@zephyr/ui/shadui/card";
 import { motion } from "motion/react";
 import type React from "react";
 
-type SkillsProps = {
+interface SkillsProps {
   skills: string[];
-};
+}
 
 const Skills: React.FC<SkillsProps> = ({ skills }) => (
   <Card className="bg-card text-card-foreground">

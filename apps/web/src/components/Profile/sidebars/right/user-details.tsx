@@ -32,10 +32,10 @@ import { getSecureImageUrl } from "@/lib/utils/image-url";
 import FollowersList from "../../followers-list";
 import FollowingList from "../../following-list";
 
-type UserDetailsProps = {
-  userData: UserData;
+interface UserDetailsProps {
   loggedInUserId: string;
-};
+  userData: UserData;
+}
 
 const UserDetails: React.FC<UserDetailsProps> = ({
   userData: initialUserData,
@@ -69,7 +69,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({
           ...fetchedUserData,
           followState: followStates[fetchedUserData.id],
         };
-      } catch (_err) {
+      } catch {
         toast({
           title: "Error",
           description: "Failed to load user data. Using cached data.",
@@ -142,7 +142,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({
           <div className="flex flex-col">
             <motion.div
               animate={{ scale: 1, opacity: 1 }}
-              className="-mt-20 relative mb-4"
+              className="relative -mt-20 mb-4"
               initial={{ scale: 0.8, opacity: 0 }}
               transition={{ delay: 0.3, duration: 0.5 }}
             >
@@ -318,7 +318,7 @@ const UserDetailsSkeleton = () => (
     </div>
     <CardContent className="relative p-6">
       <div className="flex flex-col">
-        <div className="-mt-20 relative mb-4">
+        <div className="relative -mt-20 mb-4">
           <Skeleton className="size-[120px] rounded-full" />
         </div>
         <div className="space-y-4">

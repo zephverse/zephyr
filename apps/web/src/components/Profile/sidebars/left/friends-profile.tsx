@@ -4,13 +4,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@zephyr/ui/shadui/avatar";
 import { Card, CardContent } from "@zephyr/ui/shadui/card";
 import type React from "react";
 
-type FriendsProps = {
+interface FriendsProps {
   friends: Array<{
     name: string;
     role: string;
     avatar: string;
   }>;
-};
+}
 
 const Friends: React.FC<FriendsProps> = ({ friends }) => (
   <Card className="mb-6 bg-card text-card-foreground">

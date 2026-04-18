@@ -1,6 +1,6 @@
 "use client";
 import { AnimatePresence, motion } from "motion/react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { cn } from "../../lib/utils";
 
 export const FlipWords = ({
@@ -29,6 +29,15 @@ export const FlipWords = ({
       }, duration);
     }
   }, [isAnimating, duration, startAnimation]);
+
+  const wordSegments = useMemo(
+    () =>
+      Array.from(currentWord.matchAll(/\S+/g)).map((match) => ({
+        start: match.index ?? 0,
+        word: match[0],
+      })),
+    [currentWord]
+  );
 
   return (
     <AnimatePresence
@@ -65,26 +74,26 @@ export const FlipWords = ({
         }}
       >
         {/* edit suggested by Sajal: https://x.com/DewanganSajal */}
-        {currentWord.split(" ").map((word, wordIndex) => (
+        {wordSegments.map((segment) => (
           <motion.span
             animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
             className="inline-block whitespace-nowrap"
             initial={{ opacity: 0, y: 10, filter: "blur(8px)" }}
-            key={`word-${word}-${wordIndex}-${currentWord}`}
+            key={`${currentWord}-${segment.start}`}
             transition={{
-              delay: wordIndex * 0.3,
+              delay: segment.start * 0.03,
               duration: 0.3,
             }}
           >
-            {word.split("").map((letter, letterIndex) => (
+            {segment.word.split("").map((letter, letterIndex) => (
               <motion.span
                 animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                 className="inline-block"
                 initial={{ opacity: 0, y: 10, filter: "blur(8px)" }}
                 // biome-ignore lint/suspicious/noArrayIndexKey: Letters in a word maintain stable order for animation
-                key={`${wordIndex}-${letterIndex}`}
+                key={`${segment.start}-${letterIndex}`}
                 transition={{
-                  delay: wordIndex * 0.3 + letterIndex * 0.05,
+                  delay: segment.start * 0.03 + letterIndex * 0.05,
                   duration: 0.2,
                 }}
               >

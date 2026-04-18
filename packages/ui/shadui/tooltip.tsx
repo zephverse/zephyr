@@ -7,11 +7,8 @@ import {
   Root,
   Trigger,
 } from "@radix-ui/react-tooltip";
-import {
-  type ComponentPropsWithoutRef,
-  type ElementRef,
-  forwardRef,
-} from "react";
+import type * as React from "react";
+import type { ComponentPropsWithoutRef, ElementRef } from "react";
 
 import { cn } from "../lib/utils";
 
@@ -21,10 +18,14 @@ const Tooltip = Root;
 
 const TooltipTrigger = Trigger;
 
-const TooltipContent = forwardRef<
-  ElementRef<typeof Content>,
-  ComponentPropsWithoutRef<typeof Content>
->(({ className, sideOffset = 4, ...props }, ref) => (
+const TooltipContent = ({
+  className,
+  sideOffset = 4,
+  ref,
+  ...props
+}: ComponentPropsWithoutRef<typeof Content> & {
+  ref?: React.Ref<ElementRef<typeof Content> | null>;
+}) => (
   <Portal>
     <Content
       className={cn(
@@ -36,7 +37,7 @@ const TooltipContent = forwardRef<
       {...props}
     />
   </Portal>
-));
+);
 TooltipContent.displayName = Content.displayName;
 
-export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider };
+export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger };

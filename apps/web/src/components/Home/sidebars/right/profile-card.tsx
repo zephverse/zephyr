@@ -10,9 +10,9 @@ import UserAvatar from "@/components/Layouts/user-avatar";
 import Linkify from "@/helpers/global/linkify";
 import { formatNumber } from "@/lib/utils";
 
-type ProfileCardProps = {
+interface ProfileCardProps {
   userData: UserData;
-};
+}
 
 const ProfileCard: React.FC<ProfileCardProps> = ({ userData }) => {
   const [isHovered, setIsHovered] = useState(false);

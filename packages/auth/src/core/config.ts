@@ -48,18 +48,18 @@ function deriveUsernameFromProfile(
   return sanitized || (email ? email.split("@")[0] : "user");
 }
 
-export type EmailService = {
-  sendVerificationEmail?: (
-    email: string,
-    token: string
-  ) => Promise<{ success: boolean; error?: string; verificationUrl?: string }>;
+export interface EmailService {
   sendPasswordResetEmail?: (
     email: string,
     token: string
   ) => Promise<{ success: boolean; error?: string; resetUrl?: string }>;
-};
+  sendVerificationEmail?: (
+    email: string,
+    token: string
+  ) => Promise<{ success: boolean; error?: string; verificationUrl?: string }>;
+}
 
-export type AuthConfig = {
+export interface AuthConfig {
   emailService?: EmailService;
   environment?: "development" | "production";
   /**
@@ -72,7 +72,7 @@ export type AuthConfig = {
     otp: string;
     type: string;
   }) => Promise<void>;
-};
+}
 
 export function createAuthConfig(config: AuthConfig = {}) {
   const {
@@ -151,7 +151,6 @@ export function createAuthConfig(config: AuthConfig = {}) {
           const hash = await hashPasswordWithScrypt(plainPassword);
           return { hash };
         },
-        // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: ...
         verify: async (...args: unknown[]) => {
           let plainPassword: unknown;
           let providedHash: unknown;

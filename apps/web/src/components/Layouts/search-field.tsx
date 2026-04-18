@@ -126,12 +126,12 @@ export default function SearchField({
       });
     }, 10_000);
     return () => clearInterval(interval);
-  }, []);
+  }, [placeholders.length]);
 
   return (
     <div className="relative w-full max-w-md">
       <form className="relative" onSubmit={handleSubmit}>
-        <HashIcon className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 text-muted-foreground" />
+        <HashIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           aria-label="Search"
           autoComplete="off"
@@ -173,7 +173,7 @@ export default function SearchField({
 
       {open && (input || (history && history.length > 0)) && (
         <div
-          className="-translate-x-1/2 absolute left-1/2 z-[205] mt-2 w-[min(90vw,28rem)] md:left-0 md:z-50 md:w-full md:translate-x-0"
+          className="absolute left-1/2 z-[205] mt-2 w-[min(90vw,28rem)] -translate-x-1/2 md:left-0 md:z-50 md:w-full md:translate-x-0"
           ref={commandRef}
         >
           <SearchCommandList

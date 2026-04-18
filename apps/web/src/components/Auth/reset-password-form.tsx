@@ -299,7 +299,7 @@ export default function ResetPasswordForm() {
                                       type="text"
                                       value={field.value ?? ""}
                                     />
-                                    <Mail className="-translate-y-1/2 absolute top-1/2 right-3 h-4 w-4 text-muted-foreground" />
+                                    <Mail className="absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                                   </div>
                                 </FormControl>
                                 <FormMessage />

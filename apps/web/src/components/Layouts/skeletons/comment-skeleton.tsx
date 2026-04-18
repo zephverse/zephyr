@@ -1,8 +1,8 @@
 import type React from "react";
 
-type CommentSkeletonProps = {
+interface CommentSkeletonProps {
   showActions?: boolean;
-};
+}
 
 const CommentSkeleton: React.FC<CommentSkeletonProps> = ({
   showActions = true,

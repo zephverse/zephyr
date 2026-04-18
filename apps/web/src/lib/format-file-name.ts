@@ -23,8 +23,8 @@ export function truncateFileName(fileName: string, maxLength = 25): string {
   }
 
   const extension = fileName.split(".").pop();
-  const nameWithoutExt = fileName.substring(0, fileName.lastIndexOf("."));
-  const truncatedName = nameWithoutExt.substring(
+  const nameWithoutExt = fileName.slice(0, fileName.lastIndexOf("."));
+  const truncatedName = nameWithoutExt.slice(
     0,
     maxLength - 3 - (extension?.length || 0)
   );

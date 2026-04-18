@@ -2,11 +2,11 @@ import { useToast } from "@zephyr/ui/hooks/use-toast";
 import { useState } from "react";
 import { validateFile } from "@/lib/utils/file-validation";
 
-export type Attachment = {
+export interface Attachment {
   file: File;
-  mediaId?: string;
   isUploading: boolean;
-};
+  mediaId?: string;
+}
 
 export default function useMediaUpload() {
   const { toast } = useToast();

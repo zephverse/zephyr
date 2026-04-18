@@ -3,22 +3,21 @@ import disposableEmailDomains from "disposable-email-domains";
 // biome-ignore lint/performance/noNamespaceImport: This library uses a namespace export
 import * as emailValidator from "email-validator";
 
-export type EmailValidationResult = {
-  isValid: boolean;
-  score: number;
-  confidence: "low" | "medium" | "high";
-  reasons: string[];
-  disposable: boolean;
-  mxRecords: boolean;
-  smtpCheck?: boolean;
+export interface EmailValidationResult {
   catchAll?: boolean;
+  confidence: "low" | "medium" | "high";
+  disposable: boolean;
+  isValid: boolean;
+  mxRecords: boolean;
+  reasons: string[];
   roleAccount?: boolean;
-};
+  score: number;
+  smtpCheck?: boolean;
+}
 
-export type EmailValidationOptions = {
-  skipSmtpCheck?: boolean;
+export interface EmailValidationOptions {
   skipMxCheck?: boolean;
-  timeout?: number;
+  skipSmtpCheck?: boolean;
   smtpVerifier?: (
     email: string,
     timeoutMs: number
@@ -27,7 +26,8 @@ export type EmailValidationOptions = {
     isCatchAll?: boolean;
     isRole?: boolean;
   } | null>;
-};
+  timeout?: number;
+}
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: This function is complex due to multiple validation steps
 export async function validateEmailAdvanced(

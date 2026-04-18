@@ -10,11 +10,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-type HelpLinkProps = {
+interface HelpLinkProps {
   href: string;
-  text: string;
   previewImage: string;
-};
+  text: string;
+}
 
 const PreviewCursor = ({
   mouseX,

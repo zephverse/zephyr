@@ -41,12 +41,12 @@ const containerVariants = {
   },
 };
 
-type TagEditorProps = {
-  postId?: string;
+interface TagEditorProps {
   initialTags: string[];
   onCloseAction: () => void;
   onTagsUpdateAction: (tags: Tag[]) => void;
-};
+  postId?: string;
+}
 
 export function TagEditor({
   postId,

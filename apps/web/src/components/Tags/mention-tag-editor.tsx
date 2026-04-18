@@ -41,12 +41,12 @@ const containerVariants = {
   },
 };
 
-type MentionTagEditorProps = {
-  postId?: string;
+interface MentionTagEditorProps {
   initialMentions: UserData[];
   onCloseAction: () => void;
   onMentionsUpdateAction: (mentions: UserData[]) => void;
-};
+  postId?: string;
+}
 
 export function MentionTagEditor({
   postId,

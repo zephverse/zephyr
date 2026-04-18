@@ -31,8 +31,8 @@
   width: 100%;
   height: 100%;
   pointer-events: none;
-  opacity: 0.5;
   background: transparent url("data:image/svg+xml;base64,...") repeat;
+  opacity: 0.5;
 }
 
 .stars {
@@ -41,13 +41,13 @@
 }
 .stars2 {
   background-size: 300px 300px;
-  animation: stars 100s linear infinite;
   opacity: 0.3;
+  animation: stars 100s linear infinite;
 }
 .stars3 {
   background-size: 400px 400px;
-  animation: stars 150s linear infinite;
   opacity: 0.1;
+  animation: stars 150s linear infinite;
 }
 
 @keyframes stars {
@@ -70,8 +70,8 @@
 
 .gif-avatar-container img {
   position: absolute;
-  transform-origin: center;
   max-width: none;
+  transform-origin: center;
 }
 
 .bg-grid-white {

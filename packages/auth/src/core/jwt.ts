@@ -1,11 +1,11 @@
 import { type CachedSession, jwtSessionCache } from "@zephyr/db";
 import { type JWTPayload, jwtVerify } from "jose";
 
-export type JWTValidationResult = {
-  valid: boolean;
-  payload?: JWTPayload;
+export interface JWTValidationResult {
   error?: string;
-};
+  payload?: JWTPayload;
+  valid: boolean;
+}
 
 export async function validateJWTToken(
   token: string
@@ -37,7 +37,7 @@ export function extractTokenFromHeader(
   if (!authHeader?.startsWith("Bearer ")) {
     return null;
   }
-  return authHeader.substring(7);
+  return authHeader.slice(7);
 }
 
 export function createJWTValidationCacheKey(token: string): string {

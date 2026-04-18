@@ -10,10 +10,10 @@ import { MoreHorizontal, Trash2 } from "lucide-react";
 import { useState } from "react";
 import DeleteCommentDialog from "./delete-comment-dialog";
 
-type CommentMoreButtonProps = {
-  comment: CommentData;
+interface CommentMoreButtonProps {
   className?: string;
-};
+  comment: CommentData;
+}
 
 export default function CommentMoreButton({
   comment,

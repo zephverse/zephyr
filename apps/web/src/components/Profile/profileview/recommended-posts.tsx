@@ -4,17 +4,17 @@ import { motion } from "motion/react";
 import Image from "next/image";
 import type React from "react";
 
-type RecommendedPost = {
-  id: number;
+interface RecommendedPost {
   className: string;
+  description: string;
+  id: number;
   thumbnail: string;
   title: string;
-  description: string;
-};
+}
 
-type RecommendedPostsProps = {
+interface RecommendedPostsProps {
   posts: RecommendedPost[];
-};
+}
 
 const PostContent: React.FC<{ post: RecommendedPost }> = ({ post }) => (
   <div className="relative h-full w-full overflow-hidden rounded-xl border border-border bg-card shadow-md transition-all hover:shadow-lg">

@@ -29,7 +29,7 @@ export async function GET() {
     });
 
     return Response.json(trendingUsers);
-  } catch (_error) {
+  } catch {
     return Response.json(
       { error: "Failed to fetch trending users" },
       { status: 500 }

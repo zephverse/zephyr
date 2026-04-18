@@ -10,10 +10,10 @@ import { Flame } from "lucide-react";
 import { useEffect, useState } from "react";
 import kyInstance from "@/lib/ky";
 
-type AuraCountProps = {
-  postId: string;
+interface AuraCountProps {
   initialAura: number;
-};
+  postId: string;
+}
 
 export default function AuraCount({ postId, initialAura }: AuraCountProps) {
   const queryKey = ["vote-info", postId];

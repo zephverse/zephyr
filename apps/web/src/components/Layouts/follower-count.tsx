@@ -4,11 +4,11 @@ import { Users } from "lucide-react";
 import { motion } from "motion/react";
 import { formatNumber } from "@/lib/utils";
 
-type FollowerCountProps = {
-  userId: string;
+interface FollowerCountProps {
   initialState: { followers: number; isFollowedByUser: boolean };
   onClick?: () => void;
-};
+  userId: string;
+}
 
 export default function FollowerCount({
   initialState,

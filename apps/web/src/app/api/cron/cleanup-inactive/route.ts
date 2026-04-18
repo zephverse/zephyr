@@ -161,7 +161,7 @@ async function cleanupInactiveUsers() {
     try {
       await prisma.$disconnect();
       log("👋 Database connection closed");
-    } catch (_error) {
+    } catch {
       log("❌ Error closing database connection");
     }
   }

@@ -39,9 +39,9 @@ const emailSchema = z.object({
 type UsernameFormValues = z.infer<typeof usernameSchema>;
 type EmailFormValues = z.infer<typeof emailSchema>;
 
-type AccountSettingsProps = {
+interface AccountSettingsProps {
   user: UserData;
-};
+}
 
 export default function AccountSettings({ user }: AccountSettingsProps) {
   const { toast } = useToast();

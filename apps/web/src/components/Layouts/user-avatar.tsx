@@ -3,13 +3,13 @@ import type { UserData } from "@zephyr/db";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 
-type UserAvatarProps = {
-  user?: Pick<UserData, "avatarUrl"> | null;
+interface UserAvatarProps {
   avatarUrl?: string | null;
-  size?: number;
   className?: string;
   priority?: boolean;
-};
+  size?: number;
+  user?: Pick<UserData, "avatarUrl"> | null;
+}
 
 export default function UserAvatar({
   user,

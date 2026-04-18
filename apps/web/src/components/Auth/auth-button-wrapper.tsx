@@ -1,10 +1,10 @@
 import { motion } from "motion/react";
 import type { ReactNode } from "react";
 
-type AuthButtonWrapperProps = {
+interface AuthButtonWrapperProps {
   children: ReactNode;
   className?: string;
-};
+}
 
 export default function AuthButtonWrapper({
   children,

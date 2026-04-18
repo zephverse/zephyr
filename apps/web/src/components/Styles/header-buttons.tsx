@@ -9,12 +9,12 @@ import { motion } from "motion/react";
 import Link from "next/link";
 import type React from "react";
 
-type HeaderIconButtonProps = {
+interface HeaderIconButtonProps {
+  count?: number;
   href: string;
   icon: React.ReactNode;
-  count?: number;
   title: string;
-};
+}
 
 export function HeaderIconButton({
   href,
@@ -38,7 +38,7 @@ export function HeaderIconButton({
                   {!!count && (
                     <motion.span
                       animate={{ scale: 1 }}
-                      className="-right-1 -top-1 absolute flex h-4 w-4 items-center justify-center rounded-full bg-primary font-medium text-[10px] text-primary-foreground"
+                      className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary font-medium text-[10px] text-primary-foreground"
                       initial={{ scale: 0 }}
                     >
                       {count}

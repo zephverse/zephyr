@@ -11,11 +11,11 @@ import {
 import LoadingButton from "@/components/Auth/loading-button";
 import { useDeletePostMutation } from "@/posts/mutations";
 
-type DeletePostDialogProps = {
-  post: PostData;
-  open: boolean;
+interface DeletePostDialogProps {
   onClose: () => void;
-};
+  open: boolean;
+  post: PostData;
+}
 
 export default function DeletePostDialog({
   post,

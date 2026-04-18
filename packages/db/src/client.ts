@@ -85,10 +85,10 @@ export type UserData = Prisma.UserGetPayload<{
   select: ReturnType<typeof getUserDataSelect>;
 }>;
 
-export type PostsPage = {
-  posts: PostData[];
+export interface PostsPage {
   nextCursor: string | null;
-};
+  posts: PostData[];
+}
 
 export function getCommentDataInclude(loggedInUserId: string) {
   return {
@@ -102,10 +102,10 @@ export type CommentData = Prisma.CommentGetPayload<{
   include: ReturnType<typeof getCommentDataInclude>;
 }>;
 
-export type CommentsPage = {
+export interface CommentsPage {
   comments: CommentData[];
   previousCursor: string | null;
-};
+}
 
 export const notificationsInclude = {
   issuer: {
@@ -128,15 +128,15 @@ export type NotificationData = Prisma.NotificationGetPayload<{
   include: typeof notificationsInclude;
 }>;
 
-export type NotificationsPage = {
-  notifications: NotificationData[];
+export interface NotificationsPage {
   nextCursor: string | null;
-};
+  notifications: NotificationData[];
+}
 
-export type FollowerInfo = {
+export interface FollowerInfo {
   followers: number;
   isFollowedByUser: boolean;
-};
+}
 
 export type PostData = Prisma.PostGetPayload<{
   include: {
@@ -186,71 +186,71 @@ export type PostData = Prisma.PostGetPayload<{
   aura: number;
 };
 
-export type TagWithCount = {
-  id: string;
-  name: string;
-  createdAt: Date;
-  updatedAt: Date;
+export interface TagWithCount {
   _count?: {
     posts: number;
   };
-};
+  createdAt: Date;
+  id: string;
+  name: string;
+  updatedAt: Date;
+}
 
-export type VoteInfo = {
+export interface VoteInfo {
   aura: number;
   userVote: number;
-};
+}
 
-export type BookmarkInfo = {
+export interface BookmarkInfo {
   isBookmarkedByUser: boolean;
-};
+}
 
-export type NotificationCountInfo = {
+export interface NotificationCountInfo {
   unreadCount: number;
-};
+}
 
-export type MessageCountInfo = {
-  unreadCount: number;
+export interface MessageCountInfo {
   error?: string;
-};
+  unreadCount: number;
+}
 
-export type ShareStats = {
+export interface ShareStats {
+  clicks: number;
   platform: string;
   shares: number;
-  clicks: number;
-};
+}
 
-export type ShareResponse = {
+export interface ShareResponse {
   shares: number;
-};
+}
 
-export type ClickResponse = {
+export interface ClickResponse {
   clicks: number;
-};
+}
 
-export type FormStatus = {
+export interface FormStatus {
+  error?: string;
   isLoading: boolean;
   isResending: boolean;
-  error?: string;
-};
+}
 
-export type SignUpFormProps = {
-  onSuccess?: () => void;
+export interface SignUpFormProps {
   onError?: (error: Error) => void;
-};
+  onSuccess?: () => void;
+}
 
-export type MentionData = {
+export interface MentionData {
+  createdAt: Date;
   id: string;
   postId: string;
-  userId: string;
-  createdAt: Date;
   user: {
     id: string;
     username: string;
     displayName: string;
     avatarUrl: string | null;
   };
-};
+  userId: string;
+}
 
 export const mentionsInclude = {
   user: {
@@ -263,12 +263,12 @@ export const mentionsInclude = {
   },
 } satisfies Prisma.MentionInclude;
 
-export type UnfollowUserDialogProps = {
-  user: UserData;
-  open: boolean;
-  onClose: () => void;
+export interface UnfollowUserDialogProps {
   handleUnfollow: (userId: string) => void;
-};
+  onClose: () => void;
+  open: boolean;
+  user: UserData;
+}
 
 // biome-ignore lint/performance/noBarrelFile: reexport
 export * from "../prisma/generated/prisma/client";

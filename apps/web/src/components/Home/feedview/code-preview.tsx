@@ -18,12 +18,12 @@ import {
 } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { cn } from "@/lib/utils";
 
-type CodePreviewProps = {
-  mediaId: string;
-  language?: string;
-  fileName?: string;
+interface CodePreviewProps {
   className?: string;
-};
+  fileName?: string;
+  language?: string;
+  mediaId: string;
+}
 
 const normalizedlangRegex = /^\./;
 const normalizeLanguage = (language = ""): string => {
@@ -98,7 +98,7 @@ export function CodePreview({
         title: "Copied to clipboard",
         description: "Code has been copied to your clipboard",
       });
-    } catch (_error) {
+    } catch {
       toast({
         title: "Failed to copy",
         description: "Please try again",

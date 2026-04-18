@@ -20,12 +20,12 @@ import { SVGViewer } from "./svg-viewer";
 
 const FALLBACK_IMAGE = fallbackImage;
 
-type MediaViewerProps = {
-  media: Media[];
+interface MediaViewerProps {
   initialIndex?: number;
   isOpen: boolean;
+  media: Media[];
   onClose: () => void;
-};
+}
 
 const MediaViewer = ({
   media,
@@ -151,7 +151,6 @@ const MediaViewer = ({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen]);
 
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Media rendering requires multiple format checks and fallback logic
   const renderMedia = () => {
     if (!currentMedia) {
       return <p className="text-destructive">No media available</p>;
@@ -352,7 +351,7 @@ const MediaViewer = ({
             <>
               <Button
                 aria-label="Previous media"
-                className="-translate-y-1/2 absolute top-1/2 left-2 z-50 bg-background/50 hover:bg-background/80"
+                className="absolute top-1/2 left-2 z-50 -translate-y-1/2 bg-background/50 hover:bg-background/80"
                 onClick={handlePrevious}
                 size="icon"
                 variant="ghost"
@@ -361,7 +360,7 @@ const MediaViewer = ({
               </Button>
               <Button
                 aria-label="Next media"
-                className="-translate-y-1/2 absolute top-1/2 right-2 z-50 bg-background/50 hover:bg-background/80"
+                className="absolute top-1/2 right-2 z-50 -translate-y-1/2 bg-background/50 hover:bg-background/80"
                 onClick={handleNext}
                 size="icon"
                 variant="ghost"
@@ -369,7 +368,7 @@ const MediaViewer = ({
                 <ChevronRight className="h-4 w-4" />
               </Button>
 
-              <div className="-translate-x-1/2 absolute bottom-4 left-1/2 z-50 rounded-full bg-background/50 px-3 py-1">
+              <div className="absolute bottom-4 left-1/2 z-50 -translate-x-1/2 rounded-full bg-background/50 px-3 py-1">
                 <span className="text-sm">
                   {currentIndex + 1} / {media.length}
                 </span>

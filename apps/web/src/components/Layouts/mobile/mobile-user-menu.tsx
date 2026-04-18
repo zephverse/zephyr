@@ -17,9 +17,12 @@ import type React from "react";
 import UserAvatar from "@/components/Layouts/user-avatar";
 import { getSecureImageUrl } from "@/lib/utils/image-url";
 
-type MobileUserMenuProps = {
+interface MobileUserMenuProps {
   isOpen: boolean;
   onCloseAction: () => void;
+  onLogoutAction: () => void;
+  setThemeAction: (theme: string) => void;
+  theme?: string;
   user: {
     id: string;
     username?: string;
@@ -29,10 +32,7 @@ type MobileUserMenuProps = {
     avatarKey?: string | null;
     displayName?: string;
   };
-  theme?: string;
-  setThemeAction: (theme: string) => void;
-  onLogoutAction: () => void;
-};
+}
 
 const menuVariants: Variants = {
   hidden: {
@@ -81,7 +81,7 @@ export function MobileUserMenu({
           url: getSecureImageUrl(data.url),
           key: data.key,
         };
-      } catch (_error) {
+      } catch {
         return {
           url: user.avatarUrl ? getSecureImageUrl(user.avatarUrl) : null,
           key: user.avatarKey,
@@ -132,7 +132,7 @@ export function MobileUserMenu({
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                     >
-                      <div className="-inset-4 absolute rounded-full bg-gradient-to-r from-primary/20 via-primary/30 to-primary/20 opacity-75 blur-md" />
+                      <div className="absolute -inset-4 rounded-full bg-gradient-to-r from-primary/20 via-primary/30 to-primary/20 opacity-75 blur-md" />
                       <Link
                         href={`/users/${user.username || user.id}`}
                         onClick={onCloseAction}
@@ -240,12 +240,12 @@ export function MobileUserMenu({
   );
 }
 
-type MobileMenuItemProps = {
+interface MobileMenuItemProps {
+  href: string;
   icon: React.ReactNode;
   label: string;
-  href: string;
   onClick?: () => void;
-};
+}
 
 function MobileMenuItem({ icon, label, href, onClick }: MobileMenuItemProps) {
   return (

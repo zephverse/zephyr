@@ -134,7 +134,7 @@ export default function ConfirmResetForm() {
         }
 
         setIsTokenValid(true);
-      } catch (_error) {
+      } catch {
         toast({
           variant: "destructive",
           title: "Error",
@@ -188,7 +188,7 @@ export default function ConfirmResetForm() {
         });
 
         router.push("/login");
-      } catch (_error) {
+      } catch {
         toast({
           variant: "destructive",
           title: "Error",
@@ -280,7 +280,7 @@ export default function ConfirmResetForm() {
         >
           <div className="relative">
             <h1
-              className="-rotate-90 absolute origin-center transform select-none whitespace-nowrap font-bold text-6xl text-blue-400/20 tracking-wider xl:text-8xl 2xl:text-9xl"
+              className="absolute origin-center -rotate-90 transform select-none whitespace-nowrap font-bold text-6xl text-blue-400/20 tracking-wider xl:text-8xl 2xl:text-9xl"
               style={{
                 transformOrigin: "center",
                 left: "-50%",

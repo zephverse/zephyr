@@ -11,14 +11,14 @@ import {
 } from "@zephyr/ui/shadui/command";
 import { History, TrendingUp, X } from "lucide-react";
 
-type SearchCommandListProps = {
-  input: string;
-  suggestions?: SearchSuggestion[];
+interface SearchCommandListProps {
   history?: string[];
-  onSelectAction: (value: string) => void;
+  input: string;
   onClearHistory?: () => void;
   onRemoveHistoryItem?: (query: string) => void;
-};
+  onSelectAction: (value: string) => void;
+  suggestions?: SearchSuggestion[];
+}
 
 export function SearchCommandList({
   input,

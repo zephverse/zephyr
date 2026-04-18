@@ -2,9 +2,9 @@ import { Card, CardContent, CardTitle } from "@zephyr/ui/shadui/card";
 import { Users } from "lucide-react";
 import type React from "react";
 
-type FriendsSkeletonProps = {
+interface FriendsSkeletonProps {
   isCollapsed: boolean;
-};
+}
 
 const FriendsSkeleton: React.FC<FriendsSkeletonProps> = ({ isCollapsed }) => (
   <Card

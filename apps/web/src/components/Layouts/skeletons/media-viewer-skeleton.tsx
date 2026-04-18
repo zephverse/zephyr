@@ -1,10 +1,10 @@
 import { Dialog, DialogContent } from "@zephyr/ui/shadui/dialog";
 import { cn } from "@/lib/utils";
 
-type MediaViewerSkeletonProps = {
-  type?: "IMAGE" | "VIDEO" | "AUDIO" | "CODE" | "DOCUMENT";
+interface MediaViewerSkeletonProps {
   className?: string;
-};
+  type?: "IMAGE" | "VIDEO" | "AUDIO" | "CODE" | "DOCUMENT";
+}
 
 export function MediaViewerSkeleton({
   type = "IMAGE",
@@ -86,10 +86,10 @@ export function MediaViewerSkeleton({
           <div className="absolute inset-0 bg-background/80 backdrop-blur-xl" />
 
           <div className="absolute top-2 right-2 z-50 h-9 w-9 animate-pulse rounded-md bg-muted/50" />
-          <div className="-translate-y-1/2 absolute top-1/2 left-2 z-50 h-9 w-9 animate-pulse rounded-md bg-muted/50" />
-          <div className="-translate-y-1/2 absolute top-1/2 right-2 z-50 h-9 w-9 animate-pulse rounded-md bg-muted/50" />
+          <div className="absolute top-1/2 left-2 z-50 h-9 w-9 -translate-y-1/2 animate-pulse rounded-md bg-muted/50" />
+          <div className="absolute top-1/2 right-2 z-50 h-9 w-9 -translate-y-1/2 animate-pulse rounded-md bg-muted/50" />
 
-          <div className="-translate-x-1/2 absolute bottom-4 left-1/2 z-50 h-6 w-16 animate-pulse rounded-full bg-muted/50" />
+          <div className="absolute bottom-4 left-1/2 z-50 h-6 w-16 -translate-x-1/2 animate-pulse rounded-full bg-muted/50" />
 
           <div className="relative flex h-full w-full items-center justify-center p-4">
             {renderSkeletonContent()}

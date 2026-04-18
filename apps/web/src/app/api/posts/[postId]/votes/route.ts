@@ -1,10 +1,10 @@
 import { getPostDataInclude, type PostData, prisma } from "@zephyr/db";
 import { getSessionFromApi } from "@/lib/session";
 
-type VoteInfo = {
+interface VoteInfo {
   aura: number;
   userVote: number;
-};
+}
 
 export async function GET(
   _req: Request,

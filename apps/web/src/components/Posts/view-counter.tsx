@@ -4,9 +4,9 @@ import { debugLog } from "@zephyr/config/debug";
 import { useCallback, useEffect, useRef } from "react";
 import { useIncrementViewMutation } from "@/posts/view/mutations";
 
-type ViewTrackerProps = {
+interface ViewTrackerProps {
   postId: string;
-};
+}
 
 export default function ViewTracker({ postId }: ViewTrackerProps) {
   const incrementViewMutation = useIncrementViewMutation();

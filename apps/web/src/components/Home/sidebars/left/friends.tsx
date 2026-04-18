@@ -14,15 +14,15 @@ import { FriendListItem } from "./friend-list-item";
 import { getRandomTitle } from "./random-titles";
 import { ViewSwitcher } from "./view-switcher";
 
-type FriendsProps = {
+interface FriendsProps {
   isCollapsed: boolean;
-};
+}
 
-type FriendsListProps = {
+interface FriendsListProps {
   followedUsers: UserData[];
-  viewType: "grid" | "list";
   onUnfollow: (user: UserData) => void;
-};
+  viewType: "grid" | "list";
+}
 
 const FriendsList: React.FC<FriendsListProps> = ({
   followedUsers,

@@ -17,13 +17,13 @@ import { cn, formatNumber } from "@/lib/utils";
 import { useUpdateTagsMutation } from "./mutations/tag-mention-mutation";
 import { TagEditor } from "./tag-editor";
 
-type TagsProps = {
-  tags: TagWithCount[];
-  isOwner?: boolean;
+interface TagsProps {
   className?: string;
-  postId?: string;
+  isOwner?: boolean;
   onTagsChange?: (tags: TagWithCount[]) => void;
-};
+  postId?: string;
+  tags: TagWithCount[];
+}
 
 const containerVariants = {
   initial: { opacity: 0 },
@@ -176,7 +176,7 @@ export function Tags({
                 {hoveredTag === tag.id && (
                   <motion.div
                     animate="animate"
-                    className="-z-10 absolute inset-0 rounded-full bg-primary/20"
+                    className="absolute inset-0 -z-10 rounded-full bg-primary/20"
                     initial="initial"
                     variants={glowVariants}
                   />
@@ -234,7 +234,7 @@ export function Tags({
                   <span className="text-primary text-xs">Add tag</span>
                 </Button>
                 <motion.div
-                  className="-z-10 absolute inset-0 rounded-full bg-primary/20 blur-md"
+                  className="absolute inset-0 -z-10 rounded-full bg-primary/20 blur-md"
                   initial={{ opacity: 0 }}
                   whileHover={{
                     opacity: 1,

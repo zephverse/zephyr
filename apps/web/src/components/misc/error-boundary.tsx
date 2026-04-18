@@ -3,16 +3,16 @@ import { Button } from "@zephyr/ui/shadui/button";
 import { AlertCircle } from "lucide-react";
 import { Component, type ErrorInfo, type ReactNode } from "react";
 
-type Props = {
+interface Props {
   children: ReactNode;
   fallback?: ReactNode;
   onReset?: () => void;
-};
+}
 
-type State = {
-  hasError: boolean;
+interface State {
   error: Error | null;
-};
+  hasError: boolean;
+}
 
 export class ErrorBoundary extends Component<Props, State> {
   state: State = {
@@ -52,10 +52,10 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 }
 
-type ErrorFallbackProps = {
+interface ErrorFallbackProps {
   error: Error | null;
   resetErrorBoundary: () => void;
-};
+}
 
 export function ErrorFallback({
   error,

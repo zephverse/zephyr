@@ -2,6 +2,16 @@ import { Card, CardContent } from "@zephyr/ui/shadui/card";
 import { Skeleton } from "@zephyr/ui/shadui/skeleton";
 import type React from "react";
 
+const STORY_SKELETON_IDS = [
+  "story-1",
+  "story-2",
+  "story-3",
+  "story-4",
+  "story-5",
+  "story-6",
+];
+const POST_SKELETON_IDS = ["post-1", "post-2", "post-3"];
+
 const StoryCardSkeleton: React.FC = () => (
   <Card className="h-[300px] w-[200px] shrink-0 overflow-hidden bg-card shadow-lg">
     <CardContent className="flex h-full flex-col overflow-x-hidden p-0">
@@ -53,9 +63,8 @@ export default function PostsLoadingSkeleton() {
           <Skeleton className="mb-2 h-8 w-48" />
           <Skeleton className="mb-4 h-4 w-full" />
           <div className="flex space-x-4 overflow-x-hidden">
-            {[...new Array(6)].map((_, index) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: skeleton components use index keys as order never changes
-              <StoryCardSkeleton key={`story-skeleton-${index}`} />
+            {STORY_SKELETON_IDS.map((id) => (
+              <StoryCardSkeleton key={id} />
             ))}
           </div>
         </CardContent>
@@ -67,8 +76,8 @@ export default function PostsLoadingSkeleton() {
           <Skeleton className="mb-4 h-4 w-full" />
           <Skeleton className="mb-6 h-10 w-full max-w-md" />
           <div className="space-y-8">
-            {[...new Array(3)].map((_, index) => (
-              <PostCardSkeleton key={`loading-post-${index + 1}`} />
+            {POST_SKELETON_IDS.map((id) => (
+              <PostCardSkeleton key={id} />
             ))}
           </div>
         </CardContent>

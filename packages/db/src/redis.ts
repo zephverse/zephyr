@@ -39,10 +39,10 @@ try {
 
 export { redis };
 
-export type TrendingTopic = {
-  hashtag: string;
+export interface TrendingTopic {
   count: number;
-};
+  hashtag: string;
+}
 
 const TRENDING_TOPICS_KEY = "trending:topics";
 const TRENDING_TOPICS_BACKUP_KEY = "trending:topics:backup";
@@ -214,7 +214,7 @@ export const postViewsCache = {
   },
 };
 
-export type CachedSession = {
+export interface CachedSession {
   session: {
     id: string;
     createdAt: Date;
@@ -234,7 +234,7 @@ export type CachedSession = {
     createdAt: Date;
     updatedAt: Date;
   };
-};
+}
 
 export const jwtSessionCache = {
   async setJWKS(jwks: JSONWebKeySet): Promise<void> {
@@ -271,7 +271,7 @@ export const jwtSessionCache = {
         JSON.stringify(sessionData)
       );
       console.log(
-        `Cached validated session for token hash: ${tokenHash.substring(0, 8)}...`
+        `Cached validated session for token hash: ${tokenHash.slice(0, 8)}...`
       );
     } catch (error) {
       console.error("Error caching validated session:", error);
@@ -283,7 +283,7 @@ export const jwtSessionCache = {
       const cached = await redis.get(`${SESSION_CACHE_KEY_PREFIX}${tokenHash}`);
       if (cached) {
         console.log(
-          `Retrieved validated session from cache for token hash: ${tokenHash.substring(0, 8)}...`
+          `Retrieved validated session from cache for token hash: ${tokenHash.slice(0, 8)}...`
         );
         const sessionData = JSON.parse(cached);
         sessionData.session.expiresAt = new Date(sessionData.session.expiresAt);
@@ -302,7 +302,7 @@ export const jwtSessionCache = {
     try {
       await redis.del(`${SESSION_CACHE_KEY_PREFIX}${tokenHash}`);
       console.log(
-        `Invalidated cached session for token hash: ${tokenHash.substring(0, 8)}...`
+        `Invalidated cached session for token hash: ${tokenHash.slice(0, 8)}...`
       );
     } catch (error) {
       console.error("Error invalidating cached session:", error);
@@ -311,10 +311,6 @@ export const jwtSessionCache = {
 
   createTokenHash(token: string): string {
     const crypto = require("node:crypto");
-    return crypto
-      .createHash("sha256")
-      .update(token)
-      .digest("hex")
-      .substring(0, 16);
+    return crypto.createHash("sha256").update(token).digest("hex").slice(0, 16);
   },
 };

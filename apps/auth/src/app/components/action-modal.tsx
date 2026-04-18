@@ -6,12 +6,12 @@ import { AlertCircle, Edit, Eye, UserCog, X } from "lucide-react";
 import { motion } from "motion/react";
 import type { ModalAction, User } from "../types/types";
 
-type ActionModalProps = {
-  user: User;
+interface ActionModalProps {
   action: ModalAction;
-  onConfirmAction: () => void;
   onCancelAction: () => void;
-};
+  onConfirmAction: () => void;
+  user: User;
+}
 
 export default function ActionModal({
   user,

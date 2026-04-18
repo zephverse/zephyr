@@ -1,11 +1,11 @@
 import { Menu } from "lucide-react";
-import type React from "react";
+import type * as React from "react";
 import { Button } from "../../../shadui/button";
 import { Sheet, SheetContent, SheetTrigger } from "../../../shadui/sheet";
 
-type MobileSidebarToggleProps = {
+interface MobileSidebarToggleProps {
   children: React.ReactNode;
-};
+}
 
 export function MobileSidebarToggle({ children }: MobileSidebarToggleProps) {
   return (

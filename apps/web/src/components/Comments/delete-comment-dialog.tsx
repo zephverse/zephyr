@@ -11,11 +11,11 @@ import {
 import LoadingButton from "@/components/Auth/loading-button";
 import { useDeleteCommentMutation } from "./mutations";
 
-type DeleteCommentDialogProps = {
+interface DeleteCommentDialogProps {
   comment: CommentData;
-  open: boolean;
   onClose: () => void;
-};
+  open: boolean;
+}
 
 export default function DeleteCommentDialog({
   comment,

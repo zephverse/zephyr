@@ -40,18 +40,18 @@ export const TAB_CONFIG = [
   { id: "ask", label: "Ask HN", icon: <HelpCircle className="h-4 w-4" /> },
 ];
 
-type HnSidebarProps = {
-  searchInput: string;
-  setSearchInputAction: (value: string) => void;
-  sortBy: SortOption;
-  setSortByAction: (value: SortOption) => void;
+interface HnSidebarProps {
   activeTab: string;
-  setActiveTabAction: (value: string) => void;
-  totalStories: number;
-  totalPoints: number;
   isFetching: boolean;
   onRefreshAction: () => void;
-};
+  searchInput: string;
+  setActiveTabAction: (value: string) => void;
+  setSearchInputAction: (value: string) => void;
+  setSortByAction: (value: SortOption) => void;
+  sortBy: SortOption;
+  totalPoints: number;
+  totalStories: number;
+}
 
 const sidebarVariants: Variants = {
   hidden: { x: -50, opacity: 0 },

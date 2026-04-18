@@ -1,14 +1,14 @@
 import type { FileCategory } from "../config/file-config";
 
-export type FileTypeConfig = {
-  mime: string;
+export interface FileTypeConfig {
   category: FileCategory;
+  mime: string;
   tag: {
     bg: string;
     text: string;
     icon: string;
   };
-};
+}
 
 export const FILE_CONFIGS: Record<string, FileTypeConfig> = {
   jpg: {

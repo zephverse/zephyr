@@ -3,10 +3,10 @@
 import { Grid, List } from "lucide-react";
 import { motion } from "motion/react";
 
-type ViewSwitcherProps = {
-  view: "grid" | "list";
+interface ViewSwitcherProps {
   onChange: (view: "grid" | "list") => void;
-};
+  view: "grid" | "list";
+}
 
 export const ViewSwitcher = ({ view, onChange }: ViewSwitcherProps) => {
   return (
@@ -21,7 +21,7 @@ export const ViewSwitcher = ({ view, onChange }: ViewSwitcherProps) => {
         {view === "list" && (
           <motion.div
             animate={{ opacity: 1 }}
-            className="-bottom-1 absolute right-0 left-0 h-[2px] bg-primary"
+            className="absolute right-0 -bottom-1 left-0 h-[2px] bg-primary"
             initial={{ opacity: 0 }}
             layoutId="viewIndicator"
             transition={{ duration: 0.2 }}
@@ -39,7 +39,7 @@ export const ViewSwitcher = ({ view, onChange }: ViewSwitcherProps) => {
         {view === "grid" && (
           <motion.div
             animate={{ opacity: 1 }}
-            className="-bottom-1 absolute right-0 left-0 h-[2px] bg-primary"
+            className="absolute right-0 -bottom-1 left-0 h-[2px] bg-primary"
             initial={{ opacity: 0 }}
             layoutId="viewIndicator"
             transition={{ duration: 0.2 }}

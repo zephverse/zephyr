@@ -1,10 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import type { UserData } from "@zephyr/db";
 
-type UseBrowseUsersOptions = {
+interface UseBrowseUsersOptions {
   searchTerm: string;
   sortBy: string;
-};
+}
 
 export function useBrowseUsers({ searchTerm, sortBy }: UseBrowseUsersOptions) {
   return useQuery<UserData[]>({

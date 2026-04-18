@@ -11,10 +11,10 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { FILE_CONFIGS, type FileTypeConfig } from "@/lib/utils/mime-utils";
 
-type FileTypeWatermarkProps = {
-  type: string;
+interface FileTypeWatermarkProps {
   showCategory?: boolean;
-};
+  type: string;
+}
 
 const iconMap = {
   ImageIcon,
@@ -114,7 +114,7 @@ export const FileTypeWatermark = ({
       <motion.div
         animate={{ opacity: isHovered ? 1 : 0 }}
         className={cn(
-          "-z-10 absolute inset-0",
+          "absolute inset-0 -z-10",
           "blur-xl",
           tag.bg,
           "opacity-50"

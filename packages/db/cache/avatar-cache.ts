@@ -3,11 +3,11 @@ import { redis } from "../src/redis";
 const AVATAR_CACHE_PREFIX = "avatar:";
 const AVATAR_CACHE_TTL = 3600;
 
-export type CachedAvatarData = {
-  url: string;
+export interface CachedAvatarData {
   key: string;
   updatedAt: string;
-};
+  url: string;
+}
 
 export const avatarCache = {
   async get(userId: string): Promise<CachedAvatarData | null> {

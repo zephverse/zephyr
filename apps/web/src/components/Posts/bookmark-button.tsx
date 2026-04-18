@@ -11,10 +11,10 @@ import { Bookmark } from "lucide-react";
 import kyInstance from "@/lib/ky";
 import { cn } from "@/lib/utils";
 
-type BookmarkButtonProps = {
-  postId: string;
+interface BookmarkButtonProps {
   initialState: BookmarkInfo;
-};
+  postId: string;
+}
 
 export default function BookmarkButton({
   postId,

@@ -3,13 +3,13 @@ import type { PostData, TagWithCount, UserData } from "@zephyr/db";
 import { useSession } from "@/app/(main)/session-provider";
 import { updatePostInCaches } from "./cache-utils";
 
-type TagsMutationContext = {
+interface TagsMutationContext {
   previousPost: PostData | undefined;
-};
+}
 
-type MentionsMutationContext = {
+interface MentionsMutationContext {
   previousPost: PostData | undefined;
-};
+}
 
 export function useUpdateTagsMutation(postId?: string) {
   const queryClient = useQueryClient();

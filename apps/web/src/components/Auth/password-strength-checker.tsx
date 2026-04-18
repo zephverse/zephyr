@@ -6,10 +6,10 @@ import { AnimatePresence, motion } from "motion/react";
 import type { UseFormSetValue } from "react-hook-form";
 import { PasswordRecommender } from "./password-recommender";
 
-type Requirement = {
+interface Requirement {
   text: string;
   validator: (password: string) => boolean;
-};
+}
 
 export const uppercaseRegex = /[A-Z]/;
 export const lowercaseRegex = /[a-z]/;
@@ -50,11 +50,11 @@ const requirements: Requirement[] = [
   },
 ];
 
-type PasswordStrengthCheckerProps = {
+interface PasswordStrengthCheckerProps {
   password: string;
-  setValue: UseFormSetValue<SignUpValues>;
   setPassword: (value: string) => void;
-};
+  setValue: UseFormSetValue<SignUpValues>;
+}
 
 export function PasswordStrengthChecker({
   password,

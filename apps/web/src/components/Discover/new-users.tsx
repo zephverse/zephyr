@@ -20,9 +20,9 @@ interface UserData extends BaseUserData {
   };
 }
 
-type NewUsersProps = {
+interface NewUsersProps {
   userId?: string;
-};
+}
 
 const NewUsers: React.FC<NewUsersProps> = () => {
   const { data: users, isLoading } = useQuery<UserData[]>({

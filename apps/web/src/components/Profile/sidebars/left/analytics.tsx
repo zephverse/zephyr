@@ -4,7 +4,7 @@ import { Card, CardContent } from "@zephyr/ui/shadui/card";
 import { Eye, ThumbsUp } from "lucide-react";
 import type React from "react";
 
-type AnalyticsProps = {
+interface AnalyticsProps {
   data: {
     mostLikedPost: {
       title: string;
@@ -15,7 +15,7 @@ type AnalyticsProps = {
       views: number;
     };
   };
-};
+}
 
 const Analytics: React.FC<AnalyticsProps> = ({ data }) => (
   <Card className="mb-6 bg-card text-card-foreground">

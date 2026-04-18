@@ -6,11 +6,11 @@ import { CompassIcon, Home, Newspaper, Search, TrendingUp } from "lucide-react";
 import { motion } from "motion/react";
 import Link from "next/link";
 
-type NavigationCardProps = {
-  isCollapsed: boolean;
+interface NavigationCardProps {
   className?: string;
+  isCollapsed: boolean;
   stickyTop?: string;
-};
+}
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Navigation card requires multiple conditional rendering and styling logic
 export default function NavigationCard({

@@ -25,7 +25,7 @@ async function aggregateAnalytics() {
     try {
       await redis.ping();
       log("✅ Redis connection successful");
-    } catch (_error) {
+    } catch {
       log("❌ Redis connection failed");
       throw new Error("Redis connection failed");
     }
@@ -191,7 +191,7 @@ async function aggregateAnalytics() {
     try {
       await prisma.$disconnect();
       log("👋 Database connection closed");
-    } catch (_error) {
+    } catch {
       log("❌ Error closing database connection");
     }
   }

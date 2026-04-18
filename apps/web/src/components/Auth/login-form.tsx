@@ -222,7 +222,7 @@ export default function LoginForm() {
                   onClick={handleResendVerification}
                   type="button"
                 >
-                  <div className="-inset-0.5 absolute rounded-lg bg-primary opacity-10 blur-sm transition group-hover:opacity-20" />
+                  <div className="absolute -inset-0.5 rounded-lg bg-primary opacity-10 blur-sm transition group-hover:opacity-20" />
                   <div className="relative flex items-center justify-center gap-2 rounded-lg border border-primary/20 bg-background/80 px-4 py-2 text-primary transition-colors hover:bg-background/90">
                     <Mail className="h-4 w-4" />
                     <span>
@@ -264,7 +264,7 @@ export default function LoginForm() {
                     {errorFields.username && (
                       <motion.div
                         animate={{ opacity: 1 }}
-                        className="-translate-y-1/2 absolute top-1/2 right-3"
+                        className="absolute top-1/2 right-3 -translate-y-1/2"
                         initial={{ opacity: 0 }}
                       >
                         <XCircle className="h-4 w-4 text-destructive" />

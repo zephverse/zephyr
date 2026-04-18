@@ -2,7 +2,6 @@ import type { NextRequest } from "next/server";
 
 const AUTH_BASE = process.env.NEXT_PUBLIC_AUTH_URL || "http://localhost:3001";
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: cross origin cookie rewriting is complex by nature
 async function proxy(request: NextRequest) {
   const url = new URL(request.url);
   const target = new URL(AUTH_BASE);

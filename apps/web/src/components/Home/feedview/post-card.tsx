@@ -38,10 +38,10 @@ type ExtendedPostData = PostData & {
   } | null;
 };
 
-type PostCardProps = {
-  post: ExtendedPostData;
+interface PostCardProps {
   isJoined?: boolean;
-};
+  post: ExtendedPostData;
+}
 
 const PostCard: React.FC<PostCardProps> = ({
   post: initialPost,
@@ -251,10 +251,10 @@ const PostCard: React.FC<PostCardProps> = ({
   );
 };
 
-type CommentButtonProps = {
-  post: PostData;
+interface CommentButtonProps {
   onClick: () => void;
-};
+  post: PostData;
+}
 
 function CommentButton({ post, onClick }: CommentButtonProps) {
   return (

@@ -11,11 +11,11 @@ import { ArrowBigDown, ArrowBigUp } from "lucide-react";
 import kyInstance from "@/lib/ky";
 import { cn } from "@/lib/utils";
 
-type AuraVoteButtonProps = {
-  postId: string;
-  initialState: VoteInfo;
+interface AuraVoteButtonProps {
   authorName: string;
-};
+  initialState: VoteInfo;
+  postId: string;
+}
 
 export default function AuraVoteButton({
   postId,

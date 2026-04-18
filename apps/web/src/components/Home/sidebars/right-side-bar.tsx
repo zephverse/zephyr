@@ -7,9 +7,9 @@ import ProfileCard from "./right/profile-card";
 import SuggestedConnections from "./right/suggested-connections";
 import { TrendingTabs } from "./right/trending-tabs";
 
-type RightSidebarProps = {
+interface RightSidebarProps {
   userData: UserData;
-};
+}
 
 const RightSidebar: React.FC<RightSidebarProps> = ({ userData }) => {
   const { user } = useSession();

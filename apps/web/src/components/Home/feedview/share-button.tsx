@@ -35,18 +35,18 @@ import { cn } from "@/lib/utils";
 
 const FALLBACK_THUMBNAIL = "/fallback.png";
 
-type ShareButtonProps = {
-  postId: string;
-  title?: string;
-  thumbnail?: string;
+interface ShareButtonProps {
   description?: string;
-};
+  postId: string;
+  thumbnail?: string;
+  title?: string;
+}
 
-type ShareStats = {
+interface ShareStats {
+  clicks: number;
   platform: string;
   shares: number;
-  clicks: number;
-};
+}
 
 const ShareButton = ({
   postId,
@@ -60,7 +60,7 @@ const ShareButton = ({
   const [shareStats, setShareStats] = useState<ShareStats[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
+  const baseUrl = typeof window === "undefined" ? "" : window.location.origin;
   const postUrl = `${baseUrl}/posts/${postId}`;
 
   const fetchShareStats = useCallback(async () => {
@@ -290,7 +290,7 @@ const ShareButton = ({
       setCopied(true);
       toast.success("Link copied to clipboard!");
       await trackShare("copy");
-    } catch (_err) {
+    } catch {
       toast.error("Failed to copy link");
     }
   };
@@ -318,7 +318,7 @@ const ShareButton = ({
         await trackShare("qr");
         toast.success("QR Code downloaded!");
       }
-    } catch (_error) {
+    } catch {
       toast.error("Failed to download QR code");
     }
   };

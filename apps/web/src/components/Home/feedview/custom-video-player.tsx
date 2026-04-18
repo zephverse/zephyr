@@ -21,17 +21,17 @@ import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
-type CustomVideoPlayerProps = {
-  src: string;
-  onLoadedData: () => void;
-  onError: () => void;
-  className?: string;
+interface CustomVideoPlayerProps {
   captions?: { src: string; label: string; srclang: string }[];
-};
+  className?: string;
+  onError: () => void;
+  onLoadedData: () => void;
+  src: string;
+}
 
-type KeyboardControls = {
+interface KeyboardControls {
   [key: string]: () => void;
-};
+}
 
 const PLAYBACK_SPEEDS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 

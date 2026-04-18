@@ -21,20 +21,20 @@ import Linkify from "@/helpers/global/linkify";
 import { useFollowStates } from "@/hooks/use-follow-states";
 import { formatNumber } from "@/lib/utils";
 
-type SuggestedUsersProps = {
+interface SuggestedUsersProps {
   userId?: string;
-};
+}
 
 interface EnhancedUserData extends UserData {
+  followState?: {
+    followers: number;
+    isFollowedByUser: boolean;
+  };
   mutualFollowers?: {
     username: string;
     displayName: string;
     avatarUrl: string | null;
   }[];
-  followState?: {
-    followers: number;
-    isFollowedByUser: boolean;
-  };
 }
 
 const MutualFollowers = ({
@@ -55,7 +55,7 @@ const MutualFollowers = ({
   return (
     <div className="mt-3">
       <div className="flex items-center gap-2">
-        <div className="-space-x-2 flex">
+        <div className="flex -space-x-2">
           {displayedFollowers.map((follower) => (
             <TooltipProvider key={follower.username}>
               <Tooltip>
@@ -294,7 +294,7 @@ const UserCard = ({
             opacity: isHovered ? 0.3 : 0.2,
             scale: isHovered ? 1.1 : 1,
           }}
-          className="-right-4 -top-4 absolute h-20 w-20 rotate-45 bg-gradient-to-br from-primary/20 to-transparent blur-2xl"
+          className="absolute -top-4 -right-4 h-20 w-20 rotate-45 bg-gradient-to-br from-primary/20 to-transparent blur-2xl"
           initial={false}
           transition={{ duration: 0.3 }}
         />
@@ -303,7 +303,7 @@ const UserCard = ({
             opacity: isHovered ? 0.3 : 0.2,
             scale: isHovered ? 1.1 : 1,
           }}
-          className="-bottom-8 -left-8 absolute h-32 w-32 rounded-full bg-gradient-to-br from-primary/10 to-transparent blur-3xl"
+          className="absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-gradient-to-br from-primary/10 to-transparent blur-3xl"
           initial={false}
           transition={{ duration: 0.3 }}
         />
