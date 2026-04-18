@@ -35,8 +35,8 @@ export const keys = createEnv({
   },
 
   client: {
-    NEXT_PUBLIC_AUTH_URL: z.url().default("http://localhost:3001"),
-    NEXT_PUBLIC_URL: z.url().default("http://localhost:3000"),
+    NEXT_PUBLIC_AUTH_URL: z.url().default("https://auth.localhost"),
+    NEXT_PUBLIC_URL: z.url().default("https://social.localhost"),
   },
 
   runtimeEnv: {

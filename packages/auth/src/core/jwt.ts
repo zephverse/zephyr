@@ -16,8 +16,8 @@ export async function validateJWTToken(
     );
 
     const { payload } = await jwtVerify(token, secret, {
-      issuer: process.env.NEXT_PUBLIC_URL || "http://localhost:3000",
-      audience: process.env.NEXT_PUBLIC_URL || "http://localhost:3000",
+      issuer: process.env.NEXT_PUBLIC_URL || "https://social.localhost",
+      audience: process.env.NEXT_PUBLIC_URL || "https://social.localhost",
     });
 
     return { valid: true, payload };

@@ -1,9 +1,9 @@
 {
   "name": "@zephyr/docs",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3002",
+    "dev": "portless docs next dev",
     "build": "next build",
     "start": "next start -p 3002",
     "postbuild": "pagefind --site .next/server/app --output-path public/_pagefind",

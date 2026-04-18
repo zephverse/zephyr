@@ -28,6 +28,35 @@ export interface PreflightConfig {
   requiredServices: string[];
 }
 
+export type PreflightCheckKey =
+  | "services"
+  | "init-jobs"
+  | "postgres"
+  | "redis"
+  | "zephob"
+  | "meilisearch"
+  | "portless";
+
+export type PreflightCheckState =
+  | "pending"
+  | "running"
+  | "ok"
+  | "cached"
+  | "failed";
+
+export const PREFLIGHT_CHECK_ORDER: Array<{
+  key: PreflightCheckKey;
+  label: string;
+}> = [
+  { key: "services", label: "svc" },
+  { key: "init-jobs", label: "init" },
+  { key: "postgres", label: "pg" },
+  { key: "redis", label: "rd" },
+  { key: "zephob", label: "obj" },
+  { key: "meilisearch", label: "mei" },
+  { key: "portless", label: "ptl" },
+];
+
 export const DEFAULT_PREFLIGHT_CONFIG: PreflightConfig = {
   requiredBuckets: ["uploads", "avatars", "temp", "backups"],
   requiredServices: [
@@ -138,5 +167,42 @@ export function buildRuntimeFingerprint(snapshots: ServiceSnapshot[]) {
         }))
         .sort((a, b) => a.Service.localeCompare(b.Service))
     )
+  );
+}
+
+export function formatPreflightCheckState(state: PreflightCheckState) {
+  if (state === "running") {
+    return "...";
+  }
+  if (state === "ok") {
+    return "ok";
+  }
+  if (state === "cached") {
+    return "cache";
+  }
+  if (state === "failed") {
+    return "fail";
+  }
+  return "wait";
+}
+
+export function buildPreflightProgressLine(
+  states: ReadonlyMap<PreflightCheckKey, PreflightCheckState>
+) {
+  const body = PREFLIGHT_CHECK_ORDER.map(
+    (item) =>
+      `${item.label}:${formatPreflightCheckState(
+        states.get(item.key) ?? "pending"
+      )}`
+  ).join(" ");
+
+  return `preflight ${body}`;
+}
+
+export function shouldUseSudoForPortless(output: string) {
+  return (
+    output.includes("requires sudo") ||
+    output.includes("no TTY") ||
+    output.includes("a terminal is required")
   );
 }

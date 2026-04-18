@@ -20,7 +20,7 @@ function addCorsHeaders(response: Response) {
     "Access-Control-Allow-Origin":
       process.env.NODE_ENV === "production"
         ? process.env.NEXT_PUBLIC_URL || "https://zephyyrr.in"
-        : "http://localhost:3000",
+        : "https://social.localhost",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers":
       "Content-Type, Authorization, Cache-Control",
@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
         "Access-Control-Allow-Origin":
           process.env.NODE_ENV === "production"
             ? process.env.NEXT_PUBLIC_URL || "https://zephyyrr.in"
-            : "http://localhost:3000",
+            : "https://social.localhost",
         "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
         "Access-Control-Allow-Headers":
           "Content-Type, Authorization, Cache-Control",
@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
         "Access-Control-Allow-Origin":
           process.env.NODE_ENV === "production"
             ? process.env.NEXT_PUBLIC_URL || "https://zephyyrr.in"
-            : "http://localhost:3000",
+            : "https://social.localhost",
         "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
         "Access-Control-Allow-Headers":
           "Content-Type, Authorization, Cache-Control",
@@ -102,7 +102,7 @@ export function OPTIONS() {
       "Access-Control-Allow-Origin":
         process.env.NODE_ENV === "production"
           ? process.env.NEXT_PUBLIC_URL || "https://zephyyrr.in"
-          : "http://localhost:3000",
+          : "https://social.localhost",
       "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
       "Access-Control-Allow-Headers":
         "Content-Type, Authorization, Cache-Control",

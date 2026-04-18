@@ -7,6 +7,7 @@ import process from "node:process";
 import { intro, log, outro, spinner } from "@clack/prompts";
 import {
   areInitJobsComplete,
+  buildPreflightProgressLine,
   buildRuntimeFingerprint,
   type CacheShape,
   computeCacheDigest,
@@ -17,7 +18,11 @@ import {
   hasRedisPong,
   hasSchemaTables,
   type OneShotStatus,
+  PREFLIGHT_CHECK_ORDER,
+  type PreflightCheckKey,
+  type PreflightCheckState,
   type ServiceSnapshot,
+  shouldUseSudoForPortless,
   withinTtl,
 } from "./dev-preflight-lib";
 
@@ -29,7 +34,48 @@ const ZEPHOB_SECRET_KEY = process.env.ZEPHOB_ROOT_PASSWORD ?? "zephob-admin";
 const ZEPHOB_REGION = process.env.ZEPHOB_REGION ?? "ap-south-1";
 const ZEPHOB_INTERNAL_ENDPOINT = "http://zephob-dev:9000";
 
+const checkStates = new Map<PreflightCheckKey, PreflightCheckState>(
+  PREFLIGHT_CHECK_ORDER.map((item) => [item.key, "pending"])
+);
+
+let activeCheck: PreflightCheckKey | null = null;
+const progressSpinner = process.stdout.isTTY ? spinner() : null;
+let progressSpinnerStarted = false;
+
+function renderProgress() {
+  const line = buildPreflightProgressLine(checkStates);
+
+  if (!progressSpinner) {
+    process.stdout.write(`${line}\n`);
+    return;
+  }
+
+  if (!progressSpinnerStarted) {
+    progressSpinner.start(line);
+    progressSpinnerStarted = true;
+    return;
+  }
+
+  progressSpinner.message(line);
+}
+
+function setCheckState(key: PreflightCheckKey, state: PreflightCheckState) {
+  checkStates.set(key, state);
+  renderProgress();
+}
+
+function finishProgressLine() {
+  if (progressSpinner && progressSpinnerStarted) {
+    progressSpinner.stop(buildPreflightProgressLine(checkStates));
+    progressSpinnerStarted = false;
+  }
+}
+
 function fatal(message: string): never {
+  if (activeCheck) {
+    setCheckState(activeCheck, "failed");
+  }
+  finishProgressLine();
   log.error(message);
   outro("Preflight failed. Start infra with `bun run docker:dev` and retry.");
   process.exit(1);
@@ -51,6 +97,18 @@ async function runCmd(args: string[]) {
     exitCode,
     stderr: stderr.trim(),
     stdout: stdout.trim(),
+  };
+}
+
+async function runInteractiveCmd(args: string[]) {
+  const proc = Bun.spawn(args, {
+    stdin: "inherit",
+    stderr: "inherit",
+    stdout: "inherit",
+  });
+
+  return {
+    exitCode: await proc.exited,
   };
 }
 
@@ -93,8 +151,7 @@ async function withCache(
   const hit = cache.checks[key];
 
   if (hit && hit.key === digest && withinTtl(hit.timestamp, CACHE_TTL_MS)) {
-    log.step(`${key}: cached`);
-    return;
+    return "cached" as const;
   }
 
   await fn();
@@ -102,6 +159,7 @@ async function withCache(
     key: digest,
     timestamp: Date.now(),
   };
+  return "ok" as const;
 }
 
 async function getServiceSnapshot() {
@@ -304,6 +362,68 @@ async function assertMeilisearchReady() {
   }
 }
 
+async function hasListenerOnPort(port: number) {
+  const result = await runCmd(["ss", "-ltnH", `sport = :${port}`]);
+  if (result.exitCode !== 0) {
+    fatal(`Port check failed for :${port}: ${result.stderr || result.stdout}`);
+  }
+  return result.stdout.trim().length > 0;
+}
+
+async function ensurePortlessProxyReady() {
+  if (await hasListenerOnPort(443)) {
+    return;
+  }
+
+  if (await hasListenerOnPort(1355)) {
+    await runCmd(["portless", "proxy", "stop"]);
+  }
+
+  let startResult = await runCmd([
+    "portless",
+    "proxy",
+    "start",
+    "--https",
+    "--port",
+    "443",
+  ]);
+
+  if (startResult.exitCode !== 0) {
+    const output = `${startResult.stdout}\n${startResult.stderr}`;
+    const needsSudo = shouldUseSudoForPortless(output);
+
+    if (needsSudo && process.stdin.isTTY) {
+      const sudoStartResult = await runInteractiveCmd([
+        "sudo",
+        "portless",
+        "proxy",
+        "start",
+        "--https",
+        "--port",
+        "443",
+      ]);
+
+      if (sudoStartResult.exitCode !== 0) {
+        fatal("Portless proxy failed to start on port 443.");
+      }
+
+      startResult = { exitCode: 0, stderr: "", stdout: "" };
+    }
+  }
+
+  if (startResult.exitCode !== 0) {
+    fatal(
+      "Portless proxy is not ready on port 443. Run `sudo portless proxy start --https --port 443` and retry."
+    );
+  }
+
+  if (!(await hasListenerOnPort(443))) {
+    fatal(
+      "Portless proxy did not bind to port 443. Run `sudo portless proxy start --https --port 443` and retry."
+    );
+  }
+}
+
 async function getComposeFileFingerprint() {
   const composePath = join(process.cwd(), "docker", "docker-compose.dev.yml");
   const [content, fileStat] = await Promise.all([
@@ -318,13 +438,17 @@ async function getComposeFileFingerprint() {
 
 async function run() {
   intro("zephdev preflight");
+  renderProgress();
 
-  const s = spinner();
-  s.start("Collecting runtime status");
-  const snapshots = await getServiceSnapshot();
-  const composeFingerprint = await getComposeFileFingerprint();
-  const runtimeFingerprint = buildRuntimeFingerprint(snapshots);
-  s.stop("Runtime status collected");
+  let snapshots: ServiceSnapshot[] = [];
+  let composeFingerprint = "";
+  let runtimeFingerprint = "";
+
+  activeCheck = "services";
+  setCheckState("services", "running");
+  snapshots = await getServiceSnapshot();
+  composeFingerprint = await getComposeFileFingerprint();
+  runtimeFingerprint = buildRuntimeFingerprint(snapshots);
 
   const cache = await getCache();
   if (cache.version !== CACHE_VERSION) {
@@ -332,79 +456,82 @@ async function run() {
     cache.checks = {};
   }
 
-  await withCache(
+  const servicesStatus = await withCache(
     cache,
     "services",
     `${composeFingerprint}:${runtimeFingerprint}`,
     () => {
       assertServicesHealthy(snapshots);
-      log.success("services: running and healthy");
       return Promise.resolve();
     }
   );
+  setCheckState("services", servicesStatus);
+  activeCheck = null;
 
-  await withCache(
+  activeCheck = "init-jobs";
+  setCheckState("init-jobs", "running");
+  const initJobsStatus = await withCache(
     cache,
     "init-jobs",
     `${composeFingerprint}:${runtimeFingerprint}`,
-    async () => {
-      const step = spinner();
-      step.start("Checking one-shot init jobs");
-      await assertInitJobsCompleted();
-      step.stop("init jobs: completed");
-    }
+    () => assertInitJobsCompleted()
   );
+  setCheckState("init-jobs", initJobsStatus);
+  activeCheck = null;
 
-  await withCache(
+  activeCheck = "postgres";
+  setCheckState("postgres", "running");
+  const postgresStatus = await withCache(
     cache,
     "postgres",
     `${composeFingerprint}:${runtimeFingerprint}`,
-    async () => {
-      const step = spinner();
-      step.start("Checking postgres schema state");
-      await assertPostgresSchemaReady();
-      step.stop("postgres: schema ready");
-    }
+    () => assertPostgresSchemaReady()
   );
+  setCheckState("postgres", postgresStatus);
+  activeCheck = null;
 
-  await withCache(
+  activeCheck = "redis";
+  setCheckState("redis", "running");
+  const redisStatus = await withCache(
     cache,
     "redis",
     `${composeFingerprint}:${runtimeFingerprint}`,
-    async () => {
-      const step = spinner();
-      step.start("Checking redis connectivity");
-      await assertRedisReady();
-      step.stop("redis: responsive");
-    }
+    () => assertRedisReady()
   );
+  setCheckState("redis", redisStatus);
+  activeCheck = null;
 
-  await withCache(
+  activeCheck = "zephob";
+  setCheckState("zephob", "running");
+  const zephobStatus = await withCache(
     cache,
     "zephob",
     `${composeFingerprint}:${runtimeFingerprint}:${ZEPHOB_ACCESS_KEY}:${ZEPHOB_REGION}`,
-    async () => {
-      const step = spinner();
-      step.start("Checking object storage buckets");
-      await assertBucketsReady();
-      step.stop("object storage: buckets ready");
-    }
+    () => assertBucketsReady()
   );
+  setCheckState("zephob", zephobStatus);
+  activeCheck = null;
 
-  await withCache(
+  activeCheck = "meilisearch";
+  setCheckState("meilisearch", "running");
+  const meilisearchStatus = await withCache(
     cache,
     "meilisearch",
     `${composeFingerprint}:${runtimeFingerprint}`,
-    async () => {
-      const step = spinner();
-      step.start("Checking meilisearch health");
-      await assertMeilisearchReady();
-      step.stop("meilisearch: healthy");
-    }
+    () => assertMeilisearchReady()
   );
+  setCheckState("meilisearch", meilisearchStatus);
+  activeCheck = null;
+
+  activeCheck = "portless";
+  setCheckState("portless", "running");
+  await ensurePortlessProxyReady();
+  setCheckState("portless", "ok");
+  activeCheck = null;
 
   await setCache(cache);
-
+  finishProgressLine();
+  log.success("Zephyr goes brr");
   outro("Preflight checks passed");
 }
 

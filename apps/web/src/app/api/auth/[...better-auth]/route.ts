@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 
-const AUTH_BASE = process.env.NEXT_PUBLIC_AUTH_URL || "http://localhost:3001";
+const AUTH_BASE = process.env.NEXT_PUBLIC_AUTH_URL || "https://auth.localhost";
 
 async function proxy(request: NextRequest) {
   const url = new URL(request.url);

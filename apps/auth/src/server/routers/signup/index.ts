@@ -311,7 +311,7 @@ async function _sendVerificationEmailSafe(
   email: string,
   token: string
 ): Promise<void> {
-  const base = env.NEXT_PUBLIC_URL ?? "http://localhost:3000";
+  const base = env.NEXT_PUBLIC_URL ?? "https://social.localhost";
   const url = new URL(`${base}/verify-email`);
   url.searchParams.set("token", token);
   try {
@@ -405,7 +405,7 @@ export const signupRouter = router({
         await writePendingSignup(token, payload);
 
         try {
-          const baseUrl = env.NEXT_PUBLIC_AUTH_URL ?? "http://localhost:3000";
+          const baseUrl = env.NEXT_PUBLIC_AUTH_URL ?? "https://auth.localhost";
           const response = await fetch(
             `${baseUrl}/api/auth/email-otp/send-verification-otp`,
             {
@@ -471,7 +471,7 @@ export const signupRouter = router({
         return { success: false, error: "not-found" } as const;
       }
       try {
-        const baseUrl = env.NEXT_PUBLIC_AUTH_URL ?? "http://localhost:3000";
+        const baseUrl = env.NEXT_PUBLIC_AUTH_URL ?? "https://auth.localhost";
         const response = await fetch(
           `${baseUrl}/api/auth/email-otp/send-verification-otp`,
           {

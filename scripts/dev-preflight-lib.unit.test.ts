@@ -1,14 +1,20 @@
 import { describe, expect, test } from "bun:test";
 import {
   areInitJobsComplete,
+  buildPreflightProgressLine,
   buildRuntimeFingerprint,
   computeCacheDigest,
+  formatPreflightCheckState,
   getMissingBuckets,
   getMissingServices,
   getUnhealthyServices,
   hasRedisPong,
   hasSchemaTables,
+  PREFLIGHT_CHECK_ORDER,
+  type PreflightCheckKey,
+  type PreflightCheckState,
   type ServiceSnapshot,
+  shouldUseSudoForPortless,
   withinTtl,
 } from "./dev-preflight-lib";
 
@@ -112,5 +118,44 @@ describe("cache and fingerprint helpers", () => {
     const now = Date.now();
     expect(withinTtl(now - 500, 1000)).toBe(true);
     expect(withinTtl(now - 1500, 1000)).toBe(false);
+  });
+});
+
+describe("preflight ui helpers", () => {
+  test("formats check states for compact status line", () => {
+    expect(formatPreflightCheckState("pending")).toBe("wait");
+    expect(formatPreflightCheckState("running")).toBe("...");
+    expect(formatPreflightCheckState("ok")).toBe("ok");
+    expect(formatPreflightCheckState("cached")).toBe("cache");
+    expect(formatPreflightCheckState("failed")).toBe("fail");
+  });
+
+  test("builds compact single-line status output", () => {
+    const states = new Map<PreflightCheckKey, PreflightCheckState>(
+      PREFLIGHT_CHECK_ORDER.map((check) => [check.key, "pending"])
+    );
+
+    states.set("services", "ok");
+    states.set("postgres", "running");
+    states.set("portless", "cached");
+
+    expect(buildPreflightProgressLine(states)).toBe(
+      "preflight svc:ok init:wait pg:... rd:wait obj:wait mei:wait ptl:cache"
+    );
+  });
+});
+
+describe("portless start helpers", () => {
+  test("detects sudo-required messages", () => {
+    expect(shouldUseSudoForPortless("Error: Port 443 requires sudo.")).toBe(
+      true
+    );
+    expect(shouldUseSudoForPortless("no TTY is available for sudo")).toBe(true);
+    expect(
+      shouldUseSudoForPortless(
+        "sudo: a terminal is required to read the password"
+      )
+    ).toBe(true);
+    expect(shouldUseSudoForPortless("Proxy started in background")).toBe(false);
   });
 });

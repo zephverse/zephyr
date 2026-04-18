@@ -307,6 +307,8 @@ export function createAuthConfig(config: AuthConfig = {}) {
     trustedOrigins: [
       env.NEXT_PUBLIC_URL,
       env.NEXT_PUBLIC_AUTH_URL,
+      "https://social.localhost",
+      "https://auth.localhost",
       "http://localhost:3000",
       "http://localhost:3001",
       "https://zephyyrr.in",

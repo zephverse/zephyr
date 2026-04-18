@@ -44,9 +44,9 @@ export const keys = createEnv({
       .string()
       .transform((val) => Number.parseInt(val, 10))
       .default(3000),
-    NEXT_PUBLIC_URL: z.url().default("http://localhost:3000"),
+    NEXT_PUBLIC_URL: z.url().default("https://social.localhost"),
     NEXT_PUBLIC_ZEPHOB_ENDPOINT: z.url().default("http://localhost:9090"),
-    NEXT_PUBLIC_AUTH_URL: z.url().default("http://localhost:3001"),
+    NEXT_PUBLIC_AUTH_URL: z.url().default("https://auth.localhost"),
   },
 
   runtimeEnv: {

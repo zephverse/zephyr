@@ -3,7 +3,7 @@ import { createAuthClient } from "better-auth/react";
 
 export const authClient: ReturnType<typeof createAuthClient> = createAuthClient(
   {
-    baseURL: process.env.NEXT_PUBLIC_AUTH_URL || "http://localhost:3001",
+    baseURL: process.env.NEXT_PUBLIC_AUTH_URL || "https://auth.localhost",
     fetchOptions: {
       credentials: "include",
     },

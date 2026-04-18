@@ -1,6 +1,6 @@
 {
   "name": "zephyr",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "license": "AGPL-3.0",
   "homepage": "https://zephyyrr.in",
   "private": true,
@@ -10,7 +10,7 @@
   ],
   "scripts": {
     "predev": "bun scripts/dev-preflight.ts",
-    "dev": "turbo check-types && turbo dev",
+    "dev": "turbo dev",
     "check": "ultracite fix --unsafe",
     "check-types": "tsc --project scripts/tsconfig.json && turbo check-types",
     "postinstall": "bun run --filter=@zephyr/db db:generate",
@@ -36,6 +36,7 @@
     "dotenv": "^17.4.2",
     "lefthook": "^2.1.6",
     "meilisearch": "^0.54.0",
+    "portless": "^0.10.3",
     "prisma": "^7.7.0",
     "turbo": "^2.9.6",
     "typescript": "^6.0.3",
