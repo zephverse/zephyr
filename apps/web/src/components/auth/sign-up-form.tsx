@@ -266,6 +266,39 @@ export default function SignUpForm() {
         const result = await signUp(values);
 
         if (result.success) {
+          if (result.requiresEmailVerification === false) {
+            const { authClient } = await import("@/lib/auth");
+            const loginResult = await authClient.signIn.email({
+              email: values.email,
+              password: values.password,
+              callbackURL: "/",
+              fetchOptions: {
+                onError: () => {
+                  // handled below with fallback redirect
+                },
+              },
+            });
+
+            if (loginResult?.data) {
+              setRateLimit("start", { isLimited: false });
+              toast({
+                title: "Welcome to Zephyr! 🎉",
+                description:
+                  "Account created and signed in. Email verification is bypassed on localhost development.",
+              });
+              window.location.href = "/";
+              return;
+            }
+
+            toast({
+              title: "Account Created! 🎉",
+              description:
+                "Email verification is bypassed on localhost development. Please log in to continue.",
+            });
+            window.location.href = "/login";
+            return;
+          }
+
           setOTPState(values.email);
           setRateLimit("start", { isLimited: false });
           toast({
@@ -419,6 +452,7 @@ export default function SignUpForm() {
           const loginResult = await authClient.signIn.email({
             email: responseEmail,
             password: responsePassword,
+            callbackURL: "/",
             fetchOptions: {
               onSuccess: () => {
                 console.log("Auto-login successful");

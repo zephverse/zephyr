@@ -1,6 +1,45 @@
 import type { NextRequest } from "next/server";
 
 const AUTH_BASE = process.env.NEXT_PUBLIC_AUTH_URL || "https://auth.localhost";
+const FORWARDED_HEADER_BLOCKLIST = new Set([
+  "accept-encoding",
+  "connection",
+  "content-length",
+  "host",
+  "transfer-encoding",
+]);
+
+function buildUpstreamHeaders(request: NextRequest) {
+  const headers = new Headers();
+
+  request.headers.forEach((value, key) => {
+    const lower = key.toLowerCase();
+    if (FORWARDED_HEADER_BLOCKLIST.has(lower)) {
+      return;
+    }
+    headers.set(key, value);
+  });
+
+  const forwardedHost =
+    request.headers.get("x-forwarded-host") || request.nextUrl.host;
+  const forwardedProto =
+    request.headers.get("x-forwarded-proto") ||
+    request.nextUrl.protocol.replace(":", "");
+  const forwardedOrigin = `${forwardedProto}://${forwardedHost}`;
+
+  headers.set("x-forwarded-host", forwardedHost);
+  headers.set("x-forwarded-proto", forwardedProto);
+
+  if (!headers.get("origin")) {
+    headers.set("origin", forwardedOrigin);
+  }
+
+  if (!headers.get("referer")) {
+    headers.set("referer", `${forwardedOrigin}/`);
+  }
+
+  return headers;
+}
 
 async function proxy(request: NextRequest) {
   const url = new URL(request.url);
@@ -8,15 +47,7 @@ async function proxy(request: NextRequest) {
   target.pathname = url.pathname;
   target.search = url.search;
 
-  const headers = new Headers(request.headers);
-  headers.delete("host");
-  const forwardedHost =
-    request.headers.get("x-forwarded-host") || request.nextUrl.host;
-  const forwardedProto =
-    request.headers.get("x-forwarded-proto") ||
-    request.nextUrl.protocol.replace(":", "");
-  headers.set("x-forwarded-host", forwardedHost);
-  headers.set("x-forwarded-proto", forwardedProto);
+  const headers = buildUpstreamHeaders(request);
 
   const init: RequestInit = {
     method: request.method,
@@ -110,6 +141,10 @@ async function proxy(request: NextRequest) {
       headers: responseHeaders,
     });
   } catch {
+    console.error("Auth proxy upstream request failed", {
+      method: request.method,
+      target: target.toString(),
+    });
     return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
       headers: { "content-type": "application/json" },
