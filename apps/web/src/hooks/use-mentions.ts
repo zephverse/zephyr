@@ -1,9 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { UserData } from "@zephyr/db";
 
-type MentionsResponse = {
+interface MentionsResponse {
   mentions: UserData[];
-};
+}
 
 export function useMentions(postId?: string) {
   const queryClient = useQueryClient();

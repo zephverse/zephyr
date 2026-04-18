@@ -39,7 +39,7 @@ export async function POST(req: Request) {
     }
 
     return Response.json(followStates);
-  } catch (_error) {
+  } catch {
     return Response.json({ error: "Internal server error" }, { status: 500 });
   }
 }

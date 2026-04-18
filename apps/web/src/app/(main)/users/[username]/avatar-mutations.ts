@@ -4,16 +4,16 @@ import type { UserData } from "@zephyr/db";
 import { useToast } from "@zephyr/ui/hooks/use-toast";
 import { getSecureImageUrl } from "@/lib/utils/image-url";
 
-type UpdateProfilePayload = {
+interface UpdateProfilePayload {
+  userId: string;
   values: UpdateUserProfileValues;
-  userId: string;
-};
+}
 
-type UpdateAvatarPayload = {
+interface UpdateAvatarPayload {
   file: File;
-  userId: string;
   oldAvatarKey?: string;
-};
+  userId: string;
+}
 
 export function useUpdateAvatarMutation() {
   const queryClient = useQueryClient();

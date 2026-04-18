@@ -1,18 +1,18 @@
 import type { HNStory } from "@zephyr/aggregator/hackernews";
 
-export type FetchStoriesParams = {
-  page: number;
+export interface FetchStoriesParams {
   limit: number;
+  page: number;
   search?: string;
   sort?: string;
   type?: string;
-};
+}
 
-export type HNResponse = {
-  stories: HNStory[];
+export interface HNResponse {
   hasMore: boolean;
+  stories: HNStory[];
   total: number;
-};
+}
 
 type SearchParamsRecord = Record<string, string | number | boolean>;
 

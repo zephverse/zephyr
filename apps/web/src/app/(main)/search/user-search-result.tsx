@@ -7,18 +7,18 @@ import { Button } from "@zephyr/ui/shadui/button";
 import { Users2, VerifiedIcon } from "lucide-react";
 import { motion } from "motion/react";
 import Link from "next/link";
-import EditProfileButton from "@/components/Layouts/edit-profile-button";
-import FollowButton from "@/components/Layouts/follow-button";
-import UserAvatar from "@/components/Layouts/user-avatar";
+import EditProfileButton from "@/components/layouts/edit-profile-button";
+import FollowButton from "@/components/layouts/follow-button";
+import UserAvatar from "@/components/layouts/user-avatar";
 import Linkify from "@/helpers/global/linkify";
 import kyInstance from "@/lib/ky";
 import { cn } from "@/lib/utils";
 import { useSession } from "../session-provider";
 
-type UsersResponse = {
-  users: UserData[];
+interface UsersResponse {
   nextCursor: string | null;
-};
+  users: UserData[];
+}
 
 const container = {
   hidden: { opacity: 0 },

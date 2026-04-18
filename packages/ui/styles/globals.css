@@ -168,9 +168,9 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-sans;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    @apply bg-background text-foreground font-sans;
   }
 }
 
@@ -206,7 +206,7 @@
   }
 
   .backdrop-blur-dialog {
-    backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
   }
 }

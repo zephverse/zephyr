@@ -1,7 +1,11 @@
 import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { prisma } from "@zephyr/db";
 import { NextResponse } from "next/server";
-import { MINIO_BUCKET, minioClient, validateBucket } from "@/lib/minio";
+import {
+  validateBucket,
+  ZEPHOB_BUCKET,
+  zephobClient,
+} from "@/lib/object-storage";
 import {
   getContentDisposition,
   shouldDisplayInline,
@@ -48,11 +52,11 @@ export async function GET(
     }
 
     const command = new GetObjectCommand({
-      Bucket: MINIO_BUCKET,
+      Bucket: ZEPHOB_BUCKET,
       Key: mediaWithData.key,
     });
 
-    const response = await minioClient.send(command);
+    const response = await zephobClient.send(command);
 
     if (!response.Body) {
       return new NextResponse("Media content not found", { status: 404 });

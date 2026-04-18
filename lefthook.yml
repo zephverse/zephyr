@@ -1,0 +1,17 @@
+pre-commit:
+  commands:
+    bump:
+      run: bun scripts/hooks/bump-versions.ts
+    lint:
+      run: bun run check
+    types:
+      run: bun run check-types
+
+pre-push:
+  commands:
+    tests:
+      run: bun test
+    lint:
+      run: bun run check
+    types:
+      run: bun run check-types

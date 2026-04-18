@@ -85,7 +85,7 @@ export default function NotFound() {
               <h1 className="select-none font-bold text-[12rem] text-primary/5 leading-none tracking-tight">
                 404
               </h1>
-              <h1 className="-translate-x-1/2 -translate-y-1/2 absolute top-1/2 left-1/2 font-bold text-7xl text-primary">
+              <h1 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 font-bold text-7xl text-primary">
                 404
               </h1>
             </div>

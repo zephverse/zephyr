@@ -1,13 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Tag } from "@zephyr/db";
 
-type TagResponse = {
+interface TagResponse {
   tags: string[];
-};
+}
 
-type PopularTagsResponse = {
+interface PopularTagsResponse {
   tags: Tag[];
-};
+}
 
 export function useTags(postId?: string) {
   const queryClient = useQueryClient();

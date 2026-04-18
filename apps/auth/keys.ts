@@ -7,7 +7,10 @@ export const keys = createEnv({
     DATABASE_URL: z.url(),
     POSTGRES_PRISMA_URL: z.url(),
     POSTGRES_URL_NON_POOLING: z.url(),
-    RESEND_API_KEY: z.string().min(1),
+    RESEND_API_KEY: z.preprocess(
+      (value) => (value === "" ? undefined : value),
+      z.string().min(1).optional()
+    ),
     GOOGLE_CLIENT_ID: z.string().optional(),
     GOOGLE_CLIENT_SECRET: z.string().optional(),
     GITHUB_CLIENT_ID: z.string().optional(),
@@ -35,8 +38,8 @@ export const keys = createEnv({
   },
 
   client: {
-    NEXT_PUBLIC_AUTH_URL: z.url().default("http://localhost:3001"),
-    NEXT_PUBLIC_URL: z.url().default("http://localhost:3000"),
+    NEXT_PUBLIC_AUTH_URL: z.url().default("https://auth.localhost"),
+    NEXT_PUBLIC_URL: z.url().default("https://social.localhost"),
   },
 
   runtimeEnv: {

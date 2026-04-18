@@ -6,12 +6,12 @@ import { useRef, useState } from "react";
 import { cn } from "../../lib/utils";
 import { Input } from "../../shadui/input";
 
-type HnSearchInputProps = {
-  value: string;
+interface HnSearchInputProps {
+  className?: string;
   onChangeAction: (value: string) => void;
   placeholder?: string;
-  className?: string;
-};
+  value: string;
+}
 
 const searchVariants: Variants = {
   initial: { scale: 0.95, opacity: 0 },
@@ -98,7 +98,7 @@ export function HNSearchInput({
 
       <motion.div
         animate={{ opacity: isFocused ? 1 : 0 }}
-        className="-z-10 absolute inset-0 rounded-full bg-gradient-to-r from-orange-500/20 to-yellow-500/20 opacity-0 blur-xl transition-opacity group-hover:opacity-100"
+        className="absolute inset-0 -z-10 rounded-full bg-gradient-to-r from-orange-500/20 to-yellow-500/20 opacity-0 blur-xl transition-opacity group-hover:opacity-100"
         initial={false}
       />
     </motion.div>

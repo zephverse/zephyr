@@ -21,23 +21,23 @@ import React, { useEffect, useState } from "react";
 import { trpc } from "../trpc/client";
 import type { ModalAction, User, UserFilters } from "../types/types";
 
-type UserTableProps = {
-  users: User[];
-  onAction: (user: User, action: ModalAction) => void;
-  searchQuery: string;
-  onSearchChangeAction: (query: string) => void;
-  totalCount?: number;
-  hasMore?: boolean;
-  onLoadMoreAction?: () => void;
+interface UserTableProps {
   filters?: UserFilters;
+  hasMore?: boolean;
+  onAction: (user: User, action: ModalAction) => void;
   onFiltersChangeAction?: (filters: UserFilters) => void;
-  sortBy?: "createdAt" | "aura" | "username" | "displayName";
-  sortOrder?: "asc" | "desc";
+  onLoadMoreAction?: () => void;
+  onSearchChangeAction: (query: string) => void;
   onSortChangeAction?: (
     sortBy: "createdAt" | "aura" | "username" | "displayName",
     sortOrder: "asc" | "desc"
   ) => void;
-};
+  searchQuery: string;
+  sortBy?: "createdAt" | "aura" | "username" | "displayName";
+  sortOrder?: "asc" | "desc";
+  totalCount?: number;
+  users: User[];
+}
 
 function highlightText(text: string, searchQuery: string): React.ReactNode {
   if (!(searchQuery && text)) {

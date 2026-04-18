@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import DiscoverySidebar from "@/components/Discover/discover-sidebar";
-import NewUsers from "@/components/Discover/new-users";
-import Friends from "@/components/Home/sidebars/left/friends";
+import DiscoverySidebar from "@/components/discover/discover-sidebar";
+import NewUsers from "@/components/discover/new-users";
+import Friends from "@/components/home/sidebars/left/friends";
 import { getUserData } from "@/hooks/use-user-data";
 import { getSessionFromApi } from "@/lib/session";
 

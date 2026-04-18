@@ -6,7 +6,9 @@ import Image from "next/image";
 import type { ReactNode } from "react";
 import "./theme.css";
 
-type NextraThemeProps = { children: ReactNode };
+interface NextraThemeProps {
+  children: ReactNode;
+}
 
 export default async function NextraTheme({ children }: NextraThemeProps) {
   const navbar = (

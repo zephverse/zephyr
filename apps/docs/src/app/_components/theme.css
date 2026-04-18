@@ -22,8 +22,8 @@
 }
 
 .zephyr-theme {
-  background-color: var(--zephyr-bg);
   color: var(--zephyr-text);
+  background-color: var(--zephyr-bg);
 }
 
 /* Nextra theme vars mapping */
@@ -68,8 +68,8 @@ textarea {
 
 button[type="button"],
 button[type="submit"] {
-  background-color: var(--zephyr-accent);
   color: var(--zephyr-accent-foreground);
+  background-color: var(--zephyr-accent);
 }
 
 button[type="button"]:hover,

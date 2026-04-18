@@ -8,20 +8,20 @@ export const keys = createEnv({
     POSTGRES_PRISMA_URL: z.url(),
     POSTGRES_URL_NON_POOLING: z.url(),
     REDIS_URL: z.url(),
-    MINIO_ROOT_USER: z.string().min(1).default("minioadmin"),
-    MINIO_ROOT_PASSWORD: z.string().min(1).default("minioadmin"),
-    MINIO_BUCKET_NAME: z.string().min(1).default("uploads"),
-    MINIO_PORT: z
+    ZEPHOB_ROOT_USER: z.string().min(1).default("zephob-admin"),
+    ZEPHOB_ROOT_PASSWORD: z.string().min(1).default("zephob-admin"),
+    ZEPHOB_BUCKET_NAME: z.string().min(1).default("uploads"),
+    ZEPHOB_PORT: z
       .string()
       .transform((val) => Number.parseInt(val, 10))
-      .default(9000),
-    MINIO_CONSOLE_PORT: z
+      .default(9090),
+    ZEPHOB_CONSOLE_PORT: z
       .string()
       .transform((val) => Number.parseInt(val, 10))
       .default(9001),
-    MINIO_HOST: z.string().min(1).default("localhost"),
-    MINIO_ENDPOINT: z.url(),
-    MINIO_ENABLE_OBJECT_LOCKING: z.enum(["on", "off"]).default("on"),
+    ZEPHOB_HOST: z.string().min(1).default("localhost"),
+    ZEPHOB_ENDPOINT: z.url(),
+    ZEPHOB_ENABLE_OBJECT_LOCKING: z.enum(["on", "off"]).default("on"),
     RABBITMQ_URL: z.url().default("amqp://admin:admin123@localhost:5672"),
     MEILISEARCH_URL: z.url().default("http://localhost:7700"),
     MEILISEARCH_MASTER_KEY: z.string().default("masterKey123"),
@@ -44,9 +44,9 @@ export const keys = createEnv({
       .string()
       .transform((val) => Number.parseInt(val, 10))
       .default(3000),
-    NEXT_PUBLIC_URL: z.url().default("http://localhost:3000"),
-    NEXT_PUBLIC_MINIO_ENDPOINT: z.url().default("http://localhost:9000"),
-    NEXT_PUBLIC_AUTH_URL: z.url().default("http://localhost:3001"),
+    NEXT_PUBLIC_URL: z.url().default("https://social.localhost"),
+    NEXT_PUBLIC_ZEPHOB_ENDPOINT: z.url().default("http://localhost:9090"),
+    NEXT_PUBLIC_AUTH_URL: z.url().default("https://auth.localhost"),
   },
 
   runtimeEnv: {
@@ -54,14 +54,14 @@ export const keys = createEnv({
     POSTGRES_PRISMA_URL: process.env.POSTGRES_PRISMA_URL,
     POSTGRES_URL_NON_POOLING: process.env.POSTGRES_URL_NON_POOLING,
     REDIS_URL: process.env.REDIS_URL,
-    MINIO_ROOT_USER: process.env.MINIO_ROOT_USER,
-    MINIO_ROOT_PASSWORD: process.env.MINIO_ROOT_PASSWORD,
-    MINIO_BUCKET_NAME: process.env.MINIO_BUCKET_NAME,
-    MINIO_PORT: process.env.MINIO_PORT,
-    MINIO_CONSOLE_PORT: process.env.MINIO_CONSOLE_PORT,
-    MINIO_HOST: process.env.MINIO_HOST,
-    MINIO_ENDPOINT: process.env.MINIO_ENDPOINT,
-    MINIO_ENABLE_OBJECT_LOCKING: process.env.MINIO_ENABLE_OBJECT_LOCKING,
+    ZEPHOB_ROOT_USER: process.env.ZEPHOB_ROOT_USER,
+    ZEPHOB_ROOT_PASSWORD: process.env.ZEPHOB_ROOT_PASSWORD,
+    ZEPHOB_BUCKET_NAME: process.env.ZEPHOB_BUCKET_NAME,
+    ZEPHOB_PORT: process.env.ZEPHOB_PORT,
+    ZEPHOB_CONSOLE_PORT: process.env.ZEPHOB_CONSOLE_PORT,
+    ZEPHOB_HOST: process.env.ZEPHOB_HOST,
+    ZEPHOB_ENDPOINT: process.env.ZEPHOB_ENDPOINT,
+    ZEPHOB_ENABLE_OBJECT_LOCKING: process.env.ZEPHOB_ENABLE_OBJECT_LOCKING,
     RABBITMQ_URL: process.env.RABBITMQ_URL,
     MEILISEARCH_URL: process.env.MEILISEARCH_URL,
     MEILISEARCH_MASTER_KEY: process.env.MEILISEARCH_MASTER_KEY,
@@ -75,7 +75,7 @@ export const keys = createEnv({
     BETTER_AUTH_TELEMETRY: process.env.BETTER_AUTH_TELEMETRY,
     NEXT_PUBLIC_PORT: process.env.NEXT_PUBLIC_PORT,
     NEXT_PUBLIC_URL: process.env.NEXT_PUBLIC_URL,
-    NEXT_PUBLIC_MINIO_ENDPOINT: process.env.NEXT_PUBLIC_MINIO_ENDPOINT,
+    NEXT_PUBLIC_ZEPHOB_ENDPOINT: process.env.NEXT_PUBLIC_ZEPHOB_ENDPOINT,
     NEXT_PUBLIC_AUTH_URL: process.env.NEXT_PUBLIC_AUTH_URL,
   },
 

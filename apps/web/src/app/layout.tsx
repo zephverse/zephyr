@@ -83,13 +83,14 @@ export const metadata: Metadata = {
   },
 };
 
-type RootLayoutProperties = {
+interface RootLayoutProperties {
   readonly children: ReactNode;
-};
+}
 
 const RootLayout = ({ children }: RootLayoutProperties) => (
   <html
     className={`${SofiaProSoft.className} ${SofiaProSoft.variable} antialiased`}
+    data-scroll-behavior="smooth"
     lang="en"
     suppressHydrationWarning
   >

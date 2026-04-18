@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
-import Friends from "@/components/Home/sidebars/left/friends";
-import NavigationCard from "@/components/Home/sidebars/left/navigation-card";
-import ProfileCard from "@/components/Home/sidebars/right/profile-card";
-import TrendingTopics from "@/components/Home/sidebars/right/trending-topics";
-import StickyFooter from "@/components/Layouts/stinky-footer";
+import Friends from "@/components/home/sidebars/left/friends";
+import NavigationCard from "@/components/home/sidebars/left/navigation-card";
+import ProfileCard from "@/components/home/sidebars/right/profile-card";
+import TrendingTopics from "@/components/home/sidebars/right/trending-topics";
+import StickyFooter from "@/components/layouts/stinky-footer";
 import { getUserData } from "@/hooks/use-user-data";
 import { getSessionFromApi } from "@/lib/session";
 import SearchResults from "./search-result";
 
-type PageProps = {
+interface PageProps {
   searchParams: Promise<{ q: string }>;
-};
+}
 
 export async function generateMetadata(props: PageProps): Promise<Metadata> {
   const searchParams = await props.searchParams;

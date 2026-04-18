@@ -1,9 +1,9 @@
 import { FileText, Shield } from "lucide-react";
 import Link from "next/link";
 
-type LegalLinksCardProps = {
+interface LegalLinksCardProps {
   className?: string;
-};
+}
 
 export function LegalLinksCard({ className }: LegalLinksCardProps) {
   return (

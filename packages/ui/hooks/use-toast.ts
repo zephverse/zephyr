@@ -1,5 +1,6 @@
 "use client";
 
+import type * as React from "react";
 import { useEffect, useState } from "react";
 import type { ToastActionElement, ToastProps } from "../shadui/toast";
 
@@ -47,9 +48,9 @@ type Action =
       toastId?: ToasterToast["id"];
     };
 
-type State = {
+interface State {
   toasts: ToasterToast[];
-};
+}
 
 const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
 
@@ -195,4 +196,4 @@ function useToast() {
   };
 }
 
-export { useToast, toast };
+export { toast, useToast };

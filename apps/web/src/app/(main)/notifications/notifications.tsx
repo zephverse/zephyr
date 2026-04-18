@@ -7,9 +7,9 @@ import {
 } from "@tanstack/react-query";
 import type { NotificationsPage } from "@zephyr/db";
 import { useEffect } from "react";
-import InfiniteScrollContainer from "@/components/Layouts/infinite-scroll-container";
-import LoadMoreSkeleton from "@/components/Layouts/skeletons/load-more-skeleton";
-import PostsOnlyLoadingSkeleton from "@/components/Layouts/skeletons/post-only-loading-skeleton";
+import InfiniteScrollContainer from "@/components/layouts/infinite-scroll-container";
+import LoadMoreSkeleton from "@/components/layouts/skeletons/load-more-skeleton";
+import PostsOnlyLoadingSkeleton from "@/components/layouts/skeletons/post-only-loading-skeleton";
 import kyInstance from "@/lib/ky";
 import Notification from "./notification";
 

@@ -1,72 +1,49 @@
-export type User = {
-  id: string;
-  username: string;
+export interface User {
+  aura: number;
+  avatarUrl: string | null;
+  banned: boolean;
+  bio: string | null;
+  bookmarks: number;
+  createdAt: string;
   displayName: string;
   displayUsername: string | null;
   email: string | null;
   emailVerified: boolean;
-  banned: boolean;
-  avatarUrl: string | null;
-  bio: string | null;
-  aura: number;
-  role: "user" | "admin";
-  posts: number;
-  sessions: number;
-  following: number;
   followers: number;
-  bookmarks: number;
+  following: number;
+  id: string;
   joinedDate: string;
-  createdAt: string;
+  posts: number;
+  role: "user" | "admin";
+  sessions: number;
   updatedAt: string;
-};
+  username: string;
+}
 
-export type UserFilters = {
-  role?: "user" | "admin";
+export interface UserFilters {
   emailVerified?: boolean;
   hasEmail?: boolean;
+  role?: "user" | "admin";
   search?: string;
-};
+}
 
-export type UserListResult = {
-  users: User[];
-  totalCount: number;
+export interface UserListResult {
   hasMore: boolean;
   nextCursor?: string;
-};
+  totalCount: number;
+  users: User[];
+}
 
-export type UserStats = {
-  totalUsers: number;
+export interface UserStats {
   adminUsers: number;
-  verifiedUsers: number;
   recentUsers: number;
-  totalPosts: number;
   totalAura: number;
-};
+  totalPosts: number;
+  totalUsers: number;
+  verifiedUsers: number;
+}
 
-export type UserDetail = {
-  id: string;
-  username: string;
-  displayName: string;
-  displayUsername?: string;
-  email?: string;
-  emailVerified: boolean;
-  avatarUrl?: string;
-  bio?: string;
-  aura: number;
-  role: "user" | "admin";
-  createdAt: Date;
-  updatedAt: Date;
-  accounts: Array<{
-    providerId: string;
-    createdAt: Date;
-  }>;
-  sessions: Array<{
-    id: string;
-    createdAt: Date;
-    expiresAt: Date;
-    ipAddress?: string;
-    userAgent?: string;
-  }>;
+export interface UserDetail {
   _count: {
     posts: number;
     followers: number;
@@ -75,6 +52,29 @@ export type UserDetail = {
     comments: number;
     votes: number;
   };
-};
+  accounts: Array<{
+    providerId: string;
+    createdAt: Date;
+  }>;
+  aura: number;
+  avatarUrl?: string;
+  bio?: string;
+  createdAt: Date;
+  displayName: string;
+  displayUsername?: string;
+  email?: string;
+  emailVerified: boolean;
+  id: string;
+  role: "user" | "admin";
+  sessions: Array<{
+    id: string;
+    createdAt: Date;
+    expiresAt: Date;
+    ipAddress?: string;
+    userAgent?: string;
+  }>;
+  updatedAt: Date;
+  username: string;
+}
 
 export type ModalAction = "view" | "edit" | "update";

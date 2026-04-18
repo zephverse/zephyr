@@ -39,13 +39,13 @@ function getBaseUrl(): string {
   return env.NEXT_PUBLIC_URL.replace(TRAILING_SLASH_REGEX, "");
 }
 
-type EmailResult = {
-  success: boolean;
+export interface EmailResult {
   error?: string;
-  skipped?: boolean;
-  verificationUrl?: string;
   message?: string;
-};
+  skipped?: boolean;
+  success: boolean;
+  verificationUrl?: string;
+}
 
 function getVerificationResult(
   options: Partial<EmailResult> & { success: boolean }

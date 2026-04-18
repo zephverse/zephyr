@@ -6,10 +6,10 @@ const TAG_LIST_KEY = "tags:list";
 const TAG_SUGGESTIONS_KEY = "tags:suggestions";
 const TAG_TTL = 3600; // 1 hour
 
-export type TagCount = {
-  name: string;
+export interface TagCount {
   count: number;
-};
+  name: string;
+}
 
 export const tagCache = {
   async syncTagCounts(): Promise<void> {

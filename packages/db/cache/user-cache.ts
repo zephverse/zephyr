@@ -1,13 +1,13 @@
 import { redis } from "../src/redis";
 
-export type CachedUserStats = {
-  totalUsers: number;
+export interface CachedUserStats {
   adminUsers: number;
-  verifiedUsers: number;
   recentUsers: number;
-  totalPosts: number;
   totalAura: number;
-};
+  totalPosts: number;
+  totalUsers: number;
+  verifiedUsers: number;
+}
 
 const USER_STATS_CACHE_KEY = "admin:user:stats";
 const USER_STATS_TTL = 300;
@@ -42,7 +42,7 @@ function doesKeyContainSearchQuery(key: string, searchQuery: string): boolean {
     const filters = JSON.parse(decoded);
 
     return filters.search === searchQuery;
-  } catch (_error) {
+  } catch {
     return false;
   }
 }

@@ -1,43 +1,43 @@
 import type React from "react";
 
-export type FormData = {
-  email: string;
-  type: string;
+export interface FormData {
+  browser: string;
   category: string;
-  priority: string;
-  subject: string;
+  email: string;
   message: string;
   os: string;
-  browser: string;
-};
+  priority: string;
+  subject: string;
+  type: string;
+}
 
-export type StepProps = {
+export interface StepProps {
   formData: FormData;
-  setFormData: (data: FormData) => void;
-  onNext?: () => void;
-  onBack?: () => void;
   loading?: boolean;
-};
+  onBack?: () => void;
+  onNext?: () => void;
+  setFormData: (data: FormData) => void;
+}
 
-export type Attachment = {
-  name: string;
+export interface Attachment {
   file: File;
-  url: string;
+  isUploading: boolean;
   key: string;
+  name: string;
   originalName: string;
+  previewUrl?: string;
   size: number;
   type: string;
-  isUploading: boolean;
-  previewUrl?: string;
-};
+  url: string;
+}
 
-export type StepThreeProps = {
-  formData: FormData;
-  setFormData: (data: FormData) => void;
-  onBack?: () => void;
-  loading: boolean;
+export interface StepThreeProps {
   attachments: Attachment[];
   fileInputRef: React.RefObject<HTMLInputElement | null>;
+  formData: FormData;
   handleFileUpload: (files: FileList) => Promise<void>;
+  loading: boolean;
+  onBack?: () => void;
   setAttachments: React.Dispatch<React.SetStateAction<Attachment[]>>;
-};
+  setFormData: (data: FormData) => void;
+}

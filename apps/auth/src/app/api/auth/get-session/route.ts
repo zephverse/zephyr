@@ -6,7 +6,7 @@ function corsHeaders() {
     "Access-Control-Allow-Origin":
       process.env.NODE_ENV === "production"
         ? process.env.NEXT_PUBLIC_URL || "https://zephyyrr.in"
-        : "http://localhost:3000",
+        : "https://social.localhost",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
     "Access-Control-Allow-Credentials": "true",

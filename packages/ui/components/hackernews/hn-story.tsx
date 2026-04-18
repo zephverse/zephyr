@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { motion, type Variants } from "motion/react";
 import { useRouter } from "next/navigation";
-import type React from "react";
+import type * as React from "react";
 import { toast } from "../../hooks/use-toast";
 import { cn } from "../../lib/utils";
 import { Badge } from "../../shadui/badge";
@@ -40,7 +40,7 @@ const iconButtonVariants: Variants = {
   hover: { scale: 1.1 },
 };
 
-type HnStoryProps = {
+interface HnStoryProps {
   story: {
     id: number;
     title: string;
@@ -50,7 +50,7 @@ type HnStoryProps = {
     score: number;
     descendants: number;
   };
-};
+}
 
 export function HNStory({ story }: HnStoryProps) {
   const domain = story.url ? new URL(story.url).hostname : null;
@@ -92,7 +92,7 @@ export function HNStory({ story }: HnStoryProps) {
           description: "Link has been copied to your clipboard",
         });
       }
-    } catch (_error) {
+    } catch {
       // Silently fail if clipboard is not available
     }
   };
@@ -153,7 +153,7 @@ export function HNStory({ story }: HnStoryProps) {
     >
       <motion.div
         animate={{ opacity: 0 }}
-        className="-z-10 absolute inset-0 bg-gradient-to-r from-orange-500/10 to-transparent opacity-0 transition-opacity group-hover:opacity-100"
+        className="absolute inset-0 -z-10 bg-gradient-to-r from-orange-500/10 to-transparent opacity-0 transition-opacity group-hover:opacity-100"
         initial={false}
         whileHover={{ opacity: 0.1 }}
       />

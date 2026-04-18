@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import type React from "react";
+import type * as React from "react";
 import { useEffect, useId, useRef, useState } from "react";
 import { cn } from "../../lib/utils";
 import { SparklesCore } from "./sparkles";
@@ -140,10 +140,10 @@ export const Cover = ({
       >
         {children}
       </motion.span>
-      <CircleIcon className="-right-[2px] -top-[2px] absolute" />
-      <CircleIcon className="-bottom-[2px] -right-[2px] absolute" delay={0.4} />
-      <CircleIcon className="-left-[2px] -top-[2px] absolute" delay={0.8} />
-      <CircleIcon className="-bottom-[2px] -left-[2px] absolute" delay={1.6} />
+      <CircleIcon className="absolute -top-[2px] -right-[2px]" />
+      <CircleIcon className="absolute -right-[2px] -bottom-[2px]" delay={0.4} />
+      <CircleIcon className="absolute -top-[2px] -left-[2px]" delay={0.8} />
+      <CircleIcon className="absolute -bottom-[2px] -left-[2px]" delay={1.6} />
     </span>
   );
 };

@@ -15,9 +15,9 @@ import AccountSettings from "./tabs/account-settings";
 import ProfileSettings from "./tabs/profile-settings";
 import SecuritySettings from "./tabs/security-settings";
 
-type ClientSettingsProps = {
+interface ClientSettingsProps {
   user: UserData;
-};
+}
 
 export default function ClientSettings({ user }: ClientSettingsProps) {
   return (
@@ -101,7 +101,7 @@ export default function ClientSettings({ user }: ClientSettingsProps) {
           <FossBanner className="mt-8" />
 
           {/* Background gradient effect */}
-          <div className="-z-10 absolute inset-0 rounded-xl bg-gradient-to-br from-primary/5 via-secondary/5 to-background blur-3xl" />
+          <div className="absolute inset-0 -z-10 rounded-xl bg-gradient-to-br from-primary/5 via-secondary/5 to-background blur-3xl" />
         </div>
       </motion.div>
       <div className="hidden md:block">

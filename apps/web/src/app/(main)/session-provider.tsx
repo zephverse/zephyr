@@ -4,10 +4,10 @@ import type { Session, User } from "@zephyr/auth/core";
 import type React from "react";
 import { createContext, useContext } from "react";
 
-type SessionContext = {
-  user: User;
+interface SessionContext {
   session: Session;
-};
+  user: User;
+}
 
 const SessionContext = createContext<SessionContext | null>(null);
 

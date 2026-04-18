@@ -4,6 +4,7 @@ export const config: NextConfig = {
   transpilePackages: ["@zephyr/auth", "@zephyr/db", "@zephyr/config"],
   reactStrictMode: true,
   reactCompiler: true,
+  allowedDevOrigins: ["*.localhost", "localhost", "127.0.0.1"],
   experimental: {
     staleTimes: { dynamic: 30 },
     cssChunking: true,

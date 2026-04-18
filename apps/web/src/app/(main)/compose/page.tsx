@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import NavigationCard from "@/components/Home/sidebars/left/navigation-card";
-import ProfileCard from "@/components/Home/sidebars/right/profile-card";
-import TrendingTopics from "@/components/Home/sidebars/right/trending-topics";
-import StickyFooter from "@/components/Layouts/stinky-footer";
+import NavigationCard from "@/components/home/sidebars/left/navigation-card";
+import ProfileCard from "@/components/home/sidebars/right/profile-card";
+import TrendingTopics from "@/components/home/sidebars/right/trending-topics";
+import StickyFooter from "@/components/layouts/stinky-footer";
 import { getUserData } from "@/hooks/use-user-data";
 import { getSessionFromApi } from "@/lib/session";
 import PostEditorPage from "./post-editor-page";

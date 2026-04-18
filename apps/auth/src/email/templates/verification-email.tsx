@@ -14,9 +14,9 @@ import {
 } from "@react-email/components";
 import { emailConfig } from "../config";
 
-type VerificationEmailProps = {
+interface VerificationEmailProps {
   verificationUrl: string;
-};
+}
 
 export const VerificationEmail = ({
   verificationUrl,
@@ -85,9 +85,9 @@ export const VerificationEmail = ({
 export const getVerificationEmailHtml = (verificationUrl: string) =>
   render(<VerificationEmail verificationUrl={verificationUrl} />);
 
-type OTPVerificationEmailProps = {
+interface OTPVerificationEmailProps {
   otp: string;
-};
+}
 
 export const OTPVerificationEmail = ({ otp }: OTPVerificationEmailProps) => (
   <Html lang="en">

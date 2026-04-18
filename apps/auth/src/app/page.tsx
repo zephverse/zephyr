@@ -29,7 +29,7 @@ export default async function AdminDashboard() {
   }
 
   if (!isAdmin) {
-    redirect(process.env.NEXT_PUBLIC_URL || "http://localhost:3000");
+    redirect(process.env.NEXT_PUBLIC_URL || "https://social.localhost");
   }
 
   return <AdminDashboardClient />;

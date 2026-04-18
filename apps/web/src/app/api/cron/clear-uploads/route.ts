@@ -1,6 +1,6 @@
 import { prisma } from "@zephyr/db";
 import { NextResponse } from "next/server";
-import { deleteAvatar } from "@/lib/minio";
+import { deleteAvatar } from "@/lib/object-storage";
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Media cleanup involves multiple batch operations, file processing, and error handling
 async function clearUploads() {
@@ -214,7 +214,7 @@ async function clearUploads() {
     try {
       await prisma.$disconnect();
       log("👋 Database connection closed");
-    } catch (_error) {
+    } catch {
       log("❌ Error closing database connection");
     }
   }

@@ -1,15 +1,15 @@
-export type HNStoryType = {
+export interface HNStoryType {
+  by: string;
+  descendants: number;
   id: number;
+  score: number;
+  time: number;
   title: string;
   url?: string;
-  by: string;
-  time: number;
-  score: number;
-  descendants: number;
-};
+}
 
-export type HNApiResponse = {
-  stories: HNStoryType[];
+export interface HNApiResponse {
   hasMore: boolean;
+  stories: HNStoryType[];
   total: number;
-};
+}

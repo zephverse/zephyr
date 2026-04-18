@@ -1,11 +1,11 @@
 import { type CachedSession, jwtSessionCache } from "@zephyr/db";
 import { type JWTPayload, jwtVerify } from "jose";
 
-export type JWTValidationResult = {
-  valid: boolean;
-  payload?: JWTPayload;
+export interface JWTValidationResult {
   error?: string;
-};
+  payload?: JWTPayload;
+  valid: boolean;
+}
 
 export async function validateJWTToken(
   token: string
@@ -16,8 +16,8 @@ export async function validateJWTToken(
     );
 
     const { payload } = await jwtVerify(token, secret, {
-      issuer: process.env.NEXT_PUBLIC_URL || "http://localhost:3000",
-      audience: process.env.NEXT_PUBLIC_URL || "http://localhost:3000",
+      issuer: process.env.NEXT_PUBLIC_URL || "https://social.localhost",
+      audience: process.env.NEXT_PUBLIC_URL || "https://social.localhost",
     });
 
     return { valid: true, payload };
@@ -37,7 +37,7 @@ export function extractTokenFromHeader(
   if (!authHeader?.startsWith("Bearer ")) {
     return null;
   }
-  return authHeader.substring(7);
+  return authHeader.slice(7);
 }
 
 export function createJWTValidationCacheKey(token: string): string {

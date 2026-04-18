@@ -1,10 +1,10 @@
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
 
-type AnimatedWordCounterProps = {
+interface AnimatedWordCounterProps {
   current: number;
   max: number;
-};
+}
 
 export function AnimatedWordCounter({
   current,
@@ -44,7 +44,7 @@ export function AnimatedWordCounter({
       {isNearLimit && (
         <motion.div
           animate={{ opacity: 1, y: 0 }}
-          className="-top-6 absolute left-0 text-warning"
+          className="absolute -top-6 left-0 text-warning"
           initial={{ opacity: 0, y: 10 }}
         >
           {isOverLimit ? "Too many words" : "Approaching limit"}

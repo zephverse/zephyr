@@ -8,9 +8,9 @@ import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import AnimatedAuthLink from "@/components/Auth/animated-auth-link";
-import AuthButtonWrapper from "@/components/Auth/auth-button-wrapper";
-import LoginForm from "@/components/Auth/login-form";
+import AnimatedAuthLink from "@/components/auth/animated-auth-link";
+import AuthButtonWrapper from "@/components/auth/auth-button-wrapper";
+import LoginForm from "@/components/auth/login-form";
 import DiscordSignInButton from "./discord-sign-in-button";
 import GithubSignInButton from "./github-sign-in-button";
 import GoogleSignInButton from "./google-sign-in-button";
@@ -150,7 +150,7 @@ export default function ClientLoginPage() {
           variants={slideIn}
         >
           <div className="relative">
-            <h1 className="vertical-left -translate-y-1/2 absolute top-1/2 left-0 select-none whitespace-nowrap font-bold text-6xl text-primary/20 tracking-wider xl:text-8xl 2xl:text-9xl">
+            <h1 className="vertical-left absolute top-1/2 left-0 -translate-y-1/2 select-none whitespace-nowrap font-bold text-6xl text-primary/20 tracking-wider xl:text-8xl 2xl:text-9xl">
               LOGIN
             </h1>
           </div>

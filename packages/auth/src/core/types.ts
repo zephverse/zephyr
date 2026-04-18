@@ -6,7 +6,7 @@ export type User = typeof auth.$Infer.Session.user & {
   role?: "user" | "admin";
 };
 
-export type AuthContext = {
+export interface AuthContext {
   session: Session | null;
   user: User | null;
-};
+}

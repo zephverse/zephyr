@@ -12,9 +12,9 @@ import {
 } from "@react-email/components";
 import { emailConfig } from "../config";
 
-type PasswordResetEmailProps = {
+interface PasswordResetEmailProps {
   resetUrl: string;
-};
+}
 
 export const PasswordResetEmail = ({ resetUrl }: PasswordResetEmailProps) => (
   <Html>

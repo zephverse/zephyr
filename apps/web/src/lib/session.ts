@@ -7,7 +7,7 @@ export async function getSessionFromApi(): Promise<SessionResponse> {
   const hdrs = await nextHeaders();
   const cookie = hdrs.get("cookie") || "";
 
-  const authBase = process.env.NEXT_PUBLIC_AUTH_URL || "http://localhost:3001";
+  const authBase = process.env.NEXT_PUBLIC_AUTH_URL || "https://auth.localhost";
 
   const sessionUrl = `${authBase}/api/auth/get-session`;
   const sessionRes = await fetch(sessionUrl, {

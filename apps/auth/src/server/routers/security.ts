@@ -201,10 +201,10 @@ async function auditResetPassword(options: {
 }
 
 export {
-  checkLogoutRateLimit,
   auditLogout,
-  checkResetPasswordRateLimit,
   auditResetPassword,
+  checkLogoutRateLimit,
+  checkResetPasswordRateLimit,
 };
 
 export const securityRouter = router({

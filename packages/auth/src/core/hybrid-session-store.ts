@@ -1,17 +1,17 @@
 import { prisma, redis } from "@zephyr/db";
 
-export type HybridSession = {
-  id: string;
-  userId: string;
-  token: string;
-  expiresAt: Date;
-  ipAddress?: string | null;
-  userAgent?: string | null;
+export interface HybridSession {
   createdAt: Date;
-  updatedAt: Date;
+  expiresAt: Date;
+  id: string;
+  ipAddress?: string | null;
   lastSyncedAt?: Date;
   syncStatus?: "active" | "archived" | "expired";
-};
+  token: string;
+  updatedAt: Date;
+  userAgent?: string | null;
+  userId: string;
+}
 
 const REDIS_SESSION_PREFIX = "session:active:";
 const REDIS_USER_SESSIONS_PREFIX = "user:sessions:";

@@ -8,7 +8,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo, useState } from "react";
 import { FaGithub } from "react-icons/fa";
-import { HelpLink } from "@/components/Animations/image-link-preview";
+import { HelpLink } from "@/components/animations/image-link-preview";
 
 // biome-ignore lint/suspicious/noShadowRestrictedNames: This is a custom error boundary component
 export default function Error({
@@ -50,6 +50,7 @@ export default function Error({
   const auroras = useMemo(
     () =>
       new Array(6).fill(0).map((_, i) => ({
+        id: `aurora-${i + 1}`,
         width: 600 + Math.sin(i) * 400,
         height: 600 + Math.cos(i) * 400,
         top: `${(i * 25) % 100}%`,
@@ -78,7 +79,7 @@ export default function Error({
               opacity: 0,
               scale: 0.8,
             }}
-            key={`aurora-${aurora.width}-${aurora.height}-${i}`}
+            key={aurora.id}
             style={{
               width: `${aurora.width}px`,
               height: `${aurora.height}px`,

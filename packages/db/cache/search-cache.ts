@@ -1,9 +1,9 @@
 import { redis } from "../src/redis";
 
-export type SearchSuggestion = {
-  query: string;
+export interface SearchSuggestion {
   count: number;
-};
+  query: string;
+}
 
 const SEARCH_HISTORY_TTL = 60 * 60 * 24 * 30; // 30 days
 const SUGGESTIONS_TTL = 60 * 60 * 24 * 7; // 7 days

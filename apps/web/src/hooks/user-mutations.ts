@@ -11,14 +11,14 @@ const QUERY_KEYS = {
   userProfile: (userId: string) => ["user-profile", userId],
 } as const;
 
-type MutationContext = {
+interface MutationContext {
   previousData: {
     followerInfo: FollowerInfo | undefined;
     suggestedUsers: UserData[] | undefined;
     user: UserData | undefined;
     userProfile: unknown;
   };
-};
+}
 
 interface FollowResponseData extends FollowerInfo {
   displayName: string;

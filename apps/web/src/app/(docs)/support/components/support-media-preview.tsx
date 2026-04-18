@@ -1,13 +1,13 @@
 import type { Media } from "@zephyr/db";
-import { MediaPreviews } from "@/components/Home/feedview/media-previews";
-import { AttachmentPreview } from "@/components/Posts/editor/attachment-preview";
+import { MediaPreviews } from "@/components/home/feedview/media-previews";
+import { AttachmentPreview } from "@/components/posts/editor/attachment-preview";
 import type { Attachment } from "../types";
 
-type SupportMediaPreviewProps = {
+interface SupportMediaPreviewProps {
   attachments: Attachment[];
   onRemove: (index: number) => void;
   uploadedMedia?: Media[];
-};
+}
 
 export function SupportMediaPreview({
   attachments,

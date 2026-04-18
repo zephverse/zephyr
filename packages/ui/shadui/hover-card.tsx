@@ -1,8 +1,8 @@
 "use client";
 
-// biome-ignore lint/performance/noNamespaceImport: ignore
+// biome-ignore lint/performance/noNamespaceImport: This is a common pattern for Radix UI components, and it helps with tree-shaking and code organization.
 import * as HoverCardPrimitive from "@radix-ui/react-hover-card";
-import React from "react";
+import type * as React from "react";
 
 import { cn } from "../lib/utils";
 
@@ -10,10 +10,15 @@ const HoverCard = HoverCardPrimitive.Root;
 
 const HoverCardTrigger = HoverCardPrimitive.Trigger;
 
-const HoverCardContent = React.forwardRef<
-  React.ElementRef<typeof HoverCardPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof HoverCardPrimitive.Content>
->(({ className, align = "center", sideOffset = 4, ...props }, ref) => (
+const HoverCardContent = ({
+  className,
+  align = "center",
+  sideOffset = 4,
+  ref,
+  ...props
+}: React.ComponentPropsWithoutRef<typeof HoverCardPrimitive.Content> & {
+  ref?: React.Ref<React.ElementRef<typeof HoverCardPrimitive.Content> | null>;
+}) => (
   <HoverCardPrimitive.Content
     align={align}
     className={cn(
@@ -24,7 +29,7 @@ const HoverCardContent = React.forwardRef<
     sideOffset={sideOffset}
     {...props}
   />
-));
+);
 HoverCardContent.displayName = HoverCardPrimitive.Content.displayName;
 
-export { HoverCard, HoverCardTrigger, HoverCardContent };
+export { HoverCard, HoverCardContent, HoverCardTrigger };

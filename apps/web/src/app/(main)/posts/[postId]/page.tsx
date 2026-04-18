@@ -3,20 +3,20 @@ import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cache, Suspense } from "react";
-import PostCard from "@/components/Home/feedview/post-card";
-import NavigationCard from "@/components/Home/sidebars/left/navigation-card";
-import ProfileCard from "@/components/Home/sidebars/right/profile-card";
-import FollowButton from "@/components/Layouts/follow-button";
-import StickyFooter from "@/components/Layouts/stinky-footer";
-import UserAvatar from "@/components/Layouts/user-avatar";
-import UserTooltip from "@/components/Layouts/user-tooltip";
+import PostCard from "@/components/home/feedview/post-card";
+import NavigationCard from "@/components/home/sidebars/left/navigation-card";
+import ProfileCard from "@/components/home/sidebars/right/profile-card";
+import FollowButton from "@/components/layouts/follow-button";
+import StickyFooter from "@/components/layouts/stinky-footer";
+import UserAvatar from "@/components/layouts/user-avatar";
+import UserTooltip from "@/components/layouts/user-tooltip";
 import Linkify from "@/helpers/global/linkify";
 import { getUserData } from "@/hooks/use-user-data";
 import { authClient } from "@/lib/auth";
 
-type PageProps = {
+interface PageProps {
   params: Promise<{ postId: string }>;
-};
+}
 
 const getPost = cache(async (postId: string, loggedInUser: string) => {
   const post = await prisma.post.findUnique({
@@ -98,9 +98,9 @@ export default async function Page(props: PageProps) {
   );
 }
 
-type UserInfoSidebarProps = {
+interface UserInfoSidebarProps {
   user: UserData;
-};
+}
 
 async function UserInfoSidebar({ user }: UserInfoSidebarProps) {
   const session = await authClient.getSession();

@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
-import PostEditor from "@/components/Posts/editor/post-editor";
+import PostEditor from "@/components/posts/editor/post-editor";
 
 export default function PostEditorPage() {
   return (
@@ -11,7 +11,7 @@ export default function PostEditorPage() {
       exit={{ opacity: 0, y: -20 }}
       initial={{ opacity: 0, y: 20 }}
     >
-      <div className="-z-10 absolute inset-0 bg-gradient-to-b from-primary/5 via-background/50 to-background blur-3xl" />
+      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-primary/5 via-background/50 to-background blur-3xl" />
       <motion.div
         animate={{ scale: 1 }}
         initial={{ scale: 0.95 }}

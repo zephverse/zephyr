@@ -7,11 +7,8 @@ import type { PostsPage } from "@zephyr/db";
 import { useToast } from "@zephyr/ui/hooks/use-toast";
 import { submitPost, updatePostMentions } from "./actions";
 
-type PostInput = {
+interface PostInput {
   content: string;
-  mediaIds: string[];
-  tags: string[];
-  mentions: string[];
   hnStory?: {
     storyId: number;
     title: string;
@@ -21,7 +18,10 @@ type PostInput = {
     score: number;
     descendants: number;
   };
-};
+  mediaIds: string[];
+  mentions: string[];
+  tags: string[];
+}
 
 export function useSubmitPostMutation() {
   const { toast } = useToast();

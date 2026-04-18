@@ -19,11 +19,11 @@ import { useState } from "react";
 import { trpc } from "../trpc/client";
 import type { User } from "../types/types";
 
-type UserUpdateModalProps = {
-  user: User;
+interface UserUpdateModalProps {
   onCloseAction: () => void;
   onSuccessAction: () => void;
-};
+  user: User;
+}
 
 export default function UserUpdateModal({
   user,

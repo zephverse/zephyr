@@ -13,16 +13,16 @@ import {
 } from "@zephyr/ui/shadui/tabs";
 import { Newspaper, Terminal } from "lucide-react";
 import { motion } from "motion/react";
-import Post from "@/components/Home/feedview/post-card";
-import InfiniteScrollContainer from "@/components/Layouts/infinite-scroll-container";
-import LoadMoreSkeleton from "@/components/Layouts/skeletons/load-more-skeleton";
-import PostsOnlyLoadingSkeleton from "@/components/Layouts/skeletons/post-only-loading-skeleton";
+import Post from "@/components/home/feedview/post-card";
+import InfiniteScrollContainer from "@/components/layouts/infinite-scroll-container";
+import LoadMoreSkeleton from "@/components/layouts/skeletons/load-more-skeleton";
+import PostsOnlyLoadingSkeleton from "@/components/layouts/skeletons/post-only-loading-skeleton";
 import kyInstance from "@/lib/ky";
 
-type HnBookmarksResponse = {
-  stories: HnStoryType[];
+interface HnBookmarksResponse {
   nextCursor: string | null;
-};
+  stories: HnStoryType[];
+}
 
 const tabVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -122,7 +122,7 @@ export default function Bookmarks() {
           transition={{ duration: 0.5 }}
           variants={tabVariants}
         >
-          <div className="-inset-3 absolute hidden rounded-lg bg-gradient-to-r from-orange-500/20 via-yellow-500/20 to-orange-500/20 blur-xl sm:block" />
+          <div className="absolute -inset-3 hidden rounded-lg bg-gradient-to-r from-orange-500/20 via-yellow-500/20 to-orange-500/20 blur-xl sm:block" />
           <TabsList className="relative grid w-full grid-cols-2 rounded-full bg-background/95 p-1 text-muted-foreground shadow-xl backdrop-blur-xs sm:w-[400px]">
             <TabsTrigger
               className="relative rounded-full data-[state=active]:bg-orange-500/10 data-[state=active]:text-orange-500"

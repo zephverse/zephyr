@@ -1,13 +1,13 @@
 "use client";
 
-import type React from "react";
+import type * as React from "react";
 import { createContext, useContext, useEffect, useState } from "react";
 
-type VerificationContextType = {
+interface VerificationContextType {
   isVerifying: boolean;
   setIsVerifying: (state: boolean) => void;
   verificationChannel: BroadcastChannel | null;
-};
+}
 
 const VerificationContext = createContext<VerificationContextType | undefined>(
   undefined

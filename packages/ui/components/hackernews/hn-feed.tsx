@@ -137,7 +137,7 @@ export function HNFeed() {
     try {
       setIsLoadingMore(true);
       await fetchNextPage();
-    } catch (_error) {
+    } catch {
       toast({
         title: "Error",
         description: "Failed to load more stories",

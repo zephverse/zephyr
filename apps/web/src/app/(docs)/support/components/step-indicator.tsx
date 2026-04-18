@@ -1,9 +1,9 @@
 import { motion } from "motion/react";
 
-type StepIndicatorProps = {
+interface StepIndicatorProps {
   currentStep: number;
   totalSteps: number;
-};
+}
 
 export function StepIndicator({ currentStep, totalSteps }: StepIndicatorProps) {
   return (

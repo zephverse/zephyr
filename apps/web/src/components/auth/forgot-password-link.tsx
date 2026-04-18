@@ -1,0 +1,14 @@
+"use client";
+
+import resetPasswordImage from "@assets/previews/passwordreset.png";
+import { HelpLink } from "../animations/image-link-preview";
+
+export default function ForgotPasswordLink() {
+  return (
+    <HelpLink
+      href="/reset-password"
+      previewImage={resetPasswordImage.src}
+      text="Forgot your password?"
+    />
+  );
+}

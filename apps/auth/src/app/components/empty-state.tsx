@@ -2,10 +2,10 @@
 
 import { Users } from "lucide-react";
 
-type EmptyStateProps = {
-  title?: string;
+interface EmptyStateProps {
   description?: string;
-};
+  title?: string;
+}
 
 export function EmptyState({
   title = "No users found",

@@ -12,6 +12,7 @@ export async function login(values: LoginValues) {
       await authClient.signIn.email({
         email: values.username,
         password: values.password,
+        callbackURL: "/",
         fetchOptions: {
           onError: () => {
             throw new Error("signin-failed");
@@ -19,9 +20,10 @@ export async function login(values: LoginValues) {
         },
       });
     } else {
-      await authClient.signIn.username({
-        username: values.username,
+      await authClient.signIn.email({
+        email: values.username,
         password: values.password,
+        callbackURL: "/",
         fetchOptions: {
           onError: () => {
             throw new Error("signin-failed");

@@ -31,20 +31,21 @@ function handleRateLimitError(
   };
 }
 
-type SignUpResponse = {
-  error?: string;
-  success: boolean;
-  message?: string;
+interface SignUpResponse {
   emailVerification?: {
     email: string;
     isNewToken: boolean;
   };
+  error?: string;
+  message?: string;
   rateLimited?: boolean;
   rateLimitInfo?: {
     remaining: number;
     resetTime: number;
   };
-};
+  requiresEmailVerification?: boolean;
+  success: boolean;
+}
 
 export async function signUp(credentials: {
   username: string;
@@ -74,15 +75,26 @@ export async function signUp(credentials: {
       return { success: false, error: String(err) };
     }
 
-    const ok = data?.result?.data?.json?.success === true;
+    const resultJson = data?.result?.data?.json;
+    const ok = resultJson?.success === true;
     if (!ok) {
+      const userFacingMessage = resultJson?.message;
       const err =
         data?.result?.error?.message ||
         data?.error?.message ||
-        data?.result?.data?.json?.error ||
+        resultJson?.error ||
         data?.result?.data?.error ||
         data?.error ||
         "Signup failed";
+
+      if (String(err) === "user-exists") {
+        return {
+          success: false,
+          error:
+            userFacingMessage ||
+            "An account with this email or username already exists. Try logging in or reset your password.",
+        };
+      }
 
       if (String(err) === RATE_LIMIT_ERROR) {
         return handleRateLimitError(
@@ -96,12 +108,20 @@ export async function signUp(credentials: {
 
     return {
       success: true,
+      requiresEmailVerification:
+        resultJson?.requiresEmailVerification !== false,
       message:
-        "Pending signup created. Please check your email to verify your address.",
-      emailVerification: {
-        email: credentials.email,
-        isNewToken: true,
-      },
+        resultJson?.requiresEmailVerification === false
+          ? "Account created. Redirecting..."
+          : "Pending signup created. Please check your email to verify your address.",
+      ...(resultJson?.requiresEmailVerification === false
+        ? {}
+        : {
+            emailVerification: {
+              email: credentials.email,
+              isNewToken: true,
+            },
+          }),
     };
   } catch (error) {
     console.error("Signup error:", error);

@@ -5,8 +5,8 @@ import loginImage from "@assets/previews/login.png";
 import type { Variants } from "motion/react";
 import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
-import AnimatedAuthLink from "@/components/Auth/animated-auth-link";
-import SignUpForm from "@/components/Auth/sign-up-form";
+import AnimatedAuthLink from "@/components/auth/animated-auth-link";
+import SignUpForm from "@/components/auth/sign-up-form";
 
 const fadeIn: Variants = {
   hidden: { opacity: 0 },
@@ -132,7 +132,7 @@ export default function ClientSignupPage() {
           variants={slideIn}
         >
           <div className="relative">
-            <h1 className="vertical-right -translate-y-1/2 absolute top-1/2 right-0 select-none whitespace-nowrap font-bold text-6xl text-primary/20 tracking-wider xl:text-8xl 2xl:text-9xl">
+            <h1 className="vertical-right absolute top-1/2 right-0 -translate-y-1/2 select-none whitespace-nowrap font-bold text-6xl text-primary/20 tracking-wider xl:text-8xl 2xl:text-9xl">
               SIGN UP
             </h1>
           </div>

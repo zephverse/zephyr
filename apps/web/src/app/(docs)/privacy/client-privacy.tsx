@@ -4,7 +4,7 @@ import { Button } from "@zephyr/ui/shadui/button";
 import { ArrowLeft, LockKeyhole } from "lucide-react";
 import Link from "next/link";
 import React, { useEffect } from "react";
-import ScrollUpButton from "@/components/Layouts/scroll-up-button";
+import ScrollUpButton from "@/components/layouts/scroll-up-button";
 import { FossBanner } from "@/components/misc/foss-banner";
 
 export default function PrivacyPolicyPage() {
@@ -34,7 +34,7 @@ export default function PrivacyPolicyPage() {
             className="group flex items-center gap-2 text-muted-foreground hover:text-foreground"
             variant="ghost"
           >
-            <ArrowLeft className="group-hover:-translate-x-1 h-4 w-4 transition-transform" />
+            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
             Drift
           </Button>
         </Link>

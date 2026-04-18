@@ -23,8 +23,8 @@ html {
 }
 
 * {
-  scrollbar-width: thin;
   scrollbar-color: rgba(249, 115, 22, 0.5) transparent;
+  scrollbar-width: thin;
 }
 
 body {

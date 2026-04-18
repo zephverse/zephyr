@@ -2,12 +2,12 @@ import { Button } from "@zephyr/ui/shadui/button";
 import { Loader2 } from "lucide-react";
 import { authClient } from "@/lib/auth";
 
-type Props = {
+interface Props {
   disabled?: boolean;
   loading?: boolean;
-  onStart?: () => void;
   onEnd?: () => void;
-};
+  onStart?: () => void;
+}
 
 export default function RedditSignInButton({
   disabled,
