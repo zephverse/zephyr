@@ -8,12 +8,12 @@
   },
   "dependencies": {
     "@zephyr/db": "workspace:*",
-    "ky": "^1.14.1",
-    "next": "^16.0.10",
-    "react": "^19.2.3"
+    "ky": "^1.14.3",
+    "next": "^16.2.4",
+    "react": "^19.2.5"
   },
   "devDependencies": {
     "@zephyr/config": "workspace:*",
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.3"
   }
 }
