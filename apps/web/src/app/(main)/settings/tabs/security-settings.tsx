@@ -19,7 +19,7 @@ import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { requestPasswordReset } from "@/app/(auth)/reset-password/server-actions";
-import { LoadingButton } from "@/components/Auth/loading-button";
+import { LoadingButton } from "@/components/auth/loading-button";
 
 const identifierSchema = z.object({
   identifier: z.union([

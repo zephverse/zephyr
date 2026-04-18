@@ -12,13 +12,13 @@ import { useSearchParams } from "next/navigation";
 import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useMediaQuery } from "usehooks-ts";
-import FollowingFeed from "@/components/Home/feedview/following";
-import ForYouFeed from "@/components/Home/for-you-feed";
-import LeftSideBar from "@/components/Home/sidebars/left-side-bar";
-import RightSideBar from "@/components/Home/sidebars/right-side-bar";
-import ScrollUpButton from "@/components/Layouts/scroll-up-button";
-import StickyFooter from "@/components/Layouts/stinky-footer";
-import PostEditor from "@/components/Posts/editor/post-editor";
+import FollowingFeed from "@/components/home/feedview/following";
+import ForYouFeed from "@/components/home/for-you-feed";
+import LeftSideBar from "@/components/home/sidebars/left-side-bar";
+import RightSideBar from "@/components/home/sidebars/right-side-bar";
+import ScrollUpButton from "@/components/layouts/scroll-up-button";
+import StickyFooter from "@/components/layouts/stinky-footer";
+import PostEditor from "@/components/posts/editor/post-editor";
 
 interface ClientHomeProps {
   userData: UserData;

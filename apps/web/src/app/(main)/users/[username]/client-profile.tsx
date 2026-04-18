@@ -3,11 +3,11 @@
 import type { UserData } from "@zephyr/db";
 import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import ScrollUpButton from "@/components/Layouts/scroll-up-button";
-import StickyFooter from "@/components/Layouts/stinky-footer";
-import ProfileFeedView from "@/components/Profile/profile-feed-view";
-import LeftSidebar from "@/components/Profile/sidebars/profile-left-side-bar";
-import RightSidebar from "@/components/Profile/sidebars/profile-right-side-bar";
+import ScrollUpButton from "@/components/layouts/scroll-up-button";
+import StickyFooter from "@/components/layouts/stinky-footer";
+import ProfileFeedView from "@/components/profile/profile-feed-view";
+import LeftSidebar from "@/components/profile/sidebars/profile-left-side-bar";
+import RightSidebar from "@/components/profile/sidebars/profile-right-side-bar";
 
 interface ProfilePageProps {
   loggedInUserId: string;

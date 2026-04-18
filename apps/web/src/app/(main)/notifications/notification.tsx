@@ -2,7 +2,7 @@ import type { NotificationData, NotificationType } from "@zephyr/db";
 import { AtSign, Heart, MessageCircle, User2 } from "lucide-react";
 import Link from "next/link";
 import type { JSX } from "react";
-import UserAvatar from "@/components/Layouts/user-avatar";
+import UserAvatar from "@/components/layouts/user-avatar";
 import { cn } from "@/lib/utils";
 
 interface NotificationProps {

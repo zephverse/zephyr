@@ -1,5 +1,5 @@
 import { prisma } from "@zephyr/db";
-import Header from "@/components/Layouts/header";
+import Header from "@/components/layouts/header";
 import { getSessionFromApi } from "@/lib/session";
 
 export default async function Navbar() {

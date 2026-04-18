@@ -6,10 +6,10 @@ import { Alert, AlertDescription } from "@zephyr/ui/shadui/alert";
 import { Separator } from "@zephyr/ui/shadui/separator";
 import { FileText, Search } from "lucide-react";
 import { motion } from "motion/react";
-import Post from "@/components/Home/feedview/post-card";
-import InfiniteScrollContainer from "@/components/Layouts/infinite-scroll-container";
-import LoadMoreSkeleton from "@/components/Layouts/skeletons/load-more-skeleton";
-import PostsLoadingSkeleton from "@/components/Layouts/skeletons/post-only-loading-skeleton";
+import Post from "@/components/home/feedview/post-card";
+import InfiniteScrollContainer from "@/components/layouts/infinite-scroll-container";
+import LoadMoreSkeleton from "@/components/layouts/skeletons/load-more-skeleton";
+import PostsLoadingSkeleton from "@/components/layouts/skeletons/post-only-loading-skeleton";
 import kyInstance from "@/lib/ky";
 import UserSearchResults from "./user-search-result";
 

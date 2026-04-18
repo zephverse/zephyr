@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
-import PostEditor from "@/components/Posts/editor/post-editor";
+import PostEditor from "@/components/posts/editor/post-editor";
 
 export default function PostEditorPage() {
   return (

@@ -13,10 +13,10 @@ import {
 } from "@zephyr/ui/shadui/tabs";
 import { Newspaper, Terminal } from "lucide-react";
 import { motion } from "motion/react";
-import Post from "@/components/Home/feedview/post-card";
-import InfiniteScrollContainer from "@/components/Layouts/infinite-scroll-container";
-import LoadMoreSkeleton from "@/components/Layouts/skeletons/load-more-skeleton";
-import PostsOnlyLoadingSkeleton from "@/components/Layouts/skeletons/post-only-loading-skeleton";
+import Post from "@/components/home/feedview/post-card";
+import InfiniteScrollContainer from "@/components/layouts/infinite-scroll-container";
+import LoadMoreSkeleton from "@/components/layouts/skeletons/load-more-skeleton";
+import PostsOnlyLoadingSkeleton from "@/components/layouts/skeletons/post-only-loading-skeleton";
 import kyInstance from "@/lib/ky";
 
 interface HnBookmarksResponse {

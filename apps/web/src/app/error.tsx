@@ -8,7 +8,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo, useState } from "react";
 import { FaGithub } from "react-icons/fa";
-import { HelpLink } from "@/components/Animations/image-link-preview";
+import { HelpLink } from "@/components/animations/image-link-preview";
 
 // biome-ignore lint/suspicious/noShadowRestrictedNames: This is a custom error boundary component
 export default function Error({

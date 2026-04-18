@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import DiscoverySidebar from "@/components/Discover/discover-sidebar";
-import SuggestedUsers from "@/components/Discover/suggested-users";
-import TrendingUsers from "@/components/Discover/trending-users";
-import Friends from "@/components/Home/sidebars/left/friends";
-import NavigationCard from "@/components/Home/sidebars/left/navigation-card";
+import DiscoverySidebar from "@/components/discover/discover-sidebar";
+import SuggestedUsers from "@/components/discover/suggested-users";
+import TrendingUsers from "@/components/discover/trending-users";
+import Friends from "@/components/home/sidebars/left/friends";
+import NavigationCard from "@/components/home/sidebars/left/navigation-card";
 import { getUserData } from "@/hooks/use-user-data";
 import { getSessionFromApi } from "@/lib/session";
 

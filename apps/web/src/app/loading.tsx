@@ -7,7 +7,7 @@ import { Home } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { getRandomFact } from "@/components/Constants/loading-facts";
+import { getRandomFact } from "@/components/constants/loading-facts";
 
 export default function Loading() {
   const [funFact, setFunFact] = useState("");

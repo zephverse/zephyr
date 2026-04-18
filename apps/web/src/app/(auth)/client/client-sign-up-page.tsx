@@ -5,8 +5,8 @@ import loginImage from "@assets/previews/login.png";
 import type { Variants } from "motion/react";
 import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
-import AnimatedAuthLink from "@/components/Auth/animated-auth-link";
-import SignUpForm from "@/components/Auth/sign-up-form";
+import AnimatedAuthLink from "@/components/auth/animated-auth-link";
+import SignUpForm from "@/components/auth/sign-up-form";
 
 const fadeIn: Variants = {
   hidden: { opacity: 0 },

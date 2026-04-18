@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type React from "react";
 import { LinkIt, LinkItUrl } from "react-linkify-it";
-import UserLinkWithTooltip from "@/components/Layouts/user-link-with-tooltip";
+import UserLinkWithTooltip from "@/components/layouts/user-link-with-tooltip";
 
 interface LinkifyProps {
   children: React.ReactNode;

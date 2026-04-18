@@ -1,6 +1,6 @@
 import { HNFeed } from "@zephyr/ui/components/hackernews/hn-feed";
 import { Suspense } from "react";
-import FeedViewSkeleton from "@/components/Layouts/skeletons/feed-view-skeleton";
+import FeedViewSkeleton from "@/components/layouts/skeletons/feed-view-skeleton";
 
 export const metadata = {
   title: "HackerNews",
