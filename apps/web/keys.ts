@@ -32,7 +32,9 @@ export const keys = createEnv({
       ),
     CRON_SECRET: z.string().optional(),
     CRON_SECRET_KEY: z.string().optional(),
-    NODE_ENV: z.enum(["development", "production"]).default("development"),
+    NODE_ENV: z
+      .enum(["development", "production", "test"])
+      .default("development"),
     NEXT_TELEMETRY_DISABLED: z.enum(["0", "1"]).default("1"),
     TURBO_TELEMETRY_DISABLED: z.enum(["0", "1"]).default("1"),
     BETTER_AUTH_TELEMETRY: z.enum(["0", "1"]).default("0"),

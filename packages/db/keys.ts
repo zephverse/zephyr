@@ -11,7 +11,9 @@ export const keys = createEnv({
     REDIS_URL: z.string().default("redis://:zephyrredis@localhost:6379/0"),
     MEILISEARCH_URL: z.url().default("http://localhost:7700"),
     MEILISEARCH_MASTER_KEY: z.string().default("masterKey123"),
-    NODE_ENV: z.enum(["development", "production"]).default("development"),
+    NODE_ENV: z
+      .enum(["development", "production", "test"])
+      .default("development"),
     CHECKPOINT_DISABLE: z.coerce.number().default(1),
   },
 
