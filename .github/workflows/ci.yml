@@ -286,8 +286,6 @@ jobs:
           file: ${{ matrix.dockerfile }}
           push: true
           platforms: linux/amd64,linux/arm64
-          cache-from: type=gha,scope=${{ matrix.image }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
@@ -482,7 +480,7 @@ jobs:
             '' \
             'echo "Checking schema drift between DB and Prisma schema..."' \
             'set +e' \
-            'bunx prisma migrate diff --from-url "$DATABASE_URL" --to-schema-datamodel "$SCHEMA_PATH" --exit-code >/dev/null' \
+            'bunx prisma migrate diff --from-config-datasource --to-schema "$SCHEMA_PATH" --config "$PRISMA_CONFIG_PATH" --exit-code >/dev/null' \
             'diff_status=$?' \
             'set -e' \
             '' \
@@ -521,6 +519,7 @@ jobs:
             -H 'accept: application/json' \
             -H 'Content-Type: application/json' \
             -H "x-api-key: ${DOKPLOY_API_TOKEN}" \
+            --fail-with-body \
             -d "$CREATE_PAYLOAD")
 
           SCHEDULE_ID=$(printf '%s' "$CREATE_RESPONSE" | jq -r '.scheduleId // .id // .data.scheduleId // empty')
@@ -536,6 +535,15 @@ jobs:
             -H 'accept: application/json' \
             -H 'Content-Type: application/json' \
             -H "x-api-key: ${DOKPLOY_API_TOKEN}" \
+            --fail-with-body \
             -d "{\"scheduleId\":\"${SCHEDULE_ID}\"}")
+
+          RUN_ERROR_CODE=$(printf '%s' "$RUN_RESPONSE" | jq -r '.code // .data.code // empty')
+
+          if [ -n "$RUN_ERROR_CODE" ]; then
+            echo "Dokploy schedule run failed with code: ${RUN_ERROR_CODE}"
+            printf '%s\n' "$RUN_RESPONSE"
+            exit 1
+          fi
 
           printf '%s\n' "$RUN_RESPONSE"
