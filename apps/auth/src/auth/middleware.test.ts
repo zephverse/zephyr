@@ -2,42 +2,51 @@ import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
 
 const mockFindUnique = mock(async () => null);
 
-mock.module("@zephyr/db", () => ({
-  prisma: {
-    user: {
-      findUnique: mockFindUnique,
-    },
-  },
-}));
-
 const mockFindByToken = mock(async () => null);
 const mockCreate = mock(async () => null);
 const mockValidateJWTToken = mock(async () => ({ valid: false }));
 
-mock.module("@zephyr/auth/core", () => ({
-  extractTokenFromHeader: (h: string | null) =>
-    h ? h.replace("Bearer ", "") : null,
-  hybridSessionStore: {
-    findByToken: mockFindByToken,
-    create: mockCreate,
-  },
-  validateJWTToken: mockValidateJWTToken,
-}));
-
 const mockGetSession = mock(async () => null);
-
-mock.module("./config", () => ({
-  auth: {
-    api: {
-      getSession: mockGetSession,
-    },
-  },
-}));
+const originalConsole = {
+  error: console.error,
+  log: console.log,
+  warn: console.warn,
+};
 
 describe("middleware", () => {
   let middlewareModule: any;
 
   beforeEach(async () => {
+    console.error = mock(() => undefined) as typeof console.error;
+    console.log = mock(() => undefined) as typeof console.log;
+    console.warn = mock(() => undefined) as typeof console.warn;
+
+    mock.module("@zephyr/db", () => ({
+      prisma: {
+        user: {
+          findUnique: mockFindUnique,
+        },
+      },
+    }));
+
+    mock.module("@zephyr/auth/core", () => ({
+      extractTokenFromHeader: (h: string | null) =>
+        h ? h.replace("Bearer ", "") : null,
+      hybridSessionStore: {
+        findByToken: mockFindByToken,
+        create: mockCreate,
+      },
+      validateJWTToken: mockValidateJWTToken,
+    }));
+
+    mock.module("./config", () => ({
+      auth: {
+        api: {
+          getSession: mockGetSession,
+        },
+      },
+    }));
+
     process.env.DATABASE_URL = "postgresql://mock";
     process.env.POSTGRES_PRISMA_URL = "postgresql://mock";
     process.env.POSTGRES_URL_NON_POOLING = "postgresql://mock";
@@ -54,7 +63,10 @@ describe("middleware", () => {
   });
 
   afterEach(() => {
-    mock.restore();
+    console.error = originalConsole.error;
+    console.log = originalConsole.log;
+    console.warn = originalConsole.warn;
+    mock.clearAllMocks();
   });
 
   describe("getSessionFromRequest", () => {

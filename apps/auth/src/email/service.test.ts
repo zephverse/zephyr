@@ -2,6 +2,11 @@ import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
 
 let throwOnSend = false;
 let returnErrorOnSend = false;
+const originalConsole = {
+  error: console.error,
+  log: console.log,
+  warn: console.warn,
+};
 
 mock.module("@zephyr/auth", () => ({
   validateEmailAdvanced: mock(async () => ({
@@ -40,6 +45,10 @@ describe("email service", () => {
   let serviceModule: any;
 
   beforeEach(async () => {
+    console.error = mock(() => undefined) as typeof console.error;
+    console.log = mock(() => undefined) as typeof console.log;
+    console.warn = mock(() => undefined) as typeof console.warn;
+
     throwOnSend = false;
     returnErrorOnSend = false;
 
@@ -76,6 +85,9 @@ describe("email service", () => {
   });
 
   afterEach(() => {
+    console.error = originalConsole.error;
+    console.log = originalConsole.log;
+    console.warn = originalConsole.warn;
     mock.restore();
   });
 
@@ -146,7 +158,7 @@ describe("email service", () => {
       confidence: "low",
       reasons: ["Invalid format"],
       disposable: false,
-    } as any);
+    });
 
     const result = await serviceModule.sendVerificationEmail(
       "bad@email",

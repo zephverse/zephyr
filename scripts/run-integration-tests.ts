@@ -1,16 +1,43 @@
 import { collectTestFiles } from "./test-file-discovery";
 
-async function run(): Promise<number> {
-  const rootDir = process.cwd();
-  const extraArgs = Bun.argv.slice(2);
-  const integrationTests = await collectTestFiles("integration", rootDir);
+interface IntegrationTestRunnerDeps {
+  collectFiles?: typeof collectTestFiles;
+  logger?: Pick<typeof console, "error" | "log">;
+  rootDir?: string;
+  runProcess?: (options: { cmd: string[]; cwd: string }) => Promise<number>;
+}
+
+function defaultRunProcess(options: {
+  cmd: string[];
+  cwd: string;
+}): Promise<number> {
+  const proc = Bun.spawn({
+    cmd: options.cmd,
+    cwd: options.cwd,
+    stdin: "inherit",
+    stdout: "inherit",
+    stderr: "inherit",
+  });
+
+  return proc.exited;
+}
+
+export async function runIntegrationTests(
+  extraArgs = Bun.argv.slice(2),
+  deps: IntegrationTestRunnerDeps = {}
+): Promise<number> {
+  const rootDir = deps.rootDir ?? process.cwd();
+  const logger = deps.logger ?? console;
+  const collectFiles = deps.collectFiles ?? collectTestFiles;
+  const runProcess = deps.runProcess ?? defaultRunProcess;
+  const integrationTests = await collectFiles("integration", rootDir);
 
   if (integrationTests.length === 0) {
-    console.log("No integration tests found. Skipping integration suite.");
+    logger.log("No integration tests found. Skipping integration suite.");
     return 0;
   }
 
-  const proc = Bun.spawn({
+  return await runProcess({
     cmd: [
       "bun",
       "test",
@@ -19,19 +46,22 @@ async function run(): Promise<number> {
       ...integrationTests.map((filePath) => `./${filePath}`),
     ],
     cwd: rootDir,
-    stdin: "inherit",
-    stdout: "inherit",
-    stderr: "inherit",
   });
-
-  return await proc.exited;
 }
 
-run()
-  .then((exitCode) => {
-    process.exit(exitCode);
-  })
-  .catch((error: unknown) => {
-    console.error("Failed to execute integration tests:", error);
-    process.exit(1);
-  });
+const isDirectExecution = Bun.argv.some(
+  (arg) =>
+    arg.endsWith("scripts/run-integration-tests.ts") ||
+    arg.endsWith("run-integration-tests.ts")
+);
+
+if (isDirectExecution) {
+  runIntegrationTests()
+    .then((exitCode) => {
+      process.exit(exitCode);
+    })
+    .catch((error: unknown) => {
+      console.error("Failed to execute integration tests:", error);
+      process.exit(1);
+    });
+}

@@ -1,5 +1,11 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
 
+const originalConsole = {
+  error: console.error,
+  log: console.log,
+  warn: console.warn,
+};
+
 const mockPrisma = {
   session: {
     create: mock(async (args: any) => ({
@@ -48,6 +54,10 @@ describe("HybridSessionStore", () => {
   let store: HybridSessionStore;
 
   beforeEach(() => {
+    console.error = mock(() => undefined) as typeof console.error;
+    console.log = mock(() => undefined) as typeof console.log;
+    console.warn = mock(() => undefined) as typeof console.warn;
+
     mockRedis.pipeline.mockClear();
     mockRedis.get.mockClear();
     mockRedis.keys.mockClear();
@@ -64,6 +74,9 @@ describe("HybridSessionStore", () => {
   });
 
   afterEach(() => {
+    console.error = originalConsole.error;
+    console.log = originalConsole.log;
+    console.warn = originalConsole.warn;
     store.destroy();
     mock.restore();
   });

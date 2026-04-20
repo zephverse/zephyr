@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
 import { SignJWT } from "jose";
 
+const originalConsoleError = console.error;
+
 mock.module("@zephyr/db", () => ({
   jwtSessionCache: {
     createTokenHash: (t: string) => `hash_${t}`,
@@ -30,6 +32,7 @@ describe("jwt helpers", () => {
   let issuer: string;
 
   beforeEach(() => {
+    console.error = mock(() => undefined) as typeof console.error;
     process.env.NEXTAUTH_SECRET = "test-secret";
     process.env.NEXT_PUBLIC_URL = "https://social.localhost";
 
@@ -38,6 +41,7 @@ describe("jwt helpers", () => {
   });
 
   afterEach(() => {
+    console.error = originalConsoleError;
     mock.restore();
   });
 

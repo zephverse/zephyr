@@ -1,4 +1,6 @@
-import { beforeEach, describe, expect, mock, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
+
+const originalConsoleError = console.error;
 
 const mockAuth = {
   api: {
@@ -12,7 +14,12 @@ import { getSessionFromRequest, optionalAuth, requireAuth } from "./middleware";
 
 describe("middleware", () => {
   beforeEach(() => {
+    console.error = mock(() => undefined) as typeof console.error;
     mockAuth.api.getSession.mockClear();
+  });
+
+  afterEach(() => {
+    console.error = originalConsoleError;
   });
 
   test("getSessionFromRequest returns null when no session", async () => {

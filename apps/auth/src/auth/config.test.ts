@@ -18,7 +18,7 @@ mock.module("../email/service", () => ({
 
 const mockCreateAuthConfig = mock((cfg: any) => cfg);
 
-mock.module("@zephyr/auth", () => ({
+mock.module("@zephyr/auth/core", () => ({
   createAuthConfig: mockCreateAuthConfig,
 }));
 
