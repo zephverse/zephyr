@@ -470,10 +470,10 @@ jobs:
 
           PRISMA_COMMAND="$(printf '%s\n' \
             'set -eu' \
-            'cd /app' \
+            'cd /app/packages/db' \
             '' \
-            'PRISMA_CONFIG_PATH="packages/db/prisma.config.ts"' \
-            'SCHEMA_PATH="packages/db/prisma/schema.prisma"' \
+            'PRISMA_CONFIG_PATH="./prisma.config.ts"' \
+            'SCHEMA_PATH="./prisma/schema.prisma"' \
             '' \
             'echo "Applying committed Prisma migrations..."' \
             'bunx prisma migrate deploy --config "$PRISMA_CONFIG_PATH"' \
