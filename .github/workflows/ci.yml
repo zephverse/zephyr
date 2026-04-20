@@ -513,7 +513,7 @@ jobs:
             'fi' \
             '' \
             'echo "Schema drift detected. Attempting non-destructive sync with db push..."' \
-            'bunx prisma db push --skip-generate --config "$TEMP_CONFIG"' \
+            'bunx prisma db push --config "$TEMP_CONFIG"' \
             '' \
             'echo "Prisma safe sync completed."' \
           )"
