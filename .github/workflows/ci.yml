@@ -11,8 +11,12 @@ on:
       - dev
   workflow_dispatch:
 
+env:
+  REGISTRY: ghcr.io
+
 permissions:
   contents: read
+  pull-requests: read
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -55,7 +59,8 @@ jobs:
           path: |
             **/node_modules
             !**/node_modules/.cache
-          key: ${{ runner.os }}-node-modules-${{ hashFiles('bun.lock') }}-${{ hashFiles('**/package.json') }}
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('bun.lock') }}-${{
+            hashFiles('**/package.json') }}
           restore-keys: |
             ${{ runner.os }}-node-modules-${{ hashFiles('bun.lock') }}-
             ${{ runner.os }}-node-modules-
@@ -92,9 +97,150 @@ jobs:
       - name: Run unit tests
         run: bun run test:unit
 
-      - name: Save Turbo cache
-        if: always()
-        uses: actions/cache/save@v5
+  detect-pr-merge:
+    name: Detect merged PR push
+    needs: quality
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      should-build: ${{ steps.pr-check.outputs.should-build }}
+      merge-pr-number: ${{ steps.pr-check.outputs.pr-number }}
+    steps:
+      - name: Check whether commit came from merged PR
+        id: pr-check
+        uses: actions/github-script@v8
         with:
-          path: .turbo
-          key: ${{ runner.os }}-turbo-${{ github.sha }}
+          script: |
+            const { owner, repo } = context.repo
+            const commit_sha = context.sha
+
+            const response = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+              owner,
+              repo,
+              commit_sha
+            })
+
+            const mergedPr = response.data.find((pr) => pr.merged_at && pr.base.ref === "main")
+
+            core.setOutput("should-build", mergedPr ? "true" : "false")
+            core.setOutput("pr-number", mergedPr ? String(mergedPr.number) : "")
+
+            if (mergedPr) {
+              core.info(`Detected merged PR #${mergedPr.number} for ${commit_sha}`)
+            } else {
+              core.info(`No merged PR associated with ${commit_sha}; skipping build.`)
+            }
+
+  build-and-push:
+    name: Build and Push (${{ matrix.app }})
+    needs:
+      - quality
+      - detect-pr-merge
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.detect-pr-merge.outputs.should-build == 'true'
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - app: web
+            dockerfile: ./apps/web/Dockerfile
+            image: zephyr-web
+          - app: auth
+            dockerfile: ./apps/auth/Dockerfile
+            image: zephyr-auth
+          - app: docs
+            dockerfile: ./apps/docs/Dockerfile
+            image: zephyr-docs
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Print merged PR context
+        run: |
+          echo "Building Docker images for merged PR #${{ needs.detect-pr-merge.outputs.merge-pr-number }}"
+          echo "Commit: ${{ github.sha }}"
+
+      - name: Read app version metadata
+        id: version
+        shell: bash
+        run: |
+          APP_VERSION=$(jq -r '.version' "apps/${{ matrix.app }}/package.json")
+          ROOT_VERSION=$(jq -r '.version' "package.json")
+
+          {
+            echo "app_version=${APP_VERSION}"
+            echo "root_version=${ROOT_VERSION}"
+            echo "tag_name=${{ matrix.app }}-v${APP_VERSION}"
+            echo "sha_short=$(git rev-parse --short HEAD)"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+
+      - name: Setup Blacksmith Builder
+        uses: useblacksmith/setup-docker-builder@v1
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract image metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.image }}
+          tags: |
+            type=raw,value=${{ steps.version.outputs.tag_name }}
+            type=sha,prefix=${{ matrix.app }}-sha-
+            type=raw,value=latest
+          labels: |
+            org.opencontainers.image.title=${{ matrix.image }}
+            org.opencontainers.image.version=${{ steps.version.outputs.app_version }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            io.zephyr.app=${{ matrix.app }}
+            io.zephyr.app-version=${{ steps.version.outputs.app_version }}
+            io.zephyr.root-version=${{ steps.version.outputs.root_version }}
+            io.zephyr.pr-number=${{ needs.detect-pr-merge.outputs.merge-pr-number }}
+
+      - name: Build and push Docker image (multi-arch)
+        uses: useblacksmith/build-push-action@v2
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: true
+          platforms: linux/amd64,linux/arm64
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  cleanup-old-images:
+    name: Cleanup old GHCR images
+    needs: build-and-push
+    if: github.ref == 'refs/heads/main'
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    permissions:
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        image:
+          - zephyr-web
+          - zephyr-auth
+          - zephyr-docs
+    steps:
+      - name: Delete old package versions (keep last 10)
+        uses: actions/delete-package-versions@v5
+        with:
+          package-name: ${{ matrix.image }}
+          package-type: container
+          min-versions-to-keep: 10
+          delete-only-untagged-versions: true
+          token: ${{ secrets.GITHUB_TOKEN }}
