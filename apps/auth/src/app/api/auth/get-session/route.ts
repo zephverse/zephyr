@@ -1,6 +1,8 @@
 import type { NextRequest } from "next/server";
 import { auth } from "@/auth/config";
 
+export const dynamic = "force-dynamic";
+
 function corsHeaders() {
   return {
     "Access-Control-Allow-Origin":

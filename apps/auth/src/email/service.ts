@@ -10,6 +10,12 @@ import {
 
 let resend: Resend | null = null;
 
+export function __resetResend(): void {
+  if (process.env.NODE_ENV === "test") {
+    resend = null;
+  }
+}
+
 export function isEmailServiceConfigured(): boolean {
   return Boolean(env.RESEND_API_KEY);
 }

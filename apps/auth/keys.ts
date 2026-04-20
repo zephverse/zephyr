@@ -30,7 +30,9 @@ export const keys = createEnv({
       .default(
         "postgresql://postgres:postgres@localhost:5434/zephyr-logs?schema=public"
       ),
-    NODE_ENV: z.enum(["development", "production"]).default("development"),
+    NODE_ENV: z
+      .enum(["development", "production", "test"])
+      .default("development"),
     NEXT_TELEMETRY_DISABLED: z.enum(["0", "1"]).default("1"),
     TURBO_TELEMETRY_DISABLED: z.enum(["0", "1"]).default("1"),
     BETTER_AUTH_TELEMETRY: z.enum(["0", "1"]).default("0"),

@@ -29,16 +29,42 @@ const createRedisConfig = (): RedisOptions => {
   return config;
 };
 
-let redis: IoRedis;
+let redisClient: IoRedis | null = null;
 
-try {
-  redis = new IoRedis(
-    createRedisConnectionOptions(keys.REDIS_URL, createRedisConfig())
+const getRedisClient = (): IoRedis => {
+  if (redisClient && redisClient.status !== "end") {
+    return redisClient;
+  }
+
+  if (redisClient?.status === "end") {
+    redisClient = null;
+  }
+
+  const redisUrl = process.env.REDIS_URL ?? keys.REDIS_URL;
+
+  if (!redisUrl) {
+    throw new Error("REDIS_URL is not configured");
+  }
+
+  redisClient = new IoRedis(
+    createRedisConnectionOptions(redisUrl, createRedisConfig())
   );
-} catch (error) {
-  console.error("Failed to initialize Redis client:", error);
-  throw error;
-}
+
+  return redisClient;
+};
+
+const redis = new Proxy({} as IoRedis, {
+  get(_target, property) {
+    const client = getRedisClient();
+    const value = Reflect.get(client, property, client);
+
+    if (typeof value === "function") {
+      return value.bind(client);
+    }
+
+    return value;
+  },
+});
 
 export { redis };
 

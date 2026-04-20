@@ -2,6 +2,8 @@ import { keys } from "@root/keys";
 import { debugLog } from "@zephyr/config/debug";
 import type { NextRequest } from "next/server";
 
+export const dynamic = "force-dynamic";
+
 type PendingVerifyResult =
   | { ok: true; data?: { email: string; password: string } }
   | { ok: true }

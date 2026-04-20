@@ -18,6 +18,7 @@ coverage
 .turbo
 .kiro
 .cache
+.codex
 
 # Vercel
 .vercel
