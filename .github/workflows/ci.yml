@@ -131,29 +131,99 @@ jobs:
               core.info(`No merged PR associated with ${commit_sha}; skipping build.`)
             }
 
+  determine-build-matrix:
+    name: Determine changed app images
+    needs:
+      - quality
+      - detect-pr-merge
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.detect-pr-merge.outputs.should-build == 'true'
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.changed-apps.outputs.matrix }}
+      has-app-changes: ${{ steps.changed-apps.outputs.has-app-changes }}
+    steps:
+      - name: Resolve changed apps from merged PR
+        id: changed-apps
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const { owner, repo } = context.repo
+            const prNumber = Number('${{ needs.detect-pr-merge.outputs.merge-pr-number }}')
+
+            if (!prNumber) {
+              core.setOutput('matrix', JSON.stringify({ include: [] }))
+              core.setOutput('has-app-changes', 'false')
+              core.info('No merged PR number found; skipping image build matrix.')
+              return
+            }
+
+            const files = await github.paginate(
+              github.rest.pulls.listFiles,
+              {
+                owner,
+                repo,
+                pull_number: prNumber,
+                per_page: 100,
+              },
+            )
+
+            const changedFiles = files.map((file) => file.filename)
+            core.info(`Merged PR #${prNumber} changed ${changedFiles.length} files.`)
+
+            const appEntries = [
+              {
+                app: 'web',
+                dockerfile: './apps/web/Dockerfile',
+                image: 'zephyr-web',
+              },
+              {
+                app: 'auth',
+                dockerfile: './apps/auth/Dockerfile',
+                image: 'zephyr-auth',
+              },
+              {
+                app: 'docs',
+                dockerfile: './apps/docs/Dockerfile',
+                image: 'zephyr-docs',
+              },
+            ]
+
+            const triggerAllPrefixes = ['packages/', 'docker/']
+            const triggerAllFiles = new Set(['bun.lock', 'package.json', 'turbo.json', 'tsconfig.json'])
+
+            const shouldBuildAll = changedFiles.some((file) =>
+              triggerAllPrefixes.some((prefix) => file.startsWith(prefix)) || triggerAllFiles.has(file),
+            )
+
+            const selectedApps = shouldBuildAll
+              ? appEntries
+              : appEntries.filter(({ app }) => changedFiles.some((file) => file.startsWith(`apps/${app}/`)))
+
+            if (selectedApps.length === 0) {
+              core.setOutput('matrix', JSON.stringify({ include: [] }))
+              core.setOutput('has-app-changes', 'false')
+              core.info(`No app-specific changes detected in PR #${prNumber}; skipping Docker builds.`)
+              return
+            }
+
+            core.setOutput('matrix', JSON.stringify({ include: selectedApps }))
+            core.setOutput('has-app-changes', 'true')
+            core.info(`Selected Docker image builds: ${selectedApps.map(({ app }) => app).join(', ')}`)
+
   build-and-push:
     name: Build and Push (${{ matrix.app }})
     needs:
       - quality
       - detect-pr-merge
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.detect-pr-merge.outputs.should-build == 'true'
+      - determine-build-matrix
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.detect-pr-merge.outputs.should-build == 'true' && needs.determine-build-matrix.outputs.has-app-changes == 'true'
     runs-on: blacksmith-4vcpu-ubuntu-2404
     permissions:
       contents: read
       packages: write
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - app: web
-            dockerfile: ./apps/web/Dockerfile
-            image: zephyr-web
-          - app: auth
-            dockerfile: ./apps/auth/Dockerfile
-            image: zephyr-auth
-          - app: docs
-            dockerfile: ./apps/docs/Dockerfile
-            image: zephyr-docs
+      matrix: ${{ fromJSON(needs.determine-build-matrix.outputs.matrix) }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -221,6 +291,90 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
+      - name: Resolve deploy targets
+        id: deploy-targets
+        env:
+          DOKPLOY_API_URL: ${{ secrets.DOKPLOY_API_URL }}
+          DOKPLOY_API_TOKEN: ${{ secrets.DOKPLOY_API_TOKEN }}
+          DOKPLOY_WEB_APP_ID: ${{ secrets.DOKPLOY_WEB_APP_ID }}
+          DOKPLOY_AUTH_APP_ID: ${{ secrets.DOKPLOY_AUTH_APP_ID }}
+          DOKPLOY_DOCS_APP_ID: ${{ secrets.DOKPLOY_DOCS_APP_ID }}
+          WEB_HEALTH_URL: ${{ secrets.WEB_HEALTH_URL }}
+          AUTH_HEALTH_URL: ${{ secrets.AUTH_HEALTH_URL }}
+          DOCS_HEALTH_URL: ${{ secrets.DOCS_HEALTH_URL }}
+        run: |
+          app_id=""
+          health_url=""
+          deploy_enabled="false"
+          health_enabled="false"
+
+          case "${{ matrix.app }}" in
+            web)
+              app_id="${DOKPLOY_WEB_APP_ID}"
+              health_url="${WEB_HEALTH_URL}"
+              ;;
+            auth)
+              app_id="${DOKPLOY_AUTH_APP_ID}"
+              health_url="${AUTH_HEALTH_URL}"
+              ;;
+            docs)
+              app_id="${DOKPLOY_DOCS_APP_ID}"
+              health_url="${DOCS_HEALTH_URL}"
+              ;;
+          esac
+
+          if [ -n "${DOKPLOY_API_URL}" ] && [ -n "${DOKPLOY_API_TOKEN}" ] && [ -n "${app_id}" ]; then
+            deploy_enabled="true"
+          fi
+
+          if [ -n "${health_url}" ]; then
+            health_enabled="true"
+          fi
+
+          echo "app_id=${app_id}" >> "$GITHUB_OUTPUT"
+          echo "health_url=${health_url}" >> "$GITHUB_OUTPUT"
+          echo "deploy_enabled=${deploy_enabled}" >> "$GITHUB_OUTPUT"
+          echo "health_enabled=${health_enabled}" >> "$GITHUB_OUTPUT"
+
+      - name: Trigger Dokploy deployment via API
+        if: success() && steps.deploy-targets.outputs.deploy_enabled == 'true'
+        env:
+          DOKPLOY_API_URL: ${{ secrets.DOKPLOY_API_URL }}
+          DOKPLOY_API_TOKEN: ${{ secrets.DOKPLOY_API_TOKEN }}
+          DOKPLOY_APP_ID: ${{ steps.deploy-targets.outputs.app_id }}
+        run: |
+          API_URL="${DOKPLOY_API_URL%/}"
+
+          curl -X 'POST' \
+            "${API_URL}/api/application.deploy" \
+            -H 'accept: application/json' \
+            -H 'Content-Type: application/json' \
+            -H "x-api-key: ${DOKPLOY_API_TOKEN}" \
+            -d "{\"applicationId\":\"${DOKPLOY_APP_ID}\"}" \
+            --fail --silent --show-error
+
+      - name: Wait for deployment health check
+        if: success() && steps.deploy-targets.outputs.health_enabled == 'true'
+        env:
+          HEALTH_URL: ${{ steps.deploy-targets.outputs.health_url }}
+        run: |
+          echo "Waiting 30s for container to start..."
+          sleep 30
+
+          echo "Checking health endpoint..."
+          for i in {1..10}; do
+            if curl -sf "${HEALTH_URL}" > /dev/null; then
+              echo "Health check passed!"
+              exit 0
+            fi
+
+            echo "Attempt $i/10 failed, retrying in 10s..."
+            sleep 10
+          done
+
+          echo "Health check failed after 10 attempts"
+          exit 1
+
   cleanup-old-images:
     name: Cleanup old GHCR images
     needs: build-and-push
@@ -244,3 +398,132 @@ jobs:
           min-versions-to-keep: 10
           delete-only-untagged-versions: true
           token: ${{ secrets.GITHUB_TOKEN }}
+
+  prisma-sync:
+    name: Prisma safe sync
+    needs:
+      - build-and-push
+      - detect-pr-merge
+      - determine-build-matrix
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.detect-pr-merge.outputs.should-build == 'true' && needs.determine-build-matrix.outputs.has-app-changes == 'true'
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    permissions:
+      contents: read
+    steps:
+      - name: Resolve whether Prisma sync should run
+        id: resolve-prisma
+        env:
+          MATRIX_JSON: ${{ needs.determine-build-matrix.outputs.matrix }}
+          DOKPLOY_API_URL: ${{ secrets.DOKPLOY_API_URL }}
+          DOKPLOY_API_TOKEN: ${{ secrets.DOKPLOY_API_TOKEN }}
+          DOKPLOY_AUTH_APP_ID: ${{ secrets.DOKPLOY_AUTH_APP_ID }}
+        run: |
+          set -eu
+
+          has_web_or_auth="false"
+          if printf '%s' "$MATRIX_JSON" | jq -e '.include | any(.app == "web" or .app == "auth")' >/dev/null; then
+            has_web_or_auth="true"
+          fi
+
+          run_enabled="false"
+          if [ "$has_web_or_auth" = "true" ] && [ -n "$DOKPLOY_API_URL" ] && [ -n "$DOKPLOY_API_TOKEN" ] && [ -n "$DOKPLOY_AUTH_APP_ID" ]; then
+            run_enabled="true"
+          fi
+
+          echo "run_enabled=${run_enabled}" >> "$GITHUB_OUTPUT"
+
+      - name: Run Prisma migrate/safe sync via Dokploy
+        if: steps.resolve-prisma.outputs.run_enabled == 'true'
+        env:
+          DOKPLOY_API_URL: ${{ secrets.DOKPLOY_API_URL }}
+          DOKPLOY_API_TOKEN: ${{ secrets.DOKPLOY_API_TOKEN }}
+          DOKPLOY_AUTH_APP_ID: ${{ secrets.DOKPLOY_AUTH_APP_ID }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+        run: |
+          set -eu
+
+          API_URL="${DOKPLOY_API_URL%/}"
+          SCHEDULE_ID=""
+
+          cleanup_schedule() {
+            if [ -n "$SCHEDULE_ID" ]; then
+              curl -sS -X 'POST' \
+                "${API_URL}/api/schedule.delete" \
+                -H 'accept: application/json' \
+                -H 'Content-Type: application/json' \
+                -H "x-api-key: ${DOKPLOY_API_TOKEN}" \
+                -d "{\"scheduleId\":\"${SCHEDULE_ID}\"}" >/dev/null || true
+            fi
+          }
+
+          trap cleanup_schedule EXIT
+
+          PRISMA_COMMAND="$(printf '%s\n' \
+            'set -eu' \
+            'cd /app' \
+            '' \
+            'PRISMA_CONFIG_PATH="packages/db/prisma.config.ts"' \
+            'SCHEMA_PATH="packages/db/prisma/schema.prisma"' \
+            '' \
+            'echo "Applying committed Prisma migrations..."' \
+            'bunx prisma migrate deploy --config "$PRISMA_CONFIG_PATH"' \
+            '' \
+            'echo "Checking schema drift between DB and Prisma schema..."' \
+            'set +e' \
+            'bunx prisma migrate diff --from-url "$DATABASE_URL" --to-schema-datamodel "$SCHEMA_PATH" --exit-code >/dev/null' \
+            'diff_status=$?' \
+            'set -e' \
+            '' \
+            'if [ "$diff_status" -eq 0 ]; then' \
+            '  echo "No schema drift detected. Skipping schema sync."' \
+            '  exit 0' \
+            'fi' \
+            '' \
+            'if [ "$diff_status" -ne 2 ]; then' \
+            '  echo "Prisma drift check failed with exit code ${diff_status}."' \
+            '  exit "$diff_status"' \
+            'fi' \
+            '' \
+            'echo "Schema drift detected. Attempting non-destructive sync with db push..."' \
+            'bunx prisma db push --skip-generate --config "$PRISMA_CONFIG_PATH"' \
+            '' \
+            'echo "Prisma safe sync completed."' \
+          )"
+
+          CREATE_PAYLOAD=$(jq -n \
+            --arg name "zephyr-prisma-sync-${GITHUB_RUN_ID}" \
+            --arg command "$PRISMA_COMMAND" \
+            --arg appId "$DOKPLOY_AUTH_APP_ID" \
+            '{
+              name: $name,
+              cronExpression: "0 0 1 1 *",
+              scheduleType: "application",
+              shellType: "sh",
+              applicationId: $appId,
+              enabled: false,
+              command: $command
+            }')
+
+          CREATE_RESPONSE=$(curl -sS -X 'POST' \
+            "${API_URL}/api/schedule.create" \
+            -H 'accept: application/json' \
+            -H 'Content-Type: application/json' \
+            -H "x-api-key: ${DOKPLOY_API_TOKEN}" \
+            -d "$CREATE_PAYLOAD")
+
+          SCHEDULE_ID=$(printf '%s' "$CREATE_RESPONSE" | jq -r '.scheduleId // .id // .data.scheduleId // empty')
+
+          if [ -z "$SCHEDULE_ID" ]; then
+            echo "Failed to create Dokploy schedule for Prisma sync."
+            printf '%s\n' "$CREATE_RESPONSE"
+            exit 1
+          fi
+
+          RUN_RESPONSE=$(curl -sS -X 'POST' \
+            "${API_URL}/api/schedule.runManually" \
+            -H 'accept: application/json' \
+            -H 'Content-Type: application/json' \
+            -H "x-api-key: ${DOKPLOY_API_TOKEN}" \
+            -d "{\"scheduleId\":\"${SCHEDULE_ID}\"}")
+
+          printf '%s\n' "$RUN_RESPONSE"

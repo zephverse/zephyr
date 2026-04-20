@@ -1,0 +1,83 @@
+name: RustFS Bucket Bootstrap
+
+on:
+  workflow_dispatch:
+    inputs:
+      apply_public_policies:
+        description: "Apply public-read policy to uploads/avatars"
+        required: false
+        default: "true"
+      enable_versioning:
+        description: "Enable bucket versioning"
+        required: false
+        default: "true"
+
+jobs:
+  rustfs-buckets:
+    name: Ensure RustFS buckets and policies
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS credentials for RustFS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.RUSTFS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.RUSTFS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.RUSTFS_REGION }}
+
+      - name: Ensure buckets, policies, and versioning
+        env:
+          RUSTFS_ENDPOINT: ${{ secrets.RUSTFS_S3_ENDPOINT }}
+          APPLY_PUBLIC_POLICIES: ${{ github.event.inputs.apply_public_policies || 'true' }}
+          ENABLE_VERSIONING: ${{ github.event.inputs.enable_versioning || 'true' }}
+        run: |
+          set -eu
+
+          if [ -z "${RUSTFS_ENDPOINT}" ]; then
+            echo "RUSTFS_S3_ENDPOINT secret is required"
+            exit 1
+          fi
+
+          buckets="uploads avatars temp backups"
+
+          for bucket in $buckets; do
+            if aws --endpoint-url "$RUSTFS_ENDPOINT" s3api head-bucket --bucket "$bucket" 2>/dev/null; then
+              echo "Bucket $bucket already exists; skipping create"
+            else
+              echo "Creating bucket $bucket"
+              aws --endpoint-url "$RUSTFS_ENDPOINT" s3api create-bucket --bucket "$bucket"
+            fi
+          done
+
+          if [ "$APPLY_PUBLIC_POLICIES" = "true" ]; then
+            uploads_policy='{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":"*","Action":"s3:GetObject","Resource":"arn:aws:s3:::uploads/*"}]}'
+            avatars_policy='{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":"*","Action":"s3:GetObject","Resource":"arn:aws:s3:::avatars/*"}]}'
+
+            echo "Applying public-read policy for uploads"
+            aws --endpoint-url "$RUSTFS_ENDPOINT" s3api put-bucket-policy --bucket uploads --policy "$uploads_policy"
+
+            echo "Applying public-read policy for avatars"
+            aws --endpoint-url "$RUSTFS_ENDPOINT" s3api put-bucket-policy --bucket avatars --policy "$avatars_policy"
+          else
+            echo "Skipping public bucket policy updates"
+          fi
+
+          if [ "$ENABLE_VERSIONING" = "true" ]; then
+            for bucket in $buckets; do
+              status=$(aws --endpoint-url "$RUSTFS_ENDPOINT" s3api get-bucket-versioning --bucket "$bucket" | jq -r '.Status // "Disabled"')
+              if [ "$status" = "Enabled" ]; then
+                echo "Versioning already enabled for $bucket; skipping"
+              else
+                echo "Enabling versioning for $bucket"
+                aws --endpoint-url "$RUSTFS_ENDPOINT" s3api put-bucket-versioning --bucket "$bucket" --versioning-configuration Status=Enabled
+              fi
+            done
+          else
+            echo "Skipping bucket versioning updates"
+          fi
+
+      - name: Verify RustFS buckets
+        env:
+          RUSTFS_ENDPOINT: ${{ secrets.RUSTFS_S3_ENDPOINT }}
+        run: |
+          set -eu
+          aws --endpoint-url "$RUSTFS_ENDPOINT" s3api list-buckets | jq -r '.Buckets[].Name'
