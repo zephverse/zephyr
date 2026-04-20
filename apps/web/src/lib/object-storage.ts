@@ -7,22 +7,24 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { FetchHttpHandler } from "@smithy/fetch-http-handler";
 import { NodeHttpHandler } from "@smithy/node-http-handler";
 import { toast } from "sonner";
+import { env } from "../../env";
 import { validateFile } from "./utils/file-validation";
 import { getContentType, getFileConfigFromMime } from "./utils/mime-utils";
 import { uploadToasts } from "./utils/upload-messages";
 
 const isClient = typeof window !== "undefined";
 
+const zephobLocalEndpoint = env.ZEPHOB_ENDPOINT;
+
 export const zephobClient = new S3Client({
   region: "ap-south-1",
   endpoint:
-    process.env.NODE_ENV === "production"
-      ? process.env.ZEPHOB_PRODUCTION_ENDPOINT ||
-        "https://objectstorage.zephyyrr.in"
-      : process.env.ZEPHOB_ENDPOINT || "http://localhost:9090",
+    env.NODE_ENV === "production"
+      ? env.ZEPHOB_PRODUCTION_ENDPOINT || "https://objectstorage.zephyyrr.in"
+      : zephobLocalEndpoint,
   credentials: {
-    accessKeyId: process.env.ZEPHOB_ROOT_USER || "zephob-admin",
-    secretAccessKey: process.env.ZEPHOB_ROOT_PASSWORD || "zephob-admin",
+    accessKeyId: env.ZEPHOB_ROOT_USER,
+    secretAccessKey: env.ZEPHOB_ROOT_PASSWORD,
   },
   forcePathStyle: true,
   maxAttempts: 3,
@@ -37,24 +39,20 @@ export const zephobClient = new S3Client({
         }),
 });
 
-export const ZEPHOB_BUCKET = process.env.ZEPHOB_BUCKET_NAME || "uploads";
+export const ZEPHOB_BUCKET = env.ZEPHOB_BUCKET_NAME;
 
 export const getPublicUrl = (key: string) => {
   if (!key) {
     throw new Error("File key is required");
   }
 
-  const endpoint =
-    typeof window === "undefined"
-      ? process.env.ZEPHOB_ENDPOINT
-      : process.env.NEXT_PUBLIC_ZEPHOB_ENDPOINT;
+  const endpoint = env.ZEPHOB_ENDPOINT ?? zephobLocalEndpoint;
 
   const productionEndpoint =
-    process.env.ZEPHOB_PRODUCTION_ENDPOINT ||
-    "https://objectstorage.zephyyrr.in";
+    env.ZEPHOB_PRODUCTION_ENDPOINT || "https://objectstorage.zephyyrr.in";
 
   const finalEndpoint =
-    process.env.NODE_ENV === "production"
+    env.NODE_ENV === "production"
       ? productionEndpoint
       : endpoint || "http://localhost:9090";
 

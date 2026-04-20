@@ -131,29 +131,87 @@ jobs:
               core.info(`No merged PR associated with ${commit_sha}; skipping build.`)
             }
 
+  determine-build-matrix:
+    name: Determine changed app images
+    needs:
+      - quality
+      - detect-pr-merge
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.detect-pr-merge.outputs.should-build == 'true'
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.changed-apps.outputs.matrix }}
+      has-app-changes: ${{ steps.changed-apps.outputs.has-app-changes }}
+    steps:
+      - name: Resolve changed apps from merged PR
+        id: changed-apps
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const { owner, repo } = context.repo
+            const prNumber = Number('${{ needs.detect-pr-merge.outputs.merge-pr-number }}')
+
+            if (!prNumber) {
+              core.setOutput('matrix', JSON.stringify({ include: [] }))
+              core.setOutput('has-app-changes', 'false')
+              core.info('No merged PR number found; skipping image build matrix.')
+              return
+            }
+
+            const files = await github.paginate(
+              github.rest.pulls.listFiles,
+              {
+                owner,
+                repo,
+                pull_number: prNumber,
+                per_page: 100,
+              },
+            )
+
+            const changedFiles = files.map((file) => file.filename)
+            core.info(`Merged PR #${prNumber} changed ${changedFiles.length} files.`)
+
+            const appEntries = [
+              { app: 'web', dockerfile: './apps/web/Dockerfile', image: 'zephyr-web' },
+              { app: 'auth', dockerfile: './apps/auth/Dockerfile', image: 'zephyr-auth' },
+              { app: 'docs', dockerfile: './apps/docs/Dockerfile', image: 'zephyr-docs' },
+            ]
+
+            const triggerAllPrefixes = ['packages/', 'docker/']
+            const triggerAllFiles = new Set(['bun.lock', 'package.json', 'turbo.json', 'tsconfig.json'])
+
+            const shouldBuildAll = changedFiles.some((file) =>
+              triggerAllPrefixes.some((prefix) => file.startsWith(prefix)) || triggerAllFiles.has(file),
+            )
+
+            const selectedApps = shouldBuildAll
+              ? appEntries
+              : appEntries.filter(({ app }) => changedFiles.some((file) => file.startsWith(`apps/${app}/`)))
+
+            if (selectedApps.length === 0) {
+              core.setOutput('matrix', JSON.stringify({ include: [] }))
+              core.setOutput('has-app-changes', 'false')
+              core.info(`No app-specific changes detected in PR #${prNumber}; skipping Docker builds.`)
+              return
+            }
+
+            core.setOutput('matrix', JSON.stringify({ include: selectedApps }))
+            core.setOutput('has-app-changes', 'true')
+            core.info(`Selected Docker image builds: ${selectedApps.map(({ app }) => app).join(', ')}`)
+
   build-and-push:
     name: Build and Push (${{ matrix.app }})
     needs:
       - quality
       - detect-pr-merge
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.detect-pr-merge.outputs.should-build == 'true'
+      - determine-build-matrix
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.detect-pr-merge.outputs.should-build == 'true' && needs.determine-build-matrix.outputs.has-app-changes == 'true'
     runs-on: blacksmith-4vcpu-ubuntu-2404
     permissions:
       contents: read
       packages: write
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - app: web
-            dockerfile: ./apps/web/Dockerfile
-            image: zephyr-web
-          - app: auth
-            dockerfile: ./apps/auth/Dockerfile
-            image: zephyr-auth
-          - app: docs
-            dockerfile: ./apps/docs/Dockerfile
-            image: zephyr-docs
+      matrix: ${{ fromJSON(needs.determine-build-matrix.outputs.matrix) }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6

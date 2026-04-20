@@ -5,22 +5,12 @@ import { z } from "zod";
 export const keys = createEnv({
   server: {
     DATABASE_URL: z.url(),
-    POSTGRES_PRISMA_URL: z.url(),
-    POSTGRES_URL_NON_POOLING: z.url(),
     REDIS_URL: z.url(),
     ZEPHOB_ROOT_USER: z.string().min(1).default("zephob-admin"),
     ZEPHOB_ROOT_PASSWORD: z.string().min(1).default("zephob-admin"),
     ZEPHOB_BUCKET_NAME: z.string().min(1).default("uploads"),
-    ZEPHOB_PORT: z
-      .string()
-      .transform((val) => Number.parseInt(val, 10))
-      .default(9090),
-    ZEPHOB_CONSOLE_PORT: z
-      .string()
-      .transform((val) => Number.parseInt(val, 10))
-      .default(9001),
-    ZEPHOB_HOST: z.string().min(1).default("localhost"),
     ZEPHOB_ENDPOINT: z.url(),
+    ZEPHOB_PRODUCTION_ENDPOINT: z.url().optional(),
     ZEPHOB_ENABLE_OBJECT_LOCKING: z.enum(["on", "off"]).default("on"),
     RABBITMQ_URL: z.url().default("amqp://admin:admin123@localhost:5672"),
     MEILISEARCH_URL: z.url().default("http://localhost:7700"),
@@ -47,22 +37,17 @@ export const keys = createEnv({
       .transform((val) => Number.parseInt(val, 10))
       .default(3000),
     NEXT_PUBLIC_URL: z.url().default("https://social.localhost"),
-    NEXT_PUBLIC_ZEPHOB_ENDPOINT: z.url().default("http://localhost:9090"),
     NEXT_PUBLIC_AUTH_URL: z.url().default("https://auth.localhost"),
   },
 
   runtimeEnv: {
     DATABASE_URL: process.env.DATABASE_URL,
-    POSTGRES_PRISMA_URL: process.env.POSTGRES_PRISMA_URL,
-    POSTGRES_URL_NON_POOLING: process.env.POSTGRES_URL_NON_POOLING,
     REDIS_URL: process.env.REDIS_URL,
     ZEPHOB_ROOT_USER: process.env.ZEPHOB_ROOT_USER,
     ZEPHOB_ROOT_PASSWORD: process.env.ZEPHOB_ROOT_PASSWORD,
     ZEPHOB_BUCKET_NAME: process.env.ZEPHOB_BUCKET_NAME,
-    ZEPHOB_PORT: process.env.ZEPHOB_PORT,
-    ZEPHOB_CONSOLE_PORT: process.env.ZEPHOB_CONSOLE_PORT,
-    ZEPHOB_HOST: process.env.ZEPHOB_HOST,
     ZEPHOB_ENDPOINT: process.env.ZEPHOB_ENDPOINT,
+    ZEPHOB_PRODUCTION_ENDPOINT: process.env.ZEPHOB_PRODUCTION_ENDPOINT,
     ZEPHOB_ENABLE_OBJECT_LOCKING: process.env.ZEPHOB_ENABLE_OBJECT_LOCKING,
     RABBITMQ_URL: process.env.RABBITMQ_URL,
     MEILISEARCH_URL: process.env.MEILISEARCH_URL,
@@ -77,7 +62,6 @@ export const keys = createEnv({
     BETTER_AUTH_TELEMETRY: process.env.BETTER_AUTH_TELEMETRY,
     NEXT_PUBLIC_PORT: process.env.NEXT_PUBLIC_PORT,
     NEXT_PUBLIC_URL: process.env.NEXT_PUBLIC_URL,
-    NEXT_PUBLIC_ZEPHOB_ENDPOINT: process.env.NEXT_PUBLIC_ZEPHOB_ENDPOINT,
     NEXT_PUBLIC_AUTH_URL: process.env.NEXT_PUBLIC_AUTH_URL,
   },
 

@@ -58,8 +58,6 @@ services:
       dockerfile: docker/prisma.dockerfile
     environment:
       DATABASE_URL: postgresql://postgres:postgres@postgres-dev:5432/zephyr?schema=public
-      POSTGRES_PRISMA_URL: postgresql://postgres:postgres@postgres-dev:5432/zephyr?schema=public
-      POSTGRES_URL_NON_POOLING: postgresql://postgres:postgres@postgres-dev:5432/zephyr?schema=public
     networks:
       - dev_network
     depends_on:
@@ -78,8 +76,6 @@ services:
       dockerfile: docker/prisma.dockerfile
     environment:
       DATABASE_URL: postgresql://postgres:postgres@postgres-dev:5432/zephyr?schema=public
-      POSTGRES_PRISMA_URL: postgresql://postgres:postgres@postgres-dev:5432/zephyr?schema=public
-      POSTGRES_URL_NON_POOLING: postgresql://postgres:postgres@postgres-dev:5432/zephyr?schema=public
     ports:
       - "5555:5555"
     networks:
