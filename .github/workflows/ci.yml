@@ -470,17 +470,35 @@ jobs:
 
           PRISMA_COMMAND="$(printf '%s\n' \
             'set -eu' \
-            'cd /app/packages/db' \
+            'cd /app' \
             '' \
-            'PRISMA_CONFIG_PATH="./prisma.config.ts"' \
-            'SCHEMA_PATH="./prisma/schema.prisma"' \
+            'SCHEMA_PATH="/app/packages/db/prisma/schema.prisma"' \
+            'MIGRATIONS_PATH="/app/packages/db/prisma/migrations"' \
+            'TEMP_CONFIG="/tmp/zephyr-prisma.config.ts"' \
+            'DB_URL="${DATABASE_URL:-${POSTGRES_PRISMA_URL:-${POSTGRES_URL_NON_POOLING:-}}}"' \
+            '' \
+            'if [ -z "$DB_URL" ]; then' \
+            '  echo "No database URL found in DATABASE_URL/POSTGRES_PRISMA_URL/POSTGRES_URL_NON_POOLING"' \
+            '  exit 1' \
+            'fi' \
+            '' \
+            'export DATABASE_URL="$DB_URL"' \
+            '' \
+            'cat > "$TEMP_CONFIG" <<EOF' \
+            'import { defineConfig } from "prisma/config";' \
+            'export default defineConfig({' \
+            '  schema: "/app/packages/db/prisma/schema.prisma",' \
+            '  migrations: { path: "/app/packages/db/prisma/migrations" },' \
+            '  datasource: { url: process.env.DATABASE_URL ?? "" },' \
+            '});' \
+            'EOF' \
             '' \
             'echo "Applying committed Prisma migrations..."' \
-            'bunx prisma migrate deploy --config "$PRISMA_CONFIG_PATH"' \
+            'bunx prisma migrate deploy --config "$TEMP_CONFIG"' \
             '' \
             'echo "Checking schema drift between DB and Prisma schema..."' \
             'set +e' \
-            'bunx prisma migrate diff --from-config-datasource --to-schema "$SCHEMA_PATH" --config "$PRISMA_CONFIG_PATH" --exit-code >/dev/null' \
+            'bunx prisma migrate diff --from-config-datasource --to-schema "$SCHEMA_PATH" --config "$TEMP_CONFIG" --exit-code >/dev/null' \
             'diff_status=$?' \
             'set -e' \
             '' \
@@ -495,7 +513,7 @@ jobs:
             'fi' \
             '' \
             'echo "Schema drift detected. Attempting non-destructive sync with db push..."' \
-            'bunx prisma db push --skip-generate --config "$PRISMA_CONFIG_PATH"' \
+            'bunx prisma db push --skip-generate --config "$TEMP_CONFIG"' \
             '' \
             'echo "Prisma safe sync completed."' \
           )"
@@ -530,15 +548,24 @@ jobs:
             exit 1
           fi
 
-          RUN_RESPONSE=$(curl -sS -X 'POST' \
+          RUN_RESPONSE_FILE=$(mktemp)
+          RUN_STATUS=$(curl -sS -o "$RUN_RESPONSE_FILE" -w "%{http_code}" -X 'POST' \
             "${API_URL}/api/schedule.runManually" \
             -H 'accept: application/json' \
             -H 'Content-Type: application/json' \
             -H "x-api-key: ${DOKPLOY_API_TOKEN}" \
-            --fail-with-body \
             -d "{\"scheduleId\":\"${SCHEDULE_ID}\"}")
 
-          RUN_ERROR_CODE=$(printf '%s' "$RUN_RESPONSE" | jq -r '.code // .data.code // empty')
+          RUN_RESPONSE=$(cat "$RUN_RESPONSE_FILE")
+          rm -f "$RUN_RESPONSE_FILE"
+
+          if [ "$RUN_STATUS" -ge 400 ]; then
+            echo "Dokploy schedule run request failed with HTTP ${RUN_STATUS}"
+            printf '%s\n' "$RUN_RESPONSE"
+            exit 1
+          fi
+
+          RUN_ERROR_CODE=$(printf '%s' "$RUN_RESPONSE" | jq -r 'if type == "object" then (.code // .data.code // empty) else empty end' 2>/dev/null || true)
 
           if [ -n "$RUN_ERROR_CODE" ]; then
             echo "Dokploy schedule run failed with code: ${RUN_ERROR_CODE}"
