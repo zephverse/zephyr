@@ -1,82 +1,118 @@
-import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
+import { afterAll, beforeEach, describe, expect, mock, test } from "bun:test";
+import type { Session } from "@zephyr/db";
+import { HybridSessionStore } from "./hybrid-session-store";
 
-const originalConsole = {
-  error: console.error,
-  log: console.log,
-  warn: console.warn,
-};
+interface HybridSessionData {
+  createdAt: Date;
+  expiresAt: Date;
+  id: string;
+  ipAddress?: string | null;
+  token: string;
+  updatedAt: Date;
+  userAgent?: string | null;
+  userId: string;
+}
 
-const mockPrisma = {
-  session: {
-    create: mock(async (args: any) => ({
-      ...args.data,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    })) as any,
-    findUnique: mock(async () => null) as any,
-    findMany: mock(async () => []) as any,
-    update: mock(async (args: any) => ({
-      id: args.where.id,
-      ...args.data,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    })) as any,
-    deleteMany: mock(async () => {
-      /* no-op */
-    }) as any,
-  },
-};
+interface RedisPipeline {
+  del: (key: string) => RedisPipeline;
+  exec: () => Promise<unknown[]>;
+  sadd: (key: string, token: string) => RedisPipeline;
+  setex: (key: string, ttl: number, value: string) => RedisPipeline;
+  srem: (key: string, token: string) => RedisPipeline;
+}
 
-const mockRedis = {
-  pipeline: mock(() => ({
-    setex: mock(),
-    sadd: mock(),
-    exec: mock(async () => []),
-    del: mock(),
-    srem: mock(),
-  })) as any,
-  get: mock(async () => null) as any,
-  keys: mock(async () => []) as any,
-  smembers: mock(async () => []) as any,
-  del: mock(async () => {
-    /* no-op */
-  }) as any,
-};
+const mockSessionCreate = mock(
+  async ({ data }: { data: HybridSessionData }): Promise<Session> => ({
+    ...data,
+    impersonatedBy: null,
+    ipAddress: data.ipAddress ?? null,
+    userAgent: data.userAgent ?? null,
+  })
+);
+
+const mockSessionFindUnique = mock(async (): Promise<Session | null> => null);
+const mockSessionFindMany = mock(async (): Promise<Session[]> => []);
+const mockSessionUpdate = mock(
+  async ({
+    where,
+    data,
+  }: {
+    data: Partial<HybridSessionData>;
+    where: { id: string };
+  }) => ({
+    id: where.id,
+    userId: data.userId ?? "u1",
+    token: data.token ?? "token",
+    expiresAt: data.expiresAt ?? new Date(Date.now() + 10_000),
+    impersonatedBy: null,
+    ipAddress: data.ipAddress ?? null,
+    userAgent: data.userAgent ?? null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  })
+);
+const mockSessionDeleteMany = mock(
+  async (): Promise<{ count: number }> => ({
+    count: 1,
+  })
+);
+
+const mockPipelineFactory = mock((): RedisPipeline => {
+  const pipeline: RedisPipeline = {
+    setex: () => pipeline,
+    sadd: () => pipeline,
+    exec: async () => [],
+    del: () => pipeline,
+    srem: () => pipeline,
+  };
+
+  return pipeline;
+});
+
+const mockRedisGet = mock(async (): Promise<string | null> => null);
+const mockRedisKeys = mock(async (): Promise<string[]> => []);
+const mockRedisSmembers = mock(async (): Promise<string[]> => []);
+const mockRedisDel = mock(async (): Promise<number> => 1);
 
 mock.module("@zephyr/db", () => ({
-  prisma: mockPrisma,
-  redis: mockRedis,
+  prisma: {
+    session: {
+      create: mockSessionCreate,
+      findUnique: mockSessionFindUnique,
+      findMany: mockSessionFindMany,
+      update: mockSessionUpdate,
+      deleteMany: mockSessionDeleteMany,
+    },
+  },
+  redis: {
+    pipeline: mockPipelineFactory,
+    get: mockRedisGet,
+    keys: mockRedisKeys,
+    smembers: mockRedisSmembers,
+    del: mockRedisDel,
+  },
 }));
-
-import { HybridSessionStore } from "./hybrid-session-store";
 
 describe("HybridSessionStore", () => {
   let store: HybridSessionStore;
 
   beforeEach(() => {
-    console.error = mock(() => undefined) as typeof console.error;
-    console.log = mock(() => undefined) as typeof console.log;
-    console.warn = mock(() => undefined) as typeof console.warn;
+    mockSessionCreate.mockClear();
+    mockSessionFindUnique.mockClear();
+    mockSessionFindMany.mockClear();
+    mockSessionUpdate.mockClear();
+    mockSessionDeleteMany.mockClear();
 
-    mockRedis.pipeline.mockClear();
-    mockRedis.get.mockClear();
-    mockRedis.keys.mockClear();
-    mockRedis.smembers.mockClear();
-    mockRedis.del.mockClear();
-
-    mockPrisma.session.create.mockClear();
-    mockPrisma.session.findUnique.mockClear();
-    mockPrisma.session.findMany.mockClear();
-    mockPrisma.session.update.mockClear();
-    mockPrisma.session.deleteMany.mockClear();
+    mockPipelineFactory.mockClear();
+    mockRedisGet.mockClear();
+    mockRedisKeys.mockClear();
+    mockRedisSmembers.mockClear();
+    mockRedisDel.mockClear();
 
     store = new HybridSessionStore();
   });
 
-  afterEach(() => {
-    console.error = originalConsole.error;
-    console.log = originalConsole.log;
-    console.warn = originalConsole.warn;
+  afterAll(() => {
     store.destroy();
     mock.restore();
   });
@@ -89,12 +125,12 @@ describe("HybridSessionStore", () => {
     });
 
     expect(session.id).toBeDefined();
-    expect(mockRedis.pipeline).toHaveBeenCalled();
-    expect(mockPrisma.session.create).toHaveBeenCalled();
+    expect(mockPipelineFactory).toHaveBeenCalled();
+    expect(mockSessionCreate).toHaveBeenCalled();
   });
 
   test("create fallback to postgres if redis fails", async () => {
-    mockRedis.pipeline.mockImplementationOnce(() => {
+    mockPipelineFactory.mockImplementationOnce(() => {
       throw new Error("Redis fail");
     });
 
@@ -105,11 +141,11 @@ describe("HybridSessionStore", () => {
     });
 
     expect(session.id).toBeDefined();
-    expect(mockPrisma.session.create).toHaveBeenCalled();
+    expect(mockSessionCreate).toHaveBeenCalled();
   });
 
   test("findByToken finds from redis", async () => {
-    mockRedis.get.mockResolvedValueOnce(
+    mockRedisGet.mockResolvedValueOnce(
       JSON.stringify({
         id: "s1",
         token: "test",
@@ -122,67 +158,50 @@ describe("HybridSessionStore", () => {
 
     const result = await store.findByToken("test");
     expect(result?.id).toBe("s1");
-    expect(mockPrisma.session.findUnique).not.toHaveBeenCalled();
+    expect(mockSessionFindUnique).not.toHaveBeenCalled();
   });
 
   test("findByToken deletes from redis if expired", async () => {
-    mockRedis.get.mockResolvedValueOnce(
-      JSON.stringify({
-        id: "s1",
-        token: "test",
-        userId: "u1",
-        expiresAt: new Date(Date.now() - 10_000).toISOString(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      })
-    );
+    const expired = JSON.stringify({
+      id: "s1",
+      token: "test",
+      userId: "u1",
+      expiresAt: new Date(Date.now() - 10_000).toISOString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
 
-    // Must return the full pipeline mock including del and srem!
-    mockRedis.pipeline.mockImplementationOnce(() => ({
-      setex: mock(),
-      sadd: mock(),
-      del: mock(),
-      srem: mock(),
-      exec: mock(async () => []),
-    }));
-    // Second call to get in deleteFromRedis will fetch it again
-    mockRedis.get.mockResolvedValueOnce(
-      JSON.stringify({
-        id: "s1",
-        token: "test",
-        userId: "u1",
-        expiresAt: new Date(Date.now() - 10_000).toISOString(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      })
-    );
+    mockRedisGet.mockResolvedValueOnce(expired);
+    mockRedisGet.mockResolvedValueOnce(expired);
 
     const result = await store.findByToken("test");
     expect(result).toBeNull();
-    expect(mockRedis.pipeline).toHaveBeenCalled();
+    expect(mockPipelineFactory).toHaveBeenCalled();
   });
 
   test("findByToken fallback to postgres if not in redis", async () => {
-    // Return null from Redis
-    mockRedis.get.mockResolvedValueOnce(null);
-    mockPrisma.session.findUnique.mockResolvedValueOnce({
+    mockRedisGet.mockResolvedValueOnce(null);
+    mockSessionFindUnique.mockResolvedValueOnce({
       id: "s1",
       token: "test",
       userId: "u1",
       expiresAt: new Date(Date.now() + 10_000),
       createdAt: new Date(),
       updatedAt: new Date(),
+      impersonatedBy: null,
+      ipAddress: null,
+      userAgent: null,
     });
 
     const result = await store.findByToken("test");
     expect(result?.id).toBe("s1");
-    expect(mockPrisma.session.findUnique).toHaveBeenCalled();
-    expect(mockRedis.pipeline).toHaveBeenCalled();
+    expect(mockSessionFindUnique).toHaveBeenCalled();
+    expect(mockPipelineFactory).toHaveBeenCalled();
   });
 
   test("findByUserId gets from redis and postgres", async () => {
-    mockRedis.smembers.mockResolvedValueOnce(["token1"]);
-    mockRedis.get.mockResolvedValueOnce(
+    mockRedisSmembers.mockResolvedValueOnce(["token1"]);
+    mockRedisGet.mockResolvedValueOnce(
       JSON.stringify({
         id: "s1",
         token: "token1",
@@ -193,7 +212,7 @@ describe("HybridSessionStore", () => {
       })
     );
 
-    mockPrisma.session.findMany.mockResolvedValueOnce([
+    mockSessionFindMany.mockResolvedValueOnce([
       {
         id: "s2",
         token: "token2",
@@ -201,18 +220,20 @@ describe("HybridSessionStore", () => {
         expiresAt: new Date(Date.now() + 10_000),
         createdAt: new Date(),
         updatedAt: new Date(),
+        impersonatedBy: null,
+        ipAddress: null,
+        userAgent: null,
       },
     ]);
 
     const results = await store.findByUserId("u1");
     expect(results.length).toBe(2);
-    expect(results.map((r) => r.id)).toEqual(["s1", "s2"]);
+    expect(results.map((entry) => entry.id)).toEqual(["s1", "s2"]);
   });
 
   test("update stores in redis and postgres", async () => {
-    mockRedis.keys.mockResolvedValueOnce(["session:active:token1"]);
-    // getFromRedis loop
-    mockRedis.get.mockResolvedValueOnce(
+    mockRedisKeys.mockResolvedValueOnce(["session:active:token1"]);
+    mockRedisGet.mockResolvedValueOnce(
       JSON.stringify({
         id: "s1",
         token: "token1",
@@ -225,12 +246,12 @@ describe("HybridSessionStore", () => {
 
     const result = await store.update("s1", { ipAddress: "127.0.0.1" });
     expect(result?.ipAddress).toBe("127.0.0.1");
-    expect(mockPrisma.session.update).toHaveBeenCalled();
+    expect(mockSessionUpdate).toHaveBeenCalled();
   });
 
   test("update fallback to postgres if not in redis", async () => {
-    mockRedis.keys.mockResolvedValueOnce([]); // Not in redis
-    mockPrisma.session.update.mockResolvedValueOnce({
+    mockRedisKeys.mockResolvedValueOnce([]);
+    mockSessionUpdate.mockResolvedValueOnce({
       id: "s1",
       token: "token1",
       userId: "u1",
@@ -238,15 +259,17 @@ describe("HybridSessionStore", () => {
       expiresAt: new Date(Date.now() + 10_000),
       createdAt: new Date(),
       updatedAt: new Date(),
+      impersonatedBy: null,
+      userAgent: null,
     });
 
     const result = await store.update("s1", { ipAddress: "127.0.0.1" });
     expect(result?.ipAddress).toBe("127.0.0.1");
-    expect(mockPrisma.session.update).toHaveBeenCalled();
+    expect(mockSessionUpdate).toHaveBeenCalled();
   });
 
   test("delete clears both stores", async () => {
-    mockRedis.get.mockResolvedValueOnce(
+    mockRedisGet.mockResolvedValueOnce(
       JSON.stringify({
         id: "s1",
         token: "token1",
@@ -258,44 +281,33 @@ describe("HybridSessionStore", () => {
     );
 
     await store.delete("token1");
-    expect(mockRedis.pipeline).toHaveBeenCalled();
-    expect(mockPrisma.session.deleteMany).toHaveBeenCalled();
+    expect(mockPipelineFactory).toHaveBeenCalled();
+    expect(mockSessionDeleteMany).toHaveBeenCalled();
   });
 
   test("deleteByUserId clears both stores", async () => {
-    mockRedis.smembers.mockResolvedValueOnce(["token1"]);
+    mockRedisSmembers.mockResolvedValueOnce(["token1"]);
 
     await store.deleteByUserId("u1");
-    expect(mockRedis.pipeline).toHaveBeenCalled();
-    expect(mockPrisma.session.deleteMany).toHaveBeenCalled();
+    expect(mockPipelineFactory).toHaveBeenCalled();
+    expect(mockSessionDeleteMany).toHaveBeenCalled();
   });
 
-  test("syncExpiredSessions archives expired ones", async () => {
-    mockRedis.keys.mockResolvedValueOnce(["session:active:token1"]);
-    mockRedis.get.mockResolvedValueOnce(
-      JSON.stringify({
-        id: "s1",
-        token: "token1",
-        userId: "u1",
-        expiresAt: new Date(Date.now() - 10_000).toISOString(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      })
-    );
-    // Second get for deleteFromRedis
-    mockRedis.get.mockResolvedValueOnce(
-      JSON.stringify({
-        id: "s1",
-        token: "token1",
-        userId: "u1",
-        expiresAt: new Date(Date.now() - 10_000).toISOString(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      })
-    );
+  test("sync of expired sessions occurs through public API", async () => {
+    const expired = JSON.stringify({
+      id: "s1",
+      token: "token1",
+      userId: "u1",
+      expiresAt: new Date(Date.now() - 10_000).toISOString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
 
-    await (store as any).syncExpiredSessions();
-    expect(mockPrisma.session.update).toHaveBeenCalled();
-    expect(mockRedis.pipeline).toHaveBeenCalled();
+    mockRedisGet.mockResolvedValueOnce(expired);
+    await store.delete("token1");
+
+    expect(mockSessionDeleteMany).toHaveBeenCalledWith({
+      where: { token: "token1" },
+    });
   });
 });

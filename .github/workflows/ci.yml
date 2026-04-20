@@ -5,6 +5,10 @@ on:
     branches:
       - main
       - dev
+  pull_request:
+    branches:
+      - main
+      - dev
   workflow_dispatch:
 
 env:
@@ -53,8 +57,12 @@ jobs:
       - name: Check types
         run: bun run check-types
 
+      - name: Run tests
+        run: bun run test
+
   build-and-push:
     name: Build and Push (${{ matrix.app }})
+    if: github.event_name == 'push'
     needs: quality
     runs-on: blacksmith-4vcpu-ubuntu-2404
     permissions:
@@ -81,8 +89,8 @@ jobs:
         id: version
         shell: bash
         run: |
-          APP_VERSION=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["version"])' "apps/${{ matrix.app }}/package.json")
-          ROOT_VERSION=$(python3 -c 'import json; print(json.load(open("package.json"))["version"])')
+          APP_VERSION=$(jq -r '.version' "apps/${{ matrix.app }}/package.json")
+          ROOT_VERSION=$(jq -r '.version' "package.json")
 
           {
             echo "app_version=${APP_VERSION}"
@@ -137,6 +145,7 @@ jobs:
 
   cleanup-old-images:
     name: Cleanup old GHCR images
+    if: github.event_name == 'push'
     needs: build-and-push
     runs-on: blacksmith-4vcpu-ubuntu-2404
     permissions:
@@ -155,5 +164,5 @@ jobs:
           package-name: ${{ matrix.image }}
           package-type: container
           min-versions-to-keep: 10
-          delete-only-untagged-versions: false
+          delete-only-untagged-versions: true
           token: ${{ secrets.GITHUB_TOKEN }}

@@ -32,8 +32,12 @@ const createRedisConfig = (): RedisOptions => {
 let redisClient: IoRedis | null = null;
 
 const getRedisClient = (): IoRedis => {
-  if (redisClient) {
+  if (redisClient && redisClient.status !== "end") {
     return redisClient;
+  }
+
+  if (redisClient?.status === "end") {
+    redisClient = null;
   }
 
   const redisUrl = process.env.REDIS_URL ?? keys.REDIS_URL;

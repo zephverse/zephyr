@@ -5,7 +5,8 @@ import { collectTestFiles, type TestScope } from "./test-file-discovery";
 
 type CoverageScope = TestScope;
 
-const SOURCE_LCOV_PATH = join("coverage", "all", "lcov.info");
+const COVERAGE_CONFIG_PATH = join("scripts", "bunfig.coverage.toml");
+const COVERAGE_DIR_PREFIX = 'coverageDir = "';
 
 function isCoverageScope(value: string): value is CoverageScope {
   return value === "all" || value === "unit" || value === "integration";
@@ -18,6 +19,27 @@ async function fileExists(filePath: string): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+function parseCoverageDir(configContents: string): string {
+  const line = configContents
+    .split("\n")
+    .map((entry) => entry.trim())
+    .find((entry) => entry.startsWith(COVERAGE_DIR_PREFIX));
+
+  if (!line) {
+    throw new Error(`Missing coverageDir in ${COVERAGE_CONFIG_PATH}`);
+  }
+
+  return line.slice(COVERAGE_DIR_PREFIX.length, line.lastIndexOf('"'));
+}
+
+async function getSourceLcovPath(deps: CoverageRunnerDeps): Promise<string> {
+  const readText = deps.readText ?? defaultReadText;
+  const coverageConfig = await readText(COVERAGE_CONFIG_PATH);
+  const coverageDir = parseCoverageDir(coverageConfig);
+
+  return join(coverageDir, "lcov.info");
 }
 
 interface CoverageRunnerDeps {
@@ -348,6 +370,7 @@ export async function runCoverageForScope(
   const readText = deps.readText ?? defaultReadText;
   const removeFile = deps.removeFile ?? defaultRemoveFile;
   const runProcess = deps.runProcess ?? defaultRunProcess;
+  const sourceLcovPath = await getSourceLcovPath(deps);
 
   const coverageArgs = [
     "--coverage",
@@ -369,31 +392,27 @@ export async function runCoverageForScope(
     return 1;
   }
 
-  const lcovChunks: string[] = [];
+  await removeFile(sourceLcovPath);
 
-  for (const filePath of testFiles) {
-    await removeFile(SOURCE_LCOV_PATH);
+  const exitCode = await runProcess([
+    "test",
+    "--env-file=.env.test",
+    ...coverageArgs,
+    ...testFiles.map((filePath) => `./${filePath}`),
+  ]);
 
-    const exitCode = await runProcess([
-      "test",
-      "--env-file=.env.test",
-      ...coverageArgs,
-      `./${filePath}`,
-    ]);
+  const hasLcov = await doesFileExist(sourceLcovPath);
 
-    const hasLcov = await doesFileExist(SOURCE_LCOV_PATH);
-    if (hasLcov) {
-      lcovChunks.push(await readText(SOURCE_LCOV_PATH));
-    }
-
-    if (exitCode !== 0) {
-      await writeMergedLcov(scope, lcovChunks, deps);
-      return exitCode;
-    }
+  if (!hasLcov) {
+    logger.error(`Coverage output missing: ${sourceLcovPath}`);
+    await writeMergedLcov(scope, [], deps);
+    return exitCode === 0 ? 1 : exitCode;
   }
 
-  await writeMergedLcov(scope, lcovChunks, deps);
-  return 0;
+  const lcovContent = await readText(sourceLcovPath);
+  await writeMergedLcov(scope, [lcovContent], deps);
+
+  return exitCode;
 }
 
 export async function runCoverageCli(

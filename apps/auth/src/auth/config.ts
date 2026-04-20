@@ -27,7 +27,7 @@ const emailService: EmailService = {
 
 export const auth = createAuthConfig({
   emailService,
-  environment: env.NODE_ENV as "development" | "production",
+  environment: env.NODE_ENV === "test" ? "development" : env.NODE_ENV,
   sendVerificationOTP: async ({ email, otp, type }) => {
     if (type === "email-verification") {
       const result = await sendVerificationOTP(email, otp);

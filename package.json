@@ -1,6 +1,6 @@
 {
   "name": "zephyr",
-  "version": "1.0.14",
+  "version": "1.0.15",
   "license": "AGPL-3.0",
   "homepage": "https://zephyyrr.in",
   "private": true,
@@ -21,7 +21,7 @@
     "test": "bun run test:unit && bun run test:integration",
     "test:unit": "cross-env NODE_ENV=test bun scripts/run-unit-tests.ts",
     "test:integration": "cross-env NODE_ENV=test bun scripts/run-integration-tests.ts",
-    "test:coverage": "bun run test:coverage:all && bun run test:coverage:unit && bun run test:coverage:integration",
+    "test:coverage": "bun run test:coverage:all",
     "test:coverage:all": "bun scripts/run-coverage-suite.ts all",
     "test:coverage:unit": "bun scripts/run-coverage-suite.ts unit",
     "test:coverage:integration": "bun scripts/run-coverage-suite.ts integration",

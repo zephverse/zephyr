@@ -1,19 +1,25 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
+import type { CachedSession } from "@zephyr/db";
 import { SignJWT } from "jose";
 
 const originalConsoleError = console.error;
 
+const jwtSessionCacheMock = {
+  createTokenHash: mock((token: string) => `hash_${token}`),
+  setValidatedSession: mock(
+    async (_tokenHash: string, _sessionData: CachedSession): Promise<void> =>
+      Promise.resolve()
+  ),
+  getValidatedSession: mock(
+    async (_tokenHash: string): Promise<CachedSession | null> => null
+  ),
+  invalidateSession: mock(
+    async (_tokenHash: string): Promise<void> => Promise.resolve()
+  ),
+};
+
 mock.module("@zephyr/db", () => ({
-  jwtSessionCache: {
-    createTokenHash: (t: string) => `hash_${t}`,
-    setValidatedSession: mock(async () => {
-      /* no-op */
-    }) as any,
-    getValidatedSession: mock(async () => null) as any,
-    invalidateSession: mock(async () => {
-      /* no-op */
-    }) as any,
-  },
+  jwtSessionCache: jwtSessionCacheMock,
   prisma: {},
   redis: {},
 }));
@@ -42,7 +48,10 @@ describe("jwt helpers", () => {
 
   afterEach(() => {
     console.error = originalConsoleError;
-    mock.restore();
+    jwtSessionCacheMock.createTokenHash.mockClear();
+    jwtSessionCacheMock.setValidatedSession.mockClear();
+    jwtSessionCacheMock.getValidatedSession.mockClear();
+    jwtSessionCacheMock.invalidateSession.mockClear();
   });
 
   describe("validateJWTToken", () => {
@@ -89,20 +98,55 @@ describe("jwt helpers", () => {
     });
 
     test("cacheJWTValidation stores session data", async () => {
+      const expectedSessionData = {
+        session: {
+          id: expect.any(String),
+          createdAt: expect.any(Date),
+          updatedAt: expect.any(Date),
+          userId: "user123",
+          expiresAt: new Date(12_345 * 1000),
+          token: "test",
+          ipAddress: undefined,
+          userAgent: undefined,
+        },
+        user: {
+          id: "user123",
+          email: "test@test.com",
+          emailVerified: true,
+          name: "",
+          username: "",
+          createdAt: expect.any(Date),
+          updatedAt: expect.any(Date),
+        },
+      };
+
       await cacheJWTValidation("test", {
         sub: "user123",
         email: "test@test.com",
         email_verified: true,
         exp: 12_345,
       });
+
+      expect(jwtSessionCacheMock.setValidatedSession).toHaveBeenCalledWith(
+        "hash_test",
+        expectedSessionData
+      );
     });
 
     test("getCachedJWTValidation calls getValidatedSession", async () => {
       await getCachedJWTValidation("test");
+
+      expect(jwtSessionCacheMock.getValidatedSession).toHaveBeenCalledWith(
+        "hash_test"
+      );
     });
 
     test("invalidateCachedJWT calls invalidateSession", async () => {
       await invalidateCachedJWT("test");
+
+      expect(jwtSessionCacheMock.invalidateSession).toHaveBeenCalledWith(
+        "hash_test"
+      );
     });
   });
 });

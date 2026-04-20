@@ -1,7 +1,42 @@
-import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
+import {
+  afterAll,
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  test,
+} from "bun:test";
+import type { EmailValidationResult } from "@zephyr/auth";
 
 let throwOnSend = false;
 let returnErrorOnSend = false;
+
+const mockValidateEmailAdvanced = mock(
+  async (): Promise<EmailValidationResult> => ({
+    isValid: true,
+    score: 100,
+    confidence: "high",
+    reasons: [],
+    disposable: false,
+    mxRecords: true,
+  })
+) as {
+  mockClear: () => void;
+  mockResolvedValueOnce: (value: EmailValidationResult) => unknown;
+};
+
+const mockResendSend = mock(async () => {
+  await Promise.resolve();
+  if (throwOnSend) {
+    throw new Error("Send exception");
+  }
+  if (returnErrorOnSend) {
+    return { error: { message: "Send error" } };
+  }
+  return { data: { id: "123" }, error: null };
+});
+
 const originalConsole = {
   error: console.error,
   log: console.log,
@@ -9,13 +44,7 @@ const originalConsole = {
 };
 
 mock.module("@zephyr/auth", () => ({
-  validateEmailAdvanced: mock(async () => ({
-    isValid: true,
-    score: 100,
-    confidence: "high",
-    reasons: [],
-    disposable: false,
-  })),
+  validateEmailAdvanced: mockValidateEmailAdvanced,
 }));
 
 mock.module("resend", () => ({
@@ -26,23 +55,14 @@ mock.module("resend", () => ({
       }
     }
     emails = {
-      send: mock(async () => {
-        await Promise.resolve();
-        if (throwOnSend) {
-          throw new Error("Send exception");
-        }
-        if (returnErrorOnSend) {
-          return { error: { message: "Send error" } };
-        }
-        return { data: { id: "123" }, error: null };
-      }),
+      send: mockResendSend,
     };
   },
 }));
 
 describe("email service", () => {
-  let envModule: any;
-  let serviceModule: any;
+  let envModule: typeof import("../../env");
+  let serviceModule: typeof import("./service");
 
   beforeEach(async () => {
     console.error = mock(() => undefined) as typeof console.error;
@@ -88,27 +108,48 @@ describe("email service", () => {
     console.error = originalConsole.error;
     console.log = originalConsole.log;
     console.warn = originalConsole.warn;
+
+    mockValidateEmailAdvanced.mockClear();
+    mockResendSend.mockClear();
+  });
+
+  afterAll(() => {
     mock.restore();
   });
 
   test("validateEmailServiceConfig works", () => {
-    envModule.env.RESEND_API_KEY = "test_key";
+    Object.defineProperty(envModule.env, "RESEND_API_KEY", {
+      value: "test_key",
+      writable: true,
+    });
     expect(serviceModule.validateEmailServiceConfig().isValid).toBe(true);
 
-    envModule.env.RESEND_API_KEY = "";
+    Object.defineProperty(envModule.env, "RESEND_API_KEY", {
+      value: "",
+      writable: true,
+    });
     expect(serviceModule.validateEmailServiceConfig().isValid).toBe(false);
   });
 
   test("isEmailServiceConfigured and isDevelopmentMode", () => {
-    envModule.env.RESEND_API_KEY = "test_key";
+    Object.defineProperty(envModule.env, "RESEND_API_KEY", {
+      value: "test_key",
+      writable: true,
+    });
     expect(serviceModule.isEmailServiceConfigured()).toBe(true);
 
-    envModule.env.NODE_ENV = "development";
+    Object.defineProperty(envModule.env, "NODE_ENV", {
+      value: "development",
+      writable: true,
+    });
     expect(serviceModule.isDevelopmentMode()).toBe(true);
   });
 
   test("sendVerificationEmail sends successfully", async () => {
-    envModule.env.RESEND_API_KEY = "test_key";
+    Object.defineProperty(envModule.env, "RESEND_API_KEY", {
+      value: "test_key",
+      writable: true,
+    });
     const result = await serviceModule.sendVerificationEmail(
       "test@example.com",
       "token123"
@@ -117,8 +158,14 @@ describe("email service", () => {
   });
 
   test("sendVerificationEmail handles non-dev mode", async () => {
-    envModule.env.RESEND_API_KEY = "test_key";
-    envModule.env.NODE_ENV = "production";
+    Object.defineProperty(envModule.env, "RESEND_API_KEY", {
+      value: "test_key",
+      writable: true,
+    });
+    Object.defineProperty(envModule.env, "NODE_ENV", {
+      value: "production",
+      writable: true,
+    });
     const result = await serviceModule.sendVerificationEmail(
       "test@example.com",
       "token123"
@@ -127,7 +174,10 @@ describe("email service", () => {
   });
 
   test("sendVerificationEmail returns error from resend", async () => {
-    envModule.env.RESEND_API_KEY = "test_key";
+    Object.defineProperty(envModule.env, "RESEND_API_KEY", {
+      value: "test_key",
+      writable: true,
+    });
     returnErrorOnSend = true;
     const result = await serviceModule.sendVerificationEmail(
       "test@example.com",
@@ -138,7 +188,10 @@ describe("email service", () => {
   });
 
   test("sendVerificationEmail catches exceptions", async () => {
-    envModule.env.RESEND_API_KEY = "test_key";
+    Object.defineProperty(envModule.env, "RESEND_API_KEY", {
+      value: "test_key",
+      writable: true,
+    });
     throwOnSend = true;
     const result = await serviceModule.sendVerificationEmail(
       "test@example.com",
@@ -149,15 +202,13 @@ describe("email service", () => {
   });
 
   test("sendVerificationEmail catches validation error", async () => {
-    const { validateEmailAdvanced: mockedValidate } = await import(
-      "@zephyr/auth"
-    );
-    (mockedValidate as ReturnType<typeof mock>).mockResolvedValueOnce({
+    mockValidateEmailAdvanced.mockResolvedValueOnce({
       isValid: false,
       score: 0,
       confidence: "low",
       reasons: ["Invalid format"],
       disposable: false,
+      mxRecords: false,
     });
 
     const result = await serviceModule.sendVerificationEmail(
@@ -168,7 +219,10 @@ describe("email service", () => {
   });
 
   test("sendVerificationOTP sends successfully", async () => {
-    envModule.env.RESEND_API_KEY = "test_key";
+    Object.defineProperty(envModule.env, "RESEND_API_KEY", {
+      value: "test_key",
+      writable: true,
+    });
     const result = await serviceModule.sendVerificationOTP(
       "test@example.com",
       "123456"
@@ -177,8 +231,14 @@ describe("email service", () => {
   });
 
   test("sendVerificationOTP handles non-dev mode", async () => {
-    envModule.env.RESEND_API_KEY = "test_key";
-    envModule.env.NODE_ENV = "production";
+    Object.defineProperty(envModule.env, "RESEND_API_KEY", {
+      value: "test_key",
+      writable: true,
+    });
+    Object.defineProperty(envModule.env, "NODE_ENV", {
+      value: "production",
+      writable: true,
+    });
     const result = await serviceModule.sendVerificationOTP(
       "test@example.com",
       "123456"
@@ -187,7 +247,10 @@ describe("email service", () => {
   });
 
   test("sendVerificationOTP returns error from resend", async () => {
-    envModule.env.RESEND_API_KEY = "test_key";
+    Object.defineProperty(envModule.env, "RESEND_API_KEY", {
+      value: "test_key",
+      writable: true,
+    });
     returnErrorOnSend = true;
     const result = await serviceModule.sendVerificationOTP(
       "test@example.com",
@@ -198,7 +261,10 @@ describe("email service", () => {
   });
 
   test("sendVerificationOTP catches exceptions", async () => {
-    envModule.env.RESEND_API_KEY = "test_key";
+    Object.defineProperty(envModule.env, "RESEND_API_KEY", {
+      value: "test_key",
+      writable: true,
+    });
     throwOnSend = true;
     const result = await serviceModule.sendVerificationOTP(
       "test@example.com",
@@ -209,7 +275,10 @@ describe("email service", () => {
   });
 
   test("sendPasswordResetEmail sends successfully", async () => {
-    envModule.env.RESEND_API_KEY = "test_key";
+    Object.defineProperty(envModule.env, "RESEND_API_KEY", {
+      value: "test_key",
+      writable: true,
+    });
     const result = await serviceModule.sendPasswordResetEmail(
       "test@example.com",
       "token123"
@@ -218,8 +287,14 @@ describe("email service", () => {
   });
 
   test("sendPasswordResetEmail handles non-dev mode", async () => {
-    envModule.env.RESEND_API_KEY = "test_key";
-    envModule.env.NODE_ENV = "production";
+    Object.defineProperty(envModule.env, "RESEND_API_KEY", {
+      value: "test_key",
+      writable: true,
+    });
+    Object.defineProperty(envModule.env, "NODE_ENV", {
+      value: "production",
+      writable: true,
+    });
     const result = await serviceModule.sendPasswordResetEmail(
       "test@example.com",
       "token123"
@@ -228,7 +303,10 @@ describe("email service", () => {
   });
 
   test("sendPasswordResetEmail returns error from resend", async () => {
-    envModule.env.RESEND_API_KEY = "test_key";
+    Object.defineProperty(envModule.env, "RESEND_API_KEY", {
+      value: "test_key",
+      writable: true,
+    });
     returnErrorOnSend = true;
     const result = await serviceModule.sendPasswordResetEmail(
       "test@example.com",
@@ -239,7 +317,10 @@ describe("email service", () => {
   });
 
   test("sendPasswordResetEmail catches exceptions", async () => {
-    envModule.env.RESEND_API_KEY = "test_key";
+    Object.defineProperty(envModule.env, "RESEND_API_KEY", {
+      value: "test_key",
+      writable: true,
+    });
     throwOnSend = true;
     const result = await serviceModule.sendPasswordResetEmail(
       "test@example.com",

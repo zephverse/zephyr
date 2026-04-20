@@ -2,10 +2,17 @@ import { describe, expect, mock, test } from "bun:test";
 import type { FetchCreateContextFnOptions } from "@trpc/server/adapters/fetch";
 import type { User as AuthUser, Session } from "better-auth";
 
-const mockGetSessionFromRequest = mock(async () => ({
-  session: null,
-  user: null,
-}));
+interface SessionFromRequestResult {
+  session: Session | null;
+  user: AuthUser | null;
+}
+
+const mockGetSessionFromRequest = mock(
+  async (): Promise<SessionFromRequestResult> => ({
+    session: null,
+    user: null,
+  })
+);
 
 mock.module("@zephyr/auth/core", () => ({
   getSessionFromRequest: mockGetSessionFromRequest,
@@ -69,7 +76,7 @@ describe("server trpc", () => {
     mockGetSessionFromRequest.mockResolvedValueOnce({
       session,
       user,
-    } as never);
+    });
 
     const ctx = await createContext(options);
 

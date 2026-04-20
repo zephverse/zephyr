@@ -63,6 +63,10 @@ async function collectTestFilesRecursive(
 }
 
 function selectFilesForScope(files: string[], scope: TestScope): string[] {
+  // Contract: collectTestFiles returns alphabetically sorted file paths.
+  const sortFiles = (paths: string[]) =>
+    [...paths].sort((a, b) => a.localeCompare(b));
+
   const integrationFiles = files.filter(isIntegrationTestFile);
 
   const unitFiles = files.filter(
@@ -70,14 +74,14 @@ function selectFilesForScope(files: string[], scope: TestScope): string[] {
   );
 
   if (scope === "integration") {
-    return integrationFiles;
+    return sortFiles(integrationFiles);
   }
 
   if (scope === "unit") {
-    return unitFiles;
+    return sortFiles(unitFiles);
   }
 
-  return files;
+  return sortFiles(files);
 }
 
 export async function collectTestFiles(

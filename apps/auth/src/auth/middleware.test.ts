@@ -1,12 +1,42 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
+import type { HybridSession, JWTValidationResult } from "@zephyr/auth/core";
 
-const mockFindUnique = mock(async () => null);
+type MiddlewareModule = typeof import("./middleware");
 
-const mockFindByToken = mock(async () => null);
-const mockCreate = mock(async () => null);
-const mockValidateJWTToken = mock(async () => ({ valid: false }));
+interface SessionLookupUser {
+  createdAt: Date;
+  displayName: string;
+  email: string;
+  emailVerified: boolean;
+  name: string;
+  updatedAt: Date;
+  username: string;
+}
 
-const mockGetSession = mock(async () => null);
+type ApiSessionResult = {
+  session: { id: string; userId: string };
+  user: { id: string };
+} | null;
+
+const mockFindUnique = mock(
+  async (): Promise<SessionLookupUser | { username: string } | null> => null
+);
+
+const mockFindByToken = mock(async (): Promise<HybridSession | null> => null);
+const mockCreate = mock(async (): Promise<HybridSession | null> => null);
+const mockValidateJWTToken = mock(
+  async (): Promise<JWTValidationResult> => ({ valid: false })
+);
+
+const mockGetSession = mock(async (): Promise<ApiSessionResult> => null);
+
+const originalEnv = {
+  BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
+  DATABASE_URL: process.env.DATABASE_URL,
+  POSTGRES_PRISMA_URL: process.env.POSTGRES_PRISMA_URL,
+  POSTGRES_URL_NON_POOLING: process.env.POSTGRES_URL_NON_POOLING,
+};
+
 const originalConsole = {
   error: console.error,
   log: console.log,
@@ -14,7 +44,32 @@ const originalConsole = {
 };
 
 describe("middleware", () => {
-  let middlewareModule: any;
+  let middlewareModule: MiddlewareModule;
+
+  const restoreEnvValue = (
+    key:
+      | "BETTER_AUTH_SECRET"
+      | "DATABASE_URL"
+      | "POSTGRES_PRISMA_URL"
+      | "POSTGRES_URL_NON_POOLING"
+  ): void => {
+    const value = originalEnv[key];
+    if (value === undefined) {
+      delete process.env[key];
+      return;
+    }
+    process.env[key] = value;
+  };
+
+  const validUserData: SessionLookupUser = {
+    username: "test",
+    email: "test@example.com",
+    emailVerified: true,
+    name: "Test",
+    displayName: "Test User",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
 
   beforeEach(async () => {
     console.error = mock(() => undefined) as typeof console.error;
@@ -66,6 +121,12 @@ describe("middleware", () => {
     console.error = originalConsole.error;
     console.log = originalConsole.log;
     console.warn = originalConsole.warn;
+
+    restoreEnvValue("DATABASE_URL");
+    restoreEnvValue("POSTGRES_PRISMA_URL");
+    restoreEnvValue("POSTGRES_URL_NON_POOLING");
+    restoreEnvValue("BETTER_AUTH_SECRET");
+
     mock.clearAllMocks();
   });
 
@@ -90,25 +151,18 @@ describe("middleware", () => {
     });
 
     test("uses cached session from hybrid store", async () => {
+      const now = new Date();
       mockFindByToken.mockResolvedValueOnce({
         id: "s1",
         userId: "u1",
         token: "valid",
-        expiresAt: new Date(),
+        expiresAt: now,
         ipAddress: "127.0.0.1",
         userAgent: "ua",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      } as any);
-      mockFindUnique.mockResolvedValueOnce({
-        username: "test",
-        email: "test@example.com",
-        emailVerified: true,
-        name: "Test",
-        displayName: "Test User",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      } as any);
+        createdAt: now,
+        updatedAt: now,
+      });
+      mockFindUnique.mockResolvedValueOnce(validUserData);
 
       const req = new Request("http://localhost", {
         headers: { authorization: "Bearer valid" },
@@ -124,17 +178,18 @@ describe("middleware", () => {
     });
 
     test("returns null if cached session but user not found", async () => {
+      const now = new Date();
       mockFindByToken.mockResolvedValueOnce({
         id: "s1",
         userId: "u1",
         token: "valid",
-        expiresAt: new Date(),
+        expiresAt: now,
         ipAddress: "127.0.0.1",
         userAgent: "ua",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      } as any);
-      mockFindUnique.mockResolvedValueOnce(null as any);
+        createdAt: now,
+        updatedAt: now,
+      });
+      mockFindUnique.mockResolvedValueOnce(null);
 
       const req = new Request("http://localhost", {
         headers: { authorization: "Bearer valid" },
@@ -146,30 +201,24 @@ describe("middleware", () => {
     });
 
     test("creates new hybrid session if token is valid but uncached", async () => {
-      mockFindByToken.mockResolvedValueOnce(null as any);
+      const now = new Date();
+
+      mockFindByToken.mockResolvedValueOnce(null);
       mockValidateJWTToken.mockResolvedValueOnce({
         valid: true,
         payload: { sub: "u1", exp: Date.now() / 1000 + 10_000 },
-      } as any);
-      mockFindUnique.mockResolvedValueOnce({
-        username: "test",
-        email: "test@example.com",
-        emailVerified: true,
-        name: "Test",
-        displayName: "Test User",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      } as any);
+      });
+      mockFindUnique.mockResolvedValueOnce(validUserData);
       mockCreate.mockResolvedValueOnce({
         id: "s1",
         userId: "u1",
         token: "valid",
-        expiresAt: new Date(),
+        expiresAt: now,
         ipAddress: "127.0.0.1",
         userAgent: "ua",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      } as any);
+        createdAt: now,
+        updatedAt: now,
+      });
 
       const req = new Request("http://localhost", {
         headers: { authorization: "Bearer valid" },
@@ -184,11 +233,11 @@ describe("middleware", () => {
     });
 
     test("returns null if validation result has no sub", async () => {
-      mockFindByToken.mockResolvedValueOnce(null as any);
+      mockFindByToken.mockResolvedValueOnce(null);
       mockValidateJWTToken.mockResolvedValueOnce({
         valid: true,
         payload: { exp: Date.now() / 1000 + 10_000 },
-      } as any);
+      });
       const req = new Request("http://localhost", {
         headers: { authorization: "Bearer valid" },
       });
@@ -199,15 +248,15 @@ describe("middleware", () => {
     });
 
     test("falls through if userData is null after validation", async () => {
-      mockFindByToken.mockResolvedValueOnce(null as any);
+      mockFindByToken.mockResolvedValueOnce(null);
       mockValidateJWTToken.mockResolvedValueOnce({
         valid: true,
         payload: { sub: "u1", exp: Date.now() / 1000 + 10_000 },
-      } as any);
-      mockFindUnique.mockResolvedValueOnce(null as any);
+      });
+      mockFindUnique.mockResolvedValueOnce(null);
 
       // it should fall back to auth.api.getSession
-      mockGetSession.mockResolvedValueOnce(null as any);
+      mockGetSession.mockResolvedValueOnce(null);
 
       const req = new Request("http://localhost", {
         headers: { authorization: "Bearer valid" },
@@ -220,10 +269,10 @@ describe("middleware", () => {
 
     test("uses auth.api.getSession as ultimate fallback and gets user data", async () => {
       mockGetSession.mockResolvedValueOnce({
-        session: { id: "s2" },
+        session: { id: "s2", userId: "u2" },
         user: { id: "u2" },
-      } as any);
-      mockFindUnique.mockResolvedValueOnce({ username: "apiuser" } as any);
+      });
+      mockFindUnique.mockResolvedValueOnce({ username: "apiuser" });
 
       const req = new Request("http://localhost");
       const result = await middlewareModule.getSessionFromRequest(req);
@@ -256,10 +305,10 @@ describe("middleware", () => {
 
     test("requireAuth returns context if authorized", async () => {
       mockGetSession.mockResolvedValueOnce({
-        session: { id: "s2" },
+        session: { id: "s2", userId: "u2" },
         user: { id: "u2" },
-      } as any);
-      mockFindUnique.mockResolvedValueOnce({ username: "apiuser" } as any);
+      });
+      mockFindUnique.mockResolvedValueOnce({ username: "apiuser" });
 
       const req = new Request("http://localhost");
       const result = await middlewareModule.requireAuth(req);

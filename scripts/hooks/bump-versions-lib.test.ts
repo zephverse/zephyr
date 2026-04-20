@@ -216,6 +216,28 @@ describe("runBumpVersions", () => {
   let originalSpawn: typeof Bun.spawn;
   let sandboxDir = "";
 
+  interface SpawnResult {
+    exited: Promise<number>;
+    stderr: Blob;
+    stdout: Blob;
+  }
+
+  type SpawnFn = (args: string[], options?: unknown) => SpawnResult;
+
+  const createSpawnResult = (
+    stdout = "",
+    stderr = "",
+    exitCode = 0
+  ): SpawnResult => ({
+    stdout: new Blob([stdout]),
+    stderr: new Blob([stderr]),
+    exited: Promise.resolve(exitCode),
+  });
+
+  const setSpawnMock = (spawnFn: SpawnFn): void => {
+    Bun.spawn = spawnFn as unknown as typeof Bun.spawn;
+  };
+
   beforeEach(async () => {
     originalSpawn = Bun.spawn;
     sandboxDir = await mkdtemp(join(tmpdir(), "zephyr-run-bump-versions-"));
@@ -234,7 +256,7 @@ describe("runBumpVersions", () => {
 
   test("end-to-end bump versions with mocks", async () => {
     // We mock Bun.spawn to pretend git is working
-    Bun.spawn = ((args: string[], _options: any) => {
+    setSpawnMock((args: string[]) => {
       const command = args.join(" ");
       let stdoutStr = "";
       let exitCode = 0;
@@ -249,12 +271,8 @@ describe("runBumpVersions", () => {
         exitCode = 1;
       }
 
-      return {
-        stdout: new Blob([stdoutStr]),
-        stderr: new Blob([""]),
-        exited: Promise.resolve(exitCode),
-      } as any;
-    }) as any;
+      return createSpawnResult(stdoutStr, "", exitCode);
+    });
 
     await runBumpVersions();
 
@@ -262,12 +280,9 @@ describe("runBumpVersions", () => {
   });
 
   test("throws if getGitRepoRoot fails", async () => {
-    Bun.spawn = ((_args: string[], _options: any) =>
-      ({
-        stdout: new Blob([""]),
-        stderr: new Blob(["fatal: not a git repository"]),
-        exited: Promise.resolve(128),
-      }) as any) as any;
+    setSpawnMock(() =>
+      createSpawnResult("", "fatal: not a git repository", 128)
+    );
 
     await expect(runBumpVersions()).rejects.toThrow(
       "Failed to resolve repository root"
@@ -275,12 +290,7 @@ describe("runBumpVersions", () => {
   });
 
   test("throws if getGitRepoRoot returns empty", async () => {
-    Bun.spawn = ((_args: string[], _options: any) =>
-      ({
-        stdout: new Blob(["\n"]),
-        stderr: new Blob([""]),
-        exited: Promise.resolve(0),
-      }) as any) as any;
+    setSpawnMock(() => createSpawnResult("\n", "", 0));
 
     await expect(runBumpVersions()).rejects.toThrow(
       "Failed to resolve repository root path"
@@ -288,20 +298,12 @@ describe("runBumpVersions", () => {
   });
 
   test("throws if getStagedFiles fails", async () => {
-    Bun.spawn = ((args: string[], _options: any) => {
+    setSpawnMock((args: string[]) => {
       if (args[0] === "git" && args[1] === "rev-parse") {
-        return {
-          stdout: new Blob([`${sandboxDir}\n`]),
-          stderr: new Blob([""]),
-          exited: Promise.resolve(0),
-        } as any;
+        return createSpawnResult(`${sandboxDir}\n`, "", 0);
       }
-      return {
-        stdout: new Blob([""]),
-        stderr: new Blob(["error"]),
-        exited: Promise.resolve(1),
-      } as any;
-    }) as any;
+      return createSpawnResult("", "error", 1);
+    });
 
     await expect(runBumpVersions()).rejects.toThrow(
       "Failed to read staged files"
@@ -309,34 +311,18 @@ describe("runBumpVersions", () => {
   });
 
   test("throws if stageFile fails", async () => {
-    Bun.spawn = ((args: string[], _options: any) => {
+    setSpawnMock((args: string[]) => {
       if (args[0] === "git" && args[1] === "rev-parse") {
-        return {
-          stdout: new Blob([`${sandboxDir}\n`]),
-          stderr: new Blob([""]),
-          exited: Promise.resolve(0),
-        } as any;
+        return createSpawnResult(`${sandboxDir}\n`, "", 0);
       }
       if (args[0] === "git" && args[1] === "diff") {
-        return {
-          stdout: new Blob(["docker/docker-compose.dev.yml\n"]),
-          stderr: new Blob([""]),
-          exited: Promise.resolve(0),
-        } as any;
+        return createSpawnResult("docker/docker-compose.dev.yml\n", "", 0);
       }
       if (args[0] === "git" && args[1] === "add") {
-        return {
-          stdout: new Blob([""]),
-          stderr: new Blob(["failed to add"]),
-          exited: Promise.resolve(1),
-        } as any;
+        return createSpawnResult("", "failed to add", 1);
       }
-      return {
-        stdout: new Blob([""]),
-        stderr: new Blob([""]),
-        exited: Promise.resolve(0),
-      } as any;
-    }) as any;
+      return createSpawnResult("", "", 0);
+    });
 
     await expect(runBumpVersions()).rejects.toThrow("Failed to stage");
   });
@@ -344,27 +330,19 @@ describe("runBumpVersions", () => {
 
 describe("bumpVersion error cases", () => {
   test("throws if version is missing", async () => {
-    const sandboxDir = await mkdtemp(
-      join(tmpdir(), "zephyr-bump-script-error-")
-    );
-    await writePackageJson(join(sandboxDir, "package.json"), {
-      name: "root",
-    } as any);
-
     await expect(
       runBumpVersionWithContext({
         fileExists: async () => true,
         getStagedFiles: async () => ["docker/docker-compose.dev.yml"],
-        readPackageJson: async () => ({ name: "root" }) as any,
+        readPackageJson: async () =>
+          ({ name: "root" }) as unknown as PackageJson,
         stageFile: async () => {
-          /* no-op */
+          // no-op
         },
         writePackageJson: async () => {
-          /* no-op */
+          // no-op
         },
       })
     ).rejects.toThrow("Missing version in package.json");
-
-    await rm(sandboxDir, { force: true, recursive: true });
   });
 });
