@@ -11,9 +11,6 @@ on:
       - dev
   workflow_dispatch:
 
-env:
-  REGISTRY: ghcr.io
-
 permissions:
   contents: read
 
@@ -34,18 +31,53 @@ jobs:
         with:
           bun-version-file: package.json
 
-      - name: Restore Bun and Turbo caches
+      - name: Get bun store path
+        id: bun-cache
+        shell: bash
+        run: |
+          echo "store_path=$(bun pm cache dir)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore Bun cache
         uses: actions/cache@v5
+        id: bun-cache-restore
         with:
           path: |
+            ${{ steps.bun-cache.outputs.store_path }}
             ~/.bun/install/cache
-            ~/.cache/prisma
-            .turbo
-          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+          key: ${{ runner.os }}-bun-store-${{ hashFiles('bun.lock') }}
           restore-keys: |
-            ${{ runner.os }}-bun-
+            ${{ runner.os }}-bun-store-
+
+      - name: Restore node_modules
+        uses: actions/cache@v5
+        id: node-modules-restore
+        with:
+          path: |
+            **/node_modules
+            !**/node_modules/.cache
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('bun.lock') }}-${{ hashFiles('**/package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-modules-${{ hashFiles('bun.lock') }}-
+            ${{ runner.os }}-node-modules-
+
+      - name: Restore Turbo cache
+        uses: actions/cache@v5
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-
+
+      - name: Restore Prisma cache
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/prisma
+          key: ${{ runner.os }}-prisma-${{ hashFiles('**/schema.prisma') }}
+          restore-keys: |
+            ${{ runner.os }}-prisma-
 
       - name: Install dependencies
+        if: steps.node-modules-restore.outputs.cache-hit != 'true'
         run: bun install --frozen-lockfile
 
       - name: Generate Prisma client
@@ -60,109 +92,9 @@ jobs:
       - name: Run unit tests
         run: bun run test:unit
 
-  build-and-push:
-    name: Build and Push (${{ matrix.app }})
-    if: github.event_name == 'push'
-    needs: quality
-    runs-on: blacksmith-4vcpu-ubuntu-2404
-    permissions:
-      contents: read
-      packages: write
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - app: web
-            dockerfile: ./apps/web/Dockerfile
-            image: zephyr-web
-          - app: auth
-            dockerfile: ./apps/auth/Dockerfile
-            image: zephyr-auth
-          - app: docs
-            dockerfile: ./apps/docs/Dockerfile
-            image: zephyr-docs
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-
-      - name: Read app version metadata
-        id: version
-        shell: bash
-        run: |
-          APP_VERSION=$(jq -r '.version' "apps/${{ matrix.app }}/package.json")
-          ROOT_VERSION=$(jq -r '.version' "package.json")
-
-          {
-            echo "app_version=${APP_VERSION}"
-            echo "root_version=${ROOT_VERSION}"
-            echo "tag_name=${{ matrix.app }}-v${APP_VERSION}"
-            echo "sha_short=$(git rev-parse --short HEAD)"
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v4
-
-      - name: Setup Blacksmith Builder
-        uses: useblacksmith/setup-docker-builder@v1
-
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v4
+      - name: Save Turbo cache
+        if: always()
+        uses: actions/cache/save@v5
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract image metadata
-        id: meta
-        uses: docker/metadata-action@v6
-        with:
-          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.image }}
-          tags: |
-            type=raw,value=${{ steps.version.outputs.tag_name }},enable=${{ github.ref_name == 'main' }}
-            type=sha,prefix=${{ matrix.app }}-sha-
-            type=raw,value=latest,enable=${{ github.ref_name == 'main' }}
-            type=raw,value=dev,enable=${{ github.ref_name == 'dev' }}
-          labels: |
-            org.opencontainers.image.title=${{ matrix.image }}
-            org.opencontainers.image.version=${{ steps.version.outputs.app_version }}
-            org.opencontainers.image.revision=${{ github.sha }}
-            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
-            io.zephyr.app=${{ matrix.app }}
-            io.zephyr.app-version=${{ steps.version.outputs.app_version }}
-            io.zephyr.root-version=${{ steps.version.outputs.root_version }}
-
-      - name: Build and push Docker image (multi-arch)
-        uses: useblacksmith/build-push-action@v2
-        with:
-          context: .
-          file: ${{ matrix.dockerfile }}
-          push: true
-          platforms: linux/amd64,linux/arm64
-          cache-from: type=gha,scope=${{ matrix.image }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-
-  cleanup-old-images:
-    name: Cleanup old GHCR images
-    if: github.event_name == 'push'
-    needs: build-and-push
-    runs-on: blacksmith-4vcpu-ubuntu-2404
-    permissions:
-      packages: write
-    strategy:
-      fail-fast: false
-      matrix:
-        image:
-          - zephyr-web
-          - zephyr-auth
-          - zephyr-docs
-    steps:
-      - name: Delete old package versions (keep last 10)
-        uses: actions/delete-package-versions@v5
-        with:
-          package-name: ${{ matrix.image }}
-          package-type: container
-          min-versions-to-keep: 10
-          delete-only-untagged-versions: true
-          token: ${{ secrets.GITHUB_TOKEN }}
+          path: .turbo
+          key: ${{ runner.os }}-turbo-${{ github.sha }}
