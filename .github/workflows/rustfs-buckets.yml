@@ -80,6 +80,10 @@ jobs:
       - name: Verify RustFS buckets
         env:
           RUSTFS_ENDPOINT: ${{ secrets.RUSTFS_S3_ENDPOINT }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.RUSTFS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.RUSTFS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.RUSTFS_REGION }}
+          AWS_EC2_METADATA_DISABLED: "true"
         run: |
           set -eu
           aws --endpoint-url "$RUSTFS_ENDPOINT" s3api list-buckets | jq -r '.Buckets[].Name'

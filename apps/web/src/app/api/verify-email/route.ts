@@ -150,14 +150,11 @@ export async function GET(req: NextRequest) {
 
   try {
     try {
-      const sessionRes = await fetch(
-        `${authBase}/api/auth/get-session`,
-        {
-          headers: {
-            cookie: req.headers.get("cookie") ?? "",
-          },
-        }
-      );
+      const sessionRes = await fetch(`${authBase}/api/auth/get-session`, {
+        headers: {
+          cookie: req.headers.get("cookie") ?? "",
+        },
+      });
 
       if (sessionRes.ok) {
         const sessionData = await sessionRes.json().catch(() => null);
