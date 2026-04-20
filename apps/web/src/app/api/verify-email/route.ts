@@ -151,7 +151,7 @@ export async function GET(req: NextRequest) {
   try {
     try {
       const sessionRes = await fetch(
-        `${req.nextUrl.origin}/api/auth/get-session`,
+        `${authBase}/api/auth/get-session`,
         {
           headers: {
             cookie: req.headers.get("cookie") ?? "",
