@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth/config";
 import AdminDashboardClient from "./admin-dashboard.client";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminDashboard() {
   const hdrs = await headers();
   const serverHeaders = new Headers();

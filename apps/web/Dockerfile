@@ -13,12 +13,6 @@ RUN --mount=type=cache,target=/root/.bun \
     bun install
 COPY apps/web/ ./apps/web/
 WORKDIR /app/apps/web
-ARG NEXT_PUBLIC_AUTH_URL
-ARG NEXT_PUBLIC_URL
-ARG NEXT_PUBLIC_ZEPHOB_ENDPOINT
-ENV NEXT_PUBLIC_AUTH_URL=$NEXT_PUBLIC_AUTH_URL
-ENV NEXT_PUBLIC_URL=$NEXT_PUBLIC_URL
-ENV NEXT_PUBLIC_ZEPHOB_ENDPOINT=$NEXT_PUBLIC_ZEPHOB_ENDPOINT
 RUN --mount=type=cache,target=/root/.bun \
     bun run build
 

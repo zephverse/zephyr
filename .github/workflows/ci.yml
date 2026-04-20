@@ -130,10 +130,6 @@ jobs:
           file: ${{ matrix.dockerfile }}
           push: true
           platforms: linux/amd64,linux/arm64
-          build-args: |
-            NEXT_PUBLIC_AUTH_URL=${{ vars.NEXT_PUBLIC_AUTH_URL }}
-            NEXT_PUBLIC_URL=${{ vars.NEXT_PUBLIC_URL }}
-            NEXT_PUBLIC_ZEPHOB_ENDPOINT=${{ vars.NEXT_PUBLIC_ZEPHOB_ENDPOINT }}
           cache-from: type=gha,scope=${{ matrix.image }}
           cache-to: type=gha,mode=max,scope=${{ matrix.image }}
           tags: ${{ steps.meta.outputs.tags }}

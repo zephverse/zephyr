@@ -2,6 +2,8 @@ import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { appRouter } from "@/server/routers/app";
 import { createContext } from "@/server/trpc";
 
+export const dynamic = "force-dynamic";
+
 const handler = async (request: Request) => {
   if (request.method === "OPTIONS") {
     return new Response(null, {
