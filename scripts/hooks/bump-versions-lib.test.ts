@@ -113,6 +113,13 @@ describe("runBumpVersionWithContext", () => {
     stagedByScript = new Set<string>();
   });
 
+  afterEach(async () => {
+    if (sandboxDir) {
+      await rm(sandboxDir, { force: true, recursive: true });
+      sandboxDir = "";
+    }
+  });
+
   test("skips missing workspace package.json files", async () => {
     stagedFiles = new Set(["apps/auth/src/index.ts"]);
 

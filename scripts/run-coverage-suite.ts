@@ -34,8 +34,9 @@ function parseCoverageDir(configContents: string): string {
   return line.slice(COVERAGE_DIR_PREFIX.length, line.lastIndexOf('"'));
 }
 
-async function getSourceLcovPath(_deps: CoverageRunnerDeps): Promise<string> {
-  const coverageConfig = await defaultReadText(COVERAGE_CONFIG_PATH);
+async function getSourceLcovPath(deps: CoverageRunnerDeps): Promise<string> {
+  const readText = deps.readText ?? defaultReadText;
+  const coverageConfig = await readText(COVERAGE_CONFIG_PATH);
   const coverageDir = parseCoverageDir(coverageConfig);
 
   return join(coverageDir, "lcov.info");
@@ -192,7 +193,7 @@ function applyDaLine(record: LcovFileRecord, line: string): void {
 
 function defaultRunProcess(args: string[]): Promise<number> {
   const proc = Bun.spawn({
-    cmd: ["bun", "--config=scripts/bunfig.coverage.toml", ...args],
+    cmd: ["bun", `--config=${COVERAGE_CONFIG_PATH}`, ...args],
     cwd: process.cwd(),
     env: {
       ...process.env,
@@ -426,14 +427,12 @@ export async function runCoverageCli(
     return 1;
   }
 
-  const scopeArg = scopeInput as CoverageScope;
-
-  if (isCoverageScope(scopeArg) === false) {
+  if (isCoverageScope(scopeInput) === false) {
     console.error(usage);
     return 1;
   }
 
-  return await runCoverageForScope(scopeArg);
+  return await runCoverageForScope(scopeInput);
 }
 
 const isDirectExecution = Bun.argv.some(

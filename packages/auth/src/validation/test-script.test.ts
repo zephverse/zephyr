@@ -15,4 +15,68 @@ describe("signUpSchema sample validation", () => {
       expect(result.data.username).toBe("valid_user_123");
     }
   });
+
+  test("rejects missing email", () => {
+    const result = signUpSchema.safeParse({
+      username: "valid_user_123",
+      password: "ValidPass2026!",
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.format().email?._errors.length).toBeGreaterThan(0);
+    }
+  });
+
+  test("rejects malformed email", () => {
+    const result = signUpSchema.safeParse({
+      email: "not-an-email",
+      username: "valid_user_123",
+      password: "ValidPass2026!",
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.format().email?._errors.length).toBeGreaterThan(0);
+    }
+  });
+
+  test("rejects invalid username", () => {
+    const result = signUpSchema.safeParse({
+      email: "hello@example.com",
+      username: "bad user!",
+      password: "ValidPass2026!",
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.format().username?._errors.length).toBeGreaterThan(0);
+    }
+  });
+
+  test("rejects short password", () => {
+    const result = signUpSchema.safeParse({
+      email: "hello@example.com",
+      username: "valid_user_123",
+      password: "Ab1!",
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.format().password?._errors.length).toBeGreaterThan(0);
+    }
+  });
+
+  test("rejects password missing required classes", () => {
+    const result = signUpSchema.safeParse({
+      email: "hello@example.com",
+      username: "valid_user_123",
+      password: "lowercaseonly",
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.format().password?._errors.length).toBeGreaterThan(0);
+    }
+  });
 });

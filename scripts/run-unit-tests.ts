@@ -67,8 +67,13 @@ export async function runUnitTests(
   return 0;
 }
 
-// @ts-expect-error Bun supports import.meta.main at runtime in scripts
-if (import.meta.main) {
+const isDirectExecution = Bun.argv.some(
+  (arg) =>
+    arg.endsWith("scripts/run-unit-tests.ts") ||
+    arg.endsWith("run-unit-tests.ts")
+);
+
+if (isDirectExecution) {
   runUnitTests()
     .then((exitCode) => {
       process.exit(exitCode);

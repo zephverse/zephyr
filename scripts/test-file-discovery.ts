@@ -14,7 +14,8 @@ const IGNORE_DIRS = new Set([
 ]);
 
 const TEST_FILE_PATTERN = /(?:\.test|\.spec|_test_|_spec_)\.(?:[cm]?[jt]sx?)$/;
-const INTEGRATION_TEST_PATTERN = /\.integration\.test\.(?:[cm]?[jt]sx?)$/;
+const INTEGRATION_TEST_PATTERN =
+  /\.integration\.(?:test|spec)\.(?:[cm]?[jt]sx?)$/;
 
 function toPosixPath(filePath: string): string {
   return filePath.split(sep).join("/");

@@ -1,4 +1,12 @@
-import { afterAll, beforeEach, describe, expect, mock, test } from "bun:test";
+import {
+  afterAll,
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  test,
+} from "bun:test";
 import type { Session } from "@zephyr/db";
 import { HybridSessionStore } from "./hybrid-session-store";
 
@@ -112,8 +120,11 @@ describe("HybridSessionStore", () => {
     store = new HybridSessionStore();
   });
 
-  afterAll(() => {
+  afterEach(() => {
     store.destroy();
+  });
+
+  afterAll(() => {
     mock.restore();
   });
 

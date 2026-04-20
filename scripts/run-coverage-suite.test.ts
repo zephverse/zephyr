@@ -77,8 +77,15 @@ describe("run-coverage-suite", () => {
       ],
       fileExists: async (filePath) =>
         filePath.endsWith("coverage/all/lcov.info"),
-      readText: async () =>
-        "TN:\nSF:a.ts\nDA:1,1\nend_of_record\nTN:\nSF:b.ts\nDA:1,1\nend_of_record\n",
+      readText: (filePath) => {
+        if (filePath.endsWith("scripts/bunfig.coverage.toml")) {
+          return Promise.resolve('[test]\ncoverageDir = "coverage/all"\n');
+        }
+
+        return Promise.resolve(
+          "TN:\nSF:a.ts\nDA:1,1\nend_of_record\nTN:\nSF:b.ts\nDA:1,1\nend_of_record\n"
+        );
+      },
       removeFile: (filePath) => {
         expect(filePath).toBe("coverage/all/lcov.info");
         return Promise.resolve();
@@ -122,23 +129,30 @@ describe("run-coverage-suite", () => {
         "apps/auth/src/a2.test.ts",
       ],
       fileExists: async () => true,
-      readText: async () =>
-        [
-          "TN:",
-          "SF:apps/auth/src/a.ts",
-          "FN:1,foo",
-          "FNDA:0,foo",
-          "DA:1,0",
-          "DA:2,1",
-          "end_of_record",
-          "TN:",
-          "SF:apps/auth/src/a.ts",
-          "FN:1,foo",
-          "FNDA:3,foo",
-          "DA:1,3",
-          "DA:2,0",
-          "end_of_record",
-        ].join("\n"),
+      readText: (filePath) => {
+        if (filePath.endsWith("scripts/bunfig.coverage.toml")) {
+          return Promise.resolve('[test]\ncoverageDir = "coverage/all"\n');
+        }
+
+        return Promise.resolve(
+          [
+            "TN:",
+            "SF:apps/auth/src/a.ts",
+            "FN:1,foo",
+            "FNDA:0,foo",
+            "DA:1,0",
+            "DA:2,1",
+            "end_of_record",
+            "TN:",
+            "SF:apps/auth/src/a.ts",
+            "FN:1,foo",
+            "FNDA:3,foo",
+            "DA:1,3",
+            "DA:2,0",
+            "end_of_record",
+          ].join("\n")
+        );
+      },
       removeFile: async () => undefined,
       runProcess: async () => 0,
       writeText: (filePath, content) => {
@@ -168,8 +182,15 @@ describe("run-coverage-suite", () => {
         "scripts/b.test.ts",
       ],
       fileExists: async () => true,
-      readText: async () =>
-        "TN:\nSF:a.ts\nDA:1,1\nend_of_record\nTN:\nSF:b.ts\nDA:1,1\nend_of_record\n",
+      readText: (filePath) => {
+        if (filePath.endsWith("scripts/bunfig.coverage.toml")) {
+          return Promise.resolve('[test]\ncoverageDir = "coverage/all"\n');
+        }
+
+        return Promise.resolve(
+          "TN:\nSF:a.ts\nDA:1,1\nend_of_record\nTN:\nSF:b.ts\nDA:1,1\nend_of_record\n"
+        );
+      },
       removeFile: async () => undefined,
       runProcess: async () => 3,
       writeText: (filePath, content) => {
@@ -182,6 +203,35 @@ describe("run-coverage-suite", () => {
     const merged = writes.get("coverage/unit/lcov.info");
     expect(merged).toContain("SF:a.ts");
     expect(merged).toContain("SF:b.ts");
+  });
+
+  test("returns 1 when lcov file is missing after success", async () => {
+    const writes = new Map<string, string>();
+    const logger = { error: mock(() => undefined), log: mock(() => undefined) };
+
+    const exitCode = await runCoverageForScope("unit", {
+      collectFiles: async () => ["apps/auth/src/a.test.ts"],
+      fileExists: async () => false,
+      logger,
+      readText: (filePath) => {
+        if (filePath.endsWith("scripts/bunfig.coverage.toml")) {
+          return Promise.resolve('[test]\ncoverageDir = "coverage/all"\n');
+        }
+        return Promise.resolve("");
+      },
+      removeFile: async () => undefined,
+      runProcess: async () => 0,
+      writeText: (filePath, content) => {
+        writes.set(filePath, content);
+        return Promise.resolve();
+      },
+    });
+
+    expect(exitCode).toBe(1);
+    expect(writes.get("coverage/unit/lcov.info")).toContain("TN:\n");
+    expect(logger.error).toHaveBeenCalledWith(
+      "Coverage output missing: coverage/all/lcov.info"
+    );
   });
 
   test("runCoverageCli validates arguments", async () => {

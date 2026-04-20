@@ -83,7 +83,7 @@ describe("email service", () => {
     // We must manually set up the envs before importing
     process.env.RESEND_API_KEY = "test_key";
     Object.defineProperty(process.env, "NODE_ENV", {
-      value: "development",
+      value: "test",
       writable: true,
     });
     process.env.NEXT_PUBLIC_URL = "https://social.localhost";
