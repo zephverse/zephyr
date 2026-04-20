@@ -17,16 +17,13 @@ jobs:
     name: Ensure RustFS buckets and policies
     runs-on: ubuntu-latest
     steps:
-      - name: Configure AWS credentials for RustFS
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.RUSTFS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.RUSTFS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.RUSTFS_REGION }}
-
       - name: Ensure buckets, policies, and versioning
         env:
           RUSTFS_ENDPOINT: ${{ secrets.RUSTFS_S3_ENDPOINT }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.RUSTFS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.RUSTFS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.RUSTFS_REGION }}
+          AWS_EC2_METADATA_DISABLED: "true"
           APPLY_PUBLIC_POLICIES: ${{ github.event.inputs.apply_public_policies || 'true' }}
           ENABLE_VERSIONING: ${{ github.event.inputs.enable_versioning || 'true' }}
         run: |
@@ -34,6 +31,11 @@ jobs:
 
           if [ -z "${RUSTFS_ENDPOINT}" ]; then
             echo "RUSTFS_S3_ENDPOINT secret is required"
+            exit 1
+          fi
+
+          if [ -z "${AWS_ACCESS_KEY_ID}" ] || [ -z "${AWS_SECRET_ACCESS_KEY}" ] || [ -z "${AWS_DEFAULT_REGION}" ]; then
+            echo "RUSTFS credentials/region secrets are required"
             exit 1
           fi
 
