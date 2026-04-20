@@ -18,6 +18,11 @@ const jwtSessionCacheMock = {
   ),
 };
 
+const originalEnv = {
+  NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
+  NEXT_PUBLIC_URL: process.env.NEXT_PUBLIC_URL,
+};
+
 mock.module("@zephyr/db", () => ({
   jwtSessionCache: jwtSessionCacheMock,
   prisma: {},
@@ -48,6 +53,18 @@ describe("jwt helpers", () => {
 
   afterEach(() => {
     console.error = originalConsoleError;
+    if (originalEnv.NEXTAUTH_SECRET === undefined) {
+      delete process.env.NEXTAUTH_SECRET;
+    } else {
+      process.env.NEXTAUTH_SECRET = originalEnv.NEXTAUTH_SECRET;
+    }
+
+    if (originalEnv.NEXT_PUBLIC_URL === undefined) {
+      delete process.env.NEXT_PUBLIC_URL;
+    } else {
+      process.env.NEXT_PUBLIC_URL = originalEnv.NEXT_PUBLIC_URL;
+    }
+
     jwtSessionCacheMock.createTokenHash.mockClear();
     jwtSessionCacheMock.setValidatedSession.mockClear();
     jwtSessionCacheMock.getValidatedSession.mockClear();

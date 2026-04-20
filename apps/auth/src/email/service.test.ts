@@ -9,6 +9,11 @@ import {
 } from "bun:test";
 import type { EmailValidationResult } from "@zephyr/auth";
 
+interface ResendSendResult {
+  data: { id: string } | null;
+  error: { message: string } | null;
+}
+
 let throwOnSend = false;
 let returnErrorOnSend = false;
 
@@ -26,13 +31,13 @@ const mockValidateEmailAdvanced = mock(
   mockResolvedValueOnce: (value: EmailValidationResult) => unknown;
 };
 
-const mockResendSend = mock(async () => {
+const mockResendSend = mock(async (): Promise<ResendSendResult> => {
   await Promise.resolve();
   if (throwOnSend) {
     throw new Error("Send exception");
   }
   if (returnErrorOnSend) {
-    return { error: { message: "Send error" } };
+    return { data: null, error: { message: "Send error" } };
   }
   return { data: { id: "123" }, error: null };
 });
@@ -43,28 +48,31 @@ const originalConsole = {
   warn: console.warn,
 };
 
-mock.module("@zephyr/auth", () => ({
-  validateEmailAdvanced: mockValidateEmailAdvanced,
-}));
-
-mock.module("resend", () => ({
-  Resend: class MockResend {
-    constructor(key: string) {
-      if (key === "throw_init") {
-        throw new Error("Init error");
-      }
-    }
-    emails = {
-      send: mockResendSend,
-    };
-  },
-}));
-
 describe("email service", () => {
   let envModule: typeof import("../../env");
   let serviceModule: typeof import("./service");
 
   beforeEach(async () => {
+    mock.restore();
+
+    mock.module("@zephyr/auth", () => ({
+      validateEmailAdvanced: mockValidateEmailAdvanced,
+    }));
+
+    mock.module("resend", () => ({
+      Resend: class MockResend {
+        constructor(key: string) {
+          if (key === "throw_init") {
+            throw new Error("Init error");
+          }
+        }
+
+        emails = {
+          send: mockResendSend,
+        };
+      },
+    }));
+
     console.error = mock(() => undefined) as typeof console.error;
     console.log = mock(() => undefined) as typeof console.log;
     console.warn = mock(() => undefined) as typeof console.warn;

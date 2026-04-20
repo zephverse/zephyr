@@ -6,7 +6,7 @@ describe("signUpSchema sample validation", () => {
     const result = signUpSchema.safeParse({
       email: "hello@example.com",
       username: "valid_user_123",
-      password: "ValidPassword123!",
+      password: "ValidPass2026!",
     });
 
     expect(result.success).toBe(true);

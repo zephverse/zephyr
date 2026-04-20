@@ -34,9 +34,8 @@ function parseCoverageDir(configContents: string): string {
   return line.slice(COVERAGE_DIR_PREFIX.length, line.lastIndexOf('"'));
 }
 
-async function getSourceLcovPath(deps: CoverageRunnerDeps): Promise<string> {
-  const readText = deps.readText ?? defaultReadText;
-  const coverageConfig = await readText(COVERAGE_CONFIG_PATH);
+async function getSourceLcovPath(_deps: CoverageRunnerDeps): Promise<string> {
+  const coverageConfig = await defaultReadText(COVERAGE_CONFIG_PATH);
   const coverageDir = parseCoverageDir(coverageConfig);
 
   return join(coverageDir, "lcov.info");

@@ -43,20 +43,28 @@ export async function runUnitTests(
     return 1;
   }
 
-  return await runProcess({
-    cmd: [
-      "bun",
-      "test",
-      "--env-file=.env.test",
-      ...extraArgs,
-      ...unitTests.map((filePath) => `./${filePath}`),
-    ],
-    cwd: rootDir,
-    env: {
-      ...process.env,
-      NODE_ENV: "test",
-    },
-  });
+  for (const filePath of unitTests) {
+    const exitCode = await runProcess({
+      cmd: [
+        "bun",
+        "test",
+        "--env-file=.env.test",
+        ...extraArgs,
+        `./${filePath}`,
+      ],
+      cwd: rootDir,
+      env: {
+        ...process.env,
+        NODE_ENV: "test",
+      },
+    });
+
+    if (exitCode !== 0) {
+      return exitCode;
+    }
+  }
+
+  return 0;
 }
 
 // @ts-expect-error Bun supports import.meta.main at runtime in scripts

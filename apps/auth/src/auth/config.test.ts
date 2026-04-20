@@ -58,6 +58,7 @@ describe("auth config wrappers", () => {
   });
 
   beforeAll(async () => {
+    mockCreateAuthConfig.mockClear();
     await import("./config");
     const configCall = mockCreateAuthConfig.mock.calls.at(-1)?.[0];
 
