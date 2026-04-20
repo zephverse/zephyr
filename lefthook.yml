@@ -10,7 +10,7 @@ pre-commit:
 pre-push:
   commands:
     tests:
-      run: bun test
+      run: bun run test
     lint:
       run: bun run check
     types:

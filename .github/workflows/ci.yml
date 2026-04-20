@@ -1,0 +1,163 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Lint and Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+
+      - name: Restore Bun and Turbo caches
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.bun/install/cache
+            ~/.cache/prisma
+            .turbo
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: bun run --filter=@zephyr/db db:generate
+
+      - name: Check lint/format
+        run: bun run check
+
+      - name: Check types
+        run: bun run check-types
+
+  build-and-push:
+    name: Build and Push (${{ matrix.app }})
+    needs: quality
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - app: web
+            dockerfile: ./apps/web/Dockerfile
+            image: zephyr-web
+          - app: auth
+            dockerfile: ./apps/auth/Dockerfile
+            image: zephyr-auth
+          - app: docs
+            dockerfile: ./apps/docs/Dockerfile
+            image: zephyr-docs
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Read app version metadata
+        id: version
+        shell: bash
+        run: |
+          APP_VERSION=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["version"])' "apps/${{ matrix.app }}/package.json")
+          ROOT_VERSION=$(python3 -c 'import json; print(json.load(open("package.json"))["version"])')
+
+          {
+            echo "app_version=${APP_VERSION}"
+            echo "root_version=${ROOT_VERSION}"
+            echo "tag_name=${{ matrix.app }}-v${APP_VERSION}"
+            echo "sha_short=$(git rev-parse --short HEAD)"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+
+      - name: Setup Blacksmith Builder
+        uses: useblacksmith/setup-docker-builder@v1
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract image metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.image }}
+          tags: |
+            type=raw,value=${{ steps.version.outputs.tag_name }},enable=${{ github.ref_name == 'main' }}
+            type=sha,prefix=${{ matrix.app }}-sha-
+            type=raw,value=latest,enable=${{ github.ref_name == 'main' }}
+            type=raw,value=dev,enable=${{ github.ref_name == 'dev' }}
+          labels: |
+            org.opencontainers.image.title=${{ matrix.image }}
+            org.opencontainers.image.version=${{ steps.version.outputs.app_version }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            io.zephyr.app=${{ matrix.app }}
+            io.zephyr.app-version=${{ steps.version.outputs.app_version }}
+            io.zephyr.root-version=${{ steps.version.outputs.root_version }}
+
+      - name: Build and push Docker image (multi-arch)
+        uses: useblacksmith/build-push-action@v2
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: true
+          platforms: linux/amd64,linux/arm64
+          build-args: |
+            NEXT_PUBLIC_AUTH_URL=${{ vars.NEXT_PUBLIC_AUTH_URL }}
+            NEXT_PUBLIC_URL=${{ vars.NEXT_PUBLIC_URL }}
+            NEXT_PUBLIC_ZEPHOB_ENDPOINT=${{ vars.NEXT_PUBLIC_ZEPHOB_ENDPOINT }}
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  cleanup-old-images:
+    name: Cleanup old GHCR images
+    needs: build-and-push
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    permissions:
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        image:
+          - zephyr-web
+          - zephyr-auth
+          - zephyr-docs
+    steps:
+      - name: Delete old package versions (keep last 10)
+        uses: actions/delete-package-versions@v5
+        with:
+          package-name: ${{ matrix.image }}
+          package-type: container
+          min-versions-to-keep: 10
+          delete-only-untagged-versions: false
+          token: ${{ secrets.GITHUB_TOKEN }}
