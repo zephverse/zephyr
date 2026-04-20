@@ -305,6 +305,9 @@ jobs:
         run: |
           app_id=""
           health_url=""
+          health_initial_delay="30"
+          health_retries="10"
+          health_retry_interval="10"
           deploy_enabled="false"
           health_enabled="false"
 
@@ -320,6 +323,9 @@ jobs:
             docs)
               app_id="${DOKPLOY_DOCS_APP_ID}"
               health_url="${DOCS_HEALTH_URL}"
+              health_initial_delay="60"
+              health_retries="30"
+              health_retry_interval="10"
               ;;
           esac
 
@@ -333,6 +339,9 @@ jobs:
 
           echo "app_id=${app_id}" >> "$GITHUB_OUTPUT"
           echo "health_url=${health_url}" >> "$GITHUB_OUTPUT"
+          echo "health_initial_delay=${health_initial_delay}" >> "$GITHUB_OUTPUT"
+          echo "health_retries=${health_retries}" >> "$GITHUB_OUTPUT"
+          echo "health_retry_interval=${health_retry_interval}" >> "$GITHUB_OUTPUT"
           echo "deploy_enabled=${deploy_enabled}" >> "$GITHUB_OUTPUT"
           echo "health_enabled=${health_enabled}" >> "$GITHUB_OUTPUT"
 
@@ -357,22 +366,25 @@ jobs:
         if: success() && steps.deploy-targets.outputs.health_enabled == 'true'
         env:
           HEALTH_URL: ${{ steps.deploy-targets.outputs.health_url }}
+          HEALTH_INITIAL_DELAY: ${{ steps.deploy-targets.outputs.health_initial_delay }}
+          HEALTH_RETRIES: ${{ steps.deploy-targets.outputs.health_retries }}
+          HEALTH_RETRY_INTERVAL: ${{ steps.deploy-targets.outputs.health_retry_interval }}
         run: |
-          echo "Waiting 30s for container to start..."
-          sleep 30
+          echo "Waiting ${HEALTH_INITIAL_DELAY}s for container to start..."
+          sleep "${HEALTH_INITIAL_DELAY}"
 
           echo "Checking health endpoint..."
-          for i in {1..10}; do
+          for i in $(seq 1 "${HEALTH_RETRIES}"); do
             if curl -sf "${HEALTH_URL}" > /dev/null; then
               echo "Health check passed!"
               exit 0
             fi
 
-            echo "Attempt $i/10 failed, retrying in 10s..."
-            sleep 10
+            echo "Attempt ${i}/${HEALTH_RETRIES} failed, retrying in ${HEALTH_RETRY_INTERVAL}s..."
+            sleep "${HEALTH_RETRY_INTERVAL}"
           done
 
-          echo "Health check failed after 10 attempts"
+          echo "Health check failed after ${HEALTH_RETRIES} attempts"
           exit 1
 
   cleanup-old-images:
